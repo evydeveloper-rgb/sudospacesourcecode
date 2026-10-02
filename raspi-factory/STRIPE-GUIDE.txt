@@ -1,0 +1,247 @@
+═══════════════════════════════════════════════
+ SUDO — STRIPE PAYMENT GUIDE (AI CREDITS)
+═══════════════════════════════════════════════
+
+CRITICAL — WEBHOOK URL (MUST BE STABLE)
+───────────────────────────────────────
+  Stripe Dashboard → Developers → Webhooks → endpoint URL MUST be:
+
+    https://YOUR-API-URL.vercel.app/webhooks/stripe
+
+  NEVER point it at a preview URL like:
+    https://sudo-xxxxx-sudospace.vercel.app/...
+
+  Preview URLs die after deploys. If the webhook URL is wrong, payments
+  succeed in Stripe but the database NEVER updates (subscription stays
+  inactive). Events needed:
+    • checkout.session.completed
+    • customer.subscription.created
+    • customer.subscription.updated
+    • invoice.paid
+
+  Automated update path (no manual DB edits):
+    1. Stripe webhook → fulfillCheckoutSession → payment_sessions + subscriptions
+    2. Device return from Checkout → POST /v1/payments/confirm (backup)
+    Both write the same DB rows. UI then reads /v1/wallet/balance.
+
+═══════════════════════════════════════════════
+WHAT YOU ARE BUILDING
+═══════════════════════════════════════════════
+  Pi (Sudo Dashboard)  →  Cloud API  →  Stripe Checkout
+                              ↓
+                         PostgreSQL (wallet)
+                              ↓
+                    OpenRouter Management API (key limits)
+
+The Pi never stores Stripe secrets or OpenRouter management keys.
+Stripe handles card payments. Your cloud API handles wallet + webhooks.
+
+═══════════════════════════════════════════════
+PHASE 1 — STRIPE ACCOUNT
+═══════════════════════════════════════════════
+
+1. Create account at https://dashboard.stripe.com/register
+
+2. Business type
+   • US resident + US bank  → "Unregistered business" (solo) is fine for MVP
+   • Indonesia-based        → Stripe US unregistered usually fails verification
+     Use Midtrans/Xendit instead, or Stripe only if available in your country
+
+3. Enable Test mode (toggle top-right) while developing
+
+4. Get API keys
+   Dashboard → Developers → API keys
+   • Publishable key  pk_test_...  (safe in Pi dashboard UI)
+   • Secret key       sk_test_...  (cloud backend ONLY)
+
+5. Create Products (Dashboard → Product catalog)
+   Example credit packs:
+
+   Product: "Sudo AI Credits"
+   ├── Price: $5.00 USD  one-time  → price_xxx_5
+   ├── Price: $10.00 USD one-time  → price_xxx_10
+   └── Price: $25.00 USD one-time  → price_xxx_25
+
+   Map each price to credits in your backend (e.g. $5 = $5 OpenRouter limit).
+
+═══════════════════════════════════════════════
+PHASE 2 — CLOUD BACKEND (REQUIRED)
+═══════════════════════════════════════════════
+
+Deploy the starter in:  sudo-api/
+
+Suggested hosting: Railway, Fly.io, Render, or Cloudflare Workers + Neon DB
+
+Environment variables (.env):
+
+  DATABASE_URL=postgresql://...
+  STRIPE_SECRET_KEY=sk_test_...
+  STRIPE_WEBHOOK_SECRET=whsec_...
+  OPENROUTER_MANAGEMENT_KEY=sk-or-mgmt-...
+  JWT_SECRET=random-long-string
+  API_BASE_URL=https://api.yourdomain.com
+
+Database schema: see sudo-api/schema.sql
+
+═══════════════════════════════════════════════
+PHASE 3 — STRIPE CHECKOUT FLOW
+═══════════════════════════════════════════════
+
+1. User on Pi opens "Top up" → picks a pack ($5 / $10 / $25)
+
+2. Pi calls your API:
+   POST /v1/payments/checkout
+   Authorization: Bearer <device_token>
+   Body: { "price_id": "price_xxx_5" }
+
+3. Backend:
+   a. Creates payment_sessions row (status: pending)
+   b. Creates Stripe Checkout Session:
+      - mode: payment
+      - line_items: [{ price: price_id, quantity: 1 }]
+      - metadata: { session_id, device_id, user_id }
+      - success_url: https://api.../v1/payments/success?session_id=...
+      - cancel_url:  http://raspberrypi.local/#billing
+
+4. Backend returns { checkout_url } → Pi redirects user to Stripe
+
+5. User pays on Stripe-hosted page (you never touch card data)
+
+═══════════════════════════════════════════════
+PHASE 4 — WEBHOOK (MOST IMPORTANT PART)
+═══════════════════════════════════════════════
+
+Stripe sends events to:
+  POST https://api.yourdomain.com/webhooks/stripe
+
+Register in Dashboard → Developers → Webhooks → Add endpoint
+Events to listen for:
+  • checkout.session.completed
+  • payment_intent.payment_failed   (optional)
+
+Local testing:
+  stripe listen --forward-to localhost:8000/webhooks/stripe
+  # Copy whsec_... into STRIPE_WEBHOOK_SECRET
+
+On checkout.session.completed:
+  1. Verify webhook signature (stripe.Webhook.construct_event)
+  2. Read metadata.session_id
+  3. If payment_session already "paid" → return 200 (idempotent!)
+  4. Mark payment_session paid
+  5. Add USD credits to wallet (ledger entry)
+  6. PATCH OpenRouter key limit for this device/user
+  7. Return 200
+
+NEVER trust the success_url alone — only the webhook confirms payment.
+
+═══════════════════════════════════════════════
+PHASE 5 — OPENROUTER KEY MANAGEMENT
+═══════════════════════════════════════════════
+
+Create a Management API key at:
+  https://openrouter.ai/settings/management-keys
+
+Per device (on first boot / pairing):
+  POST https://openrouter.ai/api/v1/keys
+  Authorization: Bearer <MANAGEMENT_KEY>
+  Body: { "name": "sudo-device-abc123", "limit": 0 }
+
+Store key_hash in DB. Give the plaintext sk-or-v1-... to the Pi agent
+(once) or proxy inference through your API.
+
+After top-up ($10 paid):
+  PATCH https://openrouter.ai/api/v1/keys/{hash}
+  Body: { "limit": <new_total_limit> }
+
+Check remaining:
+  GET https://openrouter.ai/api/v1/keys/{hash}
+  → limit_remaining, usage
+
+═══════════════════════════════════════════════
+PHASE 6 — DEDUCT ON AI USAGE
+═══════════════════════════════════════════════
+
+Every OpenRouter response includes usage.cost (USD).
+
+Option A — Pi/agent calls OpenRouter directly:
+  After each request, POST /v1/usage/report to your API with cost.
+  API deducts wallet + checks limit_remaining.
+
+Option B — Proxy through cloud API (more control):
+  Pi → POST /v1/chat → API → OpenRouter → deduct wallet → return response
+
+Use DB transaction with row lock when deducting:
+  SELECT balance FROM wallets WHERE user_id = X FOR UPDATE
+
+═══════════════════════════════════════════════
+PHASE 7 — PI DASHBOARD INTEGRATION
+═══════════════════════════════════════════════
+
+On Pi, store only:
+  /opt/sudo/config.json
+  {
+    "device_id": "uuid-from-factory",
+    "api_token": "jwt-after-pairing",
+    "api_base": "https://api.yourdomain.com"
+  }
+
+Dashboard UI calls:
+  GET  /v1/wallet/balance     → show credits
+  POST /v1/payments/checkout  → get Stripe URL
+  GET  /v1/wallet/history     → top-up history
+
+CORS: allow http://raspberrypi.local and http://<pi-ip> on your API.
+
+═══════════════════════════════════════════════
+PHASE 8 — TESTING CHECKLIST
+═══════════════════════════════════════════════
+
+[ ] Stripe test card: 4242 4242 4242 4242, any future expiry, any CVC
+[ ] stripe listen running, webhook secret set
+[ ] Top-up $5 → webhook fires → wallet balance +$5
+[ ] Double webhook → balance only +$5 once (idempotency)
+[ ] OpenRouter key limit updated
+[ ] AI request works, usage.cost deducted
+[ ] Balance = 0 → request blocked with clear error
+
+═══════════════════════════════════════════════
+PHASE 9 — GO LIVE
+═══════════════════════════════════════════════
+
+[ ] Switch Stripe to Live mode
+[ ] Replace pk_test / sk_test with pk_live / sk_live
+[ ] Register live webhook endpoint with live signing secret
+[ ] Complete Stripe identity verification
+[ ] Set up payout bank account
+[ ] Monitor Dashboard → Payments + Developers → Webhooks logs
+[ ] Add Stripe Tax if selling internationally (optional)
+
+═══════════════════════════════════════════════
+FEES (APPROXIMATE)
+═══════════════════════════════════════════════
+
+Stripe US online card:  2.9% + $0.30 per successful charge
+OpenRouter:             pay-as-you-go per token (no markup)
+Your margin:            charge more than cost, or bundle credits
+
+Example: sell $10 pack → Stripe fee ~$0.59 → you net ~$9.41
+         allocate $9.41 OpenRouter limit (or less for margin)
+
+═══════════════════════════════════════════════
+STARTER CODE
+═══════════════════════════════════════════════
+
+See sudo-api/ for a minimal FastAPI reference:
+  • schema.sql
+  • main.py
+  • requirements.txt
+  • .env.example
+
+Run locally:
+  cd sudo-api
+  pip install -r requirements.txt
+  cp .env.example .env   # fill in keys
+  stripe listen --forward-to localhost:8000/webhooks/stripe
+  uvicorn main:app --reload --port 8000
+
+═══════════════════════════════════════════════

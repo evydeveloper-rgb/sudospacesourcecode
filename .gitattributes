@@ -1,0 +1,24 @@
+# These files run on Linux. A CR at the end of a line makes bash read it as
+# part of the command, so "$BOOT/x" becomes "$BOOT\r/x" and every path breaks
+# — which is exactly how install-factory.sh silently failed to install
+# anything on 2026-08-06. Force LF regardless of the flashing machine's
+# core.autocrlf setting.
+* text=auto eol=lf
+
+*.sh   text eol=lf
+*.py   text eol=lf
+*.json text eol=lf
+*.html text eol=lf
+*.css  text eol=lf
+*.md   text eol=lf
+*.txt  text eol=lf
+*.ts   text eol=lf
+*.mjs  text eol=lf
+*.sql  text eol=lf
+*.conf text eol=lf
+*.template text eol=lf
+
+# Vendored binaries (gitignored, but never mangle them if that changes)
+raspi-factory/picoclaw/picoclaw           binary
+raspi-factory/picoclaw/picoclaw-launcher  binary
+raspi-factory/cloudflared/cloudflared     binary

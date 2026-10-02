@@ -1,0 +1,2487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+  <meta name="theme-color" content="#f9f9f9">
+  <title>sudo — your teammate</title>
+  <link rel="stylesheet" href="/app.css">
+  <link rel="manifest" href="/manifest.json">
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Desktop only (>=1024px). The design's rail tracks setup progress, but
+         setup happens on the phone, so it carries the real navigation. -->
+    <aside class="side-rail" aria-label="Primary navigation">
+      <div class="rail-brand"><a class="wordmark" href="/" aria-label="Sudo home">sudo<span aria-hidden="true"></span></a></div>
+      <div class="rail-section">
+        <p class="rail-label">menu</p>
+        <nav class="rail-nav">
+          <button type="button" data-tab="chat" class="active">
+            <span class="rail-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg></span>
+            <span>Chat</span>
+          </button>
+          <button type="button" data-tab="apps">
+            <span class="rail-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>
+            <span>Apps</span>
+          </button>
+          <button type="button" data-tab="settings">
+            <span class="rail-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 6H10M6 6H3M21 12h-7M10 12H3M21 18h-3M14 18H3"/><circle cx="8" cy="6" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="16" cy="18" r="2"/></svg></span>
+            <span>Settings</span>
+          </button>
+        </nav>
+      </div>
+      <div class="rail-foot">
+        <div class="rail-avatar" id="rail-avatar" aria-hidden="true">s</div>
+        <div class="rail-who">
+          <span id="rail-name">sudo</span>
+          <small id="rail-sub">Session active</small>
+        </div>
+      </div>
+    </aside>
+
+    <header class="topbar">
+      <a class="wordmark" href="/" aria-label="Sudo home">sudo<span aria-hidden="true"></span></a>
+      <div class="device-state" id="device-state-wrap"><i aria-hidden="true"></i><span id="device-state">online</span></div>
+      <div class="step-chip" id="step-chip" hidden>Step <span id="step-now">1</span> of 3</div>
+    </header>
+
+    <div class="install-hint" id="install-hint" hidden>
+      <div>
+        <strong>Keep sudo one tap away</strong>
+        <small id="install-hint-how">Add this page to your home screen.</small>
+      </div>
+      <button id="install-hint-dismiss" type="button" aria-label="Dismiss">×</button>
+    </div>
+
+    <main id="app-main">
+      <section class="view welcome-view" id="view-welcome" aria-labelledby="welcome-title">
+        <div class="welcome-inner">
+          <div class="welcome-steps" aria-hidden="true">
+            <span id="wdot0"></span><span id="wdot1"></span><span id="wdot2"></span>
+          </div>
+
+          <!-- step 1 — put it on the home screen -->
+          <div class="welcome-step" id="welcome-step0">
+            <p class="eyebrow">hello</p>
+            <h1 id="welcome-title">let’s make this yours.</h1>
+            <p class="lede">First, keep me somewhere easy to reach. There’s no app to install — this page becomes the app.</p>
+
+            <div class="how-box">
+              <div class="how-head" id="how-title">On your phone</div>
+              <ol id="how-steps"></ol>
+              <p class="microcopy" id="how-note"></p>
+            </div>
+
+            <button class="primary-button" id="welcome-next" type="button">Done — next</button>
+            <button class="ghost-button" id="welcome-skip" type="button">Skip for now</button>
+          </div>
+
+          <!-- step 2 — how it should look -->
+          <div class="welcome-step" id="welcome-step1" hidden>
+            <p class="eyebrow">look</p>
+            <h1>pick how I should look.</h1>
+            <p class="lede">Pick a look to start with — tap one to try it. Later on you and I can shape this into something properly yours: your own colours, your own layout, whatever you actually use it for.</p>
+
+            <div class="theme-grid" id="welcome-theme-options">
+              <button type="button" class="theme-opt" data-value="default">
+                <span class="theme-swatch"><i style="background:#f9f9f9"></i><i style="background:#340075"></i><i style="background:#fe6944"></i></span>
+                <strong>Default</strong><small>Light, purple and coral.</small>
+              </button>
+              <button type="button" class="theme-opt" data-value="minimal">
+                <span class="theme-swatch"><i style="background:#fafafa"></i><i style="background:#27272a"></i><i style="background:#f2603c"></i></span>
+                <strong>Minimal</strong><small>Near-monochrome. Quiet.</small>
+              </button>
+              <button type="button" class="theme-opt" data-value="terminal">
+                <span class="theme-swatch"><i style="background:#0f0f11"></i><i style="background:#17171a"></i><i style="background:#fe6944"></i></span>
+                <strong>Terminal</strong><small>Dark, coral accents.</small>
+              </button>
+              <button type="button" class="theme-opt" data-value="midnight">
+                <span class="theme-swatch"><i style="background:#0d0b14"></i><i style="background:#161222"></i><i style="background:#b994ff"></i></span>
+                <strong>Midnight</strong><small>Dark, violet accents.</small>
+              </button>
+            </div>
+
+            <button class="primary-button" id="welcome-look-next" type="button">Next</button>
+            <button class="ghost-button" id="welcome-back" type="button">← Back</button>
+          </div>
+
+          <!-- step 3 — names -->
+          <div class="welcome-step" id="welcome-step2" hidden>
+            <p class="eyebrow">names</p>
+            <h1>say hi to each other.</h1>
+            <p class="lede">Two things and we can start talking. Everything else can wait — it’s all in Settings later.</p>
+
+            <label for="welcome-user">What should I call you?</label>
+            <input id="welcome-user" autocomplete="given-name" placeholder="your name" maxlength="64">
+
+            <label for="welcome-agent">And what should you call me?</label>
+            <input id="welcome-agent" placeholder="sudo" maxlength="32">
+
+            <button class="primary-button" id="welcome-finish" type="button">Say hello</button>
+            <button class="ghost-button" id="welcome-back-2" type="button">← Back</button>
+            <p class="form-status" id="welcome-status" role="status"></p>
+          </div>
+        </div>
+      </section>
+
+      <section class="view welcome-view" id="view-login" aria-labelledby="login-title">
+        <div class="welcome-inner">
+          <p class="eyebrow">locked</p>
+          <h1 id="login-title">this one needs a password.</h1>
+          <p class="lede">You are opening sudo over its public link, so it asks before letting anyone in. The password is shown in Settings when you open the dashboard at home.</p>
+
+          <label for="login-password">Password</label>
+          <input id="login-password" type="password" autocomplete="current-password" placeholder="password">
+
+          <button class="primary-button" id="login-go" type="button">Unlock</button>
+          <p class="form-status" id="login-status" role="status"></p>
+        </div>
+      </section>
+
+      <section class="view chat-view active" id="view-chat" aria-labelledby="chat-title">
+        <div class="view-heading chat-heading">
+          <div>
+            <p class="eyebrow">your teammate</p>
+            <h1 id="chat-title"><span id="agent-title">sudo</span><span id="chat-title-suffix"> is ready.</span></h1>
+          </div>
+          <button class="icon-button" id="new-chat" type="button" aria-label="Clear conversation" title="Clear conversation">
+            <span aria-hidden="true">＋</span>
+          </button>
+        </div>
+        <div class="public-link-strip" id="public-link-strip" hidden>
+          <span>Available anywhere</span>
+          <button id="copy-public-link" type="button">copy link</button>
+        </div>
+        <div class="model-loading" id="model-loading" hidden>
+          <span class="model-loading-dot" aria-hidden="true"></span>
+          <span id="model-loading-text"></span>
+        </div>
+        <div class="setup-more" id="setup-more" hidden>
+          <div>
+            <strong>Want to go further?</strong>
+            <small>Pick a personality, change the model, or let sudo do more — now that you’ve met.</small>
+          </div>
+          <div class="setup-more-actions">
+            <button id="setup-more-go" type="button">Open settings</button>
+            <button id="setup-more-dismiss" type="button" aria-label="Dismiss">×</button>
+          </div>
+        </div>
+        <div class="message-thread" id="messages" role="log" aria-live="polite" aria-relevant="additions"></div>
+        <div class="thinking" id="thinking" hidden>
+          <span></span><span></span><span></span><em>thinking</em>
+        </div>
+        <form class="composer" id="chat-form">
+          <label class="sr-only" for="chat-input">Message your agent</label>
+          <textarea id="chat-input" rows="1" maxlength="2000" placeholder="ask sudo anything…" enterkeyhint="send"></textarea>
+          <button class="send-button" id="send-button" type="submit" aria-label="Send message">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m22 2-11 11M22 2l-7 20-4-9-9-4 20-7Z"/></svg>
+          </button>
+        </form>
+      </section>
+
+      <section class="view" id="view-apps" aria-labelledby="apps-title">
+        <div class="view-heading">
+          <div>
+            <p class="eyebrow">your little tools</p>
+            <h1 id="apps-title">Apps</h1>
+            <p class="lede">Focused spaces sudo can help you run.</p>
+          </div>
+        </div>
+        <div class="app-grid">
+          <article class="mini-app mint">
+            <div class="mini-icon">↗</div><span class="soon">coming soon</span>
+            <h2>Financial tracker</h2><p>Income, spending, and what’s left at a glance.</p>
+          </article>
+          <article class="mini-app pink">
+            <div class="mini-icon">♡</div><span class="soon">coming soon</span>
+            <h2>Health tracker</h2><p>Sleep, movement, and how you’re really feeling.</p>
+          </article>
+          <article class="mini-app yellow">
+            <div class="mini-icon">≡</div><span class="soon">coming soon</span>
+            <h2>Journal</h2><p>A quiet place to think out loud with sudo.</p>
+          </article>
+          <article class="mini-app lilac">
+            <div class="mini-icon">⌂</div><span class="soon">coming soon</span>
+            <h2>Home</h2><p>Lights, locks, and small daily routines.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="view" id="view-settings" aria-labelledby="settings-title">
+        <div class="view-heading">
+          <div>
+            <p class="eyebrow">make this box yours</p>
+            <h1 id="settings-title">Settings</h1>
+          </div>
+        </div>
+
+        <div class="detail-bar" id="detail-bar" hidden>
+          <button type="button" id="detail-back" aria-label="Back to settings">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          <h2 id="detail-title">Settings</h2>
+        </div>
+
+        <div class="settings-list">
+          <div class="settings-group">agent</div>
+          <section class="setting-card" id="profile-setting">
+            <button class="setting-head" type="button" aria-expanded="true">
+              <span class="setting-icon">✦</span>
+              <span><strong>Agent &amp; personality</strong><small id="profile-summary">Set up how sudo talks to you</small></span>
+              <span class="chevron">›</span>
+            </button>
+            <div class="setting-body">
+              <div class="field-grid">
+                <label>Your name<input id="user-name" autocomplete="name" placeholder="What should I call you?"></label>
+                <label>Agent name<input id="agent-name" placeholder="sudo" maxlength="32"></label>
+              </div>
+              <fieldset>
+                <legend>Personality</legend>
+                <div class="option-grid" id="personality-options">
+                  <button type="button" data-value="friendly"><strong>Friendly</strong><small>Warm and easygoing.</small></button>
+                  <button type="button" data-value="professional"><strong>Professional</strong><small>Crisp and measured.</small></button>
+                  <button type="button" data-value="concise"><strong>Concise</strong><small>Only the words needed.</small></button>
+                  <button type="button" data-value="creative"><strong>Creative</strong><small>Playful and curious.</small></button>
+                </div>
+              </fieldset>
+              <button class="primary-button" id="save-profile" type="button">Save settings</button>
+              <p class="form-status" id="profile-status" role="status"></p>
+            </div>
+          </section>
+          <section class="setting-card" id="routing-setting">
+            <button class="setting-head" type="button">
+              <span class="setting-icon">⇄</span>
+              <span><strong>Model &amp; routing</strong><small id="routing-summary">Automatic</small></span>
+              <span class="chevron">&rsaquo;</span>
+            </button>
+            <div class="setting-body">
+              <p class="section-intro">Which model answers you. Automatic is the cheapest sensible choice on every message; fixed always uses the one you pick.</p>
+
+              <div class="access-row">
+                <div>
+                  <strong>Answering right now</strong>
+                  <small id="answering-with">Checking&hellip;</small>
+                </div>
+              </div>
+
+              <div class="access-row">
+                <div>
+                  <strong>Keep it on this device</strong>
+                  <small>Answer with the on-device model even when a key is saved. Nothing you type leaves the house.</small>
+                </div>
+                <label class="switch">
+                  <input id="prefer-local-toggle" type="checkbox">
+                  <span aria-hidden="true"></span>
+                  <em class="sr-only">Prefer the on-device model</em>
+                </label>
+              </div>
+              <button class="info-link" type="button" aria-expanded="false" aria-controls="local-info">What you give up &#9432;</button>
+              <div class="info-bubble" id="local-info">
+                The on-device model is small &mdash; roughly a thousandth the size of the cloud ones. It can greet you, chat, and handle simple things. It cannot search the web, reason through anything long, or look at images.<br><br>
+                It costs nothing to run and works with the internet down.<br><br>
+                If it is not installed yet, messages still go to the cloud rather than failing.
+              </div>
+              <p class="form-status" id="prefer-local-status" role="status"></p>
+              <div class="option-grid" id="routing-options">
+                <button type="button" data-value="auto"><strong>Automatic</strong><small>Picks per message. Cheapest that can do the job.</small></button>
+                <button type="button" data-value="fixed"><strong>Always this one</strong><small>Same model every time.</small></button>
+              </div>
+
+              <button class="info-link" type="button" aria-expanded="false" aria-controls="routing-info">How automatic routing picks ⓘ</button>
+              <div class="info-bubble" id="routing-info">
+                <strong>Short and simple asks</strong> go to the cheapest text model, which is where most messages land.<br><br>
+                <strong>Anything with an image</strong> goes to a model that can actually see — the default is text-only, so without this it would just guess.<br><br>
+                <strong>Long or multi-step work</strong> steps up to a stronger model, because a cheap model looping on a hard task costs more than the good model doing it once.<br><br>
+                You are billed per message, so automatic usually costs less than pinning everything to one strong model.
+              </div>
+
+              <div id="fixed-model-wrap" hidden>
+              <div class="label-row">
+                <span class="label-text">Model</span>
+                <button class="info-btn" type="button" data-info="model-info" aria-expanded="false" aria-label="About models">i</button>
+              </div>
+              <div class="info-bubble" id="model-info">
+                The brain your agent thinks with. All four cost you differently per message — cheaper ones are quicker and fine for everyday chat, pricier ones reason better on hard problems.<br><br>
+                <strong>DeepSeek V4 Flash</strong> — the default, and by far the cheapest. Text only, so it can't look at photos you send.<br>
+                <strong>GPT-4o mini</strong> — cheap and quick, and can read images.<br>
+                <strong>Claude Haiku 4.5</strong> — a step up in quality, reads images.<br>
+                <strong>Claude Sonnet 4.5</strong> — the strongest here and the most expensive. Best for tricky, multi-step work.<br><br>
+                Switch whenever you like. If you send a photo to a model that can't see, sudo hands it to one that can.
+              </div>
+              <label class="sr-only" for="model">Model</label>
+              <select id="model">
+                <option value="sudo-default">DeepSeek V4 Flash · default</option>
+                <option value="sudo-fast">GPT-4o mini · fast</option>
+                <option value="sudo-budget">Claude Haiku 4.5 · balanced</option>
+                <option value="sudo-smart">Claude Sonnet 4.5 · smart</option>
+              </select>
+              </div>
+              <p class="form-status" id="routing-status" role="status"></p>
+
+              <div class="settings-subgroup">on-device greeter</div>
+              <div class="access-row">
+                <div>
+                  <strong id="local-model-state">Checking…</strong>
+                  <small id="local-model-note">A small model that runs on the device itself.</small>
+                </div>
+              </div>
+              <button class="info-link" type="button" aria-expanded="false" aria-controls="local-model-info">What this is ⓘ</button>
+              <div class="info-bubble" id="local-model-info">
+                <strong>Gemma 3 270M</strong>, about 200MB, running on the Pi rather than in the cloud. It greets you and keeps sudo talking when there is no API key or no internet.<br><br>
+                It is deliberately small: quick to answer, but it cannot browse, remember past chats, or answer factual questions. Those go to the cloud model.<br><br>
+                It downloads by itself a few minutes after the device first joins Wi-Fi. If it says <em>not installed</em> long after that, the device could not reach the download.
+              </div>
+            </div>
+          </section>
+          <section class="setting-card" id="connectors-setting">
+            <button class="setting-head" type="button">
+              <span class="setting-icon">⚯</span>
+              <span><strong>Connectors</strong><small id="connectors-summary">Not connected</small></span>
+              <span class="chevron">&rsaquo;</span>
+            </button>
+            <div class="setting-body">
+              <p class="section-intro">Connectors let sudo use your other apps — sending email, adding calendar events, filing issues — instead of only talking about them.</p>
+
+              <label for="composio-key">Composio API key</label>
+              <input id="composio-key" type="password" autocomplete="off" spellcheck="false" placeholder="paste your key">
+              <p class="microcopy">From <strong>composio.dev</strong> → Settings → API Keys. Stored on this device only.</p>
+              <button class="primary-button" id="save-composio" type="button">Save key</button>
+
+              <div class="access-row">
+                <div>
+                  <strong>Use connectors</strong>
+                  <small>Let sudo act in your connected apps. Leave off if the agent starts erroring.</small>
+                </div>
+                <label class="switch"><input type="checkbox" id="composio-toggle"><span></span></label>
+              </div>
+              <p class="form-status" id="composio-status" role="status"></p>
+
+              <button class="info-link" type="button" aria-expanded="false" aria-controls="composio-info">What is Composio ⓘ</button>
+              <div class="info-bubble" id="composio-info">
+                One account that holds your logins for a few hundred apps — Gmail, Calendar, Slack, Notion, GitHub. You sign in to each app once on their site, and sudo can then act in it.<br><br>
+                <strong>Why not just give sudo my passwords?</strong> It never sees them. Composio holds the connection and hands out access that you can revoke per app, whenever you like.
+              </div>
+
+              <div class="settings-subgroup">other ways to extend sudo</div>
+
+              <button class="info-link" type="button" aria-expanded="false" aria-controls="mcp-info">MCP servers ⓘ</button>
+              <div class="info-bubble" id="mcp-info">
+                <strong>MCP</strong> is an open standard for giving an agent new abilities. An MCP server is a small program exposing tools — read this database, search these docs, control this app — and sudo can call them.<br><br>
+                Composio is the no-setup option; MCP is what you reach for when you want something specific or self-hosted. It runs on your device, so nothing leaves your network.<br><br>
+                <em>Not wired up yet</em> — it needs the same care as running commands, since an MCP server is code you chose to trust.
+              </div>
+
+              <button class="info-link" type="button" aria-expanded="false" aria-controls="cli-info">CLI tools ⓘ</button>
+              <div class="info-bubble" id="cli-info">
+                Command-line programs already on the device — <code>git</code>, <code>curl</code>, <code>ffmpeg</code>, and anything else you install. The broadest option and the one with the fewest guardrails.<br><br>
+                Turned on under <strong>What sudo can do → Run commands on this device</strong>. Read the warning there first: a web page can contain text written to trick an agent into running something harmful.
+              </div>
+            </div>
+          </section>
+          <section class="setting-card" id="files-setting">
+            <button class="setting-head" type="button" aria-expanded="false">
+              <span class="setting-icon">◫</span>
+              <span><strong>What sudo knows</strong><small id="files-summary">Identity, notes and memory</small></span>
+              <span class="chevron">›</span>
+            </button>
+            <div class="setting-body">
+              <p class="section-intro">These plain-text files are your agent's personality and everything it has remembered about you. Nothing is hidden — read any of it.</p>
+              <div id="files-list"></div>
+              <p class="microcopy">Stored on this device at <code>/opt/sudo/agent-workspace</code>. To edit them, turn on terminal access below.</p>
+            </div>
+          </section>
+          <section class="setting-card" id="channels-setting">
+            <button class="setting-head" type="button" aria-expanded="false">
+              <span class="setting-icon">◌</span>
+              <span><strong>Channels</strong><small>WhatsApp · Telegram · WeChat</small></span>
+              <span class="chevron">›</span>
+            </button>
+            <div class="setting-body">
+              <p class="section-intro">Choose where you want to talk with sudo.</p>
+              <div class="channel-list">
+                <div class="channel-row">
+                  <span class="channel-logo whatsapp" aria-hidden="true">W</span>
+                  <span class="channel-copy"><strong>WhatsApp</strong><small id="whatsapp-summary">not connected</small></span>
+                  <button class="channel-connect" type="button" id="whatsapp-connect">Set up</button>
+                </div>
+                <div class="channel-row">
+                  <span class="channel-logo telegram" aria-hidden="true">T</span>
+                  <span class="channel-copy"><strong>Telegram</strong><small>Coming soon</small></span>
+                  <span class="channel-soon">Coming soon</span>
+                </div>
+                <div class="channel-row">
+                  <span class="channel-logo wechat" aria-hidden="true">微</span>
+                  <span class="channel-copy"><strong>WeChat</strong><small>Coming soon</small></span>
+                  <span class="channel-soon">Coming soon</span>
+                </div>
+              </div>
+
+              <div class="whatsapp-panel" id="whatsapp-panel" hidden>
+                <div class="whatsapp-panel-body" id="whatsapp-panel-body"></div>
+                <button class="whatsapp-panel-close" type="button" id="whatsapp-panel-close">Close</button>
+              </div>
+
+              <p class="form-status channel-status" id="channel-status" role="status"></p>
+            </div>
+          </section>
+          <section class="setting-card" id="theme-setting">
+            <button class="setting-head" type="button" aria-expanded="false">
+              <span class="setting-icon">◐</span>
+              <span><strong>Look</strong><small id="theme-summary">Default</small></span>
+              <span class="chevron">&rsaquo;</span>
+            </button>
+            <div class="setting-body">
+              <p class="section-intro">Colours only — nothing changes about how sudo behaves. Applies as soon as you pick.</p>
+              <div class="theme-grid" id="theme-options">
+                <button type="button" class="theme-opt" data-value="default">
+                  <span class="theme-swatch"><i style="background:#f9f9f9"></i><i style="background:#340075"></i><i style="background:#fe6944"></i></span>
+                  <strong>Default</strong><small>Light, purple and coral.</small>
+                </button>
+                <button type="button" class="theme-opt" data-value="minimal">
+                  <span class="theme-swatch"><i style="background:#fafafa"></i><i style="background:#27272a"></i><i style="background:#f2603c"></i></span>
+                  <strong>Minimal</strong><small>Near-monochrome. Quiet.</small>
+                </button>
+                <button type="button" class="theme-opt" data-value="terminal">
+                  <span class="theme-swatch"><i style="background:#0f0f11"></i><i style="background:#17171a"></i><i style="background:#fe6944"></i></span>
+                  <strong>Terminal</strong><small>Dark, coral accents.</small>
+                </button>
+                <button type="button" class="theme-opt" data-value="midnight">
+                  <span class="theme-swatch"><i style="background:#0d0b14"></i><i style="background:#161222"></i><i style="background:#b994ff"></i></span>
+                  <strong>Midnight</strong><small>Dark, violet accents.</small>
+                </button>
+              </div>
+              <p class="form-status" id="theme-status" role="status"></p>
+            </div>
+          </section>
+          <div class="settings-group">api management</div>
+          <section class="setting-card" id="providers-setting">
+            <button class="setting-head" type="button">
+              <span class="setting-icon">⚿</span>
+              <span><strong>API keys &amp; billing source</strong><small id="providers-summary">None saved</small></span>
+              <span class="chevron">&rsaquo;</span>
+            </button>
+            <div class="setting-body">
+
+              <div class="label-row">
+                <span class="label-text">Where your AI usage is billed</span>
+                <button class="info-btn" type="button" data-info="key-info" aria-expanded="false" aria-label="About API keys">i</button>
+              </div>
+              <div class="info-bubble" id="key-info">
+                Your agent thinks by calling AI models, and someone has to pay for each call.<br><br>
+                <strong>Sudo credits</strong> — we handle it. Top up in Billing, nothing to set up.<br><br>
+                <strong>Your own key</strong> — you sign up at <code>openrouter.ai</code>, paste your key here, and pay them directly. Sudo credits stop being used and your billing balance is untouched. You can switch back any time; we keep both keys.
+              </div>
+
+              <div class="choice-row" id="key-source-options">
+                <button type="button" data-value="sudo"><strong>Sudo credits</strong><small>We handle billing</small></button>
+                <button type="button" data-value="own"><strong>My own key</strong><small>You bill direct</small></button>
+              </div>
+
+              <div id="own-key-wrap" hidden>
+                <div class="label-row">
+                  <label for="own-key">OpenRouter API key</label>
+                </div>
+                <input id="own-key" type="password" placeholder="sk-or-v1-…" autocomplete="off" spellcheck="false">
+                <p class="key-state" id="key-state">no key saved</p>
+                <p class="microcopy">Saved on this device and sent only to the provider it belongs to. It never reaches us. Anyone who can get into the device can read it, so treat it like the password to your account there.</p>
+              </div>
+
+              <button class="primary-button" id="save-keys" type="button">Save</button>
+              <p class="form-status" id="keys-status" role="status"></p>
+
+              <div id="byo-keys-wrap" hidden>
+              <div class="settings-subgroup">bring your own keys</div>
+
+              <p class="section-intro">Paste a key and sudo works out who it belongs to. Everything stays on this device.</p>
+
+              <label for="auto-key">Paste any API key</label>
+              <input id="auto-key" type="password" autocomplete="off" spellcheck="false" placeholder="sk-… or AIza…">
+              <p class="microcopy" id="auto-key-hint">OpenRouter, OpenAI, Anthropic, Gemini, Venice or DeepSeek — no need to say which.</p>
+              <button class="primary-button" id="save-auto-key" type="button">Save key</button>
+              <p class="form-status" id="auto-key-status" role="status"></p>
+
+              <div class="settings-subgroup">or choose the provider yourself</div>
+              <div id="provider-list"></div>
+              <p class="form-status" id="providers-status" role="status"></p>
+
+              <button class="info-link" type="button" aria-expanded="false" aria-controls="providers-info">Which one should I add ⓘ</button>
+              <div class="info-bubble" id="providers-info">
+                <strong>You don't need any of these.</strong> Sudo credits cover everything out of the box.<br><br>
+                <strong>OpenRouter</strong> is the one to add if you only add one — a single key reaching most models from every provider.<br><br>
+                A direct key (OpenAI, Anthropic, Gemini) is usually cheaper per message for that provider's own models, and worth it if you already pay them.<br><br>
+                Keys never leave the device except to the provider they belong to. Delete one by clearing the box and saving.
+              </div>
+              </div>
+            </div>
+          </section>
+          <div class="settings-group">security</div>
+          <section class="setting-card" id="abilities-setting">
+            <button class="setting-head" type="button" aria-expanded="false">
+              <span class="setting-icon">⚡</span>
+              <span><strong>What sudo can do</strong><small id="abilities-summary">Web search on · commands off</small></span>
+              <span class="chevron">›</span>
+            </button>
+            <div class="setting-body">
+              <p class="section-intro">Abilities you can grant your agent. Everything here is your call — turn things on as you need them.</p>
+
+              <div class="access-row">
+                <div><strong>Search the web</strong><small>Look up current information to answer you.</small></div>
+                <span class="status-pill good">on</span>
+              </div>
+
+              <div class="access-row">
+                <div>
+                  <strong>Run commands on this device</strong>
+                  <small>On by default. The agent can use the terminal — install things, edit files, check the system. Switch off to keep it talking only.</small>
+                </div>
+                <label class="switch">
+                  <input id="exec-toggle" type="checkbox">
+                  <span aria-hidden="true"></span>
+                  <em class="sr-only">Toggle command access</em>
+                </label>
+              </div>
+              <button class="info-btn" type="button" data-info="exec-info" aria-expanded="false" aria-label="About command access">i</button>
+              <div class="info-bubble" id="exec-info">
+                <strong>Why it's on.</strong> Doing things is the point. With the terminal the agent can actually install, fix and check things on your Pi instead of describing what you could do yourself.<br><br>
+                <strong>What you're accepting.</strong> It has the same power on this device that you do when you log in. It also reads web pages, and a page can contain text written to trick it into running something — it can't always tell instructions from content. Blocked-command patterns catch obvious attempts, not clever ones.<br><br>
+                <strong>When to switch it off.</strong> If this Pi holds anything you'd mind losing, or if you've turned on <em>Access from anywhere</em> — that puts the dashboard on a public link with no password, and anyone who has it would be talking to something that can run commands.
+              </div>
+              <div class="access-row">
+                <div>
+                  <strong>Work with helpers</strong>
+                  <small>Split big jobs across copies of itself, then combine the results.</small>
+                </div>
+                <label class="switch">
+                  <input id="subagent-toggle" type="checkbox">
+                  <span aria-hidden="true"></span>
+                  <em class="sr-only">Toggle sub-agents</em>
+                </label>
+              </div>
+              <button class="info-btn" type="button" data-info="subagent-info" aria-expanded="false" aria-label="About helpers">i</button>
+              <div class="info-bubble" id="subagent-info">
+                For a job with several parts, {{AGENT}} can start temporary helpers, give each a piece, and gather the answers. Useful for research or anything with a lot of steps.<br><br>
+                <strong>It costs more.</strong> Every helper is its own conversation and is billed separately, so one request can cost several times a normal message. Limited to 2 helpers at a time.
+              </div>
+
+              <div class="access-row">
+                <div>
+                  <strong>Install skills</strong>
+                  <small>Download ready-made abilities from the ClawHub library.</small>
+                </div>
+                <label class="switch">
+                  <input id="skills-toggle" type="checkbox">
+                  <span aria-hidden="true"></span>
+                  <em class="sr-only">Toggle skills</em>
+                </label>
+              </div>
+              <button class="info-btn" type="button" data-info="skills-info" aria-expanded="false" aria-label="About skills">i</button>
+              <div class="info-bubble" id="skills-info">
+                Skills are small add-ons other people have written, fetched from clawhub.ai and run on your device.<br><br>
+                <strong>They are code from strangers.</strong> We don't review them. Leave this off unless you want a specific skill and trust where it came from.
+              </div>
+
+              <div class="access-row">
+                <div>
+                  <strong>Full device access</strong>
+                  <small>Off by default. Lets {{AGENT}} change this dashboard itself, add things to it, and reach anywhere on the device — not just its own workspace.</small>
+                </div>
+                <label class="switch">
+                  <input id="full-access-toggle" type="checkbox">
+                  <span aria-hidden="true"></span>
+                  <em class="sr-only">Toggle full device access</em>
+                </label>
+              </div>
+              <button class="info-btn" type="button" data-info="full-access-info" aria-expanded="false" aria-label="About full device access">i</button>
+              <div class="info-bubble" id="full-access-info">
+                <strong>Why it's off.</strong> Normally {{AGENT}} is boxed into its own workspace — its memory, its notes, nothing else. This takes the box away, the same as running it on a regular computer with no restriction at all.<br><br>
+                <strong>What you're accepting.</strong> It can rewrite this dashboard, install things, and change anything on the device — genuine ownership, but with no undo button if an edit goes wrong. It also means it could, if asked the right way by whoever it's talking to, read its own configuration file out loud — and that file holds your live API key. Treat it as equivalent to handing out that key.<br><br>
+                <strong>When to turn it on.</strong> When you want it building or changing things here yourself, and you've accepted that a bad edit is yours to fix — the same trust you'd put in a program you run directly on your own machine.
+              </div>
+              <p class="form-status" id="abilities-status" role="status"></p>
+            </div>
+          </section>
+          <div class="settings-group">device &amp; developer</div>
+          <section class="setting-card" id="access-setting">
+            <button class="setting-head" type="button" aria-expanded="false">
+              <span class="setting-icon">⌁</span>
+              <span><strong>Access &amp; network</strong><small id="access-summary">raspberrypi.local · no password</small></span>
+              <span class="chevron">›</span>
+            </button>
+            <div class="setting-body">
+              <label for="device-name">Device name</label>
+              <input id="device-name" autocomplete="off" spellcheck="false" placeholder="sudo" maxlength="63">
+              <p class="microcopy">This is the web address you use to reach sudo. Letters, numbers and hyphens.</p>
+              <button class="primary-button" id="save-hostname" type="button">Rename device</button>
+              <p class="form-status" id="hostname-status" role="status"></p>
+              <div class="info-bubble" id="hostname-done" style="border-left-color: var(--ok);"></div>
+
+              <div class="settings-subgroup">network</div>
+
+              <div class="access-row">
+                <div><strong>Home network</strong><small>Anyone on this Wi-Fi can open the dashboard.</small></div>
+                <span class="status-pill good">connected</span>
+              </div>
+              <div class="access-row">
+                <div><strong>Access from anywhere</strong><small>Creates a temporary public Cloudflare link.</small></div>
+                <label class="switch">
+                  <input id="remote-toggle" type="checkbox">
+                  <span aria-hidden="true"></span>
+                  <em class="sr-only">Toggle remote access</em>
+                </label>
+              </div>
+              <button class="info-btn" type="button" data-info="remote-info" aria-expanded="false" aria-label="About access from anywhere">i</button>
+              <div class="info-bubble" id="remote-info">
+                Normally your dashboard only works on your home Wi‑Fi. Turn this on and sudo creates a public web address that reaches your device from anywhere — useful on the go.<br><br>
+                <strong>Treat that link like a password.</strong> There's no login screen: anyone who has it can chat with your agent and change these settings. Don't post it or send it to anyone you wouldn't hand your unlocked phone to.<br><br>
+                The link changes when your device restarts. Turn this off when you don't need it.
+              </div>
+              <div class="remote-box" id="remote-box" hidden>
+                <a id="remote-url" href="#" target="_blank" rel="noopener"></a>
+                <button id="copy-remote" type="button">Copy</button>
+              </div>
+              <div class="settings-subgroup">password for the public link</div>
+
+              <div class="access-row">
+                <div>
+                  <strong>Ask for a password</strong>
+                  <small>Applies to the public link only. Your home network never asks.</small>
+                </div>
+                <label class="switch">
+                  <input id="remote-pw-toggle" type="checkbox">
+                  <span aria-hidden="true"></span>
+                  <em class="sr-only">Require a password on the public link</em>
+                </label>
+              </div>
+
+              <div class="addr-row">
+                <code id="remote-pw-value">—</code>
+                <button type="button" id="remote-pw-copy">Copy</button>
+              </div>
+              <p class="microcopy" id="remote-pw-note">Only shown on your home network.</p>
+
+              <label for="remote-pw-new">Change it</label>
+              <input id="remote-pw-new" type="password" autocomplete="new-password" spellcheck="false" placeholder="at least 10 characters">
+              <button class="primary-button" id="remote-pw-save" type="button">Save password</button>
+              <p class="form-status" id="remote-pw-status" role="status"></p>
+
+              <p class="warning-copy" id="remote-pw-warning" hidden><strong>Strongly recommended: leave this on.</strong> With it off, the public link is a web address that opens your dashboard for anyone who has it — no login, no limit on attempts, from anywhere in the world. They could read your chats, change your settings, and use your API credit. Links get shared, logged by services you paste them into, and forwarded by accident.</p>
+
+              <p class="microcopy">Local dashboard: <strong>http://raspberrypi.local</strong></p>
+
+              <label>Wi‑Fi region
+                <select id="wifi-country">
+                  <option value="US">United States</option>
+                  <option value="GB">United Kingdom</option>
+                  <option value="ID">Indonesia</option>
+                  <option value="SG">Singapore</option>
+                  <option value="MY">Malaysia</option>
+                  <option value="AU">Australia</option>
+                  <option value="JP">Japan</option>
+                  <option value="DE">Germany</option>
+                  <option value="NL">Netherlands</option>
+                  <option value="CN">China</option>
+                  <option value="IN">India</option>
+                  <option value="CA">Canada</option>
+                  <option value="FR">France</option>
+                  <option value="ES">Spain</option>
+                  <option value="IT">Italy</option>
+                  <option value="BR">Brazil</option>
+                  <option value="MX">Mexico</option>
+                  <option value="PH">Philippines</option>
+                  <option value="TH">Thailand</option>
+                  <option value="VN">Vietnam</option>
+                  <option value="KR">South Korea</option>
+                  <option value="TW">Taiwan</option>
+                  <option value="HK">Hong Kong</option>
+                  <option value="AE">United Arab Emirates</option>
+                  <option value="SA">Saudi Arabia</option>
+                  <option value="ZA">South Africa</option>
+                  <option value="NG">Nigeria</option>
+                  <option value="EG">Egypt</option>
+                  <option value="PK">Pakistan</option>
+                  <option value="BD">Bangladesh</option>
+                  <option value="NZ">New Zealand</option>
+                  <option value="SE">Sweden</option>
+                  <option value="NO">Norway</option>
+                  <option value="DK">Denmark</option>
+                  <option value="FI">Finland</option>
+                  <option value="PL">Poland</option>
+                  <option value="TR">Turkey</option>
+                  <option value="RU">Russia</option>
+                  <option value="AR">Argentina</option>
+                  <option value="CO">Colombia</option>
+                  <option value="CL">Chile</option>
+                  <option value="PE">Peru</option>
+                  <option value="IL">Israel</option>
+                  <option value="IE">Ireland</option>
+                  <option value="CH">Switzerland</option>
+                  <option value="AT">Austria</option>
+                  <option value="BE">Belgium</option>
+                  <option value="PT">Portugal</option>
+                  <option value="GR">Greece</option>
+                  <option value="KE">Kenya</option>
+                </select>
+              </label>
+              <p class="microcopy">Auto-detected at setup. Controls which Wi‑Fi channels the device is allowed to use — only change this if you've moved it to a different country.</p>
+            </div>
+          </section>
+          <section class="setting-card" id="ssh-setting">
+            <button class="setting-head" type="button" aria-expanded="false">
+              <span class="setting-icon">⌘</span>
+              <span><strong>Developer access</strong><small id="ssh-summary">Terminal off</small></span>
+              <span class="chevron">›</span>
+            </button>
+            <div class="setting-body">
+              <div class="access-row">
+                <div>
+                  <strong>Terminal access (SSH)</strong>
+                  <small>Log into this device from your computer and work on it directly.</small>
+                </div>
+                <label class="switch">
+                  <input id="ssh-toggle" type="checkbox">
+                  <span aria-hidden="true"></span>
+                  <em class="sr-only">Toggle terminal access</em>
+                </label>
+              </div>
+              <button class="info-btn" type="button" data-info="ssh-info" aria-expanded="false" aria-label="About terminal access">i</button>
+              <div class="info-bubble" id="ssh-info">
+                It's your device, so you can have full access to it. This opens a way to log in from a computer on your home Wi‑Fi and use it like any other machine — install things, read files, change how sudo works.<br><br>
+                <strong>You don't need this for normal use.</strong> Everything the device is meant to do, it does from this dashboard.<br><br>
+                <strong>Home Wi‑Fi only.</strong> This is never reachable from the internet, even with <em>Access from anywhere</em> switched on.<br><br>
+                Changes you make by hand are undone if the device is ever re‑flashed.
+              </div>
+
+              <div id="ssh-details" hidden>
+                <p class="key-state" id="ssh-command">ssh …</p>
+                <div id="ssh-password-wrap">
+                  <div class="label-row">
+                    <span class="label-text">Password</span>
+                    <button class="info-btn" type="button" data-info="ssh-pw-info" aria-expanded="false" aria-label="About this password">i</button>
+                  </div>
+                  <div class="info-bubble" id="ssh-pw-info">
+                    Generated just now for your device's user account. Copy it somewhere safe — you can always come back here to see it again while you're on your home Wi‑Fi.
+                  </div>
+                  <div class="remote-box">
+                    <a id="ssh-password" href="#" onclick="return false;"></a>
+                    <button id="copy-ssh" type="button">Copy</button>
+                  </div>
+                </div>
+                <p class="microcopy" id="ssh-remote-note" hidden>
+                  Open this page on your home Wi‑Fi to see the password — it isn't shown over the public link.
+                </p>
+              </div>
+
+              <div class="label-row">
+                <span class="label-text">Prefer to use your own SSH key?</span>
+                <button class="info-btn" type="button" data-info="ssh-key-info" aria-expanded="false" aria-label="About SSH keys">i</button>
+              </div>
+              <div class="info-bubble" id="ssh-key-info">
+                An SSH key is a pair of files on your computer — a private half that never leaves it, and a public half that's safe to share. You put the public half here, and your computer proves it holds the private half when it connects. No password to type or remember.<br><br>
+                <strong>If you don't have one</strong>, skip this — the password above works fine. To make one, run <code>ssh-keygen -t ed25519</code> on your computer, then paste the contents of <code>~/.ssh/id_ed25519.pub</code>.
+              </div>
+              <input id="ssh-key" type="text" placeholder="ssh-ed25519 AAAA…" autocomplete="off" spellcheck="false">
+              <button class="primary-button" id="save-ssh-key" type="button">Use this key instead</button>
+              <p class="form-status" id="ssh-status" role="status"></p>
+
+              <div id="devtools-wrap" hidden>
+                <div class="label-row">
+                  <span class="label-text">Claude Code</span>
+                  <button class="info-btn" type="button" data-info="devtools-info" aria-expanded="false" aria-label="About Claude Code">i</button>
+                </div>
+                <div class="info-bubble" id="devtools-info">
+                  Claude Code is an AI assistant that runs in a terminal and can read and change the files on this device — handy if you want to customise how sudo works.<br><br>
+                  We don't ship it preinstalled, so the device stays small and you always get the current version. Installing takes a few minutes and needs internet. You can watch the progress right here.
+                </div>
+                <button class="primary-button" id="install-devtools" type="button">Install Claude Code</button>
+                <p class="form-status" id="devtools-status" role="status"></p>
+                <div id="devtools-done" hidden>
+                  <p class="microcopy">Installed. Open a terminal on your computer and run these:</p>
+                  <p class="key-state" id="devtools-cmd-ssh">ssh …</p>
+                  <p class="key-state">claude</p>
+                </div>
+
+                <div class="label-row"><span class="label-text">Codex</span></div>
+                <p class="microcopy" style="margin-top:0">OpenAI's terminal assistant. Same idea, different provider — you can have both.</p>
+                <button class="primary-button" id="install-codex" type="button">Install Codex</button>
+                <p class="form-status" id="codex-status" role="status"></p>
+                <div id="codex-done" hidden>
+                  <p class="key-state">codex</p>
+                </div>
+              </div>
+            </div>
+          </section>
+          <div class="settings-group">billing &amp; credits</div>
+          <section class="setting-card" id="billing-setting">
+            <button class="setting-head" type="button" aria-expanded="false">
+              <span class="setting-icon">▭</span>
+              <span><strong>Billing &amp; credits</strong><small id="billing-summary">Loading your plan…</small></span>
+              <span class="chevron">›</span>
+            </button>
+            <div class="setting-body">
+              <p class="section-intro"><strong>Don't want to deal with API keys?</strong> Top up here and we handle the routing for you — no accounts to sign up for, no keys to paste, no per-provider billing to keep track of.</p>
+              <span class="status-pill" id="subscription-status">loading</span>
+              <p class="credit-balance" id="balance">$—</p>
+              <p class="balance-label">USD credits available</p>
+              <button class="primary-button" id="subscribe-button" type="button">Start Sudo Pro · $10/month</button>
+              <p class="microcopy">Includes a 7-day trial. Checkout opens securely in Stripe.</p>
+              <p class="form-status error-text" id="billing-error" role="alert"></p>
+            </div>
+          </section>
+
+
+          <div class="version-note">sudo · v0.4 · running on your Raspberry Pi</div>
+        </div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Primary navigation">
+      <button type="button" data-tab="chat" class="active">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg><span>chat</span>
+      </button>
+      <button type="button" data-tab="apps">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>apps</span>
+      </button>
+      <button type="button" data-tab="settings">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 6H10M6 6H3M21 12h-7M10 12H3M21 18h-3M14 18H3"/><circle cx="8" cy="6" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="16" cy="18" r="2"/></svg><span>settings</span>
+      </button>
+    </nav>
+  </div>
+
+  <script>
+    const state = { status: null, greeted: false, finishingWelcome: false, personality: 'friendly', publicUrl: '', tab: 'chat', keySource: 'sudo', welcomeStep: 0, theme: 'default', settingPage: null, routing: 'auto' };
+    const $ = id => document.getElementById(id);
+
+    // Every request is bounded. Without this a stalled connection leaves the
+    // await pending forever and the UI sits on "Setting up…" with no way out
+    // — which is exactly what a phone does when it changes network mid-request.
+    async function api(path, options = {}, timeoutMs = 30000, timeoutMessage) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        const response = await fetch(path, {
+          credentials: 'same-origin', signal: controller.signal, ...options,
+        });
+        const contentType = response.headers.get('content-type') || '';
+        const data = contentType.includes('json') ? await response.json() : {};
+        if (!response.ok) throw new Error(data.error || `Request failed (${response.status})`);
+        return data;
+      } catch (error) {
+        if (error.name === 'AbortError') {
+          // "check your Wi-Fi" is the right read for a settings save going
+          // nowhere, but wrong for a chat reply: the far more likely cause on
+          // this hardware is a model still loading, not a dropped connection.
+          // Callers waiting on the agent pass their own explanation in.
+          throw new Error(timeoutMessage
+            || 'That took too long. Check you are still on the same Wi-Fi, then try again.');
+        }
+        throw error;
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
+    function setTab(tab, silent) {
+      state.tab = tab;
+      // The nav is noise until they've actually set the thing up.
+      document.querySelector('.bottom-nav').hidden = tab === 'welcome';
+      document.querySelector('.side-rail').hidden = tab === 'welcome';
+      // Setup shows progress; the running app shows connection state.
+      $('step-chip').hidden = tab !== 'welcome';
+      $('device-state-wrap').hidden = tab === 'welcome';
+      if (tab !== 'settings' && state.settingPage) closeSettingPage();
+      document.querySelectorAll('.view').forEach(view => view.classList.toggle('active', view.id === `view-${tab}`));
+  
+    // Browser/phone back moves within the app rather than leaving it.
+    // Refresh when the tab is looked at again, rather than polling a device
+    // that is usually idle.
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') refreshStatus();
+    });
+    window.addEventListener('focus', refreshStatus);
+
+    // While a screen is sitting on the welcome flow it is the one place
+    // staleness actually costs something: setup finished elsewhere would
+    // otherwise leave this screen inviting a second, conflicting setup. Poll
+    // only in that state, and only while the screen is actually being looked
+    // at, so an idle device is not questioned every few seconds forever.
+    setInterval(() => {
+      if (state.tab === 'welcome' && document.visibilityState === 'visible') refreshStatus();
+    }, 15000);
+
+    window.addEventListener('popstate', event => {
+      const entry = event.state || {};
+      const tab = entry.tab || 'chat';
+      if (state.tab !== tab) setTab(tab, true);
+      if (entry.settingPage) openSettingPage(entry.settingPage, true);
+      else if (state.settingPage) closeSettingPage(true);
+    });
+    document.querySelectorAll('.bottom-nav button, .rail-nav button').forEach(button => {
+        const active = button.dataset.tab === tab;
+        button.classList.toggle('active', active);
+        button.setAttribute('aria-current', active ? 'page' : 'false');
+      });
+      // pushState, not replaceState: the latter never creates an entry, so
+      // the browser's back button walked straight out of the app to whatever
+      // page came before it. Replaying history passes silent=true so going
+      // back does not itself push another entry.
+      const path = tab === 'chat' ? '/chat.html' : tab === 'settings' ? '/onboarding.html' : '/';
+      const entry = { tab, settingPage: null };
+      if (silent) history.replaceState(entry, '', path);
+      else history.pushState(entry, '', path);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (tab === 'chat') scrollChat('auto');
+    }
+
+    function scrollChat(behavior = 'smooth') {
+      requestAnimationFrame(() => {
+        const thread = $('messages');
+        thread.scrollTo({ top: thread.scrollHeight, behavior });
+      });
+    }
+
+
+    // The last few turns, so the on-device model can follow a thread. Without
+    // them it answered "but why" as though it were the opening line.
+    function recentTurns(limit) {
+      return [...document.querySelectorAll('#messages .message')]
+        .slice(-limit)
+        .map(el => ({
+          role: el.classList.contains('user') ? 'user' : 'agent',
+          text: (el.querySelector('div')?.textContent || el.textContent || '').trim(),
+        }))
+        .filter(turn => turn.text);
+    }
+
+    function addMessage(role, text) {
+      const item = document.createElement('div');
+      item.className = `message ${role}`;
+      const avatar = document.createElement('span');
+      avatar.className = 'message-avatar';
+      avatar.textContent = role === 'agent' ? (state.status?.agent_name || 's').slice(0, 1).toLowerCase() : 'you';
+      const bubble = document.createElement('div');
+      bubble.textContent = text;
+      item.append(avatar, bubble);
+      $('messages').appendChild(item);
+      scrollChat(role === 'agent' ? 'smooth' : 'auto');
+      return item;
+    }
+
+    async function sendMessage(event) {
+      event.preventDefault();
+      const input = $('chat-input');
+      const message = input.value.trim();
+      if (!message || $('send-button').disabled) return;
+      input.value = '';
+      input.style.height = '';
+      $('send-button').disabled = true;
+      const thinkingLabel = $('thinking').querySelector('em');
+      thinkingLabel.textContent = 'thinking';
+      $('thinking').hidden = false;
+      // A wait long enough to need the raised timeout above is long enough to
+      // look frozen on a plain, unchanging "thinking" dot -- say what is
+      // actually likely rather than leaving the same three words on screen
+      // for up to two minutes.
+      const thinkingTimers = [
+        setTimeout(() => { thinkingLabel.textContent = 'still thinking'; }, 8000),
+        setTimeout(() => {
+          thinkingLabel.textContent = 'this can take a minute — probably starting up for the first time';
+        }, 25000),
+      ];
+      // Captured before the new message is drawn, or it would be sent twice —
+      // once as history and once as the message.
+      const history = recentTurns(8);
+      addMessage('user', message);
+      scrollChat('smooth');
+      try {
+        // 30s (the api() default) is well under what the server itself will
+        // wait for: up to 90s for the on-device model, 120s for the cloud
+        // agent, either of which is ordinary on a Pi 5 the first time a model
+        // has to load into memory. The client was giving up first and blaming
+        // Wi-Fi for what was actually the agent still starting up.
+        const data = await api('/api/agent/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message, history }),
+        }, 130000, 'That is taking longer than expected — the agent may '
+          + 'be starting up for the first time. It is still working; try again shortly.');
+        addMessage('agent', data.reply || '(no response)');
+      } catch (error) {
+        addMessage('system', error.message);
+      } finally {
+        thinkingTimers.forEach(clearTimeout);
+        $('thinking').hidden = true;
+        $('send-button').disabled = false;
+        input.focus();
+      }
+    }
+
+    function platformHowTo() {
+      const ua = navigator.userAgent;
+      const isIOS = /iPad|iPhone|iPod/.test(ua)
+        || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      const isAndroid = /Android/.test(ua);
+      const coarse = window.matchMedia('(pointer: coarse)').matches;
+
+      if (isIOS) return {
+        title: 'On your iPhone or iPad',
+        steps: ['Tap the Share button at the bottom of Safari',
+                'Scroll down and tap \u201cAdd to Home Screen\u201d',
+                'Tap Add \u2014 I\u2019ll appear with your other apps'],
+        note: 'Safari only. Chrome on iOS can\u2019t add to the home screen.',
+      };
+      if (isAndroid) return {
+        title: 'On your Android phone',
+        steps: ['Open the browser menu (the three dots)',
+                'Tap \u201cAdd to Home screen\u201d or \u201cInstall app\u201d',
+                'Confirm \u2014 I\u2019ll appear with your other apps'],
+        note: '',
+      };
+      if (coarse) return {
+        title: 'On your tablet',
+        steps: ['Open your browser menu',
+                'Choose \u201cAdd to Home screen\u201d or \u201cInstall\u201d',
+                'Confirm to pin me'],
+        note: '',
+      };
+      return {
+        title: 'On this computer',
+        steps: ['In Chrome, click the install icon at the right of the address bar',
+                'No icon? Open the \u22ee menu and choose \u201cInstall page as app\u201d',
+                'Then right-click the new window and pin it to your taskbar or dock'],
+        note: 'Safari: File \u2192 Add to Dock. Firefox has no install option \u2014 bookmark this page instead.',
+      };
+    }
+
+    const WELCOME_STEPS = 3;
+
+    function renderWelcomeStep(step) {
+      state.welcomeStep = step;
+      for (let i = 0; i < WELCOME_STEPS; i += 1) {
+        $('welcome-step' + i).hidden = step !== i;
+        $('wdot' + i).className = step === i ? 'on' : '';
+      }
+      $('step-now').textContent = String(step + 1);
+      if (step === 2) setTimeout(() => $('welcome-user').focus(), 60);
+    }
+
+    function initWelcome() {
+      const how = platformHowTo();
+      $('how-title').textContent = how.title;
+      $('how-steps').replaceChildren(...how.steps.map(text => {
+        const li = document.createElement('li');
+        li.textContent = text;
+        return li;
+      }));
+      $('how-note').textContent = how.note;
+      $('how-note').hidden = !how.note;
+      renderWelcomeStep(0);
+    }
+
+    function leaveHomeScreenStep() {
+      // Onboarding covered this, so the standalone banner shouldn't repeat it.
+      try { localStorage.setItem('sudo-install-hint', 'dismissed'); } catch (_) {}
+      renderWelcomeStep(1);
+    }
+
+    async function finishWelcome() {
+      const button = $('welcome-finish');
+      const status = $('welcome-status');
+      const userName = $('welcome-user').value.trim();
+      const agentName = $('welcome-agent').value.trim() || 'sudo';
+      button.disabled = true;
+      // Held until this whole exchange is done, including the greeting. A
+      // background status poll landing in the middle of it used to see
+      // profile_done flip to true before state.status here caught up, run
+      // its own copy of the same "just finished" transition, and get its
+      // greeting wiped and duplicated a moment later when this function's
+      // own version came in -- the model's raw reply flashing on screen
+      // before the written line replaced it.
+      state.finishingWelcome = true;
+      status.textContent = 'Setting up\u2026';
+      try {
+        // Everything not asked here keeps its default; all of it stays editable.
+        const data = await api('/api/agent/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_name: userName || 'friend',
+            agent_name: agentName,
+            personality: 'friendly',
+            model: 'sudo-default',
+            remote_access: false,
+            theme: state.theme,
+          }),
+        });
+        state.status = data;
+        status.textContent = '';
+        button.disabled = false;
+        $('messages').replaceChildren();
+        // Before renderStatus, which greets too: whichever runs first owns the
+        // line, and only this one knows setup just finished.
+        state.greeted = false;
+        ensureGreeting(true);
+        renderStatus(data);
+        setTab('chat');
+        try { localStorage.setItem('sudo-offer-more', 'pending'); } catch (_) {}
+        maybeOfferMore();
+      } catch (error) {
+        status.textContent = error.message;
+        button.disabled = false;
+      } finally {
+        state.finishingWelcome = false;
+      }
+    }
+
+
+    // Asked to "greet" someone, a 270M model will sometimes describe greeting
+    // them instead of doing it -- "sent a quick hello your way." Anything not
+    // addressed to the person reads worse than the written line it would
+    // replace, so that line stays.
+    function looksLikeGreeting(text) {
+      const line = (text || '').trim();
+      if (!line || line.length > 240) return false;
+      const words = line.toLowerCase().replace(/[^a-z ]+/g, ' ').split(' ').filter(Boolean);
+      // Opening by reporting the action means it is describing the greeting,
+      // not making one.
+      const narrating = ['sent', 'sending', 'greeted', 'greeting', 'said', 'replied', 'here'];
+      if (narrating.includes(words[0])) return false;
+      const spoken = ['you', 'your', 'hi', 'hey', 'hello', 'welcome', 'morning', 'afternoon', 'evening'];
+      return words.some(word => spoken.includes(word));
+    }
+
+    // The agent speaks first, and exactly once. A written line lands instantly
+    // and always works; on a fresh setup the on-device model may then rewrite
+    // that one line in its own voice. Nobody waits on a model to be said hello
+    // to, and nothing else in the thread is touched.
+    //
+    // Single owner on purpose: renderStatus used to add an opening line of its
+    // own, so finishing setup produced two -- it clears the thread, calls
+    // renderStatus (empty thread, so: greeting) and then greets again.
+    async function ensureGreeting(firstRun = false) {
+      if (state.greeted || $('messages').children.length) return;
+      state.greeted = true;
+
+      const agent = state.status?.agent_name || 'sudo';
+      const name = state.status?.user_name || 'there';
+      let written;
+      if (!state.status?.profile_done) {
+        written = 'hey — let’s make this box yours. start in settings, then come back and tell me what you need.';
+      } else if (firstRun) {
+        written = `Hi ${name}, I'm ${agent} — good to meet you. Tell me a bit about what you do and I'll figure out where I can help.`;
+      } else {
+        written = `hey ${name} — ${agent} here. what are you working on?`;
+      }
+      const node = addMessage('agent', written);
+
+      if (!firstRun || !state.status?.profile_done) return;
+      const local = state.status?.local_model;
+      if (!local || local.state !== 'done') return;
+      try {
+        // Non-blocking either way -- the written line is already on screen --
+        // so there is no cost to waiting out a cold model load here rather
+        // than giving up at 20s and quietly keeping the written line anyway.
+        const data = await api('/api/agent/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: `Say hello to ${name} and invite them to tell you what they are working on. `
+                     + 'Reply with only the greeting, one short sentence, spoken to them directly.',
+          }),
+        }, 90000);
+        const reply = (data.reply || '').trim();
+        // isConnected: a reply arriving after the thread was cleared -- a reset,
+        // a re-run of setup -- must not put a stray line back into it.
+        if (reply && looksLikeGreeting(reply) && node.isConnected) {
+          node.querySelector('div').textContent = reply;
+          scrollChat();
+        }
+      } catch (_) {
+        // Keep the written greeting. A greeting is not worth an error message.
+      }
+    }
+
+    function maybeOfferMore() {
+      let flag = null;
+      try { flag = localStorage.getItem('sudo-offer-more'); } catch (_) {}
+      if (flag !== 'pending') return;
+      $('setup-more').hidden = false;
+    }
+
+    function dismissOfferMore() {
+      $('setup-more').hidden = true;
+      try { localStorage.setItem('sudo-offer-more', 'done'); } catch (_) {}
+    }
+
+    function selectKeySource(value) {
+      state.keySource = value;
+      document.querySelectorAll('#key-source-options button').forEach(button => {
+        const selected = button.dataset.value === value;
+        button.classList.toggle('selected', selected);
+        button.setAttribute('aria-pressed', String(selected));
+      });
+      // Nothing to paste a key into while Sudo is doing the billing. The whole
+      // bring-your-own surface belongs to the right-hand choice, not just the
+      // OpenRouter box.
+      const own = value === 'own';
+      $('own-key-wrap').hidden = !own;
+      $('byo-keys-wrap').hidden = !own;
+    }
+
+    async function saveKeys() {
+      const button = $('save-keys');
+      const status = $('keys-status');
+      const entered = $('own-key').value.trim();
+      if (state.keySource === 'own' && !entered && !state.status?.has_own_key) {
+        status.textContent = 'Paste your OpenRouter key first, or pick Sudo credits.';
+        return;
+      }
+      button.disabled = true;
+      status.textContent = 'Saving…';
+      try {
+        const body = { openrouter_key_source: state.keySource };
+        if (entered) body.user_openrouter_key = entered;
+        const data = await api('/api/agent/keys', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        $('own-key').value = '';
+        renderStatus(data);
+        status.textContent = 'Saved. Your agent is restarting with the new key.';
+        setTimeout(() => { status.textContent = ''; }, 4000);
+      } catch (error) {
+        status.textContent = error.message;
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    function renderSsh(data) {
+      const on = !!data.enabled;
+      $('ssh-toggle').checked = on;
+      $('ssh-details').hidden = !on;
+      $('ssh-summary').textContent = on
+        ? (data.auth === 'key' ? 'Terminal on · using your key' : 'Terminal on · password')
+        : 'Terminal off';
+      if (!on) return;
+
+      const host = data.host && !data.host.startsWith('127.') ? data.host : 'raspberrypi.local';
+      state.sshHost = host;
+      state.sshUser = data.user;
+      $('ssh-command').textContent = `ssh ${data.user || 'pi'}@${host}`;
+      // Claude Code is only reachable once there's a way to log in.
+      $('devtools-wrap').hidden = false;
+      Object.keys(DEVTOOL_UI).forEach(t =>
+        api(`/api/agent/devtools?tool=${t}`)
+          .then(d => { if (renderDevtools(d)) pollDevtools(t); })
+          .catch(() => {}));
+
+      const usingKey = data.auth === 'key';
+      $('ssh-password-wrap').hidden = usingKey;
+      $('ssh-remote-note').hidden = usingKey || !data.password_hidden_remotely;
+      if (!usingKey && data.password) {
+        state.sshPassword = data.password;
+        $('ssh-password').textContent = data.password;
+      } else if (!usingKey && !data.password) {
+        $('ssh-password').textContent = data.password_hidden_remotely ? '••••••••' : '';
+      }
+    }
+
+    async function toggleSsh() {
+      const wanted = $('ssh-toggle').checked;
+      const status = $('ssh-status');
+      status.textContent = wanted ? 'Turning on…' : 'Turning off…';
+      try {
+        const data = await api('/api/agent/ssh', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ enabled: wanted }),
+        });
+        renderSsh(data);
+        status.textContent = wanted ? 'Terminal access is on.' : 'Terminal access is off.';
+        setTimeout(() => { status.textContent = ''; }, 4000);
+      } catch (error) {
+        $('ssh-toggle').checked = !wanted;
+        status.textContent = error.message;
+      }
+    }
+
+    async function saveSshKey() {
+      const key = $('ssh-key').value.trim();
+      const status = $('ssh-status');
+      if (!key) { status.textContent = 'Paste your public key first.'; return; }
+      status.textContent = 'Saving…';
+      try {
+        const data = await api('/api/agent/ssh', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ enabled: true, public_key: key }),
+        });
+        $('ssh-key').value = '';
+        renderSsh(data);
+        status.textContent = 'Key saved. Password login is now off.';
+        setTimeout(() => { status.textContent = ''; }, 5000);
+      } catch (error) {
+        status.textContent = error.message;
+      }
+    }
+
+    const DEVTOOL_UI = {
+      claude: { btn: 'install-devtools', status: 'devtools-status', done: 'devtools-done' },
+      codex:  { btn: 'install-codex',    status: 'codex-status',    done: 'codex-done' },
+    };
+
+    function renderDevtools(data) {
+      const ui = DEVTOOL_UI[data.tool || 'claude'];
+      const btn = $(ui.btn);
+      const status = $(ui.status);
+      const installing = data.state === 'installing';
+      const done = data.state === 'done' || data.installed;
+
+      btn.disabled = installing;
+      btn.textContent = installing ? 'Installing…'
+        : done ? 'Reinstall / repair'
+        : `Install ${data.label || 'Claude Code'}`;
+      status.textContent = data.message || '';
+      $(ui.done).hidden = !done;
+      if (done && data.tool !== 'codex') {
+        const host = state.sshHost || 'raspberrypi.local';
+        $('devtools-cmd-ssh').textContent = `ssh ${data.user || state.sshUser || 'pi'}@${host}`;
+      }
+      return installing;
+    }
+
+    async function pollDevtools(tool) {
+      // Node takes minutes; keep asking until it settles either way.
+      for (let i = 0; i < 120; i++) {
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        try {
+          const data = await api(`/api/agent/devtools?tool=${tool}`);
+          if (!renderDevtools(data)) return;
+        } catch (_) { /* keep trying — a restart mid-install is survivable */ }
+      }
+    }
+
+    async function installDevtools(tool) {
+      const ui = DEVTOOL_UI[tool];
+      $(ui.status).textContent = 'Starting…';
+      try {
+        const data = await api(`/api/agent/devtools?tool=${tool}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: '{}',
+        });
+        if (renderDevtools(data)) pollDevtools(tool);
+      } catch (error) {
+        $(ui.status).textContent = error.message;
+        $(ui.btn).disabled = false;
+      }
+    }
+
+    async function loadAgentFiles() {
+      const wrap = $('files-list');
+      try {
+        const data = await api('/api/agent/files');
+        if (!data.files || !data.files.length) {
+          wrap.innerHTML = '<p class="microcopy">Nothing yet — these appear once your agent is set up.</p>';
+          return;
+        }
+        wrap.replaceChildren(...data.files.map(f => {
+          const box = document.createElement('div');
+          box.className = 'agent-file';
+          const head = document.createElement('button');
+          head.type = 'button';
+          const size = f.bytes < 1024 ? `${f.bytes} B` : `${(f.bytes / 1024).toFixed(1)} kB`;
+          head.innerHTML = '<span class="fname"></span><span class="fsize"></span><span class="chevron">&rsaquo;</span>';
+          head.querySelector('.fname').textContent = f.name;
+          head.querySelector('.fsize').textContent = size;
+          const body = document.createElement('pre');
+          body.textContent = f.content;   // textContent, never innerHTML
+          head.addEventListener('click', () => box.classList.toggle('open'));
+          box.append(head, body);
+          return box;
+        }));
+        $('files-summary').textContent = `${data.files.length} files · identity and memory`;
+      } catch (error) {
+        wrap.replaceChildren();
+        const msg = document.createElement('p');
+        msg.className = 'microcopy';
+        msg.textContent = error.message;
+        wrap.append(msg);
+      }
+    }
+
+    function initInstallHint() {
+      const standalone = window.matchMedia('(display-mode: standalone)').matches
+        || window.navigator.standalone === true;
+      let dismissed = false;
+      try { dismissed = localStorage.getItem('sudo-install-hint') === 'dismissed'; } catch (_) {}
+      if (standalone || dismissed) return;
+      const ua = navigator.userAgent;
+      const isIOS = /iPad|iPhone|iPod/.test(ua)
+        || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      $('install-hint-how').textContent = isIOS
+        ? 'Tap the Share button, then "Add to Home Screen".'
+        : 'Open your browser menu, then "Add to Home screen".';
+      $('install-hint').hidden = false;
+      $('install-hint-dismiss').addEventListener('click', () => {
+        $('install-hint').hidden = true;
+        try { localStorage.setItem('sudo-install-hint', 'dismissed'); } catch (_) {}
+      });
+    }
+
+    async function saveAbilities(changed) {
+      const status = $('abilities-status');
+      status.textContent = 'Saving…';
+      try {
+        const data = await api('/api/agent/abilities', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            exec_enabled: $('exec-toggle').checked,
+            subagent_enabled: $('subagent-toggle').checked,
+            skills_enabled: $('skills-toggle').checked,
+            full_access_enabled: $('full-access-toggle').checked,
+          }),
+        });
+        renderStatus(data);
+        status.textContent = 'Saved.';
+        setTimeout(() => { status.textContent = ''; }, 3000);
+      } catch (error) {
+        // put the switch the user just flipped back where it was
+        if (changed) $(changed).checked = !$(changed).checked;
+        status.textContent = error.message;
+      }
+    }
+
+
+    const THEME_LABELS = { default: 'Default', minimal: 'Minimal',
+                           terminal: 'Terminal', midnight: 'Midnight' };
+
+    function applyTheme(name) {
+      const t = THEME_LABELS[name] ? name : 'default';
+      // 'default' is the bare :root block, so carry no attribute for it.
+      if (t === 'default') document.documentElement.removeAttribute('data-theme');
+      else document.documentElement.setAttribute('data-theme', t);
+      state.theme = t;
+      // Both grids — the setup step and the Settings card — stay in step.
+      document.querySelectorAll('.theme-opt').forEach(b => {
+        const on = b.dataset.value === t;
+        b.classList.toggle('selected', on);
+        b.setAttribute('aria-pressed', String(on));
+      });
+      $('theme-summary').textContent = THEME_LABELS[t];
+      // Keep the browser chrome in step with the page.
+      const meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) meta.content = getComputedStyle(document.documentElement)
+        .getPropertyValue('--background').trim() || '#f9f9f9';
+    }
+
+    async function chooseTheme(name) {
+      const previous = state.theme;
+      applyTheme(name);                     // instant, so it feels direct
+      const status = $('theme-status');
+      status.textContent = 'Saving\u2026';
+      try {
+        const data = await api('/api/agent/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_name: $('user-name').value.trim() || 'friend',
+            agent_name: $('agent-name').value.trim() || 'sudo',
+            personality: state.personality,
+            model: $('model').value,
+            remote_access: $('remote-toggle').checked,
+            theme: name,
+          }),
+        });
+        state.status = data;
+        status.textContent = 'Saved.';
+        setTimeout(() => { status.textContent = ''; }, 2000);
+      } catch (error) {
+        applyTheme(previous);               // put it back if it did not stick
+        status.textContent = error.message;
+      }
+    }
+
+
+    // Settings are pages, not accordions: tapping a row replaces the list with
+    // that one section. Back returns to the list.
+    function openSettingPage(id, silent) {
+      const card = $(id);
+      if (!card) return;
+      state.settingPage = id;
+      document.querySelector('.settings-list').classList.add('detail-open');
+      document.querySelectorAll('.setting-card').forEach(c => c.classList.toggle('active-page', c === card));
+      $('detail-title').textContent = card.querySelector('.setting-head strong').textContent;
+      if (!silent) history.pushState({ tab: 'settings', settingPage: id }, '', '/onboarding.html');
+      $('detail-bar').hidden = false;
+      document.querySelector('#view-settings .view-heading').hidden = true;
+      window.scrollTo({ top: 0 });
+    }
+
+    function closeSettingPage(silent) {
+      stopWhatsappPoll();
+      state.settingPage = null;
+      document.querySelector('.settings-list').classList.remove('detail-open');
+      document.querySelectorAll('.setting-card').forEach(c => c.classList.remove('active-page'));
+      $('detail-bar').hidden = true;
+      document.querySelector('#view-settings .view-heading').hidden = false;
+      if (!silent) history.pushState({ tab: 'settings', settingPage: null }, '', '/onboarding.html');
+      window.scrollTo({ top: 0 });
+    }
+
+    // --- WhatsApp -----------------------------------------------------
+    //
+    // One real channel, built against the bridge in whatsapp-bridge/: a QR
+    // code from the same pairing flow as WhatsApp Web, read from a status
+    // file the bridge writes and the dashboard only ever reads. Telegram and
+    // WeChat are not wired to anything -- their rows say so instead of
+    // pretending a "Set up" button does something.
+    let whatsappPollTimer = null;
+
+    function stopWhatsappPoll() {
+      clearTimeout(whatsappPollTimer);
+      whatsappPollTimer = null;
+    }
+
+    function renderWhatsappSummary(status) {
+      $('whatsapp-summary').textContent = status.whatsapp_connected ? 'connected' : 'not connected';
+    }
+
+    function renderWhatsappPanel(info) {
+      const panel = $('whatsapp-panel');
+      const body = $('whatsapp-panel-body');
+      panel.hidden = false;
+      const phase = (info && info.state) || 'absent';
+
+      if (phase === 'qr' && info.qr) {
+        body.innerHTML = '';
+        // A coarse pointer here means whatever screen is showing this code
+        // is itself a touchscreen -- almost always the same phone that would
+        // need to scan it, which is awkward at best. Same check as the
+        // add-to-home-screen hint already uses.
+        const onTouchScreen = window.matchMedia('(pointer: coarse)').matches;
+        const tip = document.createElement('p');
+        tip.className = onTouchScreen ? 'whatsapp-tip whatsapp-tip-warn' : 'whatsapp-tip';
+        tip.textContent = onTouchScreen
+          ? "You're doing this from a phone — easier from a computer, where you can point this phone's camera at the screen instead."
+          : 'Tip: open this page on a computer, then scan with your phone.';
+        const p = document.createElement('p');
+        p.innerHTML = 'On your phone: <strong>WhatsApp → Settings → Linked Devices '
+          + '→ Link a Device</strong>, then scan this.';
+        const img = document.createElement('img');
+        img.className = 'whatsapp-qr';
+        img.alt = 'WhatsApp pairing code';
+        img.src = info.qr;
+        body.append(tip, p, img);
+        whatsappPollTimer = setTimeout(pollWhatsapp, 2500);
+      } else if (phase === 'connected') {
+        body.innerHTML = '';
+        const row = document.createElement('div');
+        row.className = 'whatsapp-connected';
+        row.innerHTML = '<i></i><span>Connected'
+          + (info.number ? ` as +${info.number}` : '') + '</span>';
+        const unlink = document.createElement('button');
+        unlink.type = 'button';
+        unlink.className = 'whatsapp-unlink';
+        unlink.textContent = 'Unlink';
+        unlink.addEventListener('click', unlinkWhatsapp);
+        body.append(row, unlink);
+        $('whatsapp-summary').textContent = 'connected';
+        stopWhatsappPoll();
+      } else if (phase === 'error') {
+        body.innerHTML = `<p class="whatsapp-error">${info.message
+          || 'Something went wrong setting this up. Try again from Settings.'}</p>`;
+        stopWhatsappPoll();
+      } else if (phase === 'absent') {
+        // Reached only if this got unlinked from elsewhere -- another tab,
+        // another visit -- while this panel was still open and polling.
+        // Nothing here is going to start on its own; the row's own Set up
+        // click is what does that.
+        $('whatsapp-summary').textContent = 'not connected';
+        panel.hidden = true;
+        stopWhatsappPoll();
+      } else {
+        // installing, or reconnecting after a dropped connection -- both are
+        // "still working on it," and both resolve into one of the states
+        // above without anyone needing to do anything.
+        body.innerHTML = `<p>${info.message || 'Starting…'}</p>`;
+        whatsappPollTimer = setTimeout(pollWhatsapp, 2500);
+      }
+    }
+
+    async function pollWhatsapp() {
+      try {
+        const info = await api('/api/agent/channels/whatsapp', {}, 10000);
+        renderWhatsappPanel(info);
+      } catch (_) {
+        // Offline for a moment, most likely -- try again rather than leaving
+        // the panel to go stale.
+        whatsappPollTimer = setTimeout(pollWhatsapp, 4000);
+      }
+    }
+
+    async function connectWhatsapp() {
+      stopWhatsappPoll();
+      $('whatsapp-panel').hidden = false;
+      $('whatsapp-panel-body').innerHTML = '<p>Starting…</p>';
+      try {
+        const info = await api('/api/agent/channels/whatsapp', { method: 'POST' }, 20000);
+        renderWhatsappPanel(info);
+      } catch (error) {
+        $('whatsapp-panel-body').innerHTML = `<p class="whatsapp-error">${error.message}</p>`;
+      }
+    }
+
+    async function unlinkWhatsapp() {
+      stopWhatsappPoll();
+      $('whatsapp-panel-body').innerHTML = '<p>Unlinking…</p>';
+      try {
+        await api('/api/agent/channels/whatsapp/unlink', { method: 'POST' }, 15000);
+        // Back to the collapsed row rather than reusing renderWhatsappPanel:
+        // its "absent" case is for a fresh device that has never been set up,
+        // where "Starting…" and another poll make sense because a click just
+        // triggered an install. Here nothing is starting -- unlinking is the
+        // whole action, and there is nothing left to wait on.
+        $('whatsapp-summary').textContent = 'not connected';
+        $('whatsapp-panel').hidden = true;
+      } catch (error) {
+        $('whatsapp-panel-body').innerHTML = `<p class="whatsapp-error">${error.message}</p>`;
+      }
+    }
+
+    // --- model routing --------------------------------------------------
+
+    // Without this the greeter is invisible: installed, still downloading and
+    // failed all look identical from the chat window.
+    function renderLocalModel(info) {
+      const state = (info && info.state) || 'absent';
+      const label = { done: 'Ready', installing: 'Downloading…', failed: 'Could not install',
+                      absent: 'Not installed yet' }[state] || state;
+      $('local-model-state').textContent = label;
+      const detail = (info && info.message) || '';
+      $('local-model-note').textContent = detail ||
+        (state === 'done' ? 'Answers even with no key and no internet.'
+                          : 'Downloads on its own once the device is online.');
+    }
+
+    // The chat title said "is ready." unconditionally, and the only place
+    // that ever said otherwise was a card buried in Settings nobody sees on
+    // their way to actually typing a message. answering_with.where is the
+    // same signal the server itself uses to decide whether a reply is even
+    // possible -- "none" means there is neither a key nor a working local
+    // model yet, which on a first boot usually just means "still installing."
+    function renderReadiness(status) {
+      const where = status.answering_with && status.answering_with.where;
+      const ready = where && where !== 'none';
+      const banner = $('model-loading');
+      const text = $('model-loading-text');
+      const suffix = $('chat-title-suffix');
+
+      if (ready) {
+        banner.hidden = true;
+        if (suffix) suffix.textContent = ' is ready.';
+        return;
+      }
+
+      const localState = (status.local_model && status.local_model.state) || 'absent';
+      if (localState === 'failed') {
+        // Not transient: waiting will not fix this one, so it says so and
+        // points at the actual way out rather than sharing the "getting
+        // ready" wording that promises this resolves on its own.
+        text.textContent = "Having trouble installing my on-device brain. Add an API "
+          + 'key in Settings so I can chat while that gets sorted out.';
+        if (suffix) suffix.textContent = ' needs an API key to chat right now.';
+      } else {
+        text.textContent = 'Still setting up my on-device brain — first replies can '
+          + "take a few minutes. I'll be ready shortly, no need to do anything.";
+        if (suffix) suffix.textContent = ' is getting ready…';
+      }
+      banner.hidden = false;
+    }
+
+    function setRouting(mode, save) {
+      const auto = mode !== 'fixed';
+      state.routing = auto ? 'auto' : 'fixed';
+      document.querySelectorAll('#routing-options button').forEach(b => {
+        const on = (b.dataset.value === 'auto') === auto;
+        b.classList.toggle('selected', on);
+        b.setAttribute('aria-pressed', String(on));
+      });
+      $('fixed-model-wrap').hidden = auto;
+      $('routing-summary').textContent = auto
+        ? 'Automatic'
+        : ($('model').selectedOptions[0]?.textContent.split('·')[0].trim() || 'Fixed');
+      if (save) saveProfile();
+    }
+
+    // --- provider keys ---------------------------------------------------
+    const PROVIDERS = [
+      { id: 'openrouter', name: 'OpenRouter', hint: 'openrouter.ai — one key, most models' },
+      { id: 'openai', name: 'OpenAI', hint: 'platform.openai.com — GPT models' },
+      { id: 'anthropic', name: 'Anthropic', hint: 'console.anthropic.com — Claude models' },
+      { id: 'gemini', name: 'Google Gemini', hint: 'aistudio.google.com — Gemini models' },
+      { id: 'venice', name: 'Venice AI', hint: 'venice.ai — private, uncensored models' },
+      { id: 'deepseek', name: 'DeepSeek', hint: 'platform.deepseek.com — direct, cheapest' },
+    ];
+
+    function renderProviders(hints) {
+      const wrap = $('provider-list');
+      wrap.replaceChildren();
+      PROVIDERS.forEach(provider => {
+        const saved = hints && hints[provider.id];
+        const row = document.createElement('div');
+        row.className = 'provider-row';
+        row.innerHTML =
+          '<label for="key-' + provider.id + '">' + provider.name +
+          (saved ? ' <em class="saved-tag">saved ····' + saved + '</em>' : '') + '</label>' +
+          '<input id="key-' + provider.id + '" type="password" autocomplete="off" spellcheck="false" placeholder="' +
+          (saved ? 'saved — paste a new key to replace' : 'paste your key') + '">' +
+          '<small>' + provider.hint +
+          (saved ? ' · <button type="button" class="link-danger" data-remove="' + provider.id
+                   + '">Remove this key</button>' : '') + '</small>';
+        wrap.appendChild(row);
+        // An empty box means "untouched", so it can never delete a stored key.
+        // That is what keeps a blank field from wiping one by accident, and it
+        // is also why removing needs to be its own deliberate action.
+        const remove = row.querySelector('[data-remove]');
+        if (remove) remove.addEventListener('click', () => removeProviderKey(provider));
+      });
+      const save = document.createElement('button');
+      save.className = 'primary-button';
+      save.textContent = 'Save keys';
+      save.addEventListener('click', saveProviderKeys);
+      wrap.appendChild(save);
+
+      // One card now covers both halves, so the summary has to say which one
+      // is actually in force rather than only counting keys.
+      const count = PROVIDERS.filter(x => hints && hints[x.id]).length;
+      $('providers-summary').textContent = count
+        ? count + (count === 1 ? ' key saved' : ' keys saved')
+        : 'Using sudo credits';
+    }
+
+
+    // One box, provider worked out from the key's prefix. The per-provider
+    // rows stay below for anything unrecognised.
+
+    // Renaming the device changes the address people reach it at, so the new
+    // one is shown plainly and the old one is called out as dead. Nothing
+    // about this is guessable from a success tick.
+
+    async function togglePreferLocal() {
+      const status = $('prefer-local-status');
+      const wanted = $('prefer-local-toggle').checked;
+      status.textContent = 'Saving…';
+      try {
+        const data = await api('/api/agent/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_name: $('user-name').value.trim() || 'friend',
+            agent_name: $('agent-name').value.trim() || 'sudo',
+            personality: state.personality,
+            model: $('model').value,
+            remote_access: $('remote-toggle').checked,
+            routing_mode: state.routing,
+            theme: state.theme,
+            prefer_local: wanted,
+          }),
+        });
+        state.status = data;
+        if (data.answering_with) $('answering-with').textContent = data.answering_with.label;
+        status.textContent = wanted ? 'Staying on this device.' : 'Using the cloud when a key is saved.';
+        setTimeout(() => { status.textContent = ''; }, 2500);
+      } catch (error) {
+        $('prefer-local-toggle').checked = !wanted;
+        status.textContent = error.message;
+      }
+    }
+
+
+    // --- password on the public link -----------------------------------
+    function renderRemotePassword(status) {
+      const on = status.remote_password_enabled !== false;
+      $('remote-pw-toggle').checked = on;
+      $('remote-pw-warning').hidden = on;
+    }
+
+    async function loadRemotePassword() {
+      try {
+        const data = await api('/api/auth/remote-password');
+        $('remote-pw-toggle').checked = !!data.enabled;
+        $('remote-pw-warning').hidden = !!data.enabled;
+        if (data.password) {
+          $('remote-pw-value').textContent = data.password;
+          $('remote-pw-note').textContent = 'Only shown on your home network.';
+        } else if (data.hidden_remotely) {
+          $('remote-pw-value').textContent = '••••••••';
+          $('remote-pw-note').textContent =
+            'Hidden here because you are on the public link. Open the dashboard at home to see it.';
+        } else {
+          $('remote-pw-value').textContent = data.has_password ? '••••••••' : 'not set yet';
+          $('remote-pw-note').textContent = data.has_password
+            ? 'Set at first boot. Change it below if you like.'
+            : 'Set one below before switching the password on.';
+        }
+      } catch (_) {
+        // Nothing to show; the fields stay as they are.
+      }
+    }
+
+    async function saveRemotePassword() {
+      const field = $('remote-pw-new');
+      const status = $('remote-pw-status');
+      const value = field.value.trim();
+      if (value.length < 10) {
+        status.textContent = 'Use at least 10 characters.';
+        return;
+      }
+      status.textContent = 'Saving…';
+      try {
+        await api('/api/auth/remote-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ new_password: value }),
+        });
+        field.value = '';
+        status.textContent = 'Password changed.';
+        loadRemotePassword();
+        setTimeout(() => { status.textContent = ''; }, 2500);
+      } catch (error) {
+        status.textContent = error.message;
+      }
+    }
+
+    async function toggleRemotePassword() {
+      const wanted = $('remote-pw-toggle').checked;
+      const status = $('remote-pw-status');
+      status.textContent = 'Saving…';
+      try {
+        const data = await api('/api/auth/remote-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ enabled: wanted }),
+        });
+        state.status = data;
+        $('remote-pw-warning').hidden = wanted;
+        status.textContent = wanted
+          ? 'The public link will ask for the password.'
+          : 'The public link is now open to anyone who has it.';
+        setTimeout(() => { status.textContent = ''; }, 3500);
+      } catch (error) {
+        $('remote-pw-toggle').checked = !wanted;
+        $('remote-pw-warning').hidden = !wanted;
+        status.textContent = error.message;
+      }
+    }
+
+    async function saveHostname() {
+      const field = $('device-name');
+      const status = $('hostname-status');
+      const done = $('hostname-done');
+      const wanted = field.value.trim().toLowerCase();
+      if (!wanted) { status.textContent = 'Give the device a name first.'; return; }
+      // Same rule the device enforces, checked here so a bad name is refused
+      // instantly instead of after a round trip.
+      if (!/^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/.test(wanted)) {
+        status.textContent = 'Letters, numbers and hyphens only — no spaces or dots, '
+          + 'and it cannot start or end with a hyphen.';
+        return;
+      }
+      status.textContent = 'Renaming…';
+      done.classList.remove('show');
+      try {
+        const data = await api('/api/device/hostname', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ hostname: wanted }),
+        }, 60000);
+        field.value = data.hostname;
+        status.textContent = '';
+        if (data.changed) {
+          done.innerHTML = 'Renamed. From now on open <strong>' + data.url + '</strong><br><br>'
+            + '<em>' + data.previous_url + '</em> will stop working. If this page goes blank, '
+            + 'that is why — open the new address.';
+          done.classList.add('show');
+          if (state.status) state.status.hostname = data.hostname;
+          $('access-summary').textContent = data.hostname + '.local · no password';
+        } else {
+          status.textContent = 'That is already its name.';
+          setTimeout(() => { status.textContent = ''; }, 2500);
+        }
+      } catch (error) {
+        status.textContent = error.message;
+      }
+    }
+
+    async function saveAutoKey() {
+      const field = $('auto-key');
+      const status = $('auto-key-status');
+      const value = field.value.trim();
+      if (!value) { status.textContent = 'Paste a key first.'; return; }
+      status.textContent = 'Checking…';
+      try {
+        const data = await api('/api/agent/provider-keys', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ auto_key: value }),
+        });
+        field.value = '';
+        const names = { openrouter: 'OpenRouter', openai: 'OpenAI', anthropic: 'Anthropic',
+                        gemini: 'Google Gemini', venice: 'Venice AI', deepseek: 'DeepSeek' };
+        status.textContent = `Saved as ${names[data.detected] || data.detected}.`;
+        state.status = data;
+        renderProviders(data.provider_key_hints);
+        setTimeout(() => { status.textContent = ''; }, 3000);
+      } catch (error) {
+        status.textContent = error.message;
+      }
+    }
+
+    async function toggleComposio() {
+      const status = $('composio-status');
+      status.textContent = 'Saving…';
+      try {
+        const data = await api('/api/agent/provider-keys', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ composio_enabled: $('composio-toggle').checked }),
+        });
+        state.status = data;
+        status.textContent = data.composio_enabled ? 'Connectors on.' : 'Connectors off.';
+        setTimeout(() => { status.textContent = ''; }, 2500);
+      } catch (error) {
+        status.textContent = error.message;
+        $('composio-toggle').checked = !$('composio-toggle').checked;
+      }
+    }
+
+
+    async function removeProviderKey(provider) {
+      const status = $('providers-status');
+      status.textContent = 'Removing ' + provider.name + '…';
+      try {
+        const data = await api('/api/agent/provider-keys', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ keys: { [provider.id]: '' } }),
+        });
+        state.status = data;
+        renderProviders(data.provider_key_hints);
+        if (data.answering_with) $('answering-with').textContent = data.answering_with.label;
+        status.textContent = provider.name + ' key removed.';
+        setTimeout(() => { status.textContent = ''; }, 2500);
+      } catch (error) {
+        status.textContent = error.message;
+      }
+    }
+
+    async function saveProviderKeys() {
+      const status = $('providers-status');
+      status.textContent = 'Saving\u2026';
+      // Only send boxes the user actually typed in — an untouched box must not
+      // wipe a key that is already stored.
+      const keys = {};
+      PROVIDERS.forEach(provider => {
+        const field = $('key-' + provider.id);
+        if (field && field.value !== '') keys[provider.id] = field.value.trim();
+      });
+      try {
+        const data = await api('/api/agent/provider-keys', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ keys }),
+        });
+        PROVIDERS.forEach(provider => { const f = $('key-' + provider.id); if (f) f.value = ''; });
+        renderProviders(data.provider_key_hints);
+        status.textContent = 'Saved.';
+        setTimeout(() => { status.textContent = ''; }, 2000);
+      } catch (error) {
+        status.textContent = error.message;
+      }
+    }
+
+    async function saveComposio() {
+      const status = $('composio-status');
+      status.textContent = 'Saving\u2026';
+      try {
+        const data = await api('/api/agent/provider-keys', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ composio_api_key: $('composio-key').value.trim() }),
+        });
+        $('composio-key').value = '';
+        $('connectors-summary').textContent = data.has_composio ? 'Composio connected' : 'Not connected';
+        status.textContent = 'Saved.';
+        setTimeout(() => { status.textContent = ''; }, 2000);
+      } catch (error) {
+        status.textContent = error.message;
+      }
+    }
+
+    function selectPersonality(value) {
+      state.personality = value;
+      document.querySelectorAll('#personality-options button').forEach(button => {
+        const selected = button.dataset.value === value;
+        button.classList.toggle('selected', selected);
+        button.setAttribute('aria-pressed', String(selected));
+      });
+    }
+
+    async function saveProfile() {
+      const button = $('save-profile');
+      const status = $('profile-status');
+      button.disabled = true;
+      status.textContent = 'Saving…';
+      try {
+        const data = await api('/api/agent/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_name: $('user-name').value.trim() || 'friend',
+            agent_name: $('agent-name').value.trim() || 'sudo',
+            personality: state.personality,
+            model: $('model').value,
+            remote_access: $('remote-toggle').checked,
+            routing_mode: state.routing,
+            country: $('wifi-country').value,
+          }),
+        });
+        state.status = data;
+        renderStatus(data);
+        status.textContent = 'Saved.';
+        button.textContent = 'Saved ✓';
+        setTimeout(() => { button.textContent = 'Save settings'; status.textContent = ''; }, 1800);
+      } catch (error) {
+        status.textContent = error.message;
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    function planLabel(value) {
+      if (value === 'trialing') return 'trial active';
+      if (value === 'active') return 'Sudo Pro';
+      if (value === 'past_due') return 'payment due';
+      return 'not subscribed';
+    }
+
+    function renderBilling(data) {
+      const subscription = data.subscription_status || 'inactive';
+      $('subscription-status').textContent = planLabel(subscription);
+      $('subscription-status').className = `status-pill ${['active', 'trialing'].includes(subscription) ? 'good' : ''}`;
+      $('balance').textContent = `$${Number(data.balance_usd || 0).toFixed(2)}`;
+      $('billing-summary').textContent = `${planLabel(subscription)} · $${Number(data.balance_usd || 0).toFixed(2)} available`;
+      $('subscribe-button').hidden = ['active', 'trialing'].includes(subscription);
+    }
+
+    async function loadBilling() {
+      try {
+        renderBilling(await api('/api/billing/balance'));
+      } catch (error) {
+        $('billing-summary').textContent = 'Could not load plan';
+        $('billing-error').textContent = error.message;
+      }
+    }
+
+    async function confirmPayment(sessionId) {
+      if (!sessionId) return;
+      $('billing-summary').textContent = 'Confirming payment…';
+      for (let i = 0; i < 8; i++) {
+        try {
+          const data = await api('/api/billing/confirm', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ session_id: sessionId }),
+          });
+          if (data.ok) {
+            renderBilling(data);
+            history.replaceState({}, '', '/billing.html');
+            return;
+          }
+        } catch (_) {}
+        await new Promise(resolve => setTimeout(resolve, 1500));
+      }
+      loadBilling();
+    }
+
+    async function subscribe() {
+      const button = $('subscribe-button');
+      button.disabled = true;
+      try {
+        const data = await api('/api/billing/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            return_url: `${location.origin}/billing.html?paid=1`,
+            cancel_url: `${location.origin}/billing.html`,
+          }),
+        });
+        location.href = data.checkout_url;
+      } catch (error) {
+        $('billing-error').textContent = error.message;
+        button.disabled = false;
+      }
+    }
+
+    function showRemote(url) {
+      state.publicUrl = url || '';
+      $('remote-box').hidden = !url;
+      $('public-link-strip').hidden = !url;
+      if (url) {
+        $('remote-url').href = url;
+        $('remote-url').textContent = url;
+      }
+    }
+
+    async function toggleRemote() {
+      const toggle = $('remote-toggle');
+      toggle.disabled = true;
+      try {
+        await api('/api/remote-access', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ enabled: toggle.checked }),
+        });
+        $('access-summary').textContent = toggle.checked ? 'Starting public link…' : 'raspberrypi.local · no password';
+        if (!toggle.checked) showRemote('');
+        else pollRemote();
+      } catch (error) {
+        toggle.checked = !toggle.checked;
+        $('access-summary').textContent = error.message;
+      } finally {
+        toggle.disabled = false;
+      }
+    }
+
+    async function pollRemote() {
+      for (let i = 0; i < 30 && $('remote-toggle').checked; i++) {
+        try {
+          const data = await api('/api/remote-access');
+          if (data.public_url) {
+            showRemote(data.public_url);
+            $('access-summary').textContent = 'Public link ready';
+            return;
+          }
+        } catch (_) {}
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
+    }
+
+    // Desktop side rail: who this is and whether it is awake.
+    function renderDeviceRail(status) {
+      const agent = status.agent_name || 'sudo';
+      $('rail-name').textContent = agent;
+      $('rail-avatar').textContent = agent.trim().charAt(0) || 's';
+      $('rail-sub').textContent = status.agent_online === false ? 'Offline' : 'Session active';
+    }
+
+    // {{AGENT}} in an info bubble's markup -- used in a few of the "what sudo
+    // can do" explanations so they read in the agent's own name rather than
+    // a generic "it". Nothing ever substituted it before this: those bubbles
+    // showed the literal text "{{AGENT}}" to every owner, on every device.
+    // Safe to call on every renderStatus -- once replaced, nothing is left
+    // to find on the next pass.
+    function applyAgentName(status) {
+      const name = status.agent_name || 'sudo';
+      document.querySelectorAll('.info-bubble').forEach(bubble => {
+        if (bubble.innerHTML.includes('{{AGENT}}')) {
+          bubble.innerHTML = bubble.innerHTML.replaceAll('{{AGENT}}', name);
+        }
+      });
+      document.querySelectorAll('.access-row small').forEach(small => {
+        if (small.innerHTML.includes('{{AGENT}}')) {
+          small.innerHTML = small.innerHTML.replaceAll('{{AGENT}}', name);
+        }
+      });
+    }
+
+    function renderStatus(status) {
+      state.status = status;
+      applyAgentName(status);
+      $('agent-title').textContent = status.agent_name || 'sudo';
+      $('user-name').value = status.user_name || '';
+      $('agent-name').value = status.agent_name || 'sudo';
+      $('model').value = status.model || 'sudo-default';
+      $('remote-toggle').checked = status.remote_access !== false;
+      $('wifi-country').value = status.country || 'US';
+      applyTheme(status.theme || 'default');
+      renderDeviceRail(status);
+      renderProviders(status.provider_key_hints);
+      if (status.hostname) $('device-name').value = status.hostname;
+      $('composio-toggle').checked = !!status.composio_enabled;
+      $('connectors-summary').textContent = status.has_composio
+        ? (status.composio_enabled ? 'Connectors on' : 'Key saved, connectors off')
+        : 'Not connected';
+      setRouting(status.routing_mode || 'auto', false);
+      if (status.answering_with) $('answering-with').textContent = status.answering_with.label;
+      $('prefer-local-toggle').checked = !!status.prefer_local;
+      renderRemotePassword(status);
+      renderLocalModel(status.local_model);
+      renderReadiness(status);
+      renderWhatsappSummary(status);
+      $('exec-toggle').checked = !!status.exec_enabled;
+      $('subagent-toggle').checked = !!status.subagent_enabled;
+      $('skills-toggle').checked = !!status.skills_enabled;
+      $('full-access-toggle').checked = !!status.full_access_enabled;
+      $('abilities-summary').textContent = [
+        'Web search on',
+        `commands ${status.exec_enabled ? 'on' : 'off'}`,
+        status.subagent_enabled ? 'helpers on' : null,
+        status.skills_enabled ? 'skills on' : null,
+        status.full_access_enabled ? 'full access on' : null,
+      ].filter(Boolean).join(' · ');
+      selectKeySource(status.openrouter_key_source || 'sudo');
+      $('key-state').textContent = status.own_key_hint
+        ? `saved key ends in ${status.own_key_hint}`
+        : 'no key saved';
+      $('profile-summary').textContent = `${status.personality || 'friendly'} · ${status.model || 'sudo-default'}`;
+      selectPersonality(status.personality || 'friendly');
+      showRemote(status.public_url);
+      if (status.remote_starting && !status.public_url) pollRemote();
+      ensureGreeting();
+      // Not while already in the flow: a refresh mid-setup would throw the
+      // person back to the first question.
+      if (!status.profile_done && state.tab !== 'welcome') {
+        // First run: two questions, not the whole settings surface.
+        initWelcome();
+        setTab('welcome');
+      }
+    }
+
+    // One device, many screens. Setup finished on a phone has to count for the
+    // laptop too, and a tab left open otherwise sits on whatever it saw when it
+    // loaded — which is how the same box ends up with two different names.
+
+    // Shown when the public link asks for a password and this browser has no
+    // session yet. Local requests never reach here.
+    function showLogin() {
+      document.querySelector('.bottom-nav').hidden = true;
+      document.querySelector('.side-rail').hidden = true;
+      $('step-chip').hidden = true;
+      $('device-state-wrap').hidden = true;
+      document.querySelectorAll('.view').forEach(v =>
+        v.classList.toggle('active', v.id === 'view-login'));
+      setTimeout(() => $('login-password').focus(), 60);
+    }
+
+    async function submitLogin() {
+      const status = $('login-status');
+      const password = $('login-password').value;
+      if (!password) { status.textContent = 'Enter the password.'; return; }
+      $('login-go').disabled = true;
+      status.textContent = 'Checking…';
+      try {
+        await api('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password }),
+        });
+        // The cookie is set; start again with a session in hand.
+        location.reload();
+      } catch (error) {
+        $('login-go').disabled = false;
+        $('login-password').value = '';
+        status.textContent = error.message;
+      }
+    }
+
+    async function refreshStatus() {
+      // finishWelcome owns this exact transition already, including which
+      // greeting wins; a poll landing mid-flight has nothing to add and used
+      // to just race it.
+      if (state.finishingWelcome) return;
+      try {
+        const status = await api('/api/setup/status', {}, 15000);
+        const wasDone = state.status && state.status.profile_done;
+        state.status = status;
+        renderStatus(status);
+        if (status.profile_done && !wasDone && state.tab === 'welcome') {
+          $('messages').replaceChildren();
+          state.greeted = false;
+          setTab('chat');
+          ensureGreeting(true);
+        }
+      } catch (_) {
+        // Offline or asleep. The next time the tab is looked at, try again.
+      }
+    }
+
+    async function copyText(text, button) {
+      if (!text) return;
+      try { await navigator.clipboard.writeText(text); }
+      catch (_) { prompt('Copy this link:', text); }
+      const old = button.textContent;
+      button.textContent = 'copied ✓';
+      setTimeout(() => { button.textContent = old; }, 1500);
+    }
+
+    async function init() {
+      const path = location.pathname;
+      if (path.includes('onboarding')) setTab('settings');
+      else if (path === '/' || path.includes('dashboard')) setTab('apps');
+      else setTab('chat');
+
+      let status;
+      try {
+        status = await api('/api/setup/status');
+      } catch (error) {
+        // 401 means the public link wants a password before anything else.
+        const auth = await api('/api/auth/status').catch(() => null);
+        if (auth && auth.auth_required && !auth.authenticated) {
+          showLogin();
+          return;
+        }
+        throw error;
+      }
+      renderStatus(status);
+      loadBilling();
+      api('/api/agent/ssh').then(renderSsh).catch(() => {});
+      loadAgentFiles();
+      loadRemotePassword();
+      initInstallHint();
+      if (status.profile_done) maybeOfferMore();
+
+      const params = new URLSearchParams(location.search);
+      if (params.get('paid') === '1' || params.get('session_id')) {
+        setTab('settings');
+        $('billing-setting').classList.add('open');
+        $('billing-setting').querySelector('.setting-head').setAttribute('aria-expanded', 'true');
+        if (params.get('session_id')) confirmPayment(params.get('session_id'));
+        else setTimeout(loadBilling, 1500);
+      }
+    }
+
+    document.querySelectorAll('.bottom-nav button, .rail-nav button').forEach(button => button.addEventListener('click', () => setTab(button.dataset.tab)));
+    document.querySelectorAll('.setting-head').forEach(button => button.addEventListener('click', () => {
+      openSettingPage(button.closest('.setting-card').id);
+    }));
+    $('detail-back').addEventListener('click', () => history.back());
+    document.querySelectorAll('#personality-options button').forEach(button => button.addEventListener('click', () => selectPersonality(button.dataset.value)));
+    $('chat-form').addEventListener('submit', sendMessage);
+    $('chat-input').addEventListener('input', event => {
+      event.target.style.height = 'auto';
+      event.target.style.height = `${Math.min(event.target.scrollHeight, 128)}px`;
+    });
+    $('chat-input').addEventListener('keydown', event => {
+      if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); $('chat-form').requestSubmit(); }
+    });
+    $('new-chat').addEventListener('click', () => {
+      $('messages').replaceChildren();
+      addMessage('agent', 'fresh start. what are we working on?');
+    });
+    // Inline explanations: tap to open, tap again (or open another) to close.
+    document.querySelectorAll('.info-btn, .info-link').forEach(button => {
+      button.addEventListener('click', event => {
+        event.stopPropagation();
+        // The icon buttons name their bubble with data-info, the labelled ones
+        // with aria-controls. Only the first was read, so every labelled button
+        // threw on click and none of their bubbles ever opened.
+        const bubble = $(button.dataset.info || button.getAttribute('aria-controls'));
+        if (!bubble) return;
+        const opening = !bubble.classList.contains('show');
+        document.querySelectorAll('.info-bubble.show').forEach(b => b.classList.remove('show'));
+        document.querySelectorAll('.info-btn, .info-link').forEach(b => b.setAttribute('aria-expanded', 'false'));
+        bubble.classList.toggle('show', opening);
+        button.setAttribute('aria-expanded', String(opening));
+      });
+    });
+    document.querySelectorAll('#key-source-options button').forEach(button =>
+      button.addEventListener('click', () => selectKeySource(button.dataset.value)));
+    $('save-keys').addEventListener('click', saveKeys);
+    $('exec-toggle').addEventListener('change', () => saveAbilities('exec-toggle'));
+    $('subagent-toggle').addEventListener('change', () => saveAbilities('subagent-toggle'));
+    $('skills-toggle').addEventListener('change', () => saveAbilities('skills-toggle'));
+    $('full-access-toggle').addEventListener('change', () => saveAbilities('full-access-toggle'));
+    $('ssh-toggle').addEventListener('change', toggleSsh);
+    $('save-ssh-key').addEventListener('click', saveSshKey);
+    $('install-devtools').addEventListener('click', () => installDevtools('claude'));
+    $('install-codex').addEventListener('click', () => installDevtools('codex'));
+    $('copy-ssh').addEventListener('click', event => copyText(state.sshPassword, event.currentTarget));
+    $('welcome-next').addEventListener('click', leaveHomeScreenStep);
+    $('welcome-skip').addEventListener('click', leaveHomeScreenStep);
+    $('welcome-back').addEventListener('click', () => renderWelcomeStep(0));
+    $('welcome-look-next').addEventListener('click', () => renderWelcomeStep(2));
+    $('welcome-back-2').addEventListener('click', () => renderWelcomeStep(1));
+    $('welcome-finish').addEventListener('click', finishWelcome);
+    // During setup the profile has not been saved yet, so a tap only previews
+    // the theme — finishWelcome() is what writes it.
+    document.querySelectorAll('#welcome-theme-options .theme-opt').forEach(b =>
+      b.addEventListener('click', () => applyTheme(b.dataset.value)));
+    $('welcome-agent').addEventListener('keydown', event => {
+      if (event.key === 'Enter') finishWelcome();
+    });
+    $('setup-more-go').addEventListener('click', () => { dismissOfferMore(); setTab('settings'); });
+    $('setup-more-dismiss').addEventListener('click', dismissOfferMore);
+    document.querySelectorAll('#theme-options button').forEach(b =>
+      b.addEventListener('click', () => chooseTheme(b.dataset.value)));
+    document.querySelectorAll('#routing-options button').forEach(b =>
+      b.addEventListener('click', () => setRouting(b.dataset.value, true)));
+    $('model').addEventListener('change', () => setRouting(state.routing, true));
+    $('save-composio').addEventListener('click', saveComposio);
+    $('save-auto-key').addEventListener('click', saveAutoKey);
+    $('save-hostname').addEventListener('click', saveHostname);
+    $('login-go').addEventListener('click', submitLogin);
+    $('login-password').addEventListener('keydown', event => {
+      if (event.key === 'Enter') submitLogin();
+    });
+    $('remote-pw-save').addEventListener('click', saveRemotePassword);
+    $('remote-pw-toggle').addEventListener('change', toggleRemotePassword);
+    $('remote-pw-copy').addEventListener('click', event =>
+      copyText($('remote-pw-value').textContent.trim(), event.currentTarget));
+    $('prefer-local-toggle').addEventListener('change', togglePreferLocal);
+    $('composio-toggle').addEventListener('change', toggleComposio);
+    $('save-profile').addEventListener('click', saveProfile);
+    $('subscribe-button').addEventListener('click', subscribe);
+    $('remote-toggle').addEventListener('change', toggleRemote);
+    $('copy-remote').addEventListener('click', event => copyText(state.publicUrl, event.currentTarget));
+    $('copy-public-link').addEventListener('click', event => copyText(state.publicUrl, event.currentTarget));
+    $('whatsapp-connect').addEventListener('click', connectWhatsapp);
+    $('whatsapp-panel-close').addEventListener('click', () => {
+      $('whatsapp-panel').hidden = true;
+      stopWhatsappPoll();
+    });
+    if ('ResizeObserver' in window) {
+      new ResizeObserver(() => {
+        if (state.tab === 'chat') scrollChat('auto');
+      }).observe($('chat-form'));
+    }
+    // .chat-view.active's height was fixed against 100dvh, which on a lot of
+    // mobile browsers does not shrink for the on-screen keyboard -- only the
+    // visual viewport does. The box stayed full height, so its bottom edge
+    // (the composer) sat exactly where the keyboard now covers it.
+    // --vvh tracks the real, keyboard-aware height instead; CSS falls back
+    // to 100dvh wherever this hasn't run yet.
+    function syncViewportHeight() {
+      if (!window.visualViewport) return;
+      const h = window.visualViewport.height;
+      // Caught in testing: this can read back 0 (or otherwise implausibly
+      // small) for a moment before the viewport has actually settled --
+      // trusting that number verbatim collapsed the whole chat view to
+      // nothing, which is a far worse bug than the one being fixed. Anything
+      // under a real phone's shortest sane in-use height is treated as "not
+      // ready yet" and left on the 100dvh fallback instead.
+      if (!h || h < 200) return;
+      document.documentElement.style.setProperty('--vvh', `${h}px`);
+    }
+    if (window.visualViewport) {
+      syncViewportHeight();
+      window.visualViewport.addEventListener('resize', () => {
+        syncViewportHeight();
+        scrollChat('auto');
+      });
+      // Some browsers move the visual viewport (rather than resizing it) when
+      // the keyboard opens -- older iOS Safari especially. Same fix applies.
+      window.visualViewport.addEventListener('scroll', syncViewportHeight);
+    }
+
+    init().catch(error => {
+      $('device-state').textContent = 'connection issue';
+      addMessage('system', error.message);
+    });
+  </script>
+</body>
+</html>

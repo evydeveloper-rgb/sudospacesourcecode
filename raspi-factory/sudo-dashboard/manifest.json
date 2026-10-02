@@ -1,0 +1,17 @@
+{
+  "name": "sudo",
+  "short_name": "sudo",
+  "description": "Your teammate, running on your own Raspberry Pi.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ebe3ce",
+  "theme_color": "#ebe3ce",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='96' fill='%23161311'/%3E%3Ctext x='50%25' y='58%25' font-family='ui-monospace,monospace' font-size='190' font-weight='700' fill='%23f4eedf' text-anchor='middle'%3Esudo%3C/text%3E%3Crect x='372' y='196' width='58' height='120' fill='%23f2603c'/%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

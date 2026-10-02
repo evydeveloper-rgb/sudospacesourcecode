@@ -1,0 +1,6 @@
+# DEPRECATED — not used.
+#
+# Factory remote access is Cloudflare Quick Tunnel (trycloudflare.com).
+# No API token, no TUNNEL_BASE_DOMAIN, no cloudflare.conf needed.
+#
+# See CLOUDFLARE-SETUP.txt

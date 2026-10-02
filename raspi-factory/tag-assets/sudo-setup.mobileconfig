@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>PayloadContent</key>
+  <array>
+    <dict>
+      <key>PayloadType</key><string>com.apple.wifi.managed</string>
+      <key>PayloadVersion</key><integer>1</integer>
+      <key>PayloadIdentifier</key><string>tech.sudospace.wifi.raspisetup</string>
+      <key>PayloadUUID</key><string>b7595a83-b8a2-553a-b180-390ccedde15b</string>
+      <key>PayloadDisplayName</key><string>Sudo setup network</string>
+      <key>SSID_STR</key><string>RaspiSetup</string>
+      <key>HIDDEN_NETWORK</key><false/>
+      <!-- Do not auto-rejoin later; this network only exists during setup. -->
+      <key>AutoJoin</key><false/>
+      <key>EncryptionType</key><string>WPA</string>
+      <key>Password</key><string>12345678</string>
+    </dict>
+  </array>
+  <key>PayloadType</key><string>Configuration</string>
+  <key>PayloadVersion</key><integer>1</integer>
+  <key>PayloadIdentifier</key><string>tech.sudospace.setup</string>
+  <key>PayloadUUID</key><string>061af96e-8396-5f44-86f2-4bea67c7b054</string>
+  <key>PayloadDisplayName</key><string>Sudo — join setup network</string>
+  <key>PayloadOrganization</key><string>Sudo</string>
+  <key>PayloadDescription</key><string>Adds the RaspiSetup network so this iPhone can reach your Sudo device during setup. You can remove this profile afterwards.</string>
+  <key>PayloadRemovalDisallowed</key><false/>
+</dict>
+</plist>

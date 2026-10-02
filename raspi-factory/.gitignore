@@ -1,0 +1,18 @@
+.env
+.env.local
+.env.*.local
+node_modules/
+.vercel
+dist/
+__pycache__/
+*.pyc
+.DS_Store
+sudo-pi/cloudflare.conf
+
+# Vendored binaries — fetched on demand by scripts/download-*.sh
+picoclaw/picoclaw
+picoclaw/picoclaw-launcher
+cloudflared/cloudflared
+
+# Dev SSH keys stay local
+dev/authorized_keys

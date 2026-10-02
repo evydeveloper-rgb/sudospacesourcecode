@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>sudo — Restarting</title>
+<style>
+{{BRAND_CSS}}
+.card { text-align: center; }
+.next {
+  margin-top: 18px;
+  text-align: left;
+  background: #f3f3f3;
+  border: 2px solid #1a1c1c;
+  border-radius: 14px;
+  padding: 14px 16px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #1a1c1c;
+}
+.next code {
+  display: block;
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid #e2e2e2;
+  font-size: 16px;
+  word-break: break-all;
+}
+.hint { font-size: 12px; color: #4a4452; margin-top: 12px; line-height: 1.4; }
+/* The one instruction that decides whether setup finishes. It used to be grey
+   12px text at the bottom of a page that had already been destroyed by the
+   phone leaving -- so nobody knew to come back, and the address the device had
+   waiting for them was never read. */
+.notice {
+  margin: 16px 0 0; padding: 14px 16px; text-align: left;
+  border: 2px solid #340075; border-radius: 14px;
+  background: #f4efff; color: #1a1c1c;
+  font-size: 14px; line-height: 1.55;
+}
+.notice.found { border-color: #1a7f4b; background: #eefaf2; }
+.addr { display: flex; align-items: stretch; gap: 8px; margin-top: 8px; }
+.addr code {
+  flex: 1; min-width: 0; margin-top: 0;
+  display: flex; align-items: center;
+  -webkit-user-select: all; user-select: all;   /* one tap selects the whole thing */
+}
+.copy {
+  flex: none; min-width: 74px; padding: 0 14px;
+  border: 2px solid #1a1c1c; border-radius: 8px;
+  background: #340075; color: #fff;
+  font: 700 13px/1 inherit; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.copy:active { transform: scale(.97); }
+.alt { margin: 9px 0 0; font-size: 12px; color: #4a4452; line-height: 1.4; }
+.hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="brand">
+    <svg class="brand-mark" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <rect x="8" y="10" width="56" height="46" rx="18" fill="#340075" stroke="#1a1c1c" stroke-width="3"/>
+      <circle cx="24" cy="40" r="9" fill="#f3f3f3" stroke="#1a1c1c" stroke-width="2.5"/>
+      <circle cx="48" cy="40" r="9" fill="#f3f3f3" stroke="#1a1c1c" stroke-width="2.5"/>
+      <path d="M30 52q6 5 12 0" fill="none" stroke="#1a1c1c" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>
+    <div class="brand-name">sudo<span>|</span></div>
+  </div>
+
+  <div class="check-wrap">✓</div>
+  <h1>Joining "{{SSID}}"</h1>
+
+  <div class="notice" id="notice">
+    <strong>Copy the address below before you leave this page.</strong>
+    sudo is about to drop its own Wi‑Fi and join yours, which disconnects your
+    phone and closes this page. Switch back to your home Wi‑Fi, wait about a
+    minute, then paste it into your browser.
+  </div>
+
+  <div class="next">
+    <strong id="addr-head">Where sudo will be:</strong>
+    <div class="addr">
+      <code id="url-name">{{DASHBOARD_URL}}</code>
+      <button type="button" class="copy" data-target="url-name">Copy</button>
+    </div>
+
+    <div id="ip-block" class="hidden">
+      <p class="alt">Or use this one — plenty of phones, Android especially, cannot resolve <em>.local</em> names at all:</p>
+      <div class="addr">
+        <code id="url-ip"></code>
+        <button type="button" class="copy" data-target="url-ip">Copy</button>
+      </div>
+    </div>
+
+    <p style="margin-top:10px;font-size:13px">The dashboard opens directly — no password needed.</p>
+  </div>
+
+  <p class="hint" id="join-status">If sudo cannot join — a mistyped password, usually — <strong>{{AP_NAME}}</strong> comes back on its own, and you can reconnect and try another network.</p>
+  <button type="button" id="done" class="copy hidden" style="margin-top:14px;width:100%;height:44px">Try a different network</button>
+</div>
+
+<script>
+  // The portal is plain http, so navigator.clipboard is undefined in most
+  // browsers (it needs a secure context). Fall back to execCommand, which
+  // still works here, and to selecting the text if even that is blocked.
+  function copyText(text, node) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text);
+    }
+    return new Promise(function (resolve, reject) {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.top = '-1000px';
+      document.body.appendChild(ta);
+      ta.select();
+      ta.setSelectionRange(0, text.length);   // iOS needs the explicit range
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      document.body.removeChild(ta);
+      if (ok) { resolve(); } else { reject(); }
+    });
+  }
+
+  // The AP goes down while sudo joins the home network, so this page loses its
+  // connection mid-poll -- every failed fetch here is expected, not an error.
+  // It comes back up afterwards precisely so the address below can arrive.
+  // Not `status`: at global scope that is window.status, a legacy string
+  // accessor, and assignments to .innerHTML on it vanish without an error.
+  var statusLine = document.getElementById('join-status');
+  var ipBlock = document.getElementById('ip-block');
+  var doneBtn = document.getElementById('done');
+  // The AP goes down for good on success -- the device stays on the home
+  // network from then on -- so this poll exists for one case only: a join that
+  // fails, where the hotspot comes back and the page can say so instead of
+  // sitting there dead. It gives up rather than retrying forever.
+  var timer = setInterval(poll, 2500);
+  setTimeout(function () { clearInterval(timer); }, 90000);
+
+  function poll() {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', '/joined?t=' + Date.now(), true);
+    xhr.timeout = 4000;
+    xhr.onload = function () {
+      if (xhr.status !== 200) { return; }
+      var data;
+      try { data = JSON.parse(xhr.responseText); } catch (e) { return; }
+      render(data);
+    };
+    xhr.send();
+  }
+
+  function render(data) {
+    if (data.state === 'ok') {
+      clearInterval(timer);
+      if (data.url) {
+        document.getElementById('url-ip').textContent = data.url;
+        ipBlock.classList.remove('hidden');
+      }
+      var notice = document.getElementById('notice');
+      notice.classList.add('found');
+      notice.innerHTML = '<strong>sudo is on ' + (data.ssid || 'your network') +
+        '.</strong> Switch this phone back to your home Wi‑Fi and open the ' +
+        'address below.';
+      document.getElementById('addr-head').textContent = 'Open one of these:';
+      statusLine.textContent = '';
+      doneBtn.classList.remove('hidden');
+    } else if (data.state === 'failed') {
+      clearInterval(timer);
+      statusLine.textContent = data.error || 'sudo could not join that network.';
+      doneBtn.textContent = 'Try a different network';
+      doneBtn.dataset.retry = '1';
+      doneBtn.classList.remove('hidden');
+    }
+  }
+
+  doneBtn.addEventListener('click', function () { window.location.href = '/'; });
+
+  poll();
+
+  Array.prototype.forEach.call(document.querySelectorAll('.copy'), function (button) {
+    button.addEventListener('click', function () {
+      var code = document.getElementById(button.dataset.target);
+      var text = code.textContent.trim();
+      copyText(text, code).then(function () {
+        button.textContent = 'Copied';
+        setTimeout(function () { button.textContent = 'Copy'; }, 1800);
+      }).catch(function () {
+        // Nothing left to try — select it so one long-press copies.
+        var range = document.createRange();
+        range.selectNodeContents(code);
+        var sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+        button.textContent = 'Hold to copy';
+        setTimeout(function () { button.textContent = 'Copy'; }, 2600);
+      });
+    });
+  });
+</script>
+</body>
+</html>

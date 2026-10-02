@@ -1,0 +1,71 @@
+═══════════════════════════════════════════════
+ SUDO — YANG SUDAH SELESAI (OTOMATIS)
+═══════════════════════════════════════════════
+
+✓ Neon database schema migrated
+✓ Stripe test mode verified (checkout URL works)
+✓ OpenRouter Management API verified (keys created)
+✓ Integration smoke test passed
+✓ Pi auto-register scripts (cloud-init on WiFi success)
+✓ billing.html on dashboard
+✓ Local API server for testing (npm run local)
+
+═══════════════════════════════════════════════
+ YANG PERLU KAMU LAKUKAN (1 MENIT)
+═══════════════════════════════════════════════
+
+Vercel butuh login browser — tidak bisa otomatis dari sini.
+
+STEP 1 — Login & deploy (satu kali):
+
+  cd sudo-api
+  npx vercel login
+
+  Terminal akan tampilkan URL seperti:
+    https://vercel.com/oauth/device?user_code=XXXX-XXXX
+
+  Buka URL itu di browser (BUKAN link GitHub lama).
+  Login Vercel → klik Authorize → tunggu terminal bilang success.
+
+  Lalu:
+  npm run deploy
+
+Script deploy.sh akan otomatis:
+  • migrate Neon
+  • deploy ke Vercel
+  • upload semua env vars
+  • buat Stripe webhook
+  • update api.url.default
+
+STEP 2 — Re-flash SD card:
+
+  cd ..
+  ./prepare-sd.sh
+
+STEP 3 — Test di Pi setelah WiFi setup:
+
+  http://raspberrypi.local/billing.html
+
+═══════════════════════════════════════════════
+ ALTERNATIF: TEST LOKAL DULU (TANPA VERCEL)
+═══════════════════════════════════════════════
+
+  cd sudo-api
+  npm run local
+
+Lalu di Pi (sama WiFi dengan Mac), edit /etc/sudo/api.url:
+  http://172.20.10.2:3000
+
+(Local API server may already be running on your Mac port 3000.)
+
+═══════════════════════════════════════════════
+ TEST PAYMENT (STRIPE SANDBOX)
+═══════════════════════════════════════════════
+
+Kartu: 4242 4242 4242 4242
+Expiry: any future date | CVC: any 3 digits
+
+Setelah bayar, webhook hanya jalan kalau API sudah deploy
+(kecuali pakai: stripe listen --forward-to localhost:3000/webhooks/stripe)
+
+═══════════════════════════════════════════════

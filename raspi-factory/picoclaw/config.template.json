@@ -1,0 +1,192 @@
+{
+  "version": 3,
+  "agents": {
+    "defaults": {
+      "workspace": "/opt/sudo/agent-workspace",
+      "restrict_to_workspace": true,
+      "model_name": "sudo-default",
+      "image_model": "sudo-image",
+      "max_tokens": 8192,
+      "context_window": 128000,
+      "temperature": 0.7,
+      "max_tool_iterations": 25,
+      "model_fallbacks": [
+        "sudo-vision",
+        "sudo-fast"
+      ],
+      "image_model_fallbacks": [
+        "sudo-vision"
+      ],
+      "max_llm_retries": 3,
+      "llm_retry_backoff_secs": 2,
+      "summarize_message_threshold": 40,
+      "summarize_token_percent": 70,
+      "subturn": {
+        "max_depth": 2,
+        "max_concurrent": 2,
+        "default_timeout_minutes": 5,
+        "default_token_budget": 20000,
+        "concurrency_timeout_sec": 60
+      }
+    }
+  },
+  "model_list": [
+    {
+      "model_name": "sudo-default",
+      "model": "openrouter/deepseek/deepseek-v4-flash-0731",
+      "api_keys": [
+        "__OPENROUTER_KEY__"
+      ],
+      "api_base": "https://openrouter.ai/api/v1"
+    },
+    {
+      "model_name": "sudo-fast",
+      "model": "openrouter/openai/gpt-4o-mini",
+      "api_keys": [
+        "__OPENROUTER_KEY__"
+      ],
+      "api_base": "https://openrouter.ai/api/v1"
+    },
+    {
+      "model_name": "sudo-smart",
+      "model": "openrouter/anthropic/claude-sonnet-4.5",
+      "api_keys": [
+        "__OPENROUTER_KEY__"
+      ],
+      "api_base": "https://openrouter.ai/api/v1"
+    },
+    {
+      "model_name": "sudo-budget",
+      "model": "openrouter/anthropic/claude-haiku-4.5",
+      "api_keys": [
+        "__OPENROUTER_KEY__"
+      ],
+      "api_base": "https://openrouter.ai/api/v1"
+    },
+    {
+      "model_name": "sudo-vision",
+      "model": "openrouter/google/gemini-2.5-flash-lite",
+      "api_keys": [
+        "__OPENROUTER_KEY__"
+      ],
+      "api_base": "https://openrouter.ai/api/v1"
+    },
+    {
+      "model_name": "sudo-image",
+      "model": "openrouter/google/gemini-3.1-flash-lite-image",
+      "api_keys": [
+        "__OPENROUTER_KEY__"
+      ],
+      "api_base": "https://openrouter.ai/api/v1"
+    },
+    {
+      "model_name": "sudo-stt",
+      "model": "openrouter/google/gemini-2.5-flash-lite",
+      "api_keys": [
+        "__OPENROUTER_KEY__"
+      ],
+      "api_base": "https://openrouter.ai/api/v1"
+    },
+    {
+      "model_name": "sudo-tts",
+      "model": "openrouter/openai/gpt-audio-mini",
+      "api_keys": [
+        "__OPENROUTER_KEY__"
+      ],
+      "api_base": "https://openrouter.ai/api/v1"
+    }
+  ],
+  "voice": {
+    "model_name": "sudo-stt",
+    "tts_model_name": "sudo-tts",
+    "echo_transcription": true
+  },
+  "channel_list": {
+    "pico": {
+      "enabled": true,
+      "type": "pico",
+      "allow_from": [],
+      "settings": {
+        "token": "__PICO_TOKEN__",
+        "allow_token_query": false,
+        "allow_origins": [
+          "http://raspberrypi.local",
+          "http://localhost"
+        ],
+        "ping_interval": 30,
+        "read_timeout": 60,
+        "max_connections": 20
+      }
+    }
+  },
+  "tools": {
+    "web": {
+      "enabled": true,
+      "duckduckgo": {
+        "enabled": true,
+        "max_results": 5
+      },
+      "format": "markdown"
+    },
+    "exec": {
+      "enabled": true,
+      "enable_deny_patterns": true,
+      "custom_deny_patterns": [],
+      "custom_allow_patterns": []
+    },
+    "cron": {
+      "enabled": true,
+      "allow_command": false,
+      "exec_timeout_minutes": 10
+    },
+    "mcp": {
+      "enabled": false,
+      "discovery": {
+        "enabled": true,
+        "ttl": 5,
+        "max_search_results": 5,
+        "use_bm25": true
+      },
+      "servers": {
+        "composio": {
+          "enabled": true,
+          "type": "http",
+          "url": "https://mcp.composio.dev/mcp",
+          "headers": {
+            "x-api-key": "__COMPOSIO_API_KEY__"
+          }
+        }
+      }
+    },
+    "skills": {
+      "enabled": false,
+      "registries": {
+        "clawhub": {
+          "enabled": true,
+          "base_url": "https://clawhub.ai",
+          "search_path": "/api/v1/search",
+          "skills_path": "/api/v1/skills",
+          "download_path": "/api/v1/download"
+        }
+      }
+    },
+    "subagent": {
+      "enabled": false
+    },
+    "spawn": {
+      "enabled": false
+    },
+    "spawn_status": {
+      "enabled": false
+    }
+  },
+  "heartbeat": {
+    "enabled": false,
+    "interval": 30
+  },
+  "gateway": {
+    "host": "127.0.0.1",
+    "port": 18790,
+    "log_level": "warn"
+  }
+}

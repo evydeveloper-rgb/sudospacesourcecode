@@ -1,0 +1,16 @@
+{
+  "name": "sudo-whatsapp-bridge",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Links this device to one WhatsApp account and routes messages through the same agent the dashboard talks to.",
+  "type": "module",
+  "main": "bridge.js",
+  "scripts": {
+    "start": "node bridge.js"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6",
+    "@hapi/boom": "^10",
+    "qrcode": "^1"
+  }
+}

@@ -1,0 +1,54 @@
+═══════════════════════════════════════════════
+ REMOTE ACCESS — NO DOMAIN NEEDED
+═══════════════════════════════════════════════
+
+Sudo uses Cloudflare Quick Tunnel:
+  https://random-words.trycloudflare.com
+
+• No domain to buy
+• No Cloudflare API token on the Pi
+• No workers.dev / TUNNEL_BASE_DOMAIN
+• User just taps "Yes — link anywhere" in onboarding
+
+═══════════════════════════════════════════════
+HOW IT WORKS
+═══════════════════════════════════════════════
+1. prepare-sd.sh bundles cloudflared (arm64) on the SD
+2. After WiFi + login, onboarding asks about remote access
+3. If Yes → Pi runs: cloudflared tunnel --url http://127.0.0.1:80
+4. Link appears in Settings / chat (~15–60 seconds)
+5. Bookmark it — anyone with the link can open the dashboard
+
+═══════════════════════════════════════════════
+TRADE-OFFS (honest)
+═══════════════════════════════════════════════
+• Link can CHANGE if the Pi reboots or tunnel restarts
+• Cloudflare rates this as testing/dev (not “enterprise permanent”)
+• Passwordless: enable only when needed and do not share the link
+
+For permanent branded URLs later: buy a domain + named tunnel
+(not required for this factory mode).
+
+═══════════════════════════════════════════════
+YOU DO NOT NEED
+═══════════════════════════════════════════════
+• cloudflare.conf
+• API token
+• Account ID
+• workers.dev subdomain
+• TUNNEL_BASE_DOMAIN
+
+Just: ./prepare-sd.sh → flash → user flow
+
+═══════════════════════════════════════════════
+TROUBLESHOOTING
+═══════════════════════════════════════════════
+Link not appearing:
+  journalctl -u sudo-remote-access -n 40
+  /var/log/sudo-remote.log
+  systemctl status sudo-remote-access
+  which cloudflared; cloudflared --version
+
+Toggle off/on in Settings to restart the tunnel.
+
+═══════════════════════════════════════════════

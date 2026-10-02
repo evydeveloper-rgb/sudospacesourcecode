@@ -1,0 +1,223 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>WiFi Setup</title>
+<style>
+    body {
+      min-height: 100dvh;
+      background-image: 
+        radial-gradient(circle at 15% 50%, rgba(211, 187, 255, 0.15), transparent 25%),
+        radial-gradient(circle at 85% 30%, rgba(254, 105, 68, 0.08), transparent 25%);
+      background-attachment: fixed;
+    }
+  </style>
+<link rel="stylesheet" href="/assets/fonts.css">
+<link rel="stylesheet" href="/assets/stitch.css">
+<meta name="theme-color" content="#fbfbfe">
+</head>
+<body class="bg-background text-on-surface font-body-md min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="bg-surface/80 backdrop-blur-xl w-full top-0 sticky z-20 border-b border-surface-variant/50">
+<div class="flex justify-between items-center px-margin-mobile py-md max-w-max-width-content mx-auto w-full">
+<div class="flex items-center gap-sm"><img alt="sudo" class="h-8 w-auto object-contain" src="/assets/sudo-wordmark.svg"></div>
+
+</div>
+</header>
+<!-- Main Content Canvas -->
+<form method="POST" action="/connect" id="form"><main class="flex-grow flex flex-col max-w-max-width-content mx-auto w-full px-margin-mobile md:px-margin-desktop py-xl gap-lg md:gap-xl">
+<!-- Header Section -->
+<section class="flex flex-col gap-sm">
+<h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-4xl text-primary-container">WiFi Setup</h1>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-2xl leading-relaxed">Select your network to connect sudo to the internet. This is required to download models and sync configuration.</p>
+</section>
+<div class="{{ERROR_CLASS}} rounded-xl border border-error bg-error-container text-on-error-container px-lg py-md font-body-md text-body-md" id="err" role="alert">{{ERROR}}</div>
+<!-- Network List -->
+<section class="flex flex-col gap-sm">
+<div class="flex items-center justify-between mb-xs"><h2 class="font-label-mono text-label-mono text-outline">AVAILABLE NETWORKS</h2><button type="button" id="refresh" aria-label="Rescan" class="w-9 h-9 rounded-full bg-surface-container-low border border-surface-variant flex items-center justify-center text-on-surface-variant hover:text-primary hover:border-primary/30 transition-colors active:scale-95"><svg class="inline-block align-middle text-xl" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20.5 5.5v5h-5"/><path d="M19.6 14.4a8 8 0 1 1-1.2-7.4l2.1 2"/></svg></button></div>
+<div class="flex flex-col gap-sm" id="wifi-list">
+<div class="font-body-md text-body-md text-on-surface-variant text-center py-lg">Looking for networks…</div>
+</div>
+</section>
+<section class="hidden flex-col gap-sm" id="manual-wrap">
+<label class="font-label-mono text-label-mono text-outline" for="manual-ssid">NETWORK NAME</label>
+<div class="relative flex items-center w-full group">
+<svg class="inline-block align-middle absolute left-lg text-outline-variant group-focus-within:text-primary transition-colors" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12.5a11 11 0 0 1 14 0"/><path d="M8.5 16a6 6 0 0 1 7 0"/><circle cx="12" cy="19.5" r="1.1" fill="currentColor" stroke="none"/></svg>
+<input class="w-full bg-surface/80 backdrop-blur-md border border-surface-variant rounded-xl pl-14 pr-4 py-4 font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-outline-variant shadow-sm" id="manual-ssid" type="text" autocomplete="off" placeholder="Type the network name">
+</div>
+</section>
+<!-- Password Input Area (Appears when network selected) -->
+<section class="mt-auto md:mt-xl flex flex-col gap-md pt-lg relative">
+<div class="absolute top-0 left-margin-mobile right-margin-mobile h-[1px] bg-gradient-to-r from-transparent via-surface-variant to-transparent"></div>
+<div class="flex flex-col gap-sm hidden" id="user-row">
+<label class="font-label-mono text-label-mono text-outline" for="wifi-username">USERNAME</label>
+<input class="w-full bg-surface/80 backdrop-blur-md border border-surface-variant rounded-xl px-lg py-4 font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary/50 transition-colors" id="wifi-username" name="username" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="your school or work username">
+<p class="font-body-md text-on-surface-variant text-xs">This network asks for a username as well as a password.</p>
+</div>
+<div class="flex flex-col gap-sm">
+<label class="font-label-mono text-label-mono text-outline" for="wifi-password" id="pw-label">PASSWORD</label>
+<div class="relative flex items-center w-full group">
+<svg class="inline-block align-middle absolute left-lg text-outline-variant group-focus-within:text-primary transition-colors" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="8" cy="12" r="3.6"/><path d="M11.6 12H21"/><path d="M17.6 12v3.2"/><path d="M20.4 12v2.2"/></svg>
+<input class="w-full bg-surface/80 backdrop-blur-md border border-surface-variant rounded-xl pl-14 pr-12 py-4 font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary/50 focus:ring-4 transition-all placeholder:text-outline-variant shadow-sm focus:shadow-glass-hover focus:ring-secondary-container/30" id="wifi-password" name="password" autocomplete="current-password" placeholder="Enter network password" type="password">
+<button type="button" id="peek" aria-label="Toggle password visibility" class="absolute right-lg text-outline-variant hover:text-primary transition-colors">
+<svg class="inline-block align-middle" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10.6 6a9.9 9.9 0 0 1 1.4-.1c6.2 0 10 6.8 10 6.8a17 17 0 0 1-3 3.8"/><path d="M6.4 7.7A17.4 17.4 0 0 0 2 12.7s3.8 6.8 10 6.8a10 10 0 0 0 4-.8"/><path d="M9.9 10.5a3 3 0 0 0 4.2 4.2"/><path d="M3 3l18 18"/></svg>
+</button>
+</div>
+</div>
+<div class="flex justify-center gap-md pt-2">
+<button class="px-8 py-4 rounded-xl font-button-text text-button-text text-on-primary hover:bg-primary-container transition-all duration-300 shadow-md hover:shadow-glass-hover focus:outline-none focus:ring-4 focus:ring-primary/30 active:scale-95 flex items-center justify-center gap-2 bg-primary-container w-full sm:w-auto" type="submit" id="submit-btn" disabled>
+                    Connect &amp; Continue
+                    <svg class="inline-block align-middle text-sm" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4.5 12h14"/><path d="M13 6.5l5.5 5.5L13 17.5"/></svg>
+</button>
+</div>
+</section>
+<p class="font-body-md text-on-surface-variant text-center text-sm pb-xl">After this, sudo restarts and joins your network. You'll find it at <span class="font-label-mono text-on-surface">{{DASHBOARD_URL}}</span></p></main><input type="hidden" name="ssid" id="ssid-hidden"><input type="hidden" name="country" id="country" value="US"></form>
+
+<script>
+var ICON = {"add": "<svg width=\"1em\" height=\"1em\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M12 5.5v13\"/><path d=\"M5.5 12h13\"/></svg>", "lock": "<svg width=\"1em\" height=\"1em\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"4.5\" y=\"10.5\" width=\"15\" height=\"10\" rx=\"2.2\"/><path d=\"M8 10.5V7a4 4 0 0 1 8 0v3.5\"/></svg>", "check_circle": "<svg width=\"1em\" height=\"1em\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"12\" cy=\"12\" r=\"9.2\"/><path d=\"M8.2 12.3l2.7 2.7 5-5.2\"/></svg>", "visibility": "<svg width=\"1em\" height=\"1em\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2 12s3.8-6.8 10-6.8S22 12 22 12s-3.8 6.8-10 6.8S2 12 2 12z\"/><circle cx=\"12\" cy=\"12\" r=\"2.8\"/></svg>", "visibility_off": "<svg width=\"1em\" height=\"1em\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M10.6 6a9.9 9.9 0 0 1 1.4-.1c6.2 0 10 6.8 10 6.8a17 17 0 0 1-3 3.8\"/><path d=\"M6.4 7.7A17.4 17.4 0 0 0 2 12.7s3.8 6.8 10 6.8a10 10 0 0 0 4-.8\"/><path d=\"M9.9 10.5a3 3 0 0 0 4.2 4.2\"/><path d=\"M3 3l18 18\"/></svg>", "signal_wifi_1_bar": "<svg width=\"1em\" height=\"1em\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.5 9.5a15 15 0 0 1 19 0\" opacity=\".25\"/><path d=\"M5.5 12.8a11 11 0 0 1 13 0\" opacity=\".25\"/><path d=\"M8.5 16a6 6 0 0 1 7 0\" opacity=\".25\"/><circle cx=\"12\" cy=\"19.4\" r=\"1.1\" fill=\"currentColor\" stroke=\"none\"/></svg>", "signal_wifi_2_bar": "<svg width=\"1em\" height=\"1em\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.5 9.5a15 15 0 0 1 19 0\" opacity=\".25\"/><path d=\"M5.5 12.8a11 11 0 0 1 13 0\" opacity=\".25\"/><path d=\"M8.5 16a6 6 0 0 1 7 0\"/><circle cx=\"12\" cy=\"19.4\" r=\"1.1\" fill=\"currentColor\" stroke=\"none\"/></svg>", "signal_wifi_3_bar": "<svg width=\"1em\" height=\"1em\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.5 9.5a15 15 0 0 1 19 0\" opacity=\".25\"/><path d=\"M5.5 12.8a11 11 0 0 1 13 0\"/><path d=\"M8.5 16a6 6 0 0 1 7 0\"/><circle cx=\"12\" cy=\"19.4\" r=\"1.1\" fill=\"currentColor\" stroke=\"none\"/></svg>", "signal_wifi_4_bar": "<svg width=\"1em\" height=\"1em\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.5 9.5a15 15 0 0 1 19 0\"/><path d=\"M5.5 12.8a11 11 0 0 1 13 0\"/><path d=\"M8.5 16a6 6 0 0 1 7 0\"/><circle cx=\"12\" cy=\"19.4\" r=\"1.1\" fill=\"currentColor\" stroke=\"none\"/></svg>"};
+var SEL_CLS = 'flex items-center justify-between p-lg bg-surface/90 backdrop-blur-md border border-secondary-container/50 rounded-xl shadow-glass transition-all text-left relative overflow-hidden';
+var IDLE_CLS = 'flex items-center justify-between p-lg bg-surface/60 backdrop-blur-md border border-surface-variant/50 hover:bg-surface hover:border-primary/30 hover:shadow-glass-hover focus:shadow-glass-active rounded-xl transition-all duration-300 text-left group';
+var selectedSSID = null;
+
+var TZ = {"Asia/Jakarta":"ID","Asia/Makassar":"ID","Asia/Jayapura":"ID","Asia/Pontianak":"ID",
+"Asia/Singapore":"SG","Asia/Kuala_Lumpur":"MY","Asia/Bangkok":"TH","Asia/Ho_Chi_Minh":"VN",
+"Asia/Manila":"PH","Asia/Tokyo":"JP","Asia/Seoul":"KR","Asia/Shanghai":"CN","Asia/Hong_Kong":"HK",
+"Asia/Taipei":"TW","Asia/Kolkata":"IN","Asia/Calcutta":"IN","Asia/Dhaka":"BD","Asia/Karachi":"PK",
+"Asia/Dubai":"AE","Asia/Riyadh":"SA","Asia/Jerusalem":"IL","Europe/London":"GB","Europe/Dublin":"IE",
+"Europe/Berlin":"DE","Europe/Amsterdam":"NL","Europe/Paris":"FR","Europe/Madrid":"ES","Europe/Rome":"IT",
+"Europe/Warsaw":"PL","Europe/Stockholm":"SE","Europe/Oslo":"NO","Europe/Copenhagen":"DK",
+"Europe/Helsinki":"FI","Europe/Vienna":"AT","Europe/Zurich":"CH","Europe/Brussels":"BE",
+"Europe/Lisbon":"PT","Europe/Athens":"GR","Europe/Istanbul":"TR","Europe/Moscow":"RU",
+"America/New_York":"US","America/Chicago":"US","America/Denver":"US","America/Los_Angeles":"US",
+"America/Anchorage":"US","America/Phoenix":"US","Pacific/Honolulu":"US","America/Toronto":"CA",
+"America/Vancouver":"CA","America/Mexico_City":"MX","America/Sao_Paulo":"BR","America/Bogota":"CO",
+"America/Santiago":"CL","America/Lima":"PE","Australia/Sydney":"AU","Australia/Melbourne":"AU",
+"Australia/Brisbane":"AU","Australia/Perth":"AU","Pacific/Auckland":"NZ","Africa/Johannesburg":"ZA",
+"Africa/Lagos":"NG","Africa/Cairo":"EG","Africa/Nairobi":"KE"};
+try { var z = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (TZ[z]) document.getElementById("country").value = TZ[z]; } catch (e) {}
+
+function sigIcon(s){s=parseInt(s,10)||0;
+  return s>=75?"signal_wifi_4_bar":s>=50?"signal_wifi_3_bar":s>=25?"signal_wifi_2_bar":"signal_wifi_1_bar";}
+
+function mkRow(net, manual){
+  var b=document.createElement("button");
+  b.type="button"; b.className=IDLE_CLS;
+  b.innerHTML =
+    '<div class="flex items-center gap-md relative z-10">'+
+      '<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center group-hover:bg-primary-container/10 transition-colors js-ic">'+
+        '<span class="text-on-surface-variant group-hover:text-primary transition-colors text-2xl js-sig">'+
+          (manual?ICON.add:ICON[sigIcon(net.signal)])+'</span>'+
+      '</div>'+
+      '<div class="flex flex-col gap-1">'+
+        '<span class="font-body-md text-body-md font-medium text-on-surface group-hover:text-primary transition-colors text-xl js-nm"></span>'+
+        '<span class="font-label-mono text-label-mono text-secondary-container text-sm hidden js-st">Selected</span>'+
+      '</div>'+
+    '</div>'+
+    '<div class="flex items-center gap-2 relative z-10">'+
+      ((!manual && net.security)?'<span class="text-outline-variant text-xl js-lk">'+ICON.lock+'</span>':'')+
+      '<svg class="inline-block align-middle text-secondary-container hidden js-ck" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9.2"/><path d="M8.2 12.3l2.7 2.7 5-5.2"/></svg>'+
+    '</div>';
+  b.querySelector(".js-nm").textContent = manual ? "Other network\u2026" : net.ssid;
+  b.addEventListener("click", function(){ manual ? pickManual(b) : pick(b, net.ssid, net.enterprise); });
+  return b;
+}
+
+function reset(){
+  document.querySelectorAll("#wifi-list button").forEach(function(el){
+    el.className = IDLE_CLS;
+    var ck=el.querySelector(".js-ck"), st=el.querySelector(".js-st"),
+        lk=el.querySelector(".js-lk"), ic=el.querySelector(".js-ic"), sg=el.querySelector(".js-sig");
+    if(ck) ck.classList.add("hidden");
+    if(st) st.classList.add("hidden");
+    if(lk) lk.classList.remove("hidden");
+    if(ic) ic.className="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center group-hover:bg-primary-container/10 transition-colors js-ic";
+    if(sg) sg.className="text-on-surface-variant group-hover:text-primary transition-colors text-2xl js-sig";
+  });
+}
+
+function mark(el){
+  el.className = SEL_CLS;
+  var ck=el.querySelector(".js-ck"), st=el.querySelector(".js-st"),
+      lk=el.querySelector(".js-lk"), ic=el.querySelector(".js-ic"), sg=el.querySelector(".js-sig");
+  if(ck) ck.classList.remove("hidden");
+  if(st) st.classList.remove("hidden");
+  if(lk) lk.classList.add("hidden");
+  if(ic) ic.className="w-12 h-12 rounded-full bg-secondary-container/10 flex items-center justify-center js-ic";
+  if(sg) sg.className="text-secondary-container text-2xl js-sig";
+}
+
+function pick(el, ssid, enterprise){
+  reset(); mark(el);
+  selectedSSID = ssid;
+  document.getElementById("ssid-hidden").value = ssid;
+  document.getElementById("manual-wrap").classList.add("hidden");
+  document.getElementById("pw-label").textContent = "PASSWORD FOR " + ssid.toUpperCase();
+  showUser(enterprise);
+  document.getElementById(enterprise ? "wifi-username" : "wifi-password").focus();
+  upd();
+}
+
+// Only networks that actually want a username get asked for one. Everyone
+// else would just see a box they cannot fill.
+function showUser(on){
+  var row = document.getElementById("user-row");
+  row.classList.toggle("hidden", !on);
+  if(!on) document.getElementById("wifi-username").value = "";
+}
+
+function pickManual(el){
+  reset(); mark(el);
+  selectedSSID = null;
+  document.getElementById("ssid-hidden").value = "";
+  document.getElementById("manual-wrap").classList.remove("hidden");
+  document.getElementById("pw-label").textContent = "PASSWORD";
+  showUser(false);
+  document.getElementById("manual-ssid").focus();
+  upd();
+}
+
+function upd(){
+  var mOn = !document.getElementById("manual-wrap").classList.contains("hidden");
+  var mVal = document.getElementById("manual-ssid").value.trim();
+  document.getElementById("submit-btn").disabled = !(selectedSSID || (mOn && mVal));
+}
+
+function render(nets){
+  var L=document.getElementById("wifi-list");
+  L.replaceChildren();
+  if(!nets || !nets.length){
+    L.innerHTML='<div class="font-body-md text-body-md text-on-surface-variant text-center py-lg">No networks found.</div>';
+  } else {
+    nets.forEach(function(n){ L.appendChild(mkRow(n,false)); });
+  }
+  L.appendChild(mkRow(null,true));
+}
+
+function scanWifi(){
+  var L=document.getElementById("wifi-list");
+  L.innerHTML='<div class="font-body-md text-body-md text-on-surface-variant text-center py-lg">Looking for networks\u2026</div>';
+  fetch("/scan").then(function(r){return r.json();}).then(render).catch(function(){
+    L.innerHTML='<div class="font-body-md text-body-md text-on-surface-variant text-center py-lg">Scan failed. <button type="button" class="text-primary underline font-semibold" onclick="scanWifi()">Try again</button></div>';
+  });
+}
+
+document.getElementById("peek").addEventListener("click", function(){
+  var p=document.getElementById("wifi-password"); var on=p.type==="password";
+  p.type = on ? "text" : "password";
+  document.getElementById("peek-icon").textContent = on ? "visibility" : "visibility_off";
+});
+document.getElementById("manual-ssid").addEventListener("input", upd);
+document.getElementById("refresh").addEventListener("click", scanWifi);
+var eb = document.getElementById("err");
+if (eb && !eb.textContent.trim()) eb.classList.add("hidden");
+document.getElementById("form").addEventListener("submit", function(e){
+  if(!document.getElementById("manual-wrap").classList.contains("hidden")){
+    var v=document.getElementById("manual-ssid").value.trim();
+    if(!v){ e.preventDefault(); return; }
+    document.getElementById("ssid-hidden").value=v;
+  }
+  document.getElementById("submit-btn").disabled=true;
+});
+scanWifi();
+</script>
+</body></html>

@@ -1,0 +1,1014 @@
+/* Sudo dashboard — mobile-first design adapted from the supplied prototype. */
+:root {
+  /* Palette from the Stitch design (Aug 2026). Tailwind + Google Fonts are
+     CDN-only, so the tokens are translated to plain CSS here — this dashboard
+     has to render on a home network with no internet and must not call out
+     to a third party. Fonts fall back to system faces.
+     Stitch's accent #fe6944 is a hair off the brand coral #f2603c already in
+     sudo-wordmark.svg, so the accent is kept as the brand value. */
+  --primary: #340075;
+  --primary-container: #4c1d95;
+  --primary-fixed: #ebdcff;
+  --on-primary: #ffffff;
+  --on-primary-container: #b994ff;
+
+  --coral: #fe6944;
+  --coral-2: #af3010;
+  --coral-tint: #ffdad2;
+
+  --amber: #e8a833;
+  --amber-tint: #ffdcc5;
+  --sky: #3e89c9;
+  --sky-tint: #d3e4f2;
+  --violet: #6a4fb6;
+  --violet-2: #55409a;
+  --violet-tint: #ebdcff;
+
+  --background: #f9f9f9;
+  --surface: #ffffff;
+  --surface-low: #f3f3f3;
+  --surface-container: #eeeeee;
+  --surface-high: #e8e8e8;
+
+  --ink: #1a1c1c;
+  --ink-2: #4a4452;
+  --ink-3: #7b7483;
+  --ink-4: #a49dab;
+  --line: #e2e2e2;
+  --line-2: #ccc3d4;
+
+  --error: #ba1a1a;
+
+  /* Semantic states — coral for things you switch on, purple for
+     confirmations, so the two never carry the same meaning. No green. */
+  --on: var(--coral);
+  --on-tint: var(--coral-tint);
+  --ok: var(--primary);
+  --ok-ink: #260059;
+  --ok-tint: var(--primary-fixed);
+
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --radius: 16px;
+  --radius-lg: 24px;
+  --shadow-glass: 0 8px 32px 0 rgba(76, 29, 149, .05);
+  --shadow-glass-hover: 0 12px 48px 0 rgba(76, 29, 149, .10);
+
+  /* Names the existing rules already use, remapped onto the new palette. */
+  --bg: var(--background);
+  --surface-soft: var(--surface-low);
+  --muted: var(--ink-2);
+  --faint: var(--ink-3);
+  --accent: var(--coral);
+  --accent-soft: var(--coral-tint);
+  --mint: var(--violet-tint);
+  --pink: var(--coral-tint);
+  --yellow: var(--amber-tint);
+  --lilac: var(--sky-tint);
+  --danger: var(--error);
+  --shadow: var(--shadow-glass);
+  --color-bg-raised: var(--surface);
+  --color-bg-sunken: var(--surface-low);
+  --paper: var(--surface-low);
+  --paper-2: var(--background);
+  /* Surfaces that were hardcoded white; themes override these so the dark
+     palettes do not end up with white veils over a dark background. */
+  --veil: rgba(255, 255, 255, .5);
+  --topbar-bg: rgba(255, 255, 255, .8);
+  --topbar-line: rgba(226, 226, 226, .8);
+  --wash-1: rgba(52, 0, 117, .04);
+  --wash-2: rgba(254, 105, 68, .05);
+  --bubble-shadow: 0 4px 16px rgba(76, 29, 149, .05);
+  --dot-ring: rgba(52, 0, 117, .14);
+  --safe-top: max(14px, env(safe-area-inset-top));
+  --safe-bottom: max(14px, env(safe-area-inset-bottom));
+}
+
+* { box-sizing: border-box; }
+html { background: var(--bg); color: var(--ink); }
+/* Sending a chat message opened the keyboard and brought the whole page with
+   it -- topbar included -- because body had no bound height, so it was the
+   element the browser's own "scroll the focused input into view" reached
+   for. #app-main is the one scrollable region now; body physically cannot
+   move, so that native behaviour has nothing to act on. */
+html, body { height: 100%; }
+body {
+  margin: 0; overflow: hidden;
+  font-family: var(--font-sans);
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(circle at 15% 50%, var(--wash-1), transparent 26%),
+    radial-gradient(circle at 85% 30%, var(--wash-2), transparent 26%);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+}
+button, input, select, textarea { font: inherit; }
+button, a { -webkit-tap-highlight-color: transparent; }
+button { color: inherit; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 3px solid rgba(52, 0, 117, .25);
+  outline-offset: 2px;
+}
+[hidden] { display: none !important; }
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+
+.app-shell {
+  width: min(100%, 900px);
+  height: 100dvh;
+  margin: 0 auto;
+  position: relative;
+  background: var(--veil);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.topbar {
+  height: calc(62px + var(--safe-top));
+  padding: var(--safe-top) 20px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* flex:none, not sticky: sticky still pins to a scrolling ancestor, and on
+     mobile Safari/Chrome that ancestor's box can misbehave the moment the
+     keyboard resizes the viewport. A flex sibling of the one thing that
+     scrolls never has to be told to stay put -- it was never in motion. */
+  flex: none;
+  z-index: 20;
+  background: var(--topbar-bg);
+  backdrop-filter: blur(18px);
+  border-bottom: 1px solid var(--topbar-line);
+}
+.wordmark {
+  color: var(--ink);
+  text-decoration: none;
+  font-family: var(--font-mono);
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -.08em;
+}
+/* The mark is "sudo" followed by a solid coral block, as in
+   sudo-wordmark.svg — not a middot. Drawn rather than using the SVG file so
+   it takes the theme's ink colour and the page's font stack, instead of the
+   near-black baked into that asset. */
+.wordmark span {
+  display: inline-block;
+  width: .30em;
+  height: .58em;
+  margin-left: .10em;
+  background: var(--accent);
+  vertical-align: baseline;
+}
+.device-state {
+  display: flex; align-items: center; gap: 7px;
+  color: var(--muted); font: 600 .72rem/1 var(--font-mono);
+}
+.device-state i {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--ok);
+  box-shadow: 0 0 0 4px var(--dot-ring);
+}
+
+#app-main {
+  flex: 1 1 auto; min-height: 0; overflow-y: auto;
+  -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+}
+.view {
+  display: none;
+  padding: 26px 18px calc(108px + var(--safe-bottom));
+  animation: enter .24s ease both;
+}
+.view.active { display: block; }
+.view-heading {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 20px;
+  max-width: 720px; margin: 0 auto 24px;
+}
+.view-heading h1 {
+  margin: 2px 0 0; font-size: clamp(2rem, 8vw, 3rem); line-height: 1.03;
+  letter-spacing: -.055em; font-weight: 750;
+}
+.eyebrow {
+  margin: 0; color: var(--muted); font: 650 .72rem/1.2 var(--font-mono);
+  text-transform: lowercase; letter-spacing: .04em;
+}
+/* Terminal prompt in front of each eyebrow — the brand's own tic. */
+.eyebrow::before { content: "$ "; color: var(--primary); font-weight: 700; }
+
+/* Settings section dividers ("your agent" / "device" / "account") */
+.settings-group {
+  margin: 0 0 9px 4px; color: var(--ink-3);
+  font: 700 .62rem/1 var(--font-mono);
+  letter-spacing: .06em; text-transform: uppercase;
+}
+.settings-group:not(:first-of-type) { margin-top: 22px; }
+.lede { color: var(--muted); margin: 10px 0 0; line-height: 1.5; }
+.icon-button {
+  width: 46px; height: 46px; flex: none; border: 1px solid var(--line);
+  background: var(--topbar-bg); border-radius: 50%; cursor: pointer; font-size: 1.5rem;
+}
+
+/* Chat */
+.chat-view.active {
+  height: calc(var(--vvh, 100dvh) - 62px - var(--safe-top) - 72px - var(--safe-bottom));
+  min-height: 0;
+  display: flex; flex-direction: column;
+  padding-bottom: 12px;
+  overflow: hidden;
+}
+.chat-heading { width: 100%; flex: none; margin-bottom: 18px; }
+.public-link-strip {
+  width: min(100%, 720px); margin: -8px auto 16px; padding: 9px 12px;
+  display: flex; justify-content: space-between; align-items: center;
+  border-radius: 12px; background: var(--ok-tint);
+  color: var(--ok-ink); font-size: .76rem; font-weight: 650;
+}
+.public-link-strip button, .remote-box button {
+  border: 0; background: transparent; text-decoration: underline; cursor: pointer;
+  min-height: 36px; padding: 0 6px; font-weight: 700;
+}
+.message-thread {
+  width: min(100%, 720px); margin: 0 auto;
+  flex: 1 1 auto; min-height: 0; overflow-y: auto;
+  overscroll-behavior: contain; scrollbar-gutter: stable;
+  -webkit-overflow-scrolling: touch;
+  display: flex; flex-direction: column; gap: 17px; padding: 4px 3px 18px 1px;
+  scroll-padding-block: 18px;
+}
+.message { display: flex; align-items: flex-end; gap: 9px; max-width: min(88%, 610px); }
+.message > div {
+  padding: 13px 15px; border-radius: 18px 18px 18px 5px;
+  background: var(--surface); box-shadow: var(--bubble-shadow);
+  line-height: 1.53; white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.message-avatar {
+  width: 28px; height: 28px; flex: none; display: grid; place-items: center;
+  border-radius: 9px; background: var(--ink); color: white;
+  font: 700 .68rem/1 var(--font-mono);
+}
+.message.user { align-self: flex-end; flex-direction: row-reverse; }
+.message.user > div { background: var(--lilac); border-radius: 18px 18px 5px 18px; }
+.message.user .message-avatar { background: transparent; color: var(--muted); width: 30px; }
+.message.system { align-self: center; max-width: 100%; color: var(--danger); font-size: .82rem; }
+.message.system > div { background: transparent; box-shadow: none; padding: 5px; }
+.message.system .message-avatar { display: none; }
+.thinking {
+  width: min(100%, 720px); flex: none; margin: 0 auto 8px; color: var(--muted);
+  display: flex; align-items: center; gap: 4px; font-size: .72rem;
+}
+.thinking span { width: 5px; height: 5px; border-radius: 50%; background: var(--faint); animation: blink 1s infinite; }
+.thinking span:nth-child(2) { animation-delay: .15s; }
+.thinking span:nth-child(3) { animation-delay: .3s; }
+.thinking em { font-style: normal; margin-left: 5px; }
+.composer {
+  width: min(100%, 720px); flex: none; margin: 0 auto;
+  position: relative; z-index: 15;
+  display: flex; align-items: flex-end; gap: 9px;
+  padding: 7px; border: 1px solid rgba(22, 19, 17,.14); border-radius: 20px;
+  background: rgba(251, 247, 235,.94); box-shadow: var(--shadow); backdrop-filter: blur(16px);
+}
+.composer textarea {
+  flex: 1; resize: none; min-height: 46px; max-height: 128px;
+  border: 0; outline: 0; background: transparent; color: var(--ink);
+  font-size: 1rem; line-height: 1.45; padding: 11px 9px;
+}
+.composer textarea::placeholder { color: var(--faint); }
+.send-button {
+  width: 46px; height: 46px; flex: none; display: grid; place-items: center;
+  border: 0; border-radius: 15px; background: var(--accent); cursor: pointer;
+  transition: transform .16s ease, opacity .16s ease;
+}
+.send-button:active { transform: scale(.94); }
+.send-button:disabled { opacity: .45; cursor: wait; }
+.send-button svg { width: 21px; fill: none; stroke: var(--ink); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Apps */
+.app-grid {
+  max-width: 720px; margin: 0 auto; display: grid; grid-template-columns: 1fr; gap: 14px;
+}
+.mini-app {
+  min-height: 174px; position: relative; padding: 19px; border: 1px solid rgba(22, 19, 17,.12);
+  border-radius: 22px; box-shadow: 0 7px 22px rgba(22, 19, 17,.06);
+}
+.mini-app.mint { background: linear-gradient(135deg, var(--violet-tint), #ece6f7); }
+.mini-app.pink { background: linear-gradient(135deg, var(--pink), #fde9ef); }
+.mini-app.yellow { background: linear-gradient(135deg, var(--yellow), #fff5cc); }
+.mini-app.lilac { background: linear-gradient(135deg, var(--sky-tint), #e6f0f8); }
+.mini-icon {
+  width: 42px; height: 42px; display: grid; place-items: center;
+  border-radius: var(--radius); background: rgba(255,255,255,.56); font-size: 1.35rem; font-weight: 700;
+}
+.mini-app h2 { margin: 26px 0 5px; font-size: 1.05rem; letter-spacing: -.02em; }
+.mini-app p { margin: 0; max-width: 28rem; color: rgba(22, 19, 17,.72); font-size: .85rem; line-height: 1.45; }
+.soon {
+  position: absolute; top: 18px; right: 18px; padding: 6px 9px; border-radius: 999px;
+  background: rgba(255,255,255,.55); font-size: .64rem; font-weight: 750; letter-spacing: .03em;
+}
+
+/* Settings */
+.settings-list { max-width: 720px; margin: 0 auto; display: grid; gap: 11px; }
+.setting-card {
+  border-radius: var(--radius-lg);
+  overflow: hidden; border: 1px solid rgba(22, 19, 17,.11); border-radius: 19px;
+  background: rgba(251, 247, 235,.7); box-shadow: 0 5px 18px rgba(22, 19, 17,.05);
+}
+.setting-head {
+  width: 100%; min-height: 76px; padding: 13px 14px; display: grid;
+  grid-template-columns: 44px 1fr 24px; gap: 12px; align-items: center;
+  text-align: left; border: 0; background: transparent; cursor: pointer;
+}
+.setting-head strong, .setting-head small { display: block; }
+.setting-head strong { font-size: .94rem; margin-bottom: 4px; }
+.setting-head small { color: var(--muted); font-size: .74rem; line-height: 1.35; }
+.setting-icon {
+  width: 44px; height: 44px; display: grid; place-items: center;
+  border-radius: var(--radius); background: var(--surface-soft); font-size: 1.15rem;
+}
+.chevron { color: var(--faint); font-size: 1.65rem; transition: transform .2s ease; }
+.setting-card.open .chevron { transform: rotate(90deg); }
+.setting-body {
+  display: none; padding: 4px 16px 18px; border-top: 1px solid var(--line);
+  animation: enter .2s ease both;
+}
+.setting-card.open .setting-body { display: block; }
+.field-grid { display: grid; grid-template-columns: 1fr; gap: 0; }
+.setting-body label, .setting-body legend {
+  display: block; margin: 16px 0 7px; font-size: .75rem; font-weight: 750; color: var(--muted);
+}
+.setting-body input:not([type="checkbox"]), .setting-body select {
+  width: 100%; min-height: 49px; padding: 11px 13px; margin-top: 7px;
+  border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); color: var(--ink);
+  font-size: 1rem;
+}
+.setting-body fieldset { border: 0; padding: 0; margin: 0; }
+.option-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.option-grid button {
+  min-height: 78px; padding: 12px; text-align: left; border: 1px solid var(--line);
+  border-radius: var(--radius); background: var(--surface-soft); cursor: pointer;
+}
+.option-grid button.selected { border: 2px solid var(--accent); background: var(--accent-soft); padding: 11px; }
+.option-grid strong, .option-grid small { display: block; }
+.option-grid strong { font-size: .8rem; }
+.option-grid small { margin-top: 4px; color: var(--muted); font-size: .68rem; line-height: 1.3; }
+.section-intro { margin: 15px 0 4px; color: var(--muted); font-size: .76rem; line-height: 1.45; }
+.channel-list { display: grid; margin-top: 8px; }
+.channel-row {
+  min-width: 0; min-height: 70px; display: grid; grid-template-columns: 42px minmax(0, 1fr) auto;
+  align-items: center; gap: 11px; border-bottom: 1px solid var(--line);
+}
+.channel-row:last-child { border-bottom: 0; }
+.channel-logo {
+  width: 40px; height: 40px; display: grid; place-items: center; border-radius: var(--radius);
+  color: #fff; font-weight: 850; box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
+}
+.channel-logo.whatsapp { background: #27b86f; }
+.channel-logo.telegram { background: #299bd7; }
+.channel-logo.wechat { background: #17b45b; }
+.channel-copy { min-width: 0; }
+.channel-copy strong, .channel-copy small { display: block; }
+.channel-copy strong { font-size: .84rem; }
+.channel-copy small { margin-top: 3px; color: var(--muted); font-size: .69rem; }
+.channel-connect {
+  min-width: 68px; min-height: 42px; padding: 0 12px; border: 1px solid var(--line);
+  border-radius: 12px; background: var(--surface); color: var(--ink);
+  font-size: .72rem; font-weight: 750; cursor: pointer;
+}
+.channel-connect:active { transform: scale(.97); }
+.channel-status { color: var(--muted); line-height: 1.45; }
+
+/* Honest placeholder for a channel that doesn't exist yet -- not a button,
+   nothing to press, no click handler pretending otherwise. */
+.channel-soon {
+  min-width: 68px; padding: 5px 10px; text-align: center;
+  border: 1px dashed var(--line-2); border-radius: 999px;
+  color: var(--muted); font-size: .66rem; font-weight: 700;
+  letter-spacing: .02em; text-transform: uppercase;
+}
+
+/* WhatsApp pairing: a QR code and, once linked, the number it's paired to.
+   Sits inside the same card rather than a modal -- Settings pages here are
+   already single-column and full-width, a modal would just be a second way
+   to do the same thing. */
+.whatsapp-panel {
+  margin-top: 12px; padding: 16px; text-align: center;
+  border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--surface-soft);
+}
+.whatsapp-panel-body p { margin: 0 0 10px; color: var(--muted); font-size: .78rem; line-height: 1.5; }
+.whatsapp-panel-body p.whatsapp-tip {
+  padding: 8px 10px; border-radius: 10px;
+  background: var(--surface); font-size: .72rem;
+}
+.whatsapp-panel-body p.whatsapp-tip-warn {
+  background: var(--accent-soft); color: var(--ink); font-weight: 650;
+}
+.whatsapp-panel-body strong { color: var(--ink); }
+.whatsapp-qr {
+  width: 200px; height: 200px; margin: 0 auto 12px; display: block;
+  border: 1px solid var(--line); border-radius: 12px; background: #fff; padding: 10px;
+}
+.whatsapp-connected {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  font-size: .86rem; font-weight: 700; color: var(--ink);
+}
+.whatsapp-connected i {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--ok);
+  box-shadow: 0 0 0 4px var(--dot-ring);
+}
+.whatsapp-error { color: var(--error); }
+.whatsapp-panel-close {
+  margin-top: 10px; padding: 7px 14px; border: 1px solid var(--line);
+  border-radius: 10px; background: var(--surface); color: var(--ink);
+  font-size: .72rem; font-weight: 700; cursor: pointer;
+}
+.whatsapp-unlink {
+  margin-top: 10px; padding: 7px 14px; border: 1px solid var(--line);
+  border-radius: 10px; background: var(--surface); color: var(--error);
+  font-size: .72rem; font-weight: 700; cursor: pointer;
+}
+.primary-button {
+  width: 100%; min-height: 50px; margin-top: 18px; border: 0; border-radius: var(--radius);
+  background: var(--accent); color: var(--ink); font-weight: 800; cursor: pointer;
+  box-shadow: 0 6px 16px rgba(232,150,122,.23);
+}
+.primary-button:disabled { opacity: .55; cursor: wait; }
+.form-status { min-height: 16px; margin: 9px 1px 0; color: #347762; font-size: .75rem; }
+.error-text { color: var(--danger); }
+.status-pill {
+  display: inline-flex; margin-top: 16px; padding: 6px 10px; border-radius: 999px;
+  background: #eee7f5; color: var(--muted); font-size: .67rem; font-weight: 800;
+}
+.status-pill.good { background: var(--ok-tint); color: var(--ok-ink); }
+.credit-balance { margin: 16px 0 0; font-size: clamp(2.4rem, 12vw, 4rem); font-weight: 780; letter-spacing: -.07em; }
+.balance-label { margin: 2px 0; color: var(--muted); font-size: .75rem; }
+.microcopy { margin: 10px 1px 0; color: var(--muted); font-size: .7rem; line-height: 1.5; }
+.warning-copy {
+  margin: 12px 0 0; padding: 10px 11px; border-radius: 10px;
+  background: var(--coral-tint); color: var(--ink); font-size: .7rem; line-height: 1.45;
+}
+.access-row {
+  min-height: 76px; display: flex; justify-content: space-between; align-items: center; gap: 16px;
+  border-bottom: 1px solid var(--line);
+}
+.access-row strong, .access-row small { display: block; }
+.access-row strong { font-size: .82rem; }
+.access-row small { max-width: 25rem; margin-top: 4px; color: var(--muted); font-size: .7rem; line-height: 1.35; }
+.switch { margin: 0 !important; flex: none; }
+.switch input { position: absolute; opacity: 0; pointer-events: none; }
+.switch span {
+  width: 48px; height: 28px; display: block; position: relative; border-radius: 999px;
+  background: var(--line); cursor: pointer; transition: background .2s ease;
+}
+.switch span::after {
+  content: ""; width: 22px; height: 22px; position: absolute; top: 3px; left: 3px;
+  border-radius: 50%; background: white; box-shadow: 0 2px 6px rgba(22, 19, 17,.2); transition: transform .2s ease;
+}
+.switch input:checked + span { background: var(--on); }
+.switch input:checked + span::after { transform: translateX(20px); }
+.switch input:focus-visible + span { outline: 3px solid rgba(52, 0, 117, .25); outline-offset: 2px; }
+.remote-box {
+  margin-top: 12px; padding: 8px 8px 8px 12px; display: flex; align-items: center; gap: 8px;
+  border-radius: 12px; background: var(--surface-soft); font-size: .7rem;
+}
+.remote-box a { flex: 1; min-width: 0; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.version-note { padding: 18px; text-align: center; color: var(--faint); font: .66rem/1.4 var(--font-mono); }
+
+.bottom-nav {
+  position: fixed; z-index: 20; left: 50%; bottom: 0; transform: translateX(-50%);
+  width: min(100%, 900px); height: calc(72px + var(--safe-bottom));
+  padding: 7px 18px var(--safe-bottom); display: grid; grid-template-columns: repeat(3, 1fr);
+  background: rgba(251, 247, 235,.94); backdrop-filter: blur(18px);
+  border-top: 1px solid rgba(22, 19, 17,.1);
+}
+.bottom-nav button {
+  min-width: 64px; min-height: 58px; border: 0; background: transparent; color: var(--faint);
+  display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 4px;
+  cursor: pointer; font-size: .64rem; font-weight: 700;
+}
+.bottom-nav svg {
+  width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+.bottom-nav button.active { color: var(--ink); }
+.bottom-nav button.active svg { stroke-width: 2.4; }
+
+@keyframes enter { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+@keyframes blink { 0%, 70%, 100% { opacity: .25; } 35% { opacity: 1; } }
+
+@media (min-width: 620px) {
+  .view { padding-inline: 34px; padding-top: 36px; }
+  .chat-view.active { padding-bottom: 16px; }
+  .app-grid { grid-template-columns: 1fr 1fr; }
+  .field-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .topbar { padding-inline: 34px; }
+  .setting-body { padding-inline: 22px; }
+}
+
+@media (min-width: 940px) {
+  body { padding: 22px 0; }
+  .app-shell { height: calc(100dvh - 44px); border-radius: 28px; box-shadow: 0 22px 70px rgba(22, 19, 17,.16); }
+  .chat-view.active { height: calc(var(--vvh, 100dvh) - 178px); min-height: 0; }
+  .bottom-nav { bottom: 22px; border-radius: 0 0 28px 28px; }
+}
+
+@media (max-width: 390px) {
+  .view { padding-inline: 13px; }
+  .view-heading h1 { font-size: 1.9rem; }
+  .option-grid { grid-template-columns: 1fr; }
+  .setting-head { grid-template-columns: 40px minmax(0, 1fr) 20px; gap: 9px; padding-inline: 11px; }
+  .setting-icon { width: 40px; height: 40px; }
+  .message { max-width: 94%; }
+  .message-avatar { width: 25px; height: 25px; }
+  .channel-row { grid-template-columns: 38px minmax(0, 1fr) auto; gap: 8px; }
+  .channel-logo { width: 36px; height: 36px; border-radius: 11px; }
+}
+
+@media (max-height: 650px) {
+  .chat-view.active { padding-top: 14px; }
+  .chat-heading { margin-bottom: 10px; }
+  .chat-heading .eyebrow { display: none; }
+  .chat-heading h1 { font-size: 1.65rem; }
+  .icon-button { width: 40px; height: 40px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+
+/* ── Inline explanations ──────────────────────────────────────────────
+   Tap-to-open rather than hover-only: this dashboard is used from a
+   phone far more often than a desktop, where :hover never fires. */
+.label-row {
+  display: flex; align-items: center; gap: 7px;
+  margin: 16px 0 7px;
+}
+.label-row label, .label-row .label-text {
+  margin: 0; font-size: .75rem; font-weight: 750; color: var(--muted);
+}
+.info-btn {
+  width: 17px; height: 17px; flex: none; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--line); border-radius: 50%;
+  background: var(--surface-soft); color: var(--muted);
+  font: 700 .62rem/1 var(--font-mono);
+  cursor: pointer; transition: background .15s ease, color .15s ease;
+}
+.info-btn:hover, .info-btn[aria-expanded="true"] {
+  background: var(--accent-soft); border-color: var(--accent); color: var(--ink);
+}
+.info-btn:focus-visible { outline: 3px solid rgba(52, 0, 117, .25); outline-offset: 2px; }
+/* The labelled sibling of .info-btn. Same job, but it carries words, so it
+   cannot inherit the 17px circle -- that is what wrapped "What you give up"
+   one word per line. */
+.info-link {
+  display: inline-flex; align-items: center; gap: 5px;
+  max-width: 100%; margin-top: 9px; padding: 0;
+  border: 0; background: none; color: var(--muted);
+  font: inherit; font-size: .72rem; line-height: 1.4;
+  text-align: left; cursor: pointer;
+}
+.info-link:hover, .info-link[aria-expanded="true"] { color: var(--accent); }
+.info-link:focus-visible { outline: 3px solid rgba(52, 0, 117, .25); outline-offset: 2px; border-radius: 5px; }
+
+.info-bubble {
+  display: none; margin: 8px 0 0; padding: 11px 12px;
+  border: 1px solid var(--line); border-left: 3px solid var(--accent);
+  border-radius: 11px; background: var(--surface-soft);
+  color: var(--ink); font-size: .71rem; line-height: 1.55;
+}
+.info-bubble.show { display: block; animation: enter .18s ease both; }
+.info-bubble strong { font-weight: 750; }
+.info-bubble code {
+  padding: 1px 5px; border-radius: 5px; background: var(--surface);
+  font: .95em/1 var(--font-mono);
+}
+
+/* Key source chooser (Sudo credits vs your own key) */
+.choice-row { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 7px; }
+.choice-row button {
+  min-height: 62px; padding: 11px; text-align: left; cursor: pointer;
+  border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-soft);
+}
+.choice-row button.selected { border: 2px solid var(--accent); background: var(--accent-soft); padding: 10px; }
+.choice-row strong, .choice-row small { display: block; }
+.choice-row strong { font-size: .78rem; }
+.choice-row small { margin-top: 3px; color: var(--muted); font-size: .66rem; line-height: 1.3; }
+.key-state {
+  margin: 9px 0 0; padding: 8px 11px; border-radius: 10px;
+  background: var(--surface-soft); color: var(--muted);
+  font: .68rem/1.45 var(--font-mono);
+}
+
+/* Add-to-home-screen nudge — shown once, only in a normal browser tab */
+.install-hint {
+  width: min(100%, 720px); margin: 10px auto -6px; padding: 11px 13px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  border: 1px solid var(--line); border-left: 3px solid var(--coral);
+  border-radius: var(--radius); background: var(--color-bg-raised); box-shadow: var(--shadow);
+}
+.install-hint strong { display: block; font-size: .82rem; }
+.install-hint small { display: block; margin-top: 3px; color: var(--muted); font-size: .7rem; line-height: 1.4; }
+.install-hint button {
+  width: 32px; height: 32px; flex: none; border: 0; border-radius: 50%;
+  background: transparent; color: var(--muted); font-size: 1.2rem; cursor: pointer;
+}
+
+/* Agent files */
+.agent-file { border: 1px solid var(--line); border-radius: 12px; margin-top: 9px; overflow: hidden; background: var(--surface-soft); }
+.agent-file > button {
+  width: 100%; display: flex; align-items: center; gap: 9px; padding: 11px 12px;
+  border: 0; background: transparent; cursor: pointer; text-align: left;
+}
+.agent-file .fname { flex: 1; font: 650 .75rem/1 var(--font-mono); }
+.agent-file .fsize { color: var(--faint); font: .66rem/1 var(--font-mono); }
+.agent-file pre {
+  display: none; margin: 0; padding: 12px 13px; border-top: 1px solid var(--line);
+  background: var(--color-bg-sunken); color: var(--ink-2);
+  font: .68rem/1.55 var(--font-mono); white-space: pre-wrap; overflow-wrap: anywhere;
+  max-height: 340px; overflow-y: auto;
+}
+.agent-file.open pre { display: block; }
+
+/* First-run: two questions, nothing else on screen */
+.welcome-view.active {
+  min-height: calc(100dvh - 62px - var(--safe-top));
+  display: flex; align-items: center; justify-content: center;
+  padding: 26px 20px calc(30px + var(--safe-bottom));
+}
+.welcome-inner { width: min(100%, 440px); }
+.welcome-inner h1 {
+  margin: 4px 0 8px; font-size: clamp(1.9rem, 8vw, 2.6rem);
+  line-height: 1.05; letter-spacing: -.05em; font-weight: 750;
+}
+.welcome-inner .lede { margin: 0 0 20px; font-size: .88rem; }
+.welcome-inner label {
+  display: block; margin: 16px 0 6px;
+  font: 750 .72rem/1 var(--font-mono); color: var(--muted);
+}
+.welcome-inner input {
+  width: 100%; min-height: 50px; padding: 12px 14px;
+  border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--surface); color: var(--ink); font-size: 1rem;
+}
+.welcome-inner .primary-button { margin-top: 22px; }
+
+/* Offer to go deeper — only after they've met the agent */
+/* Shown above the composer while nothing can actually answer yet -- the
+   on-device model still installing, most commonly. Without this the only
+   feedback was the chat title's permanently-optimistic "is ready.", so a
+   message sent during that window just sat on a generic "thinking" dot
+   animation with no indication anything unusual was happening. */
+.model-loading {
+  width: min(100%, 720px); margin: 0 auto 14px; padding: 10px 13px;
+  display: flex; align-items: center; gap: 9px;
+  border: 1px solid var(--line); border-left: 3px solid var(--accent);
+  border-radius: var(--radius); background: var(--color-bg-raised);
+  color: var(--muted); font-size: .74rem; line-height: 1.45;
+}
+.model-loading-dot {
+  width: 7px; height: 7px; border-radius: 50%; flex: none;
+  background: var(--accent); animation: blink 1.1s infinite ease-in-out;
+}
+
+.setup-more {
+  width: min(100%, 720px); margin: 0 auto 14px; padding: 11px 12px;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  border: 1px solid var(--line); border-left: 3px solid var(--violet);
+  border-radius: var(--radius); background: var(--color-bg-raised);
+}
+.setup-more strong { display: block; font-size: .8rem; }
+.setup-more small { display: block; margin-top: 3px; color: var(--muted); font-size: .69rem; line-height: 1.4; }
+.setup-more-actions { display: flex; align-items: center; gap: 4px; flex: none; }
+.setup-more-actions button:first-child {
+  padding: 8px 11px; border: 1px solid var(--line); border-radius: 10px;
+  background: var(--surface-soft); font-size: .72rem; font-weight: 700; cursor: pointer;
+}
+.setup-more-actions button:last-child {
+  width: 30px; height: 30px; border: 0; border-radius: 50%;
+  background: transparent; color: var(--muted); font-size: 1.15rem; cursor: pointer;
+}
+
+/* Welcome: step dots */
+.welcome-steps { display: flex; gap: 6px; margin-bottom: 18px; }
+.welcome-steps span {
+  width: 10px; height: 8px; border-radius: 999px; background: var(--line);
+  transition: width .2s var(--ease-out), background .2s var(--ease-out);
+}
+.welcome-steps span.on { width: 28px; background: var(--ink); }
+
+/* Welcome: how-to-install panel */
+.how-box {
+  margin: 18px 0 4px; padding: 15px 16px;
+  border: 1px solid var(--line); border-left: 3px solid var(--coral);
+  border-radius: var(--radius); background: var(--color-bg-raised);
+}
+.how-head { font: 750 .7rem/1 var(--font-mono); color: var(--muted); margin-bottom: 10px; }
+.how-box ol { margin: 0; padding-left: 19px; }
+.how-box li { font-size: .84rem; line-height: 1.5; margin-bottom: 7px; }
+.how-box li:last-child { margin-bottom: 0; }
+.how-box .microcopy { margin-top: 11px; padding-top: 10px; border-top: 1px solid var(--line); }
+
+.ghost-button {
+  width: 100%; min-height: 44px; margin-top: 9px; padding: 10px;
+  border: 0; border-radius: 12px; background: transparent;
+  color: var(--muted); font-size: .82rem; font-weight: 650; cursor: pointer;
+}
+.ghost-button:hover { color: var(--ink); }
+
+/* Step chip in the header, per the Stitch setup screens */
+.step-chip {
+  padding: 7px 14px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--surface-low);
+  color: var(--ink-2); font: 600 .68rem/1 var(--font-mono); letter-spacing: .06em;
+}
+.step-chip b { color: var(--primary); }
+
+/* Primary action — deep purple, per Stitch */
+.primary-button {
+  background: var(--primary); color: var(--on-primary);
+  border: 0; border-radius: var(--radius);
+  box-shadow: 0 4px 14px rgba(52, 0, 117, .18);
+  transition: background .2s var(--ease-out), box-shadow .2s var(--ease-out), transform .06s;
+}
+.primary-button:hover { background: var(--primary-container); box-shadow: var(--shadow-glass-hover); }
+.primary-button:active { transform: scale(.985); }
+
+/* Cards lift the way the Stitch surfaces do */
+.setting-card, .mini-app, .how-box, .install-hint, .setup-more, .agent-file {
+  box-shadow: var(--shadow-glass);
+}
+.setting-card { border-color: var(--line); background: var(--surface); }
+.option-grid button.selected, .choice-row button.selected {
+  border: 2px solid var(--primary); background: var(--primary-fixed);
+}
+.welcome-steps span.on { background: var(--primary); }
+.info-btn:hover, .info-btn[aria-expanded="true"] {
+  background: var(--primary-fixed); border-color: var(--primary); color: var(--primary);
+}
+.info-bubble { border-left-color: var(--primary); }
+.how-box { border-left-color: var(--primary); }
+
+/* ── Themes ───────────────────────────────────────────────────────────
+   Everything downstream derives from this handful of tokens, so a theme
+   only has to restate them. Set data-theme on <html>.
+   No green in any of them: on/active stays coral, confirmations purple. */
+
+/* Minimal — near-monochrome, colour only where it carries meaning */
+:root[data-theme="minimal"] {
+  /* Pure white page with grey cards — the inverse of default's warm page and
+     white cards. The two used to differ by #f9f9f9 vs #fafafa, one value in
+     255, so picking Minimal appeared to do nothing at all. */
+  --background: #ffffff;
+  --surface: #f6f6f7;
+  --surface-low: #efeff1;
+  --surface-container: #e7e7ea;
+  --ink: #18181b;
+  --ink-2: #52525b;
+  --ink-3: #8b8b93;
+  --ink-4: #b4b4bb;
+  --line: #e4e4e7;
+  --line-2: #d4d4d8;
+  --primary: #27272a;
+  --primary-container: #3f3f46;
+  --primary-fixed: #e8e8ea;
+  /* Genuinely monochrome: --accent maps to --coral, so leaving it orange kept
+     every switch, dot and the logo block looking exactly like the default
+     theme. "Quiet" is the whole point of this one. */
+  --coral: #3f3f46;
+  --coral-tint: #ececee;
+  --violet-tint: #ececed;
+  --sky-tint: #eceef0;
+  --amber-tint: #f1efe9;
+  --wash-1: transparent;
+  --wash-2: transparent;
+  --bubble-shadow: 0 2px 8px rgba(0,0,0,.04);
+  --dot-ring: rgba(39,39,42,.12);
+}
+
+/* Terminal — dark, for people who live in one */
+:root[data-theme="terminal"] {
+  --background: #0f0f11;
+  --surface: #17171a;
+  --surface-low: #1d1d21;
+  --surface-container: #24242a;
+  --ink: #ededf0;
+  --ink-2: #a9a9b4;
+  --ink-3: #7b7b88;
+  --ink-4: #55555f;
+  --line: #2a2a31;
+  --line-2: #3a3a44;
+  --primary: #fe6944;
+  --primary-container: #ff8b6d;
+  --primary-fixed: #3a1f18;
+  --on-primary: #17171a;
+  --coral: #fe6944;
+  --coral-tint: #3a1f18;
+  --violet-tint: #241f3a;
+  --sky-tint: #16242e;
+  --amber-tint: #2e2617;
+  --veil: rgba(255, 255, 255, .02);
+  --topbar-bg: rgba(15, 15, 17, .82);
+  --topbar-line: rgba(42, 42, 49, .9);
+  --wash-1: rgba(254, 105, 68, .07);
+  --wash-2: rgba(185, 148, 255, .05);
+  --bubble-shadow: 0 4px 16px rgba(0, 0, 0, .4);
+  --dot-ring: rgba(254, 105, 68, .18);
+  --shadow-glass: 0 8px 32px rgba(0, 0, 0, .45);
+  --shadow-glass-hover: 0 12px 48px rgba(0, 0, 0, .6);
+}
+
+/* Midnight — dark, violet-led. (The Stitch "Matrix" board was green,
+   which is out per the no-green rule, so this is its stand-in.) */
+:root[data-theme="midnight"] {
+  --background: #0d0b14;
+  --surface: #161222;
+  --surface-low: #1c1729;
+  --surface-container: #241e33;
+  --ink: #ece9f5;
+  --ink-2: #a9a2c0;
+  --ink-3: #7b749b;
+  --ink-4: #565073;
+  --line: #2a2440;
+  --line-2: #3a3355;
+  --primary: #b994ff;
+  --primary-container: #d3bbff;
+  --primary-fixed: #2a1f47;
+  --on-primary: #1a1430;
+  --coral: #fe6944;
+  --coral-tint: #3a1f18;
+  --violet-tint: #2a1f47;
+  --sky-tint: #16202e;
+  --amber-tint: #2e2617;
+  --veil: rgba(255, 255, 255, .02);
+  --topbar-bg: rgba(13, 11, 20, .82);
+  --topbar-line: rgba(42, 36, 64, .9);
+  --wash-1: rgba(254, 105, 68, .07);
+  --wash-2: rgba(185, 148, 255, .05);
+  --bubble-shadow: 0 4px 16px rgba(0, 0, 0, .4);
+  --dot-ring: rgba(185, 148, 255, .2);
+  --shadow-glass: 0 8px 32px rgba(0, 0, 0, .5);
+  --shadow-glass-hover: 0 12px 48px rgba(0, 0, 0, .65);
+}
+
+/* Swatches in the picker */
+.theme-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 7px; }
+.theme-opt {
+  padding: 0; overflow: hidden; cursor: pointer; text-align: left;
+  border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface);
+}
+.theme-opt.selected { border: 2px solid var(--primary); }
+.theme-swatch { height: 54px; display: flex; }
+.theme-swatch i { flex: 1; }
+.theme-opt strong { display: block; padding: 9px 11px 3px; font-size: .78rem; }
+.theme-opt small { display: block; padding: 0 11px 10px; color: var(--muted); font-size: .66rem; line-height: 1.3; }
+
+/* ==========================================================================
+   Desktop shell — from the Stitch "Setup Dashboard (Desktop)" screen.
+   Metrics taken from that export: 280px rail, 1400px content cap, and the
+   12-column 8/4 split. Built on our own tokens rather than the design's
+   fixed light palette, so all four themes still work at this width.
+   ========================================================================== */
+
+.side-rail { display: none; }
+
+@media (min-width: 1024px) {
+  /* The 940px block floats the shell as a rounded card; the desktop design
+     is full-bleed with the rail against the edge, so undo that here. */
+  body { padding: 0; }
+  .app-shell {
+    /* The mobile shell is a centred 900px column; desktop is full-bleed with
+       the rail on the edge, so the cap moves to the content instead. */
+    width: 100%; max-width: none;
+    min-height: 100dvh; border-radius: 0; box-shadow: none;
+    display: grid; grid-template-columns: 280px minmax(0, 1fr); grid-template-rows: auto 1fr;
+  }
+  .topbar { grid-column: 2; grid-row: 1; width: auto; }
+  #app-main { grid-column: 2; grid-row: 2; min-height: 0; overflow-y: auto; }
+  .bottom-nav { display: none; }
+  /* Fill the column so the composer anchors to the bottom, as on mobile —
+     the mobile calc subtracts the bottom nav, which is gone at this width. */
+  .chat-view.active { height: calc(var(--vvh, 100dvh) - 62px - var(--safe-top)); min-height: 0; }
+
+  .side-rail {
+    grid-column: 1; grid-row: 1 / -1;
+    display: flex; flex-direction: column;
+    border-right: 1px solid var(--line); background: var(--surface);
+    position: sticky; top: 0; height: 100dvh;
+  }
+  .rail-brand { padding: 22px 20px; }
+  .rail-brand .wordmark { font-size: 1.25rem; }
+  .rail-section { padding: 6px 14px; flex-grow: 1; }
+  .rail-label {
+    margin: 10px 8px 8px; color: var(--muted);
+    font: 600 .62rem/1 var(--font-mono); letter-spacing: .1em; text-transform: uppercase;
+  }
+  .rail-nav { display: flex; flex-direction: column; gap: 6px; }
+  .rail-nav button {
+    position: relative; display: flex; align-items: center; gap: 12px;
+    padding: 11px 12px; border: 1px solid transparent; border-radius: 12px;
+    background: none; color: var(--muted); font-size: .87rem; font-weight: 650;
+    cursor: pointer; text-align: left; transition: background .18s var(--ease-out), color .18s var(--ease-out);
+  }
+  .rail-nav button:hover { background: var(--surface-soft); color: var(--ink); }
+  .rail-icon {
+    width: 32px; height: 32px; display: grid; place-items: center; flex: none;
+    border-radius: 9px; background: var(--surface-soft); color: inherit;
+  }
+  .rail-icon svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+  /* Active item: bordered, lifted, with the design's left indicator bar. */
+  .rail-nav button.active {
+    border-color: var(--line-2); background: var(--surface-soft);
+    color: var(--ink); box-shadow: var(--shadow-glass);
+  }
+  .rail-nav button.active::before {
+    content: ""; position: absolute; left: -1px; top: 50%; transform: translateY(-50%);
+    width: 3px; height: 30px; border-radius: 0 3px 3px 0; background: var(--primary);
+  }
+  .rail-nav button.active .rail-icon { background: var(--primary); color: var(--on-primary); }
+
+  .rail-foot { display: flex; align-items: center; gap: 11px; padding: 18px 20px; border-top: 1px solid var(--line); }
+  .rail-avatar {
+    width: 38px; height: 38px; display: grid; place-items: center; flex: none;
+    border-radius: 50%; background: var(--primary); color: var(--on-primary);
+    font-weight: 750; text-transform: lowercase;
+  }
+  .rail-who { display: flex; flex-direction: column; min-width: 0; }
+  .rail-who span { font-size: .84rem; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rail-who small { color: var(--muted); font-size: .68rem; }
+}
+
+/* Content is capped and centred at desktop width. The device panel that
+   used to sit beside it is gone: it showed CPU, load and uplink figures that
+   were invented, and a made-up number is worse than no number. */
+@media (min-width: 1280px) {
+  #app-main { max-width: 1180px; margin-inline: auto; width: 100%; }
+}
+
+/* ==========================================================================
+   Settings as pages. Tapping a row replaces the list with that one section,
+   rather than expanding it in place — the list had grown long enough that an
+   opened section pushed everything else off-screen.
+   ========================================================================== */
+.detail-bar {
+  max-width: 720px; margin: 0 auto 16px;
+  display: flex; align-items: center; gap: 12px;
+}
+.detail-bar button {
+  width: 42px; height: 42px; flex: none; display: grid; place-items: center;
+  border: 1px solid var(--line); border-radius: 50%;
+  background: var(--surface); cursor: pointer;
+}
+.detail-bar button svg {
+  width: 19px; height: 19px; fill: none; stroke: currentColor;
+  stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round;
+}
+.detail-bar h2 { margin: 0; font-size: 1.5rem; letter-spacing: -.03em; font-weight: 750; }
+
+/* In list mode every body is closed; the chevron says "goes somewhere". */
+.setting-card .setting-body { display: none; }
+.settings-list.detail-open .setting-card:not(.active-page) { display: none; }
+.settings-list.detail-open .settings-group { display: none; }
+.setting-card.active-page { border: 0; background: none; box-shadow: none; }
+.setting-card.active-page .setting-head { display: none; }
+.setting-card.active-page .setting-body { display: block; padding-inline: 0; }
+.settings-subgroup {
+  margin: 26px 0 10px; padding-top: 18px; border-top: 1px solid var(--line);
+  color: var(--ink-3); font: 700 .62rem/1 var(--font-mono);
+  letter-spacing: .06em; text-transform: uppercase;
+}
+
+/* Provider key rows */
+.provider-row { margin-top: 16px; }
+.provider-row label { display: block; font-size: .84rem; font-weight: 700; }
+.provider-row small { display: block; margin-top: 5px; color: var(--muted); font-size: .68rem; }
+.saved-tag {
+  margin-left: 6px; color: var(--primary);
+  font: 600 .66rem/1 var(--font-mono); font-style: normal;
+}
+
+/* Removing a saved key is destructive and rare, so it reads as a link rather
+   than competing with Save for attention. */
+.link-danger {
+  padding: 0; border: 0; background: none; cursor: pointer;
+  color: var(--danger); font: inherit; font-size: inherit;
+  text-decoration: underline; text-underline-offset: 2px;
+}
+
+/* A value you are meant to read off the screen and type somewhere else, so it
+   is monospaced and selectable in one tap. */
+.addr-row { display: flex; align-items: stretch; gap: 8px; margin-top: 9px; }
+.addr-row code {
+  flex: 1; min-width: 0; display: flex; align-items: center;
+  padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--surface-soft); color: var(--ink);
+  font: 600 .86rem/1 var(--font-mono);
+  -webkit-user-select: all; user-select: all;
+  overflow-x: auto; white-space: nowrap;
+}
+.addr-row button {
+  flex: none; min-width: 76px; padding: 0 14px;
+  border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--surface); color: var(--ink);
+  font-size: .78rem; font-weight: 700; cursor: pointer;
+}
+.addr-row button:hover { background: var(--surface-soft); }

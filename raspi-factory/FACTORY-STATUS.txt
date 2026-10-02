@@ -1,0 +1,98 @@
+═══════════════════════════════════════════════
+ SUDO FACTORY — STATUS (user flow + PicoClaw)
+═══════════════════════════════════════════════
+
+TARGET FLOW
+───────────
+  1. Plug Pi → hotspot RaspiSetup appears
+  2. Captive portal → pick home WiFi → connect
+  3. Pi reboots → cloud registers device (background)
+  4. User opens http://raspberrypi.local/
+  5. Onboarding: your name, agent name, personality, model
+  6. Chat with real AI (PicoClaw + OpenRouter)
+  7. Billing at /billing.html (Stripe, needs Vercel deploy)
+
+═══════════════════════════════════════════════
+ DONE ✅
+═══════════════════════════════════════════════
+
+WiFi captive portal (real nmcli connect)
+  wifi-setup/app.py + templates
+  Opens the local dashboard directly after setup
+
+PicoClaw pre-installed on Pi (offline factory)
+  picoclaw/picoclaw binary v0.3.1 arm64 (~33MB on SD)
+  scripts/download-picoclaw.sh for re-download on Mac
+  systemd picoclaw-gateway.service
+
+Agent onboarding (real, persisted)
+  /onboarding.html → saves /opt/sudo/config.json
+  personality + model selection
+
+Real chat UI
+  /chat.html → POST /api/agent/chat → picoclaw agent
+
+Routing
+  / → login (if needed) → onboarding or /chat.html
+  /dashboard.html → legacy bundled UI (apps mock)
+  /billing.html → Stripe checkout via Pi proxy
+
+Security hardening (offline-capable)
+  device_secret at install (no internet)
+  Passwordless dashboard; public links must be treated as bearer secrets
+  Rate limits (login + chat), CORS lock, security headers
+  Cloud API requires X-Device-Id + X-Device-Secret
+  Billing proxied through Pi (secret never in browser)
+  Public mode: Caddy HTTPS + ufw + bind 127.0.0.1:8080
+    sudo sudo-enable-public.sh your.domain.com
+
+Cloud + OpenRouter per device
+  sudo-cloud-init → register with device secret → openrouter key
+  configure-picoclaw.sh → SOUL.md + picoclaw config
+
+No npm/node/npx on Pi — only python3, bash, curl, picoclaw binary
+
+═══════════════════════════════════════════════
+ NOT DONE YET ⚠️
+═══════════════════════════════════════════════
+
+Vercel API deploy (you: npx vercel login → npm run deploy)
+  Must redeploy after device-secret auth changes
+  Without this: billing + cloud registration fail on real Pi
+  Local test: npm run local on Mac + point Pi api.url to Mac IP
+
+Stripe webhook after deploy
+
+Schema migrate: devices.secret_hash (schema.sql has IF NOT EXISTS)
+
+Legacy dashboard (index.html) still has mock WiFi + mock chat
+  Use /chat.html for real chat; /dashboard.html for apps UI
+
+Chat multi-turn memory
+  Each message is picoclaw agent -m (single turn for now)
+  Gateway WebSocket can improve this later
+
+Model list hardcoded (3 OpenRouter models in template)
+  Can expand in picoclaw/config.template.json
+
+OpenRouter credits
+  User needs subscription/trial via billing before chat works
+
+Public access (manual after WiFi — needs domain + router):
+  sudo sudo-enable-public.sh your.domain.com
+  Port-forward 80+443 only on a trusted deployment
+
+═══════════════════════════════════════════════
+ PI REQUIREMENTS (nothing extra to install)
+═══════════════════════════════════════════════
+
+Pre-installed by factory:
+  python3, picoclaw, curl (OS default)
+
+NOT on Pi:
+  node, npm, npx, vercel, git
+
+Internet needed AFTER home WiFi:
+  cloud registration, OpenRouter API, Stripe billing
+
+═══════════════════════════════════════════════

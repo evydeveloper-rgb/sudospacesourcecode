@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/sudo-design-system-3b00530e-d247-4de9-ae30-74e1e8ea2cde/preview/_shared.css">
+  <link rel="stylesheet" href="_ds/sudo-design-system-3b00530e-d247-4de9-ae30-74e1e8ea2cde/colors_and_type.css">
+  <script src="_ds/sudo-design-system-3b00530e-d247-4de9-ae30-74e1e8ea2cde/_ds_bundle.js"></script>
+  <style>
+    @keyframes sudoDotBlink{0%,70%,100%{opacity:.25}35%{opacity:1}}
+    html,body{margin:0;height:auto;overflow-y:auto}
+    a{color:var(--sky-2);text-decoration:underline}
+    a:hover{color:var(--ink)}
+    ::-webkit-scrollbar{width:0;height:0}
+  </style>
+</helmet>
+<div style="min-height:100vh;background:var(--paper-2);background-image:radial-gradient(circle,rgba(22,19,17,.09) 1px,transparent 1px);background-size:22px 22px;display:flex;align-items:flex-start;justify-content:center;padding:32px 20px;box-sizing:border-box;overflow-y:auto">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:16px">
+    <div style="font-family:var(--font-mono);font-size:12px;color:var(--ink-3);letter-spacing:.04em"><span style="color:var(--violet)">$</span> sudo mobile · redesign</div>
+    <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" hint-size="402,874">
+      <div style="height:100%;display:flex;flex-direction:column;background:var(--paper);overflow:hidden;position:relative;font-family:var(--font-sans);color:var(--ink)">
+        <div style="height:54px;flex:none"></div>
+
+        <sc-if value="{{ isSetup }}" hint-placeholder-val="{{ true }}">
+          <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--paper-2);background-image:radial-gradient(circle,rgba(22,19,17,.1) 1px,transparent 1px);background-size:18px 18px">
+            <div style="padding:4px 20px 14px;display:flex;align-items:center;justify-content:space-between;flex:none">
+              <div style="font-family:var(--font-mono);font-size:11px;color:var(--ink-3);letter-spacing:.04em;white-space:nowrap;flex:none"><span style="color:var(--violet)">$</span> step {{ stepLabel }} / 02</div>
+              <div style="display:flex;gap:6px">
+                <div style="width:10px;height:8px;border-radius:999px;{{ dot0Style }}"></div>
+                <div style="width:10px;height:8px;border-radius:999px;{{ dot1Style }}"></div>
+              </div>
+            </div>
+
+            <div style="flex:1;overflow:auto;padding:6px 22px 18px">
+              <sc-if value="{{ isStep0 }}" hint-placeholder-val="{{ true }}">
+                <div style="font-family:var(--font-mono);font-size:11px;color:var(--ink-3);letter-spacing:.04em;margin-bottom:8px"><span style="color:var(--violet)">$</span> connect</div>
+                <h1 style="font-family:var(--font-sans);font-weight:600;font-size:25px;line-height:1.15;letter-spacing:-.02em;margin:0 0 6px">let's get you online.</h1>
+                <p style="color:var(--ink-2);font-size:14px;line-height:1.5;margin:0 0 16px">pick your home wi-fi. sudo only needs this once.</p>
+                <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
+                  <sc-for list="{{ wifiNetworks }}" as="net" hint-placeholder-count="3">
+                    <div onClick="{{ net.select }}" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;cursor:pointer;{{ net.rowStyle }}">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ink-2)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5a11 11 0 0 1 14 0"></path><path d="M8.5 16a6 6 0 0 1 7 0"></path><circle cx="12" cy="19.5" r="1" fill="var(--ink-2)"></circle></svg>
+                      <div style="flex:1;font-size:14px;font-weight:500">{{ net.ssid }}</div>
+                      <div style="font-family:var(--font-mono);font-size:11px;color:var(--ink-3)">{{ net.signal }}</div>
+                    </div>
+                  </sc-for>
+                </div>
+                <label style="display:block;font-family:var(--font-mono);font-size:11px;color:var(--ink-3);margin-bottom:6px">wi-fi password</label>
+                <input type="password" value="{{ wifiPassword }}" onChange="{{ setWifiPassword }}" placeholder="········" style="width:100%;box-sizing:border-box;font-size:15px;padding:12px 14px;border-radius:10px;border:1px solid var(--line-2);background:var(--color-bg-raised);color:var(--ink);outline:none"></input>
+              </sc-if>
+
+              <sc-if value="{{ isStep1 }}" hint-placeholder-val="{{ false }}">
+                <div style="font-family:var(--font-mono);font-size:11px;color:var(--ink-3);letter-spacing:.04em;margin-bottom:8px"><span style="color:var(--violet)">$</span> names</div>
+                <h1 style="font-weight:600;font-size:25px;line-height:1.15;letter-spacing:-.02em;margin:0 0 6px">say hi to each other.</h1>
+                <p style="color:var(--ink-2);font-size:14px;line-height:1.5;margin:0 0 16px">what should sudo call you — and what should you call them?</p>
+
+                <div style="background:var(--color-bg-raised);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:18px">
+                  <div style="font-size:12px;font-weight:600;margin-bottom:6px">once this restarts, open sudo here</div>
+                  <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+                    <div style="flex:1;min-width:0;font-family:var(--font-mono);font-size:13px;color:var(--ink-2);background:var(--color-bg-sunken);border-radius:9px;padding:9px 11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">http://raspberrypi.local</div>
+                    <button onClick="{{ copyLocalUrl }}" style="flex:none;padding:9px 12px;border-radius:9px;border:1px solid var(--line-2);background:var(--paper);font-size:12px;font-weight:600;cursor:pointer">{{ copyLabel }}</button>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><rect x="6" y="2" width="12" height="20" rx="2.5"></rect><line x1="11" y1="18" x2="13" y2="18"></line></svg>
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><rect x="3" y="4" width="18" height="12" rx="1.5"></rect><line x1="2" y1="20" x2="22" y2="20"></line></svg>
+                    <div style="font-size:11px;color:var(--ink-3);line-height:1.4">paste this into your phone's browser or your laptop's — same page either way, no app to install.</div>
+                  </div>
+                </div>
+
+                <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:18px">
+                  <div>
+                    <label style="display:block;font-family:var(--font-mono);font-size:11px;color:var(--ink-3);margin-bottom:6px">your name</label>
+                    <input value="{{ userName }}" onChange="{{ setUserName }}" placeholder="what should i call you?" style="width:100%;box-sizing:border-box;font-size:15px;padding:12px 14px;border-radius:10px;border:1px solid var(--line-2);background:var(--color-bg-raised);color:var(--ink);outline:none"></input>
+                  </div>
+                  <div>
+                    <label style="display:block;font-family:var(--font-mono);font-size:11px;color:var(--ink-3);margin-bottom:6px">their name</label>
+                    <input value="{{ agentName }}" onChange="{{ setAgentName }}" placeholder="sudo" style="width:100%;box-sizing:border-box;font-size:15px;padding:12px 14px;border-radius:10px;border:1px solid var(--line-2);background:var(--color-bg-raised);color:var(--ink);outline:none"></input>
+                  </div>
+                </div>
+                <div style="font-family:var(--font-mono);font-size:11px;color:var(--ink-3);margin-bottom:8px">their color</div>
+                <div style="display:flex;gap:12px">
+                  <sc-for list="{{ accentOptions }}" as="a" hint-placeholder-count="3">
+                    <div onClick="{{ a.select }}" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px">
+                      <div style="width:34px;height:34px;border-radius:50%;background:{{ a.hex }};{{ a.ringStyle }}"></div>
+                      <div style="font-size:10px;color:var(--ink-3)">{{ a.label }}</div>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-if>
+
+            </div>
+
+            <div style="padding:14px 20px 22px;display:flex;justify-content:space-between;align-items:center;flex:none">
+              <sc-if value="{{ hideBack }}" hint-placeholder-val="{{ true }}"><div style="width:64px"></div></sc-if>
+              <sc-if value="{{ showBack }}" hint-placeholder-val="{{ false }}">
+                <button onClick="{{ goStepBack }}" style="background:transparent;border:none;font-family:var(--font-sans);font-size:14px;color:var(--ink-2);cursor:pointer;padding:8px 4px">← back</button>
+              </sc-if>
+              <sc-if value="{{ isStep1 }}" hint-placeholder-val="{{ false }}">
+                <button onClick="{{ finishSetup }}" style="background:var(--phosphor);color:#fff;border:none;border-radius:12px;padding:12px 22px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.25)">say hi →</button>
+              </sc-if>
+              <sc-if value="{{ isStep0 }}" hint-placeholder-val="{{ true }}">
+                <button onClick="{{ goStepNext }}" disabled="{{ nextDisabled }}" style="background:var(--coral);color:#fff;border:none;border-radius:12px;padding:12px 22px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.25);opacity:{{ nextOpacity }}">next →</button>
+              </sc-if>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isApp }}" hint-placeholder-val="{{ false }}">
+          <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+            <div style="flex:none;padding:0 20px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line)">
+              <svg viewBox="0 0 320 100" role="img" aria-label="sudo" style="height:20px;width:64px;display:block"><text x="0" y="78" font-family="'JetBrains Mono', ui-monospace, monospace" font-size="92" font-weight="600" fill="var(--ink)" letter-spacing="-3">sudo</text><rect x="246" y="20" width="44" height="60" fill="var(--coral)"></rect></svg>
+              <div style="display:flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:11px;font-weight:600;color:var(--ink-3)">
+                <span style="width:7px;height:7px;border-radius:50%;background:var(--phosphor);box-shadow:0 0 0 3px var(--phosphor-tint);display:inline-block"></span>online
+              </div>
+            </div>
+
+            <div style="flex:1;overflow:auto">
+              <sc-if value="{{ isChat }}" hint-placeholder-val="{{ true }}">
+                <div style="height:100%;display:flex;flex-direction:column;padding:16px 18px 0;box-sizing:border-box">
+                  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;flex:none">
+                    <div>
+                      <div style="font-family:var(--font-mono);font-size:11px;color:var(--ink-3);letter-spacing:.04em;margin-bottom:2px">your teammate</div>
+                      <h1 style="font-weight:600;font-size:23px;letter-spacing:-.02em;margin:0">{{ agentName }} is ready.</h1>
+                    </div>
+                    <button onClick="{{ newChat }}" aria-label="new chat" style="width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--color-bg-raised);cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink-2)" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+                    </button>
+                  </div>
+
+                  <div style="flex:1;overflow:auto;display:flex;flex-direction:column;gap:12px;padding-bottom:10px">
+                    <sc-for list="{{ messages }}" as="m" hint-placeholder-count="2">
+                      <sc-if value="{{ m.isAgent }}" hint-placeholder-val="{{ true }}">
+                        <div style="display:flex;gap:8px;align-items:flex-end;max-width:86%">
+                          <div style="width:24px;height:24px;border-radius:8px;background:var(--ink);flex:none;display:flex;align-items:center;justify-content:center;gap:3px">
+                            <span style="width:3px;height:3px;border-radius:50%;background:{{ accentHex }};display:inline-block"></span>
+                            <span style="width:3px;height:3px;border-radius:50%;background:{{ accentHex }};display:inline-block"></span>
+                          </div>
+                          <div style="background:var(--color-bg-raised);border:1px solid var(--line);padding:11px 13px;border-radius:16px 16px 16px 4px;font-size:14px;line-height:1.5">{{ m.text }}</div>
+                        </div>
+                      </sc-if>
+                      <sc-if value="{{ m.isUser }}" hint-placeholder-val="{{ false }}">
+                        <div style="align-self:flex-end;max-width:86%;background:{{ accentHex }};color:#fff;padding:11px 13px;border-radius:16px 16px 4px 16px;font-size:14px;line-height:1.5">{{ m.text }}</div>
+                      </sc-if>
+                    </sc-for>
+                    <sc-if value="{{ thinking }}" hint-placeholder-val="{{ false }}">
+                      <div style="display:flex;gap:4px;align-items:center;padding-left:2px">
+                        <span style="width:5px;height:5px;border-radius:50%;background:var(--ink-4);display:inline-block;animation:sudoDotBlink 1s infinite"></span>
+                        <span style="width:5px;height:5px;border-radius:50%;background:var(--ink-4);display:inline-block;animation:sudoDotBlink 1s infinite .15s"></span>
+                        <span style="width:5px;height:5px;border-radius:50%;background:var(--ink-4);display:inline-block;animation:sudoDotBlink 1s infinite .3s"></span>
+                      </div>
+                    </sc-if>
+                  </div>
+
+                  <div style="flex:none;display:flex;gap:8px;align-items:flex-end;padding:8px;margin:0 0 14px;border:1px solid var(--line);border-radius:18px;background:var(--color-bg-raised);box-sizing:border-box">
+                    <textarea rows="1" value="{{ chatInput }}" onChange="{{ setChatInput }}" onKeyDown="{{ onChatKeyDown }}" placeholder="ask {{ agentName }} anything…" style="flex:1;resize:none;border:none;outline:none;background:transparent;font-size:14px;line-height:1.4;padding:9px 6px;font-family:var(--font-sans);color:var(--ink);max-height:80px"></textarea>
+                    <button onClick="{{ sendMessage }}" aria-label="send" style="width:38px;height:38px;border-radius:12px;border:none;background:{{ accentHex }};cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-11 11M22 2l-7 20-4-9-9-4 20-7Z"></path></svg>
+                    </button>
+                  </div>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ isApps }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:16px 18px 24px">
+                  <div style="font-family:var(--font-mono);font-size:11px;color:var(--ink-3);letter-spacing:.04em;margin-bottom:2px">your little tools</div>
+                  <h1 style="font-weight:600;font-size:23px;letter-spacing:-.02em;margin:0 0 4px">Apps</h1>
+                  <p style="color:var(--ink-2);font-size:13px;line-height:1.45;margin:0 0 16px">focused spaces {{ agentName }} can help you run.</p>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                    <div style="background:var(--sky-tint);border:1px solid var(--line);border-radius:16px;padding:14px;position:relative;min-height:138px;box-sizing:border-box">
+                      <span style="position:absolute;top:12px;right:12px;font-family:var(--font-mono);font-size:9px;font-weight:700;padding:4px 7px;border-radius:999px;background:rgba(255,255,255,.6);color:var(--ink-2)">soon</span>
+                      <div style="width:32px;height:32px;border-radius:9px;background:rgba(255,255,255,.65);display:flex;align-items:center;justify-content:center;margin-bottom:24px">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--sky-2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10M18 20V4M6 20v-4"></path></svg>
+                      </div>
+                      <div style="font-weight:600;font-size:13px;margin-bottom:3px">Financial tracker</div>
+                      <div style="font-size:11px;color:var(--ink-2);line-height:1.4">income, spending, what's left.</div>
+                    </div>
+                    <div style="background:var(--coral-tint);border:1px solid var(--line);border-radius:16px;padding:14px;position:relative;min-height:138px;box-sizing:border-box">
+                      <span style="position:absolute;top:12px;right:12px;font-family:var(--font-mono);font-size:9px;font-weight:700;padding:4px 7px;border-radius:999px;background:rgba(255,255,255,.6);color:var(--ink-2)">soon</span>
+                      <div style="width:32px;height:32px;border-radius:9px;background:rgba(255,255,255,.65);display:flex;align-items:center;justify-content:center;margin-bottom:24px">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--coral-2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z"></path></svg>
+                      </div>
+                      <div style="font-weight:600;font-size:13px;margin-bottom:3px">Health tracker</div>
+                      <div style="font-size:11px;color:var(--ink-2);line-height:1.4">sleep, movement, how you feel.</div>
+                    </div>
+                    <div style="background:var(--amber-tint);border:1px solid var(--line);border-radius:16px;padding:14px;position:relative;min-height:138px;box-sizing:border-box">
+                      <span style="position:absolute;top:12px;right:12px;font-family:var(--font-mono);font-size:9px;font-weight:700;padding:4px 7px;border-radius:999px;background:rgba(255,255,255,.6);color:var(--ink-2)">soon</span>
+                      <div style="width:32px;height:32px;border-radius:9px;background:rgba(255,255,255,.65);display:flex;align-items:center;justify-content:center;margin-bottom:24px">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber-2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 19.5V6A2 2 0 0 1 6 4h14v13"></path></svg>
+                      </div>
+                      <div style="font-weight:600;font-size:13px;margin-bottom:3px">Journal</div>
+                      <div style="font-size:11px;color:var(--ink-2);line-height:1.4">think out loud with {{ agentName }}.</div>
+                    </div>
+                    <div style="background:var(--violet-tint);border:1px solid var(--line);border-radius:16px;padding:14px;position:relative;min-height:138px;box-sizing:border-box">
+                      <span style="position:absolute;top:12px;right:12px;font-family:var(--font-mono);font-size:9px;font-weight:700;padding:4px 7px;border-radius:999px;background:rgba(255,255,255,.6);color:var(--ink-2)">soon</span>
+                      <div style="width:32px;height:32px;border-radius:9px;background:rgba(255,255,255,.65);display:flex;align-items:center;justify-content:center;margin-bottom:24px">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--violet)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"></path></svg>
+                      </div>
+                      <div style="font-weight:600;font-size:13px;margin-bottom:3px">Home</div>
+                      <div style="font-size:11px;color:var(--ink-2);line-height:1.4">lights, locks, small routines.</div>
+                    </div>
+                  </div>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:16px 18px 28px">
+                  <div style="font-family:var(--font-mono);font-size:11px;color:var(--ink-3);letter-spacing:.04em;margin-bottom:2px">make this box yours</div>
+                  <h1 style="font-weight:600;font-size:23px;letter-spacing:-.02em;margin:0 0 16px">Settings</h1>
+
+                  <div style="font-family:var(--font-mono);font-size:10px;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase;margin:0 0 8px 4px">your agent</div>
+                  <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px">
+
+                    <div style="border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--color-bg-raised)">
+                      <div onClick="{{ toggleProfileCard }}" style="display:flex;align-items:center;gap:10px;padding:13px 14px;cursor:pointer">
+                        <span style="width:34px;height:34px;border-radius:10px;background:var(--phosphor-tint);display:flex;align-items:center;justify-content:center;flex:none;font-size:15px">✦</span>
+                        <div style="flex:1;min-width:0">
+                          <div style="font-size:13px;font-weight:600">Agent &amp; personality</div>
+                          <div style="font-size:11px;color:var(--ink-3);margin-top:2px">{{ agentName }} · {{ personalityLabel }}</div>
+                        </div>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="{{ profileChevronStyle }}"><path d="m9 6 6 6-6 6"></path></svg>
+                      </div>
+                      <sc-if value="{{ profileOpen }}" hint-placeholder-val="{{ true }}">
+                        <div style="padding:0 14px 16px;border-top:1px solid var(--line)">
+                          <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px;margin-bottom:14px">
+                            <div>
+                              <label style="display:block;font-family:var(--font-mono);font-size:10px;color:var(--ink-3);margin-bottom:5px">your name</label>
+                              <input value="{{ userName }}" onChange="{{ setUserName }}" placeholder="what should i call you?" style="width:100%;box-sizing:border-box;font-size:14px;padding:10px 12px;border-radius:9px;border:1px solid var(--line);background:var(--paper);color:var(--ink);outline:none"></input>
+                            </div>
+                            <div>
+                              <label style="display:block;font-family:var(--font-mono);font-size:10px;color:var(--ink-3);margin-bottom:5px">agent name</label>
+                              <input value="{{ agentName }}" onChange="{{ setAgentName }}" placeholder="sudo" style="width:100%;box-sizing:border-box;font-size:14px;padding:10px 12px;border-radius:9px;border:1px solid var(--line);background:var(--paper);color:var(--ink);outline:none"></input>
+                            </div>
+                          </div>
+                          <div style="font-family:var(--font-mono);font-size:10px;color:var(--ink-3);margin-bottom:7px">personality</div>
+                          <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:14px">
+                            <sc-for list="{{ personalityOptions }}" as="p" hint-placeholder-count="4">
+                              <div onClick="{{ p.select }}" style="cursor:pointer;border-radius:10px;padding:9px 10px;{{ p.boxStyle }}">
+                                <div style="font-size:12px;font-weight:600">{{ p.label }}</div>
+                              </div>
+                            </sc-for>
+                          </div>
+                          <div style="font-family:var(--font-mono);font-size:10px;color:var(--ink-3);margin-bottom:7px">model</div>
+                          <select value="{{ model }}" onChange="{{ setModel }}" style="width:100%;box-sizing:border-box;font-size:13px;padding:10px 12px;border-radius:9px;border:1px solid var(--line);background:var(--paper);color:var(--ink);margin-bottom:6px">
+                            <option value="sudo-default">DeepSeek V4 Flash · default</option>
+                            <option value="sudo-fast">GPT-4o mini · fast</option>
+                            <option value="sudo-budget">Claude Haiku 4.5 · balanced</option>
+                            <option value="sudo-smart">Claude Sonnet 4.5 · smart</option>
+                          </select>
+                          <div style="font-size:11px;color:var(--ink-3);line-height:1.4">cheaper models are quicker; pricier ones reason better on hard problems.</div>
+                        </div>
+                      </sc-if>
+                    </div>
+
+                    <div style="border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--color-bg-raised)">
+                      <div onClick="{{ toggleAbilitiesCard }}" style="display:flex;align-items:center;gap:10px;padding:13px 14px;cursor:pointer">
+                        <span style="width:34px;height:34px;border-radius:10px;background:var(--amber-tint);display:flex;align-items:center;justify-content:center;flex:none;font-size:15px">⚡</span>
+                        <div style="flex:1;min-width:0">
+                          <div style="font-size:13px;font-weight:600">What {{ agentName }} can do</div>
+                          <div style="font-size:11px;color:var(--ink-3);margin-top:2px">web search on · commands {{ execLabel }}</div>
+                        </div>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="{{ abilitiesChevronStyle }}"><path d="m9 6 6 6-6 6"></path></svg>
+                      </div>
+                      <sc-if value="{{ abilitiesOpen }}" hint-placeholder-val="{{ false }}">
+                        <div style="padding:0 14px 16px;border-top:1px solid var(--line)">
+                          <p style="font-size:12px;color:var(--ink-2);line-height:1.5;margin:12px 0 12px">abilities are your call. turn things on as you need them.</p>
+                          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)">
+                            <div style="font-size:13px;font-weight:500">search the web</div>
+                            <span style="font-family:var(--font-mono);font-size:10px;font-weight:700;padding:4px 9px;border-radius:999px;background:var(--phosphor-tint);color:var(--phosphor-ink)">on</span>
+                          </div>
+                          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;gap:10px">
+                            <div style="flex:1">
+                              <div style="display:flex;align-items:center;gap:6px">
+                                <span style="font-size:13px;font-weight:500">run commands on this device</span>
+                                <button onClick="{{ toggleExecInfo }}" style="width:16px;height:16px;border-radius:50%;border:1px solid var(--line-2);background:var(--paper-2);color:var(--ink-3);font-size:10px;font-weight:700;line-height:1;cursor:pointer;padding:0">i</button>
+                              </div>
+                              <div style="font-size:11px;color:var(--ink-3);margin-top:2px;line-height:1.35">terminal access — install things, edit files.</div>
+                              <sc-if value="{{ execInfoOpen }}" hint-placeholder-val="{{ false }}">
+                                <div style="margin-top:8px;padding:10px 11px;border-radius:10px;border-left:3px solid var(--coral);background:var(--color-bg-sunken);font-size:11px;line-height:1.5;color:var(--ink-2)">the agent gets a real terminal on your pi. it reads web pages too, and a page could try to trick it into running something harmful. fine to enable on a device that's yours; leave it off if "access from anywhere" is on.</div>
+                              </sc-if>
+                            </div>
+                            <div onClick="{{ toggleExec }}" style="width:44px;height:26px;border-radius:999px;flex:none;cursor:pointer;position:relative;{{ execSwitchStyle }}">
+                              <div style="width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(22,19,17,.25);position:absolute;top:3px;transition:transform 200ms var(--ease-out);{{ execKnobStyle }}"></div>
+                            </div>
+                          </div>
+                        </div>
+                      </sc-if>
+                    </div>
+                  </div>
+
+                  <div style="font-family:var(--font-mono);font-size:10px;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase;margin:0 0 8px 4px">device</div>
+                  <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px">
+
+                    <div style="border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--color-bg-raised)">
+                      <div onClick="{{ toggleDevCard }}" style="display:flex;align-items:center;gap:10px;padding:13px 14px;cursor:pointer">
+                        <span style="width:34px;height:34px;border-radius:10px;background:var(--sky-tint);display:flex;align-items:center;justify-content:center;flex:none;font-size:15px">⌘</span>
+                        <div style="flex:1;min-width:0">
+                          <div style="font-size:13px;font-weight:600">Developer access</div>
+                          <div style="font-size:11px;color:var(--ink-3);margin-top:2px">terminal {{ sshLabel }}</div>
+                        </div>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="{{ devChevronStyle }}"><path d="m9 6 6 6-6 6"></path></svg>
+                      </div>
+                      <sc-if value="{{ devOpen }}" hint-placeholder-val="{{ false }}">
+                        <div style="padding:0 14px 16px;border-top:1px solid var(--line)">
+                          <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;gap:10px">
+                            <div style="flex:1">
+                              <div style="font-size:13px;font-weight:500">terminal access (SSH)</div>
+                              <div style="font-size:11px;color:var(--ink-3);margin-top:2px;line-height:1.35">log in from your computer, home wi-fi only.</div>
+                            </div>
+                            <div onClick="{{ toggleSsh }}" style="width:44px;height:26px;border-radius:999px;flex:none;cursor:pointer;position:relative;{{ sshSwitchStyle }}">
+                              <div style="width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(22,19,17,.25);position:absolute;top:3px;transition:transform 200ms var(--ease-out);{{ sshKnobStyle }}"></div>
+                            </div>
+                          </div>
+                          <sc-if value="{{ sshEnabled }}" hint-placeholder-val="{{ false }}">
+                            <div style="background:var(--color-bg-sunken);border-radius:10px;padding:10px 12px;margin-bottom:10px">
+                              <div style="font-family:var(--font-mono);font-size:11px;color:var(--ink-2)">ssh {{ userSlug }}@raspberrypi.local</div>
+                            </div>
+                            <div style="font-size:12px;font-weight:600;margin-bottom:6px">Claude Code</div>
+                            <p style="font-size:11px;color:var(--ink-3);line-height:1.4;margin:0 0 10px">an AI assistant that runs in your terminal and can edit files on this device.</p>
+                            <button onClick="{{ installDevtools }}" disabled="{{ devtoolsBusy }}" style="width:100%;box-sizing:border-box;padding:10px;border:none;border-radius:10px;background:var(--phosphor);color:#fff;font-weight:600;font-size:13px;cursor:pointer;opacity:{{ devtoolsOpacity }}">{{ devtoolsLabel }}</button>
+                            <sc-if value="{{ devtoolsDone }}" hint-placeholder-val="{{ false }}">
+                              <div style="font-family:var(--font-mono);font-size:11px;color:var(--phosphor-ink);margin-top:8px">installed — run "claude" after ssh-ing in</div>
+                            </sc-if>
+                          </sc-if>
+                        </div>
+                      </sc-if>
+                    </div>
+
+                    <div style="border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--color-bg-raised)">
+                      <div onClick="{{ toggleAccessCard }}" style="display:flex;align-items:center;gap:10px;padding:13px 14px;cursor:pointer">
+                        <span style="width:34px;height:34px;border-radius:10px;background:var(--coral-tint);display:flex;align-items:center;justify-content:center;flex:none;font-size:15px">⌁</span>
+                        <div style="flex:1;min-width:0">
+                          <div style="font-size:13px;font-weight:600">Access &amp; network</div>
+                          <div style="font-size:11px;color:var(--ink-3);margin-top:2px">raspberrypi.local · {{ remoteLabel }}</div>
+                        </div>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="{{ accessChevronStyle }}"><path d="m9 6 6 6-6 6"></path></svg>
+                      </div>
+                      <sc-if value="{{ accessOpen }}" hint-placeholder-val="{{ false }}">
+                        <div style="padding:0 14px 16px;border-top:1px solid var(--line)">
+                          <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;gap:10px">
+                            <div style="flex:1">
+                              <div style="display:flex;align-items:center;gap:6px">
+                                <span style="font-size:13px;font-weight:500">access from anywhere</span>
+                                <button onClick="{{ toggleRemoteInfo }}" style="width:16px;height:16px;border-radius:50%;border:1px solid var(--line-2);background:var(--paper-2);color:var(--ink-3);font-size:10px;font-weight:700;line-height:1;cursor:pointer;padding:0">i</button>
+                              </div>
+                              <div style="font-size:11px;color:var(--ink-3);margin-top:2px;line-height:1.35">a temporary public link. treat it like a password.</div>
+                              <sc-if value="{{ remoteInfoOpen }}" hint-placeholder-val="{{ false }}">
+                                <div style="margin-top:8px;padding:10px 11px;border-radius:10px;border-left:3px solid var(--coral);background:var(--color-bg-sunken);font-size:11px;line-height:1.5;color:var(--ink-2)">there's no login screen — anyone with this link can chat with your agent and change settings. don't share it. it changes when the device restarts, and turns off automatically if you leave this page.</div>
+                              </sc-if>
+                            </div>
+                            <div onClick="{{ toggleRemote }}" style="width:44px;height:26px;border-radius:999px;flex:none;cursor:pointer;position:relative;{{ remoteSwitchStyle }}">
+                              <div style="width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(22,19,17,.25);position:absolute;top:3px;transition:transform 200ms var(--ease-out);{{ remoteKnobStyle }}"></div>
+                            </div>
+                          </div>
+                          <sc-if value="{{ remoteEnabled }}" hint-placeholder-val="{{ false }}">
+                            <div style="background:var(--color-bg-sunken);border-radius:10px;padding:10px 12px;font-family:var(--font-mono);font-size:11px;color:var(--ink-2);word-break:break-all">https://{{ userSlug }}-sudo.trycloudflare.com</div>
+                          </sc-if>
+                        </div>
+                      </sc-if>
+                    </div>
+                  </div>
+
+                  <div style="font-family:var(--font-mono);font-size:10px;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase;margin:0 0 8px 4px">account</div>
+                  <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px">
+
+                    <div style="border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--color-bg-raised)">
+                      <div onClick="{{ toggleKeysCard }}" style="display:flex;align-items:center;gap:10px;padding:13px 14px;cursor:pointer">
+                        <span style="width:34px;height:34px;border-radius:10px;background:var(--violet-tint);display:flex;align-items:center;justify-content:center;flex:none;font-size:15px">⚿</span>
+                        <div style="flex:1;min-width:0">
+                          <div style="font-size:13px;font-weight:600">API keys</div>
+                          <div style="font-size:11px;color:var(--ink-3);margin-top:2px">{{ keySourceLabel }}</div>
+                        </div>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="{{ keysChevronStyle }}"><path d="m9 6 6 6-6 6"></path></svg>
+                      </div>
+                      <sc-if value="{{ keysOpen }}" hint-placeholder-val="{{ false }}">
+                        <div style="padding:0 14px 16px;border-top:1px solid var(--line)">
+                          <p style="font-size:11px;color:var(--ink-3);line-height:1.4;margin:12px 0 10px">who pays for the model your agent calls.</p>
+                          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+                            <div onClick="{{ selectKeySudo }}" style="cursor:pointer;padding:10px;border-radius:10px;{{ keySudoBoxStyle }}">
+                              <div style="font-size:12px;font-weight:600">Sudo credits</div>
+                              <div style="font-size:10px;color:var(--ink-3);margin-top:2px">we handle billing</div>
+                            </div>
+                            <div onClick="{{ selectKeyOwn }}" style="cursor:pointer;padding:10px;border-radius:10px;{{ keyOwnBoxStyle }}">
+                              <div style="font-size:12px;font-weight:600">My own key</div>
+                              <div style="font-size:10px;color:var(--ink-3);margin-top:2px">you bill direct</div>
+                            </div>
+                          </div>
+                          <sc-if value="{{ keySourceOwn }}" hint-placeholder-val="{{ false }}">
+                            <input type="password" value="{{ ownKey }}" onChange="{{ setOwnKey }}" placeholder="sk-or-v1-…" style="width:100%;box-sizing:border-box;font-size:13px;padding:10px 12px;border-radius:9px;border:1px solid var(--line);background:var(--paper);color:var(--ink);outline:none"></input>
+                          </sc-if>
+                        </div>
+                      </sc-if>
+                    </div>
+
+                    <div style="border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--color-bg-raised)">
+                      <div onClick="{{ toggleBillingCard }}" style="display:flex;align-items:center;gap:10px;padding:13px 14px;cursor:pointer">
+                        <span style="width:34px;height:34px;border-radius:10px;background:var(--phosphor-tint);display:flex;align-items:center;justify-content:center;flex:none;font-size:15px">▭</span>
+                        <div style="flex:1;min-width:0">
+                          <div style="font-size:13px;font-weight:600">Billing &amp; credits</div>
+                          <div style="font-size:11px;color:var(--ink-3);margin-top:2px">{{ billingLabel }}</div>
+                        </div>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="{{ billingChevronStyle }}"><path d="m9 6 6 6-6 6"></path></svg>
+                      </div>
+                      <sc-if value="{{ billingOpen }}" hint-placeholder-val="{{ false }}">
+                        <div style="padding:0 14px 18px;border-top:1px solid var(--line)">
+                          <div style="font-size:32px;font-weight:700;letter-spacing:-.03em;margin:14px 0 2px">$12.40</div>
+                          <div style="font-size:11px;color:var(--ink-3);margin-bottom:14px">usd credits available</div>
+                          <button style="width:100%;box-sizing:border-box;padding:11px;border:none;border-radius:10px;background:var(--phosphor);color:#fff;font-weight:600;font-size:13px;cursor:pointer">Start Sudo Pro · $10/month</button>
+                          <div style="font-size:10px;color:var(--ink-3);margin-top:8px">includes a 7-day trial.</div>
+                        </div>
+                      </sc-if>
+                    </div>
+
+                    <div style="border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--color-bg-raised)">
+                      <div onClick="{{ toggleChannelsCard }}" style="display:flex;align-items:center;gap:10px;padding:13px 14px;cursor:pointer">
+                        <span style="width:34px;height:34px;border-radius:10px;background:var(--amber-tint);display:flex;align-items:center;justify-content:center;flex:none;font-size:15px">◌</span>
+                        <div style="flex:1;min-width:0">
+                          <div style="font-size:13px;font-weight:600">Channels</div>
+                          <div style="font-size:11px;color:var(--ink-3);margin-top:2px">whatsapp · telegram · wechat</div>
+                        </div>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="{{ channelsChevronStyle }}"><path d="m9 6 6 6-6 6"></path></svg>
+                      </div>
+                      <sc-if value="{{ channelsOpen }}" hint-placeholder-val="{{ false }}">
+                        <div style="padding:0 14px 16px;border-top:1px solid var(--line)">
+                          <sc-for list="{{ channels }}" as="c" hint-placeholder-count="3">
+                            <div style="display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line)">
+                              <span style="width:30px;height:30px;border-radius:9px;background:{{ c.hex }};color:#fff;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center;flex:none">{{ c.initial }}</span>
+                              <div style="flex:1">
+                                <div style="font-size:12px;font-weight:600">{{ c.label }}</div>
+                                <div style="font-size:10px;color:var(--ink-3)">not connected</div>
+                              </div>
+                              <button onClick="{{ c.connect }}" style="padding:7px 11px;border-radius:9px;border:1px solid var(--line);background:var(--paper);font-size:11px;font-weight:600;cursor:pointer">set up</button>
+                            </div>
+                          </sc-for>
+                          <sc-if value="{{ channelStatus }}" hint-placeholder-val="{{ false }}">
+                            <p style="font-size:11px;color:var(--ink-3);margin-top:10px">{{ channelStatus }}</p>
+                          </sc-if>
+                        </div>
+                      </sc-if>
+                    </div>
+                  </div>
+
+                  <div style="text-align:center;font-family:var(--font-mono);font-size:10px;color:var(--ink-4);padding:16px 0 4px">sudo · v0.5 · running on your raspberry pi</div>
+                </div>
+              </sc-if>
+            </div>
+
+            <div style="flex:none;display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid var(--line);padding:6px 10px 20px;background:var(--paper)">
+              <button onClick="{{ goChat }}" style="background:transparent;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;{{ chatTabColor }}">
+                <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ chatTabWeight }}" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path></svg>
+                <span style="font-size:10px;font-weight:600">chat</span>
+              </button>
+              <button onClick="{{ goApps }}" style="background:transparent;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;{{ appsTabColor }}">
+                <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ appsTabWeight }}" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect></svg>
+                <span style="font-size:10px;font-weight:600">apps</span>
+              </button>
+              <button onClick="{{ goSettings }}" style="background:transparent;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;{{ settingsTabColor }}">
+                <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ settingsTabWeight }}" stroke-linecap="round" stroke-linejoin="round"><path d="M21 6H10M6 6H3M21 12h-7M10 12H3M21 18h-3M14 18H3"></path><circle cx="8" cy="6" r="2"></circle><circle cx="12" cy="12" r="2"></circle><circle cx="16" cy="18" r="2"></circle></svg>
+                <span style="font-size:10px;font-weight:600">settings</span>
+              </button>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </x-import>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    screen: 'setup',
+    step: 0,
+    wifiSelected: null,
+    wifiPassword: '',
+    userName: '',
+    agentName: 'sudo',
+    personality: 'friendly',
+    accent: 'coral',
+    tab: 'chat',
+    messages: [{ role: 'agent', text: "hey — let's make this box yours. start with wifi, then tell me your names." }],
+    chatInput: '',
+    thinking: false,
+    openCard: 'profile',
+    execEnabled: false,
+    sshEnabled: false,
+    remoteEnabled: false,
+    keySource: 'sudo',
+    ownKey: '',
+    model: 'sudo-default',
+    devtoolsState: 'idle',
+    channelStatus: '',
+    openInfo: null,
+    urlCopied: false,
+  };
+
+  toggleInfo(id) { this.setState(s => ({ openInfo: s.openInfo === id ? null : id })); }
+
+  copyLocalUrl() {
+    const text = 'http://raspberrypi.local';
+    if (navigator.clipboard) navigator.clipboard.writeText(text).catch(() => {});
+    this.setState({ urlCopied: true });
+    setTimeout(() => this.setState({ urlCopied: false }), 1800);
+  }
+
+  selectWifi(ssid) { this.setState({ wifiSelected: ssid }); }
+  setWifiPassword(e) { this.setState({ wifiPassword: e.target.value }); }
+  setUserName(e) { this.setState({ userName: e.target.value }); }
+  setAgentName(e) { this.setState({ agentName: e.target.value }); }
+  selectPersonality(v) { this.setState({ personality: v }); }
+  selectAccent(v) { this.setState({ accent: v }); }
+  goStepNext() { this.setState(s => ({ step: Math.min(1, s.step + 1) })); }
+  goStepBack() { this.setState(s => ({ step: Math.max(0, s.step - 1) })); }
+
+  finishSetup() {
+    const name = this.state.userName.trim();
+    const agent = this.state.agentName.trim() || 'sudo';
+    this.setState({
+      screen: 'app', tab: 'chat',
+      messages: [{ role: 'agent', text: `hey ${name || 'there'} — i'm ${agent}, your teammate on this little box. what can i take off your plate?` }],
+    });
+  }
+
+  setChatInput(e) { this.setState({ chatInput: e.target.value }); }
+  onChatKeyDown(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); this.sendMessage(); } }
+
+  sendMessage() {
+    const text = this.state.chatInput.trim();
+    if (!text) return;
+    const replies = {
+      friendly: "got it — i'm on it.",
+      professional: 'understood. proceeding now.',
+      concise: 'on it.',
+      creative: "ooh, fun one — let's dig in 👀",
+    };
+    this.setState(s => ({ messages: [...s.messages, { role: 'user', text }], chatInput: '', thinking: true }));
+    setTimeout(() => {
+      this.setState(s => ({
+        messages: [...s.messages, { role: 'agent', text: replies[s.personality] || 'got it.' }],
+        thinking: false,
+      }));
+    }, 900);
+  }
+
+  newChat() { this.setState({ messages: [{ role: 'agent', text: 'fresh start. what are we working on?' }] }); }
+
+  goChat() { this.setState({ tab: 'chat' }); }
+  goApps() { this.setState({ tab: 'apps' }); }
+  goSettings() { this.setState({ tab: 'settings' }); }
+
+  toggleCard(id) { this.setState(s => ({ openCard: s.openCard === id ? null : id })); }
+  toggleProfileCard() { this.toggleCard('profile'); }
+  toggleAbilitiesCard() { this.toggleCard('abilities'); }
+  toggleDevCard() { this.toggleCard('dev'); }
+  toggleAccessCard() { this.toggleCard('access'); }
+  toggleKeysCard() { this.toggleCard('keys'); }
+  toggleBillingCard() { this.toggleCard('billing'); }
+  toggleChannelsCard() { this.toggleCard('channels'); }
+
+  toggleExec() { this.setState(s => ({ execEnabled: !s.execEnabled })); }
+  toggleSsh() { this.setState(s => ({ sshEnabled: !s.sshEnabled })); }
+  toggleRemote() { this.setState(s => ({ remoteEnabled: !s.remoteEnabled })); }
+  selectKeySudo() { this.setState({ keySource: 'sudo' }); }
+  selectKeyOwn() { this.setState({ keySource: 'own' }); }
+  setOwnKey(e) { this.setState({ ownKey: e.target.value }); }
+  setModel(e) { this.setState({ model: e.target.value }); }
+
+  installDevtools() {
+    this.setState({ devtoolsState: 'installing' });
+    setTimeout(() => this.setState({ devtoolsState: 'done' }), 1600);
+  }
+
+  connectChannel(label) { this.setState({ channelStatus: `${label} connector setup is coming in a software update.` }); }
+
+  renderVals() {
+    const s = this.state;
+    const cap = w => w.charAt(0).toUpperCase() + w.slice(1);
+    const accentHexMap = { coral: '#F2603C', amber: '#E8A833', sky: '#3E89C9' };
+    const accentHex = accentHexMap[s.accent] || accentHexMap.coral;
+    const agentName = s.agentName || 'sudo';
+    const dotStyle = i => `background:${i < s.step ? 'var(--phosphor)' : i === s.step ? 'var(--ink)' : 'var(--line)'};width:${i === s.step ? '28px' : '10px'}`;
+
+    const wifiList = [
+      { ssid: 'Home 5G', signal: '▊▊▊▊' },
+      { ssid: 'Home_Network_2.4', signal: '▊▊▊░' },
+      { ssid: "Neighbor's Wifi", signal: '▊░░░' },
+    ].map(n => ({
+      ssid: n.ssid, signal: n.signal,
+      select: () => this.selectWifi(n.ssid),
+      rowStyle: n.ssid === s.wifiSelected
+        ? 'border:1px solid var(--ink);background:var(--paper-2);box-shadow:inset 0 0 0 1px var(--ink)'
+        : 'border:1px solid var(--line);background:var(--color-bg-raised)',
+    }));
+
+    const personalities = [
+      { value: 'friendly', label: 'Friendly', desc: 'Warm and easygoing.' },
+      { value: 'professional', label: 'Professional', desc: 'Crisp and measured.' },
+      { value: 'concise', label: 'Concise', desc: 'Only the words needed.' },
+      { value: 'creative', label: 'Creative', desc: 'Playful and curious.' },
+    ].map(p => ({
+      label: p.label, desc: p.desc,
+      select: () => this.selectPersonality(p.value),
+      boxStyle: p.value === s.personality
+        ? 'border:2px solid var(--ink);background:var(--paper-2)'
+        : 'border:1px solid var(--line);background:var(--color-bg-raised)',
+    }));
+
+    const accents = [
+      { value: 'coral', label: 'coral' },
+      { value: 'amber', label: 'amber' },
+      { value: 'sky', label: 'sky' },
+    ].map(a => ({
+      label: a.label, hex: accentHexMap[a.value],
+      select: () => this.selectAccent(a.value),
+      ringStyle: a.value === s.accent ? 'box-shadow:0 0 0 2px var(--paper-2),0 0 0 4px var(--ink)' : 'opacity:.5',
+    }));
+
+    const channels = [
+      { key: 'whatsapp', label: 'WhatsApp', hex: '#27b86f', initial: 'W' },
+      { key: 'telegram', label: 'Telegram', hex: '#299bd7', initial: 'T' },
+      { key: 'wechat', label: 'WeChat', hex: '#17b45b', initial: '微' },
+    ].map(c => ({ ...c, connect: () => this.connectChannel(c.label) }));
+
+    const switchStyle = on => `background:${on ? 'var(--phosphor)' : 'var(--line-2)'}`;
+    const knobStyle = on => `transform:translateX(${on ? '18px' : '0'})`;
+    const chevron = open => `transition:transform 180ms var(--ease-out);transform:rotate(${open ? '90' : '0'}deg)`;
+
+    const devtoolsBusy = s.devtoolsState === 'installing';
+    const devtoolsDone = s.devtoolsState === 'done';
+
+    return {
+      isSetup: s.screen === 'setup', isApp: s.screen === 'app',
+      isStep0: s.step === 0, isStep1: s.step === 1,
+      stepLabel: ['01', '02'][s.step],
+      dot0Style: dotStyle(0), dot1Style: dotStyle(1),
+      hideBack: s.step === 0, showBack: s.step > 0,
+      goStepBack: () => this.goStepBack(), goStepNext: () => this.goStepNext(),
+      nextDisabled: s.step === 0 && !s.wifiSelected,
+      nextOpacity: (s.step === 0 && !s.wifiSelected) ? '.5' : '1',
+      finishSetup: () => this.finishSetup(),
+      wifiNetworks: wifiList, wifiPassword: s.wifiPassword, setWifiPassword: e => this.setWifiPassword(e),
+      userName: s.userName, setUserName: e => this.setUserName(e),
+      agentName: s.agentName, setAgentName: e => this.setAgentName(e),
+      personalityOptions: personalities, accentOptions: accents, accentHex,
+
+      isApps: s.tab === 'apps', isSettings: s.tab === 'settings',
+      isChat: s.tab === 'chat',
+      goChat: () => this.goChat(), goApps: () => this.goApps(), goSettings: () => this.goSettings(),
+      chatTabColor: `color:${s.tab === 'chat' ? 'var(--ink)' : 'var(--ink-4)'}`,
+      chatTabWeight: s.tab === 'chat' ? '2.4' : '2',
+      appsTabColor: `color:${s.tab === 'apps' ? 'var(--ink)' : 'var(--ink-4)'}`,
+      appsTabWeight: s.tab === 'apps' ? '2.4' : '2',
+      settingsTabColor: `color:${s.tab === 'settings' ? 'var(--ink)' : 'var(--ink-4)'}`,
+      settingsTabWeight: s.tab === 'settings' ? '2.4' : '2',
+
+      messages: s.messages.map(m => ({ isAgent: m.role === 'agent', isUser: m.role === 'user', text: m.text })),
+      thinking: s.thinking, chatInput: s.chatInput,
+      setChatInput: e => this.setChatInput(e), onChatKeyDown: e => this.onChatKeyDown(e),
+      sendMessage: () => this.sendMessage(), newChat: () => this.newChat(),
+
+      profileOpen: s.openCard === 'profile', toggleProfileCard: () => this.toggleProfileCard(),
+      profileChevronStyle: chevron(s.openCard === 'profile'),
+      personalityLabel: cap(s.personality), model: s.model, setModel: e => this.setModel(e),
+
+      abilitiesOpen: s.openCard === 'abilities', toggleAbilitiesCard: () => this.toggleAbilitiesCard(),
+      abilitiesChevronStyle: chevron(s.openCard === 'abilities'),
+      execLabel: s.execEnabled ? 'on' : 'off', toggleExec: () => this.toggleExec(),
+      execSwitchStyle: switchStyle(s.execEnabled), execKnobStyle: knobStyle(s.execEnabled),
+
+      devOpen: s.openCard === 'dev', toggleDevCard: () => this.toggleDevCard(),
+      devChevronStyle: chevron(s.openCard === 'dev'),
+      sshLabel: s.sshEnabled ? 'on' : 'off', sshEnabled: s.sshEnabled, toggleSsh: () => this.toggleSsh(),
+      sshSwitchStyle: switchStyle(s.sshEnabled), sshKnobStyle: knobStyle(s.sshEnabled),
+      userSlug: agentName.toLowerCase().replace(/[^a-z0-9]/g, '') || 'sudo',
+      devtoolsBusy, devtoolsDone, devtoolsOpacity: devtoolsBusy ? '.6' : '1',
+      devtoolsLabel: devtoolsBusy ? 'Installing…' : devtoolsDone ? 'Reinstall / repair' : 'Install Claude Code',
+      installDevtools: () => this.installDevtools(),
+
+      accessOpen: s.openCard === 'access', toggleAccessCard: () => this.toggleAccessCard(),
+      accessChevronStyle: chevron(s.openCard === 'access'),
+      remoteEnabled: s.remoteEnabled, toggleRemote: () => this.toggleRemote(),
+      remoteLabel: s.remoteEnabled ? 'reachable anywhere' : 'home wifi only',
+      remoteSwitchStyle: switchStyle(s.remoteEnabled), remoteKnobStyle: knobStyle(s.remoteEnabled),
+
+      keysOpen: s.openCard === 'keys', toggleKeysCard: () => this.toggleKeysCard(),
+      keysChevronStyle: chevron(s.openCard === 'keys'),
+      keySourceLabel: s.keySource === 'own' ? 'using your own key' : 'using sudo credits',
+      keySourceOwn: s.keySource === 'own',
+      selectKeySudo: () => this.selectKeySudo(), selectKeyOwn: () => this.selectKeyOwn(),
+      keySudoBoxStyle: s.keySource === 'sudo' ? 'border:2px solid var(--ink);background:var(--paper-2)' : 'border:1px solid var(--line);background:var(--color-bg-raised)',
+      keyOwnBoxStyle: s.keySource === 'own' ? 'border:2px solid var(--ink);background:var(--paper-2)' : 'border:1px solid var(--line);background:var(--color-bg-raised)',
+      ownKey: s.ownKey, setOwnKey: e => this.setOwnKey(e),
+
+      billingOpen: s.openCard === 'billing', toggleBillingCard: () => this.toggleBillingCard(),
+      billingChevronStyle: chevron(s.openCard === 'billing'),
+      billingLabel: 'trial active · $12.40 available',
+
+      channelsOpen: s.openCard === 'channels', toggleChannelsCard: () => this.toggleChannelsCard(),
+      channelsChevronStyle: chevron(s.openCard === 'channels'),
+      channels, channelStatus: s.channelStatus,
+
+      execInfoOpen: s.openInfo === 'exec', toggleExecInfo: () => this.toggleInfo('exec'),
+      remoteInfoOpen: s.openInfo === 'remote', toggleRemoteInfo: () => this.toggleInfo('remote'),
+      copyLocalUrl: () => this.copyLocalUrl(), urlCopied: s.urlCopied,
+      copyLabel: s.urlCopied ? 'copied ✓' : 'copy',
+    };
+  }
+}
+</script>
+</body>
+</html>
