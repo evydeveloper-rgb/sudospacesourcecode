@@ -598,6 +598,24 @@
                 <strong>What you're accepting.</strong> It can rewrite this dashboard, install things, and change anything on the device — genuine ownership, but with no undo button if an edit goes wrong. It also means it could, if asked the right way by whoever it's talking to, read its own configuration file out loud — and that file holds your live API key. Treat it as equivalent to handing out that key.<br><br>
                 <strong>When to turn it on.</strong> When you want it building or changing things here yourself, and you've accepted that a bad edit is yours to fix — the same trust you'd put in a program you run directly on your own machine.
               </div>
+
+              <div class="access-row">
+                <div>
+                  <strong>Speak up on its own</strong>
+                  <small>On by default. {{AGENT}} can message you first now and then — a reminder about something you said you'd do, or a reply you're waiting on. Most checks end in silence.</small>
+                </div>
+                <label class="switch">
+                  <input id="heartbeat-toggle" type="checkbox">
+                  <span aria-hidden="true"></span>
+                  <em class="sr-only">Toggle proactive messages</em>
+                </label>
+              </div>
+              <button class="info-btn" type="button" data-info="heartbeat-info" aria-expanded="false" aria-label="About proactive messages">i</button>
+              <div class="info-bubble" id="heartbeat-info">
+                <strong>What it does.</strong> Every half hour {{AGENT}} takes a cheap look at what it knows about you and decides whether there is anything genuinely worth sending. If there isn't, it stays quiet — you won't get a scheduled "just checking in".<br><br>
+                <strong>Only after you've messaged it.</strong> It never opens a WhatsApp conversation by itself. Until you write to it once there is nowhere to send, and it does nothing. No messages between 22:00 and 08:00.<br><br>
+                <strong>Why it's on.</strong> An agent that only ever answers is a search box. Speaking first is what makes it feel like it's actually paying attention. Switch it off if you'd rather it stayed silent unless spoken to.
+              </div>
               <p class="form-status" id="abilities-status" role="status"></p>
             </div>
           </section>
@@ -2227,12 +2245,14 @@
       $('subagent-toggle').checked = !!status.subagent_enabled;
       $('skills-toggle').checked = !!status.skills_enabled;
       $('full-access-toggle').checked = !!status.full_access_enabled;
+      $('heartbeat-toggle').checked = !!status.heartbeat_enabled;
       $('abilities-summary').textContent = [
         'Web search on',
         `commands ${status.exec_enabled ? 'on' : 'off'}`,
         status.subagent_enabled ? 'helpers on' : null,
         status.skills_enabled ? 'skills on' : null,
         status.full_access_enabled ? 'full access on' : null,
+        status.heartbeat_enabled ? 'speaks up' : null,
       ].filter(Boolean).join(' · ');
       selectKeySource(status.openrouter_key_source || 'sudo');
       $('key-state').textContent = status.own_key_hint
@@ -2396,6 +2416,7 @@
     $('subagent-toggle').addEventListener('change', () => saveAbilities('subagent-toggle'));
     $('skills-toggle').addEventListener('change', () => saveAbilities('skills-toggle'));
     $('full-access-toggle').addEventListener('change', () => saveAbilities('full-access-toggle'));
+    $('heartbeat-toggle').addEventListener('change', () => saveAbilities('heartbeat-toggle'));
     $('ssh-toggle').addEventListener('change', toggleSsh);
     $('save-ssh-key').addEventListener('click', saveSshKey);
     $('install-devtools').addEventListener('click', () => installDevtools('claude'));

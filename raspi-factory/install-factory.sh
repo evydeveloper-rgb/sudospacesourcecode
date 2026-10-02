@@ -178,7 +178,13 @@ EOF
 # worth saying and usually does nothing. It only reaches the owner's WhatsApp
 # once they have messaged the device, so the service is idle until the bridge
 # is paired and used -- same "costs nothing until asked for" shape as the
-# bridge itself. Enabled at install; if it has nothing to do, it exits.
+# bridge itself.
+#
+# ON BY DEFAULT. Shipping this off would make the agent a thing that only ever
+# answers, never one that speaks first -- which is the whole point of the box.
+# The owner can switch it off in Settings -> What sudo can do (that toggle runs
+# `systemctl enable/disable --now sudo-heartbeat.timer`), so the default is a
+# starting point, not a cage. The timer is enabled at the end of this script.
 cat > /etc/systemd/system/sudo-heartbeat.service << 'EOF'
 [Unit]
 Description=Sudo Proactive Heartbeat
@@ -210,6 +216,7 @@ OnUnitActiveSec=30min
 WantedBy=timers.target
 EOF
 systemctl daemon-reload 2>/dev/null || true
+# Enabled by default -- see the note above. Settings can turn it back off.
 systemctl enable --now sudo-heartbeat.timer 2>/dev/null || true
 
 # ── Sudo Dashboard (LAN + remote tunnel both use :80) ───────────────────────

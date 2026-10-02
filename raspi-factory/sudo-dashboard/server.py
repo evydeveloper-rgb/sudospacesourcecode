@@ -461,6 +461,9 @@ def setup_status(include_sensitive=False):
         # config.json, which is where the live OpenRouter/pico/Composio keys
         # live. That is the owner's call to make deliberately, not a default.
         "full_access_enabled": bool(cfg.get("full_access_enabled", False)),
+        # On by default, like exec -- the device speaking first is the point.
+        # Reflects the systemd timer, which is the single source of truth.
+        "heartbeat_enabled": heartbeat_enabled(),
         "openrouter_key_source": (
             "own" if cfg.get("openrouter_key_source") == "own" else "sudo"
         ),
@@ -508,6 +511,56 @@ def run_remote_access(enable: bool):
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     )
+
+
+HEARTBEAT_TIMER = "sudo-heartbeat.timer"
+OWNER_FILE = "/opt/sudo/whatsapp-auth/owner.json"
+
+
+def heartbeat_enabled():
+    """Whether the proactive heartbeat timer is running right now.
+
+    Reads systemd rather than a config flag, so the Settings switch and the
+    unit can never disagree -- the state lives in exactly one place.
+    """
+    try:
+        r = subprocess.run(
+            ["systemctl", "is-enabled", HEARTBEAT_TIMER],
+            capture_output=True, text=True, timeout=3,
+        )
+        return r.stdout.strip() == "enabled"
+    except Exception:
+        return False
+
+
+def run_heartbeat(enable: bool):
+    try:
+        cmd = "enable" if enable else "disable"
+        # --now so the switch takes effect immediately, not at next boot.
+        subprocess.run(
+            ["systemctl", cmd, "--now", HEARTBEAT_TIMER],
+            capture_output=True, timeout=10,
+        )
+    except Exception:
+        pass
+
+
+def owner_session_key():
+    """The picoclaw session the owner's own WhatsApp thread uses.
+
+    Must match the key the bridge hands picoclaw on each message
+    (`sudo-whatsapp:<owner jid>`), or the heartbeat's context gate looks in
+    the wrong file and concludes nobody has talked to the device -- and so
+    never nudges anyone.
+    """
+    try:
+        with open(OWNER_FILE, encoding="utf-8") as f:
+            jid = (json.load(f) or {}).get("jid")
+        if jid:
+            return "sudo-whatsapp:" + str(jid).replace(":", "_")
+    except Exception:
+        pass
+    return "sudo-whatsapp:main"
 
 
 def run_configure_picoclaw():
@@ -1490,6 +1543,11 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                 if flag in body:
                     cfg[flag] = bool(body.get(flag))
             write_json_file(CONFIG, cfg)
+            if "heartbeat_enabled" in body:
+                # Not a config value: the timer itself is the state. Enabling
+                # or disabling the unit is the whole change, so there is
+                # nothing that can drift out of sync.
+                run_heartbeat(bool(body.get("heartbeat_enabled")))
             run_configure_picoclaw()
             self.send_json({"ok": True, **setup_status(include_sensitive=False)})
             return True

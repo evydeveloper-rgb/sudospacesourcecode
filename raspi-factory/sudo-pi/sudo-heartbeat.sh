@@ -29,9 +29,12 @@ PICOCLAW_BIN=/usr/local/bin/picoclaw
 PICOCLAW_CONFIG=/opt/sudo/picoclaw/config.json
 SEND_TOKEN_FILE=/opt/sudo/whatsapp/send-token
 SEND_URL=http://127.0.0.1:8790/send
+OWNER_FILE=/opt/sudo/whatsapp-auth/owner.json
 LOG=/var/log/sudo-heartbeat.log
-# The same session the WhatsApp bridge uses, so a nudge can build on whatever
-# conversation is already open rather than arriving as a stranger.
+# The session the owner's own WhatsApp thread uses. Must match what the bridge
+# hands picoclaw (`sudo-whatsapp:<owner jid>`), or the "has anyone talked to us
+# lately?" check below reads a file nobody is writing to and the device never
+# nudges anyone. Resolved from owner.json once the owner has messaged us.
 SESSION_KEY=sudo-whatsapp:main
 # No sending inside this local window. The device has no clock but the Pi's.
 QUIET_START=22
@@ -55,19 +58,27 @@ if [ ! -f "$SEND_TOKEN_FILE" ]; then
   exit 0
 fi
 
+# Point at the owner's own thread, the one their messages actually land in.
+# Same normalisation the bridge uses (path-unsafe chars -> `_`).
+if [ -f "$OWNER_FILE" ]; then
+  jid=$(python3 -c 'import json,sys;print((json.load(open(sys.argv[1])) or {}).get("jid") or "")' "$OWNER_FILE" 2>/dev/null)
+  if [ -n "$jid" ]; then
+    SESSION_KEY="sudo-whatsapp:$(printf '%s' "$jid" | sed 's/[^A-Za-z0-9._-]/_/g')"
+  fi
+fi
+
 if [ ! -x "$PICOCLAW_BIN" ] || [ ! -f "$PICOCLAW_CONFIG" ]; then
   log "picoclaw not configured, skipping"
   exit 0
 fi
 
 # Has anyone actually talked to this device lately? Sessions live as JSONL
-# under the workspace; the newest one that mentions our key is the signal.
-last=$(
-  find "$WORKSPACE/sessions" -type f -name '*.jsonl' -newermt "-${MAX_IDLE_HOURS} hours" 2>/dev/null \
-    | head -1
-)
-if [ -z "$last" ]; then
-  log "no recent conversation — skipping"
+# under the workspace, one file per session key. Look for the owner's own
+# thread specifically -- a stray file from any other session is not a signal
+# that the owner is around.
+last="$WORKSPACE/sessions/${SESSION_KEY}.jsonl"
+if [ ! -f "$last" ] || [ -z "$(find "$last" -newermt "-${MAX_IDLE_HOURS} hours" 2>/dev/null)" ]; then
+  log "no recent conversation in $SESSION_KEY — skipping"
   exit 0
 fi
 

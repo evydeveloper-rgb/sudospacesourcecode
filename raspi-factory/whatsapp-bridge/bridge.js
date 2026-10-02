@@ -25,7 +25,20 @@ const CHAT_URL = process.env.SUDO_CHAT_URL || 'http://127.0.0.1/api/agent/chat';
 // picoclaw keeps the WhatsApp thread under this key on the device, so a
 // message sent from a phone in the kitchen and the next one after it share
 // context instead of each being answered cold.
-const SESSION_KEY = process.env.SUDO_SESSION || 'sudo-whatsapp:main';
+// Fallback session key, used only before we know who we're talking to. Once a
+// message arrives we key the session by the sender's JID, so two people who
+// text this device never share one memory/thread (and, before this, the
+// heartbeat's context gate read a file nobody was writing to).
+const DEFAULT_SESSION = process.env.SUDO_SESSION || 'sudo-whatsapp:main';
+
+// Baileys JIDs look like `15551234567@s.whatsapp.net`; picoclaw uses the key
+// as a filename for its session store, so strip anything path-unsafe. The
+// leading colon on a device JID is normalised to `_` rather than dropped, so
+// two different senders can never collapse onto the same file.
+function sessionKeyFor(jid) {
+  if (!jid) return DEFAULT_SESSION;
+  return 'sudo-whatsapp:' + jid.replace(/[^A-Za-z0-9._-]/g, '_');
+}
 // Who to reach when this device speaks first (heartbeat, reminder). Learned
 // from the first direct message the owner sends, and remembered so the box
 // does not have to be told again after a restart. WA_OWNER pins it by hand.
@@ -61,9 +74,9 @@ function writeStatus(patch) {
 // our own session key so this device's WhatsApp conversation keeps its thread
 // inside picoclaw's session store rather than starting fresh every message.
 // (The dashboard box uses its own key, so the two stay separate.)
-function askAgent(message) {
+function askAgent(message, sessionKey) {
   return new Promise((resolve, reject) => {
-    const body = JSON.stringify({ message, history: [], session: SESSION_KEY });
+    const body = JSON.stringify({ message, history: [], session: sessionKey || DEFAULT_SESSION });
     const req = http.request(
       CHAT_URL,
       {
@@ -266,7 +279,7 @@ async function start() {
       }
 
       try {
-        const reply = await askAgent(text);
+        const reply = await askAgent(text, sessionKeyFor(jid));
         await sock.sendMessage(jid, { text: reply });
       } catch (err) {
         log(`reply failed: ${err.message}`);
