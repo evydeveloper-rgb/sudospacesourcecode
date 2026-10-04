@@ -88,6 +88,8 @@ WHATSAPP_UNLINK_SCRIPT = "/usr/local/bin/sudo-unlink-whatsapp.sh"
 UPDATE_SCRIPT = "/usr/local/bin/sudo-update.sh"
 UPDATE_STATUS = "/var/lib/sudo-update-status.json"
 VERSION_FILE = "/opt/sudo/version"
+RESET_SCRIPT = "/usr/local/bin/sudo-reset-setup.sh"
+RESET_STATUS = "/var/lib/sudo-reset-status.json"
 # Small enough to answer in about a second on a 4GB Pi. It greets and keeps
 # the box talking when there is no cloud key; it is not asked to know things.
 # How many turns of context the on-device model gets. Small models lose the
@@ -1632,6 +1634,52 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                 return True
             self.send_json({"ok": True, "state": "checking",
                             "message": "Checking for updates…"})
+            return True
+
+        if path == "/api/agent/reset" and self.command == "POST":
+            if not os.path.isfile(RESET_SCRIPT):
+                self.send_json({"error": "Reset helper missing — re-flash this device to get it"},
+                               code=500)
+                return True
+            # Destructive and irreversible: the caller must say so explicitly.
+            try:
+                body = self.read_body_json()
+            except (ValueError, json.JSONDecodeError):
+                body = {}
+            if body.get("confirm") != "RESET":
+                self.send_json({"error": "Reset not confirmed"}, code=400)
+                return True
+            write_json_file(RESET_STATUS, {
+                "state": "resetting",
+                "message": "Resetting this device…",
+                "at": time.time(),
+            })
+            try:
+                # Runs outside the dashboard's sandbox (it owns /var/lib,
+                # NetworkManager and the service units). Not waited on -- the
+                # script wipes Wi-Fi and brings the hotspot back, so the reply
+                # to this very request is the last thing this dashboard will
+                # ever serve. A short delay lets that reply flush before the
+                # reboot takes the box down.
+                subprocess.Popen(
+                    ["/bin/bash", "-c",
+                     f"sleep 1; /bin/bash {RESET_SCRIPT}; sleep 2; /sbin/reboot"],
+                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                    start_new_session=True,
+                )
+            except Exception as exc:
+                write_json_file(RESET_STATUS, {
+                    "state": "error", "message": str(exc),
+                    "at": time.time(),
+                })
+                self.send_json({"error": str(exc)}, code=500)
+                return True
+            self.send_json({"ok": True, "state": "resetting",
+                            "message": "Resetting this device…"})
+            return True
+
+        if path == "/api/agent/reset" and self.command == "GET":
+            self.send_json(read_json_file(RESET_STATUS, {"state": "idle", "message": ""}) or {})
             return True
 
         if path == "/api/agent/channels/whatsapp/unlink" and self.command == "POST":

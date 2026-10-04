@@ -105,6 +105,7 @@ cp "${BOOT}/sudo-pi/unlink-whatsapp.sh" /usr/local/bin/sudo-unlink-whatsapp.sh
 cp "${BOOT}/sudo-pi/sudo-heartbeat.sh" /usr/local/bin/sudo-heartbeat.sh
 cp "${BOOT}/sudo-pi/spend-guard.py" /usr/local/bin/sudo-spend-guard.py
 cp "${BOOT}/sudo-pi/sudo-update.sh" /usr/local/bin/sudo-update.sh
+cp "${BOOT}/sudo-pi/reset-setup.sh" /usr/local/bin/sudo-reset-setup.sh
 cp "${BOOT}/sudo-pi/trigger-cloud-init.py" /opt/sudo-pi/
 # The bundle this device was built from, kept on-device as the update baseline.
 # Lets an update (or a rollback) apply over Wi-Fi without a network round-trip.
@@ -127,7 +128,8 @@ chmod +x /usr/local/bin/sudo-device-id.sh \
          /usr/local/bin/sudo-unlink-whatsapp.sh \
          /usr/local/bin/sudo-heartbeat.sh \
          /usr/local/bin/sudo-spend-guard.py \
-         /usr/local/bin/sudo-update.sh
+         /usr/local/bin/sudo-update.sh \
+         /usr/local/bin/sudo-reset-setup.sh
 
 if [ -f "${BOOT}/sudo-api/api.url.default" ] && [ "${BILLING_ON}" = "1" ]; then
     cp "${BOOT}/sudo-api/api.url.default" /etc/sudo/api.url

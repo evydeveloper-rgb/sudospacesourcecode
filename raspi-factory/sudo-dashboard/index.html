@@ -917,6 +917,27 @@
             </div>
           </section>
 
+          <div class="settings-group">reset</div>
+          <section class="setting-card" id="reset-setting">
+            <button class="setting-head" type="button" aria-expanded="false">
+              <span class="setting-icon">↺</span>
+              <span><strong>Reset setup</strong><small id="reset-summary">Back to a brand-new device</small></span>
+              <span class="chevron">›</span>
+            </button>
+            <div class="setting-body">
+              <p class="section-intro">Puts this device back to how it was out of the box: your home Wi‑Fi is forgotten and the <strong>RaspiSetup</strong> hotspot comes back, so the next boot walks the whole setup flow from the start.</p>
+              <p class="warning-copy"><strong>This erases your setup.</strong> Your name, the agent's name and personality, its model, your saved API keys, and the agent's memory all go. Terminal access and Claude Code are <em>kept</em>, so you can still get back in to test. To go back to a fresh device you must run setup again.</p>
+              <button class="primary-button" id="reset-start" type="button">Reset this device…</button>
+              <div id="reset-confirm" hidden>
+                <p class="warning-copy">Last chance — this reboots the device and cannot be undone from here.</p>
+                <input id="reset-word" type="text" placeholder="Type RESET to confirm" autocomplete="off" spellcheck="false">
+                <button class="link-danger" id="reset-confirm-go" type="button">Reset and reboot</button>
+                <button class="info-btn" id="reset-cancel" type="button" style="margin-left:10px">Cancel</button>
+              </div>
+              <p class="form-status" id="reset-status" role="status"></p>
+            </div>
+          </section>
+
 
           <div class="version-note">sudo · v0.4 · running on your Raspberry Pi</div>
         </div>
@@ -1914,6 +1935,35 @@
       }
     }
 
+    function resetArm(arm) {
+      $('reset-confirm').hidden = !arm;
+      $('reset-start').hidden = arm;
+      $('reset-status').textContent = '';
+      if (arm) { $('reset-word').value = ''; $('reset-word').focus(); }
+    }
+
+    async function runReset() {
+      const status = $('reset-status');
+      if ($('reset-word').value.trim().toUpperCase() !== 'RESET') {
+        status.textContent = 'Type RESET to confirm.';
+        return;
+      }
+      status.textContent = 'Resetting — the device will reboot and vanish from this Wi-Fi.';
+      $('reset-confirm-go').disabled = true;
+      try {
+        await api('/api/agent/reset', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ confirm: 'RESET' }),
+        });
+        status.textContent =
+          'Done. When this page stops loading, join the “RaspiSetup” network and open http://192.168.4.1/';
+      } catch (error) {
+        status.textContent = error.message;
+        $('reset-confirm-go').disabled = false;
+      }
+    }
+
     function renderReadiness(status) {
       const where = status.answering_with && status.answering_with.where;
       const ready = where && where !== 'none';
@@ -2725,6 +2775,12 @@
     $('cloud-nudge-dismiss').addEventListener('click', dismissCloudNudge);
     $('update-check').addEventListener('click', () => runUpdate(true));
     $('update-apply').addEventListener('click', () => runUpdate(false));
+    $('reset-start').addEventListener('click', () => resetArm(true));
+    $('reset-cancel').addEventListener('click', () => resetArm(false));
+    $('reset-confirm-go').addEventListener('click', runReset);
+    $('reset-word').addEventListener('keydown', event => {
+      if (event.key === 'Enter') runReset();
+    });
     $('setup-more-dismiss').addEventListener('click', dismissOfferMore);
     document.querySelectorAll('#theme-options button').forEach(b =>
       b.addEventListener('click', () => chooseTheme(b.dataset.value)));
