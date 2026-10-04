@@ -2776,6 +2776,12 @@
       // ready yet" and left on the 100dvh fallback instead.
       if (!h || h < 200) return;
       document.documentElement.style.setProperty('--vvh', `${h}px`);
+      // The visual viewport is shorter than the layout viewport exactly when
+      // the on-screen keyboard is covering the difference. Flag it so the
+      // chat can drop the bottom-nav lane while the keyboard is up, instead of
+      // leaving a dead gap above the composer.
+      const keyboardOpen = h < (window.innerHeight - 120);
+      document.body.classList.toggle('keyboard-open', keyboardOpen);
     }
     if (window.visualViewport) {
       syncViewportHeight();

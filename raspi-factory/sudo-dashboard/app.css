@@ -119,7 +119,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 
 .app-shell {
   width: min(100%, 900px);
-  height: 100dvh;
+  /* Track the visual viewport where it exists (see syncViewportHeight): it is
+     the one measurement that shrinks for the on-screen keyboard, and the chat
+     composer anchors to the bottom of this shell. Falls back to 100dvh. */
+  height: var(--vvh, 100dvh);
   margin: 0 auto;
   position: relative;
   background: var(--veil);
@@ -173,6 +176,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 #app-main {
   flex: 1 1 auto; min-height: 0; overflow-y: auto;
   -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+  /* A column, so the chat view can fill this region instead of being given a
+     height guessed from the viewport; the guess is what let the composer
+     drift up to the top when the keyboard shrank things. */
+  display: flex; flex-direction: column;
 }
 .view {
   display: none;
@@ -210,13 +217,23 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 
 /* Chat */
 .chat-view.active {
-  height: calc(var(--vvh, 100dvh) - 62px - var(--safe-top) - 72px - var(--safe-bottom));
-  min-height: 0;
+  /* Fill the main region rather than computing a height from the viewport.
+     The shell is sized to the visual viewport (see the mobile rule), so when
+     the keyboard opens the region shrinks and the composer stays pinned just
+     above it -- instead of the whole view shrinking away from the bottom and
+     stranding the input at the top. */
+  flex: 1 1 auto; height: auto; min-height: 0;
   display: flex; flex-direction: column;
-  padding-bottom: 12px;
+  /* Reserve the fixed bottom nav's lane so the composer lands just above it
+     rather than behind it. Overflowing the reserved space is what stranded
+     the composer when the keyboard opened. The lane is dropped while the
+     keyboard is up (body.keyboard-open), since the nav is behind it then. */
+  margin-bottom: calc(72px + var(--safe-bottom));
+  padding-bottom: 10px;
   overflow: hidden;
 }
-.chat-heading { width: 100%; flex: none; margin-bottom: 18px; }
+body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 6px; }
+.chat-heading { width: 100%; flex: none; margin-bottom: 12px; }
 .public-link-strip {
   width: min(100%, 720px); margin: -8px auto 16px; padding: 9px 12px;
   display: flex; justify-content: space-between; align-items: center;
@@ -232,7 +249,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   flex: 1 1 auto; min-height: 0; overflow-y: auto;
   overscroll-behavior: contain; scrollbar-gutter: stable;
   -webkit-overflow-scrolling: touch;
-  display: flex; flex-direction: column; gap: 17px; padding: 4px 3px 18px 1px;
+  display: flex; flex-direction: column; gap: 14px; padding: 2px 3px 12px 1px;
   scroll-padding-block: 18px;
 }
 .message { display: flex; align-items: flex-end; gap: 9px; max-width: min(88%, 610px); }
@@ -509,7 +526,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 @media (min-width: 940px) {
   body { padding: 22px 0; }
   .app-shell { height: calc(100dvh - 44px); border-radius: 28px; box-shadow: 0 22px 70px rgba(22, 19, 17,.16); }
-  .chat-view.active { height: calc(var(--vvh, 100dvh) - 178px); min-height: 0; }
+  .chat-view.active { margin-bottom: 0; min-height: 0; }
   .bottom-nav { bottom: 22px; border-radius: 0 0 28px 28px; }
 }
 
@@ -661,11 +678,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
    message sent during that window just sat on a generic "thinking" dot
    animation with no indication anything unusual was happening. */
 .model-loading {
-  width: min(100%, 720px); margin: 0 auto 14px; padding: 10px 13px;
+  width: min(100%, 720px); margin: 0 auto 10px; padding: 9px 12px;
   display: flex; align-items: center; gap: 9px;
   border: 1px solid var(--line); border-left: 3px solid var(--accent);
   border-radius: var(--radius); background: var(--color-bg-raised);
-  color: var(--muted); font-size: .74rem; line-height: 1.45;
+  color: var(--muted); font-size: .74rem; line-height: 1.4;
 }
 .model-loading-dot {
   width: 7px; height: 7px; border-radius: 50%; flex: none;
@@ -705,13 +722,13 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
    Violet left rail, same family as .setup-more so it reads as a suggestion
    rather than an error. */
 .cloud-nudge {
-  width: min(100%, 720px); margin: 0 auto 14px; padding: 11px 12px;
+  width: min(100%, 720px); margin: 0 auto 10px; padding: 10px 12px;
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
   border: 1px solid var(--line); border-left: 3px solid var(--violet);
   border-radius: var(--radius); background: var(--color-bg-raised);
 }
-.cloud-nudge strong { display: block; font-size: .8rem; }
-.cloud-nudge small { display: block; margin-top: 3px; color: var(--muted); font-size: .69rem; line-height: 1.4; }
+.cloud-nudge strong { display: block; font-size: .79rem; }
+.cloud-nudge small { display: block; margin-top: 2px; color: var(--muted); font-size: .69rem; line-height: 1.35; }
 .cloud-nudge-actions { display: flex; align-items: center; gap: 4px; flex: none; }
 .cloud-nudge-actions button:first-child {
   padding: 8px 11px; border: 0; border-radius: 10px;
@@ -923,9 +940,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .topbar { grid-column: 2; grid-row: 1; width: auto; }
   #app-main { grid-column: 2; grid-row: 2; min-height: 0; overflow-y: auto; }
   .bottom-nav { display: none; }
-  /* Fill the column so the composer anchors to the bottom, as on mobile —
-     the mobile calc subtracts the bottom nav, which is gone at this width. */
-  .chat-view.active { height: calc(var(--vvh, 100dvh) - 62px - var(--safe-top)); min-height: 0; }
+  /* Fill the column so the composer anchors to the bottom; the fixed bottom
+     nav is hidden at this width, so nothing needs reserving. */
+  .chat-view.active { margin-bottom: 0; min-height: 0; }
 
   .side-rail {
     grid-column: 1; grid-row: 1 / -1;
