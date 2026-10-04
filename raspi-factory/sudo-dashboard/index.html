@@ -157,6 +157,17 @@
           <span class="model-loading-dot" aria-hidden="true"></span>
           <span id="model-loading-text"></span>
         </div>
+        <div class="cloud-nudge" id="cloud-nudge" hidden>
+          <div>
+            <strong>Give me a proper brain</strong>
+            <small id="cloud-nudge-text">I'm running on the small on-device model — good for chatting, not for real work. Connect a cloud model whenever you're ready.</small>
+          </div>
+          <div class="cloud-nudge-actions">
+            <button id="cloud-nudge-go" type="button">Go to OpenRouter</button>
+            <button id="cloud-nudge-settings" type="button">Set up</button>
+            <button id="cloud-nudge-dismiss" type="button" aria-label="Dismiss">×</button>
+          </div>
+        </div>
         <div class="setup-more" id="setup-more" hidden>
           <div>
             <strong>Want to go further?</strong>
@@ -1769,6 +1780,24 @@
     // same signal the server itself uses to decide whether a reply is even
     // possible -- "none" means there is neither a key nor a working local
     // model yet, which on a first boot usually just means "still installing."
+    function renderCloudNudge(status) {
+      const box = $('cloud-nudge');
+      if (!box) return;
+      // Only once setup has actually finished, and only while the small
+      // on-device model is the one answering. The moment a cloud key lands
+      // (or Sudo credits are wired up) this stops being true and the banner
+      // disappears on the next poll -- no separate state to keep in sync.
+      const onLocal = status.answering_with && status.answering_with.where === 'local';
+      let dismissed = false;
+      try { dismissed = localStorage.getItem('sudo-cloud-nudge') === 'dismissed'; } catch (_) {}
+      box.hidden = !(status.profile_done && onLocal && !dismissed);
+    }
+
+    function dismissCloudNudge() {
+      $('cloud-nudge').hidden = true;
+      try { localStorage.setItem('sudo-cloud-nudge', 'dismissed'); } catch (_) {}
+    }
+
     function renderReadiness(status) {
       const where = status.answering_with && status.answering_with.where;
       const ready = where && where !== 'none';
@@ -2047,6 +2076,11 @@
           body: JSON.stringify({ composio_enabled: $('composio-toggle').checked }),
         });
         state.status = data;
+        // Keep the card summary in step with the switch immediately -- it
+        // otherwise only caught up on the next status poll.
+        $('connectors-summary').textContent = data.has_composio
+          ? (data.composio_enabled ? 'Connectors on' : 'Key saved, connectors off')
+          : 'Not connected';
         status.textContent = data.composio_enabled ? 'Connectors on.' : 'Connectors off.';
         setTimeout(() => { status.textContent = ''; }, 2500);
       } catch (error) {
@@ -2328,6 +2362,7 @@
       renderRemotePassword(status);
       renderLocalModel(status.local_model);
       renderReadiness(status);
+      renderCloudNudge(status);
       renderWhatsappSummary(status);
       $('exec-toggle').checked = !!status.exec_enabled;
       $('subagent-toggle').checked = !!status.subagent_enabled;
@@ -2530,6 +2565,14 @@
       if (event.key === 'Enter') finishWelcome();
     });
     $('setup-more-go').addEventListener('click', () => { dismissOfferMore(); setTab('settings'); });
+    $('cloud-nudge-go').addEventListener('click', () => {
+      window.open('https://openrouter.ai/?utm_source=sudo', '_blank', 'noopener');
+    });
+    $('cloud-nudge-settings').addEventListener('click', () => {
+      setTab('settings');
+      openSettingPage('providers-setting');
+    });
+    $('cloud-nudge-dismiss').addEventListener('click', dismissCloudNudge);
     $('setup-more-dismiss').addEventListener('click', dismissOfferMore);
     document.querySelectorAll('#theme-options button').forEach(b =>
       b.addEventListener('click', () => chooseTheme(b.dataset.value)));

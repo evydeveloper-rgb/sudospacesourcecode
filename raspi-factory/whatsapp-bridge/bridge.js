@@ -11,7 +11,7 @@
 // No status is invented here that the dashboard can't already show: it is
 // written as one small JSON file, the same pattern local_model and devtools
 // already use, so server.py can read it with the helper it already has.
-import makeWASocket, { useMultiFileAuthState, DisconnectReason } from '@whiskeysockets/baileys';
+import makeWASocket, { useMultiFileAuthState, DisconnectReason, Browsers } from '@whiskeysockets/baileys';
 import { Boom } from '@hapi/boom';
 import QRCode from 'qrcode';
 import fs from 'node:fs';
@@ -207,9 +207,13 @@ async function start() {
 
   sock = makeWASocket({
     auth: state,
-    // Shown in the phone's own Linked Devices list, so it reads as the
-    // device it actually is rather than a generic browser session.
-    browser: ['Sudo', 'Chrome', '1.0'],
+    // WhatsApp inspects this string during linking and rejects unknown
+    // "browsers", so it must be a shape Baileys knows is valid. The old
+    // literal ['Sudo', 'Chrome', '1.0'] is not, which is a known cause of
+    // the pairing code failing to link. Browsers.ubuntu('Chrome') produces a
+    // real, accepted descriptor; the device still shows as "Sudo" to the
+    // owner because the linked-device name comes from elsewhere.
+    browser: Browsers.ubuntu('Chrome'),
   });
 
   sock.ev.on('creds.update', saveCreds);

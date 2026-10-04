@@ -688,6 +688,31 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   background: transparent; color: var(--muted); font-size: 1.15rem; cursor: pointer;
 }
 
+/* Chat: the nudge to connect a cloud model while the small one is answering.
+   Violet left rail, same family as .setup-more so it reads as a suggestion
+   rather than an error. */
+.cloud-nudge {
+  width: min(100%, 720px); margin: 0 auto 14px; padding: 11px 12px;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  border: 1px solid var(--line); border-left: 3px solid var(--violet);
+  border-radius: var(--radius); background: var(--color-bg-raised);
+}
+.cloud-nudge strong { display: block; font-size: .8rem; }
+.cloud-nudge small { display: block; margin-top: 3px; color: var(--muted); font-size: .69rem; line-height: 1.4; }
+.cloud-nudge-actions { display: flex; align-items: center; gap: 4px; flex: none; }
+.cloud-nudge-actions button:first-child {
+  padding: 8px 11px; border: 0; border-radius: 10px;
+  background: var(--ink); color: var(--color-bg-raised); font-size: .72rem; font-weight: 700; cursor: pointer;
+}
+.cloud-nudge-actions button:nth-child(2) {
+  padding: 8px 11px; border: 1px solid var(--line); border-radius: 10px;
+  background: var(--surface-soft); font-size: .72rem; font-weight: 700; cursor: pointer;
+}
+.cloud-nudge-actions button:last-child {
+  width: 30px; height: 30px; border: 0; border-radius: 50%;
+  background: transparent; color: var(--muted); font-size: 1.15rem; cursor: pointer;
+}
+
 /* Welcome: step dots */
 .welcome-steps { display: flex; gap: 6px; margin-bottom: 18px; }
 .welcome-steps span {
