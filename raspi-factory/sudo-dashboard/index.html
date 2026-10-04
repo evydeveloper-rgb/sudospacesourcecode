@@ -1311,8 +1311,8 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            message: `Say hello to ${name} and invite them to tell you what they are working on. `
-                     + 'Reply with only the greeting, one short sentence, spoken to them directly.',
+            message: `Say hello to ${name}, then in the same breath warmly mention that connecting you to a cloud model unlocks real work. `
+                     + 'Reply with only the greeting, one or two short sentences, spoken to them directly.',
           }),
         }, 90000);
         const reply = (data.reply || '').trim();

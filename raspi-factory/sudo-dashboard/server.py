@@ -629,7 +629,9 @@ def local_system_prompt(cfg):
         "Take an interest in them: what they do, what they are working on, "
         "what they would like a hand with. Ask one thing at a time.\n"
         "Answer whatever they ask simply and directly, then keep the "
-        "conversation going."
+        "conversation going.\n"
+        "When it fits, warmly suggest they connect you to a cloud model for "
+        "real work."
     )
 
 
