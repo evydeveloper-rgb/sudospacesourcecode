@@ -104,7 +104,17 @@ cp "${BOOT}/sudo-pi/install-whatsapp-bridge.sh" /usr/local/bin/sudo-install-what
 cp "${BOOT}/sudo-pi/unlink-whatsapp.sh" /usr/local/bin/sudo-unlink-whatsapp.sh
 cp "${BOOT}/sudo-pi/sudo-heartbeat.sh" /usr/local/bin/sudo-heartbeat.sh
 cp "${BOOT}/sudo-pi/spend-guard.py" /usr/local/bin/sudo-spend-guard.py
+cp "${BOOT}/sudo-pi/sudo-update.sh" /usr/local/bin/sudo-update.sh
 cp "${BOOT}/sudo-pi/trigger-cloud-init.py" /opt/sudo-pi/
+# The bundle this device was built from, kept on-device as the update baseline.
+# Lets an update (or a rollback) apply over Wi-Fi without a network round-trip.
+if [ -f "${BOOT}/sudo-factory.tar.gz" ]; then
+    cp "${BOOT}/sudo-factory.tar.gz" /usr/local/bin/sudo-factory.tar.gz
+    [ -f "${BOOT}/sudo-factory.sha256" ] && cp "${BOOT}/sudo-factory.sha256" /usr/local/bin/sudo-factory.sha256
+    tr -d ' \t\r\n' < "${BOOT}/sudo-factory.tar.gz.ver" > /opt/sudo/version 2>/dev/null \
+        || printf '%s\n' "1.0.0" > /opt/sudo/version
+    chmod 644 /opt/sudo/version 2>/dev/null || true
+fi
 chmod +x /usr/local/bin/sudo-device-id.sh \
          /usr/local/bin/sudo-device-secrets.sh \
          /usr/local/bin/sudo-cloud-init.sh \
@@ -112,9 +122,12 @@ chmod +x /usr/local/bin/sudo-device-id.sh \
          /usr/local/bin/sudo-install-devtools.sh \
          /usr/local/bin/sudo-setup-ssh.sh \
          /usr/local/bin/sudo-install-local-model.sh \
-         /usr/local/bin/sudo-set-hostname.sh          /usr/local/bin/sudo-install-whatsapp-bridge.sh          /usr/local/bin/sudo-unlink-whatsapp.sh \
+         /usr/local/bin/sudo-set-hostname.sh \
+         /usr/local/bin/sudo-install-whatsapp-bridge.sh \
+         /usr/local/bin/sudo-unlink-whatsapp.sh \
          /usr/local/bin/sudo-heartbeat.sh \
-         /usr/local/bin/sudo-spend-guard.py
+         /usr/local/bin/sudo-spend-guard.py \
+         /usr/local/bin/sudo-update.sh
 
 if [ -f "${BOOT}/sudo-api/api.url.default" ] && [ "${BILLING_ON}" = "1" ]; then
     cp "${BOOT}/sudo-api/api.url.default" /etc/sudo/api.url

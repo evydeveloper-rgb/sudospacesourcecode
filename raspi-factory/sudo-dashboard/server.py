@@ -85,6 +85,9 @@ LOCAL_MODEL = "gemma3:270m"
 WHATSAPP_STATUS = "/var/lib/sudo-whatsapp-status.json"
 WHATSAPP_INSTALL_SCRIPT = "/usr/local/bin/sudo-install-whatsapp-bridge.sh"
 WHATSAPP_UNLINK_SCRIPT = "/usr/local/bin/sudo-unlink-whatsapp.sh"
+UPDATE_SCRIPT = "/usr/local/bin/sudo-update.sh"
+UPDATE_STATUS = "/var/lib/sudo-update-status.json"
+VERSION_FILE = "/opt/sudo/version"
 # Small enough to answer in about a second on a 4GB Pi. It greets and keeps
 # the box talking when there is no cloud key; it is not asked to know things.
 # How many turns of context the on-device model gets. Small models lose the
@@ -497,6 +500,7 @@ def setup_status(include_sensitive=False):
         "provider_key_hints": provider_key_hints(cfg),
         "has_composio": bool(cfg.get("composio_api_key")),
         "composio_enabled": bool(cfg.get("composio_enabled")),
+        "update": update_state(),
         "routing_mode": (
             cfg.get("routing_mode") if cfg.get("routing_mode") in ROUTING_MODES else "auto"
         ),
@@ -652,6 +656,22 @@ def whatsapp_state():
         "message": data.get("message", ""),
         "qr": data.get("qr"),
         "number": data.get("number"),
+    }
+
+
+def update_state():
+    """Where the on-device updater stands, from its own status file -- the
+    same read-not-compute pattern as whatsapp_state(). Absent file means the
+    updater has never run, which is normal on a fresh device.
+    """
+    data = read_json_file(UPDATE_STATUS, {}) or {}
+    current = (read_text(VERSION_FILE) or "").strip() or "0.0.0"
+    return {
+        "state": data.get("state", "idle"),
+        "message": data.get("message", ""),
+        "current": data.get("current") or current,
+        "latest": data.get("latest"),
+        "at": data.get("at"),
     }
 
 
@@ -1565,6 +1585,36 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                     return True
                 self.send_json({"ok": True, "state": "installing", "message": "Starting…"})
                 return True
+
+        if path == "/api/agent/update" and self.command == "GET":
+            self.send_json(update_state())
+            return True
+
+        if path == "/api/agent/update" and self.command == "POST":
+            if not os.path.isfile(UPDATE_SCRIPT):
+                self.send_json({"error": "Updater missing — re-flash this device to get it"},
+                               code=500)
+                return True
+            try:
+                body = self.read_body_json()
+            except (ValueError, json.JSONDecodeError):
+                body = {}
+            # "check" only asks GitHub; anything else checks and applies.
+            args = ["--check"] if body.get("check") else []
+            try:
+                # Runs outside the dashboard's sandbox via systemd-run like
+                # every other privileged helper; not waited on, because
+                # applying downloads a bundle, rebuilds the agent config and
+                # restarts services -- the dashboard polls update_state() for
+                # progress, exactly like the WhatsApp flow.
+                run_privileged("sudo-update", UPDATE_SCRIPT, *args,
+                               wait=False, timeout=20)
+            except Exception as exc:
+                self.send_json({"error": str(exc)}, code=500)
+                return True
+            self.send_json({"ok": True, "state": "checking",
+                            "message": "Checking for updates…"})
+            return True
 
         if path == "/api/agent/channels/whatsapp/unlink" and self.command == "POST":
             if not os.path.isfile(WHATSAPP_UNLINK_SCRIPT):

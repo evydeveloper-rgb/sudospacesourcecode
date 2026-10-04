@@ -665,6 +665,24 @@
               <p class="form-status" id="spend-status" role="status"></p>
             </div>
           </section>
+          <section class="setting-card" id="update-setting">
+            <button class="setting-head" type="button" aria-expanded="false">
+              <span class="setting-icon">⟳</span>
+              <span><strong>Updates</strong><small id="update-summary">Version 1.0.0</small></span>
+              <span class="chevron">›</span>
+            </button>
+            <div class="setting-body">
+              <p class="section-intro">New versions install over Wi‑Fi — no reflashing the card. Your files, memory, keys and WhatsApp pairing are kept; only the app changes.</p>
+              <div class="access-row">
+                <div><strong>Current version</strong><small id="update-current">1.0.0</small></div>
+                <span class="status-pill good" id="update-pill">up to date</span>
+              </div>
+              <button class="primary-button" id="update-check" type="button">Check for updates</button>
+              <button class="primary-button" id="update-apply" type="button" hidden>Update now</button>
+              <p class="microcopy" id="update-message"></p>
+              <p class="form-status" id="update-status" role="status"></p>
+            </div>
+          </section>
           <div class="settings-group">device &amp; developer</div>
           <section class="setting-card" id="access-setting">
             <button class="setting-head" type="button" aria-expanded="false">
@@ -1647,6 +1665,7 @@
     // WeChat are not wired to anything -- their rows say so instead of
     // pretending a "Set up" button does something.
     let whatsappPollTimer = null;
+    let updatePollTimer = null;
 
     function stopWhatsappPoll() {
       clearTimeout(whatsappPollTimer);
@@ -1796,6 +1815,63 @@
     function dismissCloudNudge() {
       $('cloud-nudge').hidden = true;
       try { localStorage.setItem('sudo-cloud-nudge', 'dismissed'); } catch (_) {}
+    }
+
+    function renderUpdate(info) {
+      if (!info) return;
+      const current = info.current || '1.0.0';
+      $('update-current').textContent = current;
+      $('update-summary').textContent = 'Version ' + current;
+      const state = info.state || 'idle';
+      const pill = $('update-pill');
+      const checkBtn = $('update-check');
+      const applyBtn = $('update-apply');
+      applyBtn.hidden = true;
+      checkBtn.disabled = false;
+      let tone = 'good', label = 'up to date';
+      if (state === 'available') { tone = 'warn'; label = 'update available'; }
+      else if (state === 'error') { tone = 'bad'; label = 'error'; }
+      else if (state === 'checking' || state === 'downloading' || state === 'applying') {
+        tone = 'warn'; label = state;
+        checkBtn.disabled = true;
+      } else if (state === 'up-to-date') { label = 'up to date'; }
+      else if (state === 'done') { label = 'updated'; }
+      pill.textContent = label;
+      pill.className = 'status-pill ' + tone;
+      $('update-message').textContent = info.message || '';
+      if (state === 'available') applyBtn.hidden = false;
+    }
+
+    async function runUpdate(checkOnly) {
+      const status = $('update-status');
+      status.textContent = checkOnly ? 'Checking…' : 'Starting update…';
+      try {
+        await api('/api/agent/update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ check: checkOnly }),
+        });
+        status.textContent = '';
+        pollUpdate();
+      } catch (error) {
+        status.textContent = error.message;
+      }
+    }
+
+    async function pollUpdate() {
+      clearTimeout(updatePollTimer);
+      try {
+        const info = await api('/api/agent/update', {}, 8000);
+        renderUpdate(info);
+        // Keep watching through the multi-step states; stop once it settles.
+        if (['checking', 'downloading', 'applying'].includes(info.state)) {
+          updatePollTimer = setTimeout(pollUpdate, 3000);
+        } else if (info.state === 'done') {
+          setTimeout(() => pollStatus(), 1500);
+        }
+      } catch (_) {
+        updatePollTimer = setTimeout(pollUpdate, 5000);
+      }
     }
 
     function renderReadiness(status) {
@@ -2363,6 +2439,7 @@
       renderLocalModel(status.local_model);
       renderReadiness(status);
       renderCloudNudge(status);
+      renderUpdate(status.update);
       renderWhatsappSummary(status);
       $('exec-toggle').checked = !!status.exec_enabled;
       $('subagent-toggle').checked = !!status.subagent_enabled;
@@ -2573,6 +2650,8 @@
       openSettingPage('providers-setting');
     });
     $('cloud-nudge-dismiss').addEventListener('click', dismissCloudNudge);
+    $('update-check').addEventListener('click', () => runUpdate(true));
+    $('update-apply').addEventListener('click', () => runUpdate(false));
     $('setup-more-dismiss').addEventListener('click', dismissOfferMore);
     document.querySelectorAll('#theme-options button').forEach(b =>
       b.addEventListener('click', () => chooseTheme(b.dataset.value)));

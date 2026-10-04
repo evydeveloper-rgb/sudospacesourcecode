@@ -439,6 +439,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   background: #eee7f5; color: var(--muted); font-size: .67rem; font-weight: 800;
 }
 .status-pill.good { background: var(--ok-tint); color: var(--ok-ink); }
+.status-pill.warn { background: var(--coral-tint); color: var(--coral-2); }
+.status-pill.bad { background: var(--coral-tint); color: var(--coral-2); }
 .credit-balance { margin: 16px 0 0; font-size: clamp(2.4rem, 12vw, 4rem); font-weight: 780; letter-spacing: -.07em; }
 .balance-label { margin: 2px 0; color: var(--muted); font-size: .75rem; }
 .microcopy { margin: 10px 1px 0; color: var(--muted); font-size: .7rem; line-height: 1.5; }
