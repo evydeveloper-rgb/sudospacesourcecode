@@ -155,7 +155,13 @@
         </div>
         <div class="model-loading" id="model-loading" hidden>
           <span class="model-loading-dot" aria-hidden="true"></span>
-          <span id="model-loading-text"></span>
+          <div class="model-loading-body">
+            <span id="model-loading-text"></span>
+            <div class="model-progress" id="model-progress" hidden role="progressbar"
+                 aria-valuemin="0" aria-valuemax="100" aria-label="Setting up the on-device brain">
+              <span class="model-progress-fill" id="model-progress-fill"></span>
+            </div>
+          </div>
         </div>
         <div class="cloud-nudge" id="cloud-nudge" hidden>
           <div>
@@ -1246,22 +1252,47 @@
     // renderStatus (empty thread, so: greeting) and then greets again.
     async function ensureGreeting(firstRun = false) {
       if (state.greeted || $('messages').children.length) return;
-      state.greeted = true;
 
-      const agent = state.status?.agent_name || 'sudo';
-      const name = state.status?.user_name || 'there';
+      // Hold the greeting until there is actually something able to answer.
+      // Previously the written line appeared the instant setup finished, then
+      // sat there for the few minutes the on-device model was still
+      // downloading -- so the person met a "brain" that could not reply. Now
+      // nothing is said until the model is ready, and then exactly one hello
+      // lands. If the local install failed outright, we do not hold forever:
+      // the banner already explains, so the greeting still shows.
+      const status = state.status || {};
+      if (status.profile_done) {
+        const where = status.answering_with && status.answering_with.where;
+        const ready = where && where !== 'none';
+        const localState = (status.local_model && status.local_model.state) || 'absent';
+        if (!ready && localState !== 'failed') {
+          // Remember that a first meeting is owed, so the warmer line is used
+          // whenever readiness finally flips true on a later poll.
+          if (firstRun) state.firstGreetingOwed = true;
+          return;
+        }
+      }
+
+      state.greeted = true;
+      const agent = status.agent_name || 'sudo';
+      const name = status.user_name || 'there';
+      const isFirstMeeting = firstRun || state.firstGreetingOwed;
       let written;
-      if (!state.status?.profile_done) {
+      if (!status.profile_done) {
         written = 'hey — let’s make this box yours. start in settings, then come back and tell me what you need.';
-      } else if (firstRun) {
+      } else if (isFirstMeeting) {
         written = `Hi ${name}, I'm ${agent} — good to meet you. Tell me a bit about what you do and I'll figure out where I can help.`;
       } else {
         written = `hey ${name} — ${agent} here. what are you working on?`;
       }
       const node = addMessage('agent', written);
 
-      if (!firstRun || !state.status?.profile_done) return;
-      const local = state.status?.local_model;
+      // Only try to personalise the first hello, and only when the on-device
+      // model can answer. A later poll has no firstRun flag, so gate on the
+      // remembered first-meeting marker too.
+      if (!isFirstMeeting || !status.profile_done) return;
+      state.firstGreetingOwed = false;
+      const local = status.local_model;
       if (!local || local.state !== 'done') return;
       try {
         // Non-blocking either way -- the written line is already on screen --
@@ -1879,6 +1910,8 @@
       const ready = where && where !== 'none';
       const banner = $('model-loading');
       const text = $('model-loading-text');
+      const bar = $('model-progress');
+      const fill = $('model-progress-fill');
       const suffix = $('chat-title-suffix');
 
       if (ready) {
@@ -1887,7 +1920,14 @@
         return;
       }
 
-      const localState = (status.local_model && status.local_model.state) || 'absent';
+      const local = status.local_model || {};
+      const localState = local.state || 'absent';
+      const pct = typeof local.percent === 'number' ? local.percent : null;
+
+      // Start from a clean state, then re-hide the bar for the paths that
+      // should not draw one.
+      if (bar) { bar.hidden = true; }
+
       if (localState === 'failed') {
         // Not transient: waiting will not fix this one, so it says so and
         // points at the actual way out rather than sharing the "getting
@@ -1895,6 +1935,17 @@
         text.textContent = "Having trouble installing my on-device brain. Add an API "
           + 'key in Settings so I can chat while that gets sorted out.';
         if (suffix) suffix.textContent = ' needs an API key to chat right now.';
+      } else if (localState === 'installing' && pct !== null) {
+        // A real percentage, so show real movement rather than a bar that
+        // sits still and then jumps to done -- which reads as frozen.
+        const lead = local.message || 'Setting up my on-device brain…';
+        text.textContent = lead + ' First replies can take a few minutes.';
+        if (bar && fill) {
+          bar.hidden = false;
+          bar.setAttribute('aria-valuenow', String(pct));
+          fill.style.width = Math.max(4, Math.min(100, pct)) + '%';
+        }
+        if (suffix) suffix.textContent = ' is getting ready…';
       } else {
         text.textContent = 'Still setting up my on-device brain — first replies can '
           + "take a few minutes. I'll be ready shortly, no need to do anything.";

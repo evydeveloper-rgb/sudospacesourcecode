@@ -639,6 +639,10 @@ def local_model_state():
     return {
         "state": data.get("state", "absent"),
         "message": data.get("message", ""),
+        # 0-100 while installing; the chat shows a bar from it. Absent on
+        # older installs, so the UI treats a missing value as "unknown" and
+        # falls back to the indeterminate dot rather than showing a fake 0.
+        "percent": data.get("percent"),
         "model": LOCAL_MODEL,
     }
 

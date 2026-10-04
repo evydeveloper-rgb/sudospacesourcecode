@@ -45,11 +45,15 @@ else
 fi
 
 set_status() {
-  python3 - "$1" "$2" "$STATUS" <<'PY'
+  python3 - "$1" "$2" "${3:-0}" "$STATUS" <<'PY'
 import json, sys, time
-state, message, path = sys.argv[1:4]
+state, message, percent, path = sys.argv[1:5]
+try:
+    percent = int(percent)
+except Exception:
+    percent = 0
 with open(path, "w", encoding="utf-8") as f:
-    json.dump({"state": state, "message": message, "at": time.time()}, f)
+    json.dump({"state": state, "message": message, "percent": percent, "at": time.time()}, f)
 PY
 }
 
@@ -58,13 +62,13 @@ PY
 avail_mb="$(awk '/MemAvailable/ {print int($2/1024)}' /proc/meminfo)"
 echo "MemAvailable: ${avail_mb}MB"
 if [ "${avail_mb:-0}" -lt 900 ]; then
-  set_status failed "Not enough free memory (${avail_mb}MB) to run a local model safely"
+  set_status failed "Not enough free memory (${avail_mb}MB) to run a local model safely" 0
   echo "aborting: only ${avail_mb}MB available"
   exit 1
 fi
 
 if ! command -v ollama >/dev/null 2>&1; then
-  set_status installing "Installing the local model runtime…"
+  set_status installing "Installing the local model runtime…" 5
   echo "installing ollama"
   # Progress bars are carriage-return spam: they filled 12KB of log with
   # "####" and pushed the lines that matter out of the tail we keep.
@@ -74,7 +78,7 @@ if ! command -v ollama >/dev/null 2>&1; then
   # drops every line — which would read as the install having failed.
   if ! curl -fsSL --max-time 300 https://ollama.com/install.sh | sh 2>&1 \
        | tr '\r' '\n' | sed -E '/^[#[:space:]]*([0-9.]+%)?[[:space:]]*$/d' ; then
-    set_status failed "Could not install the model runtime — check the connection"
+    set_status failed "Could not install the model runtime — check the connection" 0
     echo "ollama install failed"
     exit 1
   fi
@@ -117,16 +121,47 @@ for _ in $(seq 1 15); do
   sleep 2
 done
 
-set_status installing "Downloading ${MODEL} (about 200MB)…"
+set_status installing "Downloading ${MODEL}…" 12
 echo "pulling ${MODEL}"
 # Same treatment as the runtime install: the pull draws a progress bar with
 # carriage returns and ANSI cursor moves, and unfiltered it filled the whole
 # 12KB log tail with one repeated line, pushing the memory and network checks
 # off the top where they could not be read.
+#
+# It also feeds the dashboard's progress bar: as ollama reports a percentage,
+# that is mapped onto 12-90% of the overall setup and written to the status
+# file, so the person watching sees the download actually move instead of a
+# bar that sits still and then jumps to done.
 if ! ollama pull "$MODEL" 2>&1 \
      | tr '\r' '\n' \
-     | sed -E 's/\x1b\[[0-9;?]*[a-zA-Z]//g; s/\[[0-9;?]+[a-zA-Z]//g; /^[[:space:]]*$/d; /^pulling [0-9a-f]+:/d; /^pulling manifest/d; /^verifying/d'; then
-  set_status failed "Could not download ${MODEL}"
+     | python3 -c '
+import json, re, sys, time
+state_path, model = sys.argv[1], sys.argv[2]
+bar = re.compile(r"^(pulling [0-9a-f]+:|pulling manifest|verifying|writing manifest|success)")
+ansi = re.compile(r"\x1b\[[0-9;?]*[a-zA-Z]")
+pct = re.compile(r"(\d{1,3})%")
+last = -1
+for raw in sys.stdin:
+    line = ansi.sub("", raw).replace("[", "")
+    m = pct.search(line)
+    if m:
+        p = min(100, int(m.group(1)))
+        if p > last:
+            last = p
+            try:
+                with open(state_path, "w", encoding="utf-8") as f:
+                    json.dump({"state": "installing",
+                               "message": "Downloading %s… %d%%" % (model, p),
+                               "percent": 12 + int(p * 0.78),
+                               "at": time.time()}, f)
+            except OSError:
+                pass
+    stripped = line.strip()
+    if stripped and not bar.match(stripped):
+        sys.stdout.write(stripped + "\n")
+' "$STATUS" "$MODEL"
+  then
+  set_status failed "Could not download ${MODEL}" 0
   echo "pull failed"
   exit 1
 fi
@@ -135,16 +170,17 @@ fi
 # pulled but will not run is worse than no model, because the chat silently
 # falls back with no explanation.
 echo "smoke test"
+set_status installing "Waking ${MODEL} up for the first time…" 92
 reply="$(curl -sf --max-time 90 http://127.0.0.1:11434/api/generate \
   -d "{\"model\":\"${MODEL}\",\"prompt\":\"Say hello in five words.\",\"stream\":false}" \
   2>/dev/null | python3 -c 'import json,sys; print(json.load(sys.stdin).get("response","").strip())' 2>/dev/null)"
 
 if [ -z "$reply" ]; then
-  set_status failed "${MODEL} downloaded but did not respond"
+  set_status failed "${MODEL} downloaded but did not respond" 0
   echo "smoke test failed"
   exit 1
 fi
 
 echo "smoke test reply: ${reply}"
-set_status done "${MODEL} ready"
+set_status done "${MODEL} ready" 100
 echo "=== install-local-model complete $(date) ==="
