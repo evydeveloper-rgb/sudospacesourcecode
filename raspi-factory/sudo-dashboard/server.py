@@ -66,6 +66,12 @@ DEFAULT_MODEL = "sudo-default"
 # and the options in the Settings picker.
 ALLOWED_THEMES = {"default", "minimal", "terminal", "midnight"}
 DEFAULT_THEME = "default"
+
+# Sudo-managed credits / billing + cloud device registration are temporarily
+# off, so the box ships zero-cloud and BYO-key by default. Set to True to
+# restore the wallet endpoints and the opt-in registration path; the factory
+# also reads SUDO_BILLING to decide whether to install/enable cloud-init.
+BILLING_ENABLED = os.environ.get("SUDO_BILLING", "0").lower() in ("1", "true", "yes")
 REMOTE_SCRIPT = "/usr/local/bin/sudo-remote-access.sh"
 PICOCLAW_BIN = "/usr/local/bin/picoclaw"
 PICOCLAW_CONFIG = "/opt/sudo/picoclaw/config.json"
@@ -466,7 +472,7 @@ def setup_status(include_sensitive=False):
         "heartbeat_enabled": heartbeat_enabled(),
         "openrouter_key_source": (
             "own" if cfg.get("openrouter_key_source") == "own" else "sudo"
-        ),
+        ) if BILLING_ENABLED else "own",
         # Never return the key itself — only enough to recognise it.
         "has_own_key": bool(cfg.get("user_openrouter_key")),
         "own_key_hint": (cfg.get("user_openrouter_key") or "")[-4:] or None,
@@ -1794,8 +1800,9 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                 self.send_json({"error": str(exc)}, code=500)
             return True
 
-        # Billing proxies — keep device_secret on device
-        if path == "/api/billing/balance" and self.command == "GET":
+        # Billing proxies — keep device_secret on device. Only reachable when
+        # BILLING_ENABLED; with it off the whole surface is hidden and 404s.
+        if BILLING_ENABLED and path == "/api/billing/balance" and self.command == "GET":
             code, data = cloud_request("GET", "/v1/wallet/balance")
             if code == 200 and isinstance(data, dict):
                 cfg = read_json_file(CONFIG)
@@ -1807,7 +1814,7 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             self.send_json(data, code=code)
             return True
 
-        if path == "/api/billing/confirm" and self.command == "POST":
+        if BILLING_ENABLED and path == "/api/billing/confirm" and self.command == "POST":
             length = int(self.headers.get("Content-Length", 0))
             raw = self.rfile.read(length) if length else b"{}"
             try:
@@ -1827,7 +1834,7 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             self.send_json(data, code=code)
             return True
 
-        if path == "/api/billing/checkout" and self.command == "POST":
+        if BILLING_ENABLED and path == "/api/billing/checkout" and self.command == "POST":
             length = int(self.headers.get("Content-Length", 0))
             raw = self.rfile.read(length) if length else b"{}"
             try:

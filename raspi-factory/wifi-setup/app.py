@@ -505,11 +505,20 @@ def switch_to_wifi(ssid, password, country, username=""):
             ensure_mdns()
         except Exception as exc:
             log.warning("ensure_mdns failed: %s", exc)
+        # Cloud registration is opt-in: only fire it when this build has Sudo
+        # credits enabled. Default builds are zero-cloud — the owner supplies
+        # their own API key, so there is nothing to register.
         try:
-            subprocess.Popen(
-                ["/usr/bin/python3", "/opt/sudo-pi/trigger-cloud-init.py"],
-                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            import os as _os
+            billing_on = (
+                _os.path.exists("/etc/sudo/billing-enabled")
+                and open("/etc/sudo/billing-enabled").read().strip() == "billing=1"
             )
+            if billing_on:
+                subprocess.Popen(
+                    ["/usr/bin/python3", "/opt/sudo-pi/trigger-cloud-init.py"],
+                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                )
         except Exception as exc:
             log.warning("cloud-init trigger failed: %s", exc)
 

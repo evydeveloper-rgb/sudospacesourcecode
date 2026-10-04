@@ -76,6 +76,22 @@ EOF
 
 # ── Sudo cloud / device identity ─────────────────────────────────────────────
 mkdir -p /opt/sudo /etc/sudo /opt/sudo-pi
+
+# Sudo-managed credits + cloud registration are OPT-IN and OFF by default: the
+# box ships zero-cloud, the owner pastes their own API key. Set SUDO_BILLING=1
+# in the environment to build a device that can use Sudo credits -- that flips
+# on the cloud-registration unit and the dashboard billing card. Recorded here
+# so the wifi app, the init script and the dashboard all agree.
+SUDO_BILLING="${SUDO_BILLING:-0}"
+case "${SUDO_BILLING}" in
+    1|true|yes|on) BILLING_ON=1 ;;
+    *)            BILLING_ON=0 ;;
+esac
+if [ "${BILLING_ON}" = "1" ]; then
+    echo "billing=1" > /etc/sudo/billing-enabled
+else
+    echo "billing=0" > /etc/sudo/billing-enabled
+fi
 cp "${BOOT}/sudo-pi/device-id.sh" /usr/local/bin/sudo-device-id.sh
 cp "${BOOT}/sudo-pi/device-secrets.sh" /usr/local/bin/sudo-device-secrets.sh
 cp "${BOOT}/sudo-pi/cloud-init.sh" /usr/local/bin/sudo-cloud-init.sh
@@ -98,7 +114,7 @@ chmod +x /usr/local/bin/sudo-device-id.sh \
          /usr/local/bin/sudo-set-hostname.sh          /usr/local/bin/sudo-install-whatsapp-bridge.sh          /usr/local/bin/sudo-unlink-whatsapp.sh \
          /usr/local/bin/sudo-heartbeat.sh
 
-if [ -f "${BOOT}/sudo-api/api.url.default" ]; then
+if [ -f "${BOOT}/sudo-api/api.url.default" ] && [ "${BILLING_ON}" = "1" ]; then
     cp "${BOOT}/sudo-api/api.url.default" /etc/sudo/api.url
 fi
 
@@ -263,7 +279,7 @@ User=root
 WantedBy=multi-user.target
 EOF
 
-# ── Cloud registration (once, after WiFi + internet) ───────────────────────
+# ── Cloud registration (opt-in; only when SUDO_BILLING=1) ────────
 cat > /etc/systemd/system/sudo-cloud-init.service << 'EOF'
 [Unit]
 Description=Sudo Cloud Registration
@@ -593,7 +609,13 @@ systemctl daemon-reload
 
 # Enable based on setup state
 if [ -f /var/lib/wifi-setup-configured ]; then
-    systemctl enable sudo-dashboard.service sudo-cloud-init.service sudo-remote-access.service
+    systemctl enable sudo-dashboard.service sudo-remote-access.service
+    # Cloud registration only if this build opted into Sudo credits.
+    if [ "${BILLING_ON}" = "1" ]; then
+        systemctl enable sudo-cloud-init.service
+    else
+        systemctl disable sudo-cloud-init.service 2>/dev/null || true
+    fi
     systemctl disable wifi-setup.service raspi-hotspot.service 2>/dev/null || true
     systemctl enable picoclaw-gateway.service 2>/dev/null || true
 else

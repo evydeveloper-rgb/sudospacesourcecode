@@ -469,12 +469,11 @@
               </div>
               <div class="info-bubble" id="key-info">
                 Your agent thinks by calling AI models, and someone has to pay for each call.<br><br>
-                <strong>Sudo credits</strong> — we handle it. Top up in Billing, nothing to set up.<br><br>
-                <strong>Your own key</strong> — you sign up at <code>openrouter.ai</code>, paste your key here, and pay them directly. Sudo credits stop being used and your billing balance is untouched. You can switch back any time; we keep both keys.
+                <strong>Your own key</strong> — you sign up at <code>openrouter.ai</code>, paste your key here, and pay them directly. The key lives on this device and never reaches us. No accounts to create with us, no subscription.
               </div>
 
               <div class="choice-row" id="key-source-options">
-                <button type="button" data-value="sudo"><strong>Sudo credits</strong><small>We handle billing</small></button>
+                <button type="button" data-value="sudo" hidden><strong>Sudo credits</strong><small>We handle billing</small></button>
                 <button type="button" data-value="own"><strong>My own key</strong><small>You bill direct</small></button>
               </div>
 
@@ -867,7 +866,11 @@
   </div>
 
   <script>
-    const state = { status: null, greeted: false, finishingWelcome: false, personality: 'friendly', publicUrl: '', tab: 'chat', keySource: 'sudo', welcomeStep: 0, theme: 'default', settingPage: null, routing: 'auto' };
+    // Billing / Sudo-managed credits + cloud registration are temporarily off.
+    // Flipping this to true restores the Sudo-credits surface and the opt-in
+    // device-registration path; nothing else needs to change.
+    const BILLING_ENABLED = false;
+    const state = { status: null, greeted: false, finishingWelcome: false, personality: 'friendly', publicUrl: '', tab: 'chat', keySource: 'own', welcomeStep: 0, theme: 'default', settingPage: null, routing: 'auto' };
     const $ = id => document.getElementById(id);
 
     // Every request is bounded. Without this a stalled connection leaves the
@@ -2096,7 +2099,17 @@
       $('subscribe-button').hidden = ['active', 'trialing'].includes(subscription);
     }
 
+    // Show/hide the whole Sudo-credits / billing surface to match BILLING_ENABLED.
+    // With it off (the shipping default) the box is zero-cloud, BYO-key only.
+    function applyBillingVisibility() {
+      const group = $('billing-setting')?.closest('.settings-group');
+      if (group) group.hidden = !BILLING_ENABLED;
+      const sudoChoice = document.querySelector('#key-source-options button[data-value="sudo"]');
+      if (sudoChoice) sudoChoice.hidden = !BILLING_ENABLED;
+    }
+
     async function loadBilling() {
+      if (!BILLING_ENABLED) return;
       try {
         renderBilling(await api('/api/billing/balance'));
       } catch (error) {
@@ -2254,7 +2267,7 @@
         status.full_access_enabled ? 'full access on' : null,
         status.heartbeat_enabled ? 'speaks up' : null,
       ].filter(Boolean).join(' · ');
-      selectKeySource(status.openrouter_key_source || 'sudo');
+      selectKeySource(BILLING_ENABLED ? (status.openrouter_key_source || 'own') : 'own');
       $('key-state').textContent = status.own_key_hint
         ? `saved key ends in ${status.own_key_hint}`
         : 'no key saved';
@@ -2365,8 +2378,10 @@
       initInstallHint();
       if (status.profile_done) maybeOfferMore();
 
+      applyBillingVisibility();
+
       const params = new URLSearchParams(location.search);
-      if (params.get('paid') === '1' || params.get('session_id')) {
+      if (BILLING_ENABLED && (params.get('paid') === '1' || params.get('session_id'))) {
         setTab('settings');
         $('billing-setting').classList.add('open');
         $('billing-setting').querySelector('.setting-head').setAttribute('aria-expanded', 'true');

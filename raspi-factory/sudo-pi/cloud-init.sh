@@ -19,6 +19,12 @@ if [ -f "$MARKER" ]; then
   exit 0
 fi
 
+# Opt-in guard: builds that did not enable Sudo credits never register.
+if [ ! -f /etc/sudo/billing-enabled ] || [ "$(tr -d '[:space:]' < /etc/sudo/billing-enabled)" != "billing=1" ]; then
+  echo "Billing disabled on this build — cloud registration is opt-in, skipping"
+  exit 0
+fi
+
 if [ ! -f /var/lib/wifi-setup-configured ]; then
   echo "WiFi not configured yet — skipping"
   exit 0
