@@ -1607,6 +1607,18 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                 body = {}
             # "check" only asks GitHub; anything else checks and applies.
             args = ["--check"] if body.get("check") else []
+            # Write a fresh "checking" status before the script starts. The
+            # script writes this as its own first act, but it runs in the
+            # background; without this, the very first poll could read the
+            # PREVIOUS run's settled result and stop -- which is why checking
+            # for updates appeared to need two presses.
+            write_json_file(UPDATE_STATUS, {
+                "state": "checking",
+                "message": "Checking for updates…",
+                "current": update_state().get("current", "0.0.0"),
+                "latest": None,
+                "at": time.time(),
+            })
             try:
                 # Runs outside the dashboard's sandbox via systemd-run like
                 # every other privileged helper; not waited on, because
