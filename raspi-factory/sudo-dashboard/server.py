@@ -667,6 +667,34 @@ def whatsapp_state():
     }
 
 
+# A live install writes the status file repeatedly (internet check, Node
+# install, npm install, then the bridge itself). If nothing has touched it for
+# this long while it still says "installing", the run is dead -- almost always
+# the privileged launch failing before the script ever ran. That stale state
+# is what traps the panel on "Starting…", so it is treated as retryable.
+WHATSAPP_INSTALL_STALE_SECS = 360
+
+
+def whatsapp_install_stale() -> bool:
+    """True when the status file claims 'installing' but hasn't been written
+    for a while, so it cannot still be a live install."""
+    data = read_json_file(WHATSAPP_STATUS, {}) or {}
+    if data.get("state") != "installing":
+        return False
+    now_ms = time.time() * 1000
+    stamps = []
+    updated = data.get("updated")
+    if isinstance(updated, (int, float)):
+        stamps.append(float(updated))
+    try:
+        stamps.append(os.path.getmtime(WHATSAPP_STATUS) * 1000)
+    except OSError:
+        pass
+    if not stamps:
+        return True
+    return (now_ms - max(stamps)) > WHATSAPP_INSTALL_STALE_SECS * 1000
+
+
 def update_state():
     """Where the on-device updater stands, from its own status file -- the
     same read-not-compute pattern as whatsapp_state(). Absent file means the
@@ -1562,7 +1590,19 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
 
         if path == "/api/agent/channels/whatsapp":
             if self.command == "GET":
-                self.send_json(whatsapp_state())
+                info = whatsapp_state()
+                # A stale "installing" would otherwise poll forever with no
+                # way out. Report it as a stopped attempt so the panel stops
+                # spinning and the owner can click Set up again (which now
+                # re-launches).
+                if whatsapp_install_stale():
+                    info = dict(info)
+                    info["state"] = "error"
+                    info["message"] = (
+                        "Setup stopped before it finished — no progress for a "
+                        "while. Tap Set up to try again."
+                    )
+                self.send_json(info)
                 return True
 
             if self.command == "POST":
@@ -1573,22 +1613,47 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                     )
                     return True
                 current = whatsapp_state()
-                if current["state"] in ("installing", "qr", "connected", "reconnecting"):
-                    # Already underway or already linked -- nothing to kick off.
+                if current["state"] in ("qr", "connected", "reconnecting"):
+                    # Already linked or actively pairing -- nothing to kick off.
                     # A second click here most often means "show me the QR
                     # again", and the status the poll already reads covers
-                    # that without running the installer a second time.
+                    # that without running the installer again.
                     self.send_json({"ok": True, **current})
                     return True
+                if current["state"] == "installing" and not whatsapp_install_stale():
+                    # A genuinely in-flight install -- leave it alone and let
+                    # the poll keep watching.
+                    self.send_json({"ok": True, **current})
+                    return True
+                # Either never started, or a previous install died and left
+                # "installing" behind (the status file has no watchdog). Treat
+                # a stale "installing" as ground to try again -- otherwise the
+                # panel sits on "Starting…" forever and no click can break it,
+                # which is exactly how a failed pairing two weeks ago read.
                 try:
                     write_json_file(WHATSAPP_STATUS,
-                                     {"state": "installing", "message": "Starting…"})
+                                     {"state": "installing", "message": "Starting…",
+                                      "updated": int(time.time() * 1000)})
                     # Same reasoning as devtools: apt/npm need real root and a
                     # writable /usr, which this service's own ProtectSystem=full
                     # blocks -- systemd-run steps outside that sandbox.
-                    run_privileged("sudo-whatsapp-install", WHATSAPP_INSTALL_SCRIPT,
-                                    wait=False, timeout=20)
+                    result = run_privileged("sudo-whatsapp-install", WHATSAPP_INSTALL_SCRIPT,
+                                            wait=False, timeout=20)
+                    if result.returncode != 0:
+                        detail = (result.stderr or result.stdout or "").strip()[:300]
+                        write_json_file(WHATSAPP_STATUS, {
+                            "state": "error",
+                            "message": "Could not start the installer."
+                                       + (f" {detail}" if detail else " See /var/log/sudo-whatsapp-bridge.log"),
+                            "updated": int(time.time() * 1000),
+                        })
+                        self.send_json({"error": "Could not start the installer"}, code=500)
+                        return True
                 except Exception as exc:
+                    write_json_file(WHATSAPP_STATUS, {
+                        "state": "error", "message": str(exc),
+                        "updated": int(time.time() * 1000),
+                    })
                     self.send_json({"error": str(exc)}, code=500)
                     return True
                 self.send_json({"ok": True, "state": "installing", "message": "Starting…"})
