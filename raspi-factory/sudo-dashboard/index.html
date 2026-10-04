@@ -998,7 +998,16 @@
     // only in that state, and only while the screen is actually being looked
     // at, so an idle device is not questioned every few seconds forever.
     setInterval(() => {
-      if (state.tab === 'welcome' && document.visibilityState === 'visible') refreshStatus();
+      if (document.visibilityState !== 'visible') return;
+      // Through the welcome flow, staleness costs something: setup finished
+      // elsewhere would leave this screen inviting a second, conflicting one.
+      if (state.tab === 'welcome') { refreshStatus(); return; }
+      // On the chat screen, keep asking only until the brain can answer. The
+      // first-run model download takes minutes and finishes after setup, and
+      // without this the "setting up" banner stayed up even once the agent was
+      // ready -- nothing was left to clear it. Once it is ready, stop; there
+      // is nothing more to watch.
+      if (state.tab === 'chat' && !modelSettled(state.status)) refreshStatus();
     }, 15000);
 
     window.addEventListener('popstate', event => {
@@ -2561,6 +2570,16 @@
       }
     }
 
+    // True once chat can actually answer (cloud or on-device) or the local
+    // install failed outright. Drives both the banner and whether the chat
+    // screen is worth polling at all.
+    function modelSettled(status) {
+      if (!status) return false;
+      const where = status.answering_with && status.answering_with.where;
+      if (where && where !== 'none') return true;
+      return ((status.local_model && status.local_model.state) || 'absent') === 'failed';
+    }
+
     async function refreshStatus() {
       // finishWelcome owns this exact transition already, including which
       // greeting wins; a poll landing mid-flight has nothing to add and used
@@ -2570,6 +2589,9 @@
         const status = await api('/api/setup/status', {}, 15000);
         const wasDone = state.status && state.status.profile_done;
         state.status = status;
+        // renderStatus clears the setup banner the moment the brain can answer
+        // and drops the held first hello in exactly once, so a poll arriving
+        // here is all that is needed to catch a late-ready model.
         renderStatus(status);
         if (status.profile_done && !wasDone && state.tab === 'welcome') {
           $('messages').replaceChildren();
