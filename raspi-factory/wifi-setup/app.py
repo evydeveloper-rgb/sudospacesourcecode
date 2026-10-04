@@ -29,6 +29,7 @@ AP_IP = "192.168.4.1"
 AP_NAME = "RaspiSetup"
 MARKER = "/var/lib/wifi-setup-configured"
 PENDING_FILE = "/var/lib/wifi-setup-pending"
+CONFIG = "/opt/sudo/config.json"
 LOG_FILE = "/var/log/wifi-setup.log"
 def _dashboard_url():
     """Where the dashboard will live once Wi-Fi is up.
@@ -131,6 +132,25 @@ def get_ap_ip():
     except Exception:
         pass
     return AP_IP
+
+
+def is_returning():
+    """True when this device has been set up before, even though the portal is
+    showing again.
+
+    The marker is cleared by the recovery watchdog (device carried to a new
+    place, or the router changed) and by a reset -- but a reset clears the
+    onboarding answers too, whereas a move does not. So the answers the owner
+    gave are the durable signal: present answers mean a returning device that
+    merely lost its network, absent ones mean a genuine fresh box. The portal
+    uses this only to pick which intro to show; it never gates the Wi-Fi form.
+    """
+    try:
+        with open(CONFIG, encoding="utf-8") as f:
+            cfg = json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return False
+    return bool(cfg.get("profile_done") or cfg.get("user_name") or cfg.get("agent_name"))
 
 
 def brand_css():
@@ -582,6 +602,27 @@ class SetupHandler(http.server.BaseHTTPRequestHandler):
         """
         self.send_html(render_template("hello.html"))
 
+    def render_first_screen(self):
+        """Which of the three openings to show.
+
+        A device that has been set up before but lost its network (moved, or
+        the router changed -- the exact case the recovery watchdog reopens the
+        portal for) must NOT be greeted as if it were new: no "first time I've
+        been switched on", no offer to build the agent again. It gets a short
+        reconnect scene instead, whose only job is to get it back on Wi-Fi.
+        A genuinely fresh box still gets the full first-boot hello.
+        """
+        if INTRO_DONE["seen"]:
+            self.render_index()
+        elif is_returning():
+            self.render_reconnect()
+        else:
+            self.render_intro()
+
+    def render_reconnect(self):
+        """The returning-device opening: brief, no first-boot framing."""
+        self.send_html(render_template("reconnect.html"))
+
     def render_index(self, error=""):
         html = render_template(
             "index.html",
@@ -640,10 +681,7 @@ class SetupHandler(http.server.BaseHTTPRequestHandler):
         the page inline makes it appear on the first request.
         """
         try:
-            if INTRO_DONE["seen"]:
-                self.render_index()
-            else:
-                self.render_intro()
+            self.render_first_screen()
         except Exception:
             self.send_html(FALLBACK_HTML)
 
@@ -681,10 +719,7 @@ class SetupHandler(http.server.BaseHTTPRequestHandler):
                 return
 
             if path == "/":
-                if INTRO_DONE["seen"]:
-                    self.render_index()
-                else:
-                    self.render_intro()
+                self.render_first_screen()
                 return
 
             # Where the intro's button goes, and the way back to the list from
