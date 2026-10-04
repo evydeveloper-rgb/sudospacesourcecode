@@ -27,6 +27,7 @@ set -uo pipefail
 WORKSPACE=/opt/sudo/agent-workspace
 PICOCLAW_BIN=/usr/local/bin/picoclaw
 PICOCLAW_CONFIG=/opt/sudo/picoclaw/config.json
+SPEND_GUARD=/usr/local/bin/sudo-spend-guard.py
 SEND_TOKEN_FILE=/opt/sudo/whatsapp/send-token
 SEND_URL=http://127.0.0.1:8790/send
 OWNER_FILE=/opt/sudo/whatsapp-auth/owner.json
@@ -82,6 +83,16 @@ if [ ! -f "$last" ] || [ -z "$(find "$last" -newermt "-${MAX_IDLE_HOURS} hours" 
   exit 0
 fi
 
+# Spend guard: never let the heartbeat itself start a turn once the owner's
+# budget for the day is spent. It is a best-effort nudge, not worth going over
+# the ceiling for.
+if [ -f "$SPEND_GUARD" ]; then
+  if ! python3 "$SPEND_GUARD" check >/dev/null 2>&1; then
+    log "spend guard: over budget — skipping nudge"
+    exit 0
+  fi
+fi
+
 export HOME=/root
 export PICOCLAW_CONFIG="$PICOCLAW_CONFIG"
 export NO_COLOR=1
@@ -96,7 +107,6 @@ short message to send them. Do not invent anything.'
 
 reply=$(timeout 90 "$PICOCLAW_BIN" agent -m "$PROMPT" --session "$SESSION_KEY" 2>/dev/null \
   | tr -d '\r')
-
 # The tail of stdout can carry startup banner noise; take the last non-empty line.
 reply=$(printf '%s\n' "$reply" | grep -v '^[[:space:]]*$' | tail -1 | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
 
@@ -113,6 +123,9 @@ code=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$SEND_URL" \
 
 if [ "$code" = "200" ]; then
   log "sent a nudge"
+        # The nudge was a real agent turn against a paid model -- count it
+        # toward the same budget the dashboard and WhatsApp use.
+        [ -f "$SPEND_GUARD" ] && python3 "$SPEND_GUARD" record >/dev/null 2>&1 || true
 else
   log "send failed (HTTP $code)"
 fi

@@ -618,6 +618,42 @@
               <p class="form-status" id="abilities-status" role="status"></p>
             </div>
           </section>
+          <section class="setting-card" id="spend-setting">
+            <button class="setting-head" type="button" aria-expanded="false">
+              <span class="setting-icon">🛑</span>
+              <span><strong>Spending guard</strong><small id="spend-summary">On · 300 messages/day</small></span>
+              <span class="chevron">›</span>
+            </button>
+            <div class="setting-body">
+              <p class="section-intro">A safety cap on how much {{AGENT}} talks to the paid model. Past the limit it pauses itself until tomorrow, so a runaway loop or a curious kid can't burn through your API budget.</p>
+
+              <div class="access-row">
+                <div>
+                  <strong>Pause when the limit is hit</strong>
+                  <small>On by default. Switch off to remove the cap entirely — you keep full control of your own device, but nothing stops a runaway.</small>
+                </div>
+                <label class="switch">
+                  <input id="spend-toggle" type="checkbox">
+                  <span aria-hidden="true"></span>
+                  <em class="sr-only">Toggle spending guard</em>
+                </label>
+              </div>
+              <button class="info-btn" type="button" data-info="spend-info" aria-expanded="false" aria-label="About the spending guard">i</button>
+              <div class="info-bubble" id="spend-info">
+                <strong>What it does.</strong> Every message to {{AGENT}} costs a little, and a stuck loop can spend a lot before anyone notices. This counts those calls right here on the device and stops them once you've hit the daily number.<br><br>
+                <strong>No dollar guessing.</strong> It counts messages, not money, and it never sees your key or touches the network — the count lives on your Pi.<br><br>
+                <strong>It can't lock you out.</strong> If anything goes wrong reading the count, it lets the message through. Worst case you're back to no cap, never a bricked agent.
+              </div>
+
+              <div class="field-grid">
+                <label>Messages per day<input id="spend-max-per-day" type="number" min="1" step="10" inputmode="numeric" placeholder="300"></label>
+                <label>Burst limit (per minute)<input id="spend-max-per-minute" type="number" min="1" step="1" inputmode="numeric" placeholder="12"></label>
+                <label>Pause length after a burst (minutes)<input id="spend-cooldown-min" type="number" min="1" step="5" inputmode="numeric" placeholder="30"></label>
+              </div>
+              <p class="microcopy" id="spend-live">Waiting for a count…</p>
+              <p class="form-status" id="spend-status" role="status"></p>
+            </div>
+          </section>
           <div class="settings-group">device &amp; developer</div>
           <section class="setting-card" id="access-setting">
             <button class="setting-head" type="button" aria-expanded="false">
@@ -1477,6 +1513,45 @@
     }
 
 
+    function renderSpend(status) {
+      const s = status.spend_status || {};
+      $('spend-toggle').checked = !!status.spend_enabled;
+      $('spend-max-per-day').value = status.spend_max_per_day || 300;
+      $('spend-max-per-minute').value = status.spend_max_per_minute || 12;
+      $('spend-cooldown-min').value = status.spend_cooldown_min || 30;
+      $('spend-summary').textContent = status.spend_enabled
+        ? `On · ${status.spend_max_per_day || 300} messages/day`
+        : 'Off';
+      const used = s.day_calls != null ? s.day_calls : 0;
+      const cap = s.day_cap || status.spend_max_per_day || 300;
+      $('spend-live').textContent = s.tripped
+        ? `Paused right now — clears on its own. ${used} of ${cap} used today.`
+        : `${used} of ${cap} messages used today.`;
+    }
+
+    async function saveSpend(changed) {
+      const status = $('spend-status');
+      status.textContent = 'Saving…';
+      try {
+        const data = await api('/api/agent/abilities', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            spend_enabled: $('spend-toggle').checked,
+            spend_max_per_day: parseInt($('spend-max-per-day').value, 10) || 300,
+            spend_max_per_minute: parseInt($('spend-max-per-minute').value, 10) || 12,
+            spend_cooldown_min: parseInt($('spend-cooldown-min').value, 10) || 30,
+          }),
+        });
+        renderStatus(data);
+        status.textContent = 'Saved.';
+        setTimeout(() => { status.textContent = ''; }, 3000);
+      } catch (error) {
+        if (changed) $(changed).checked = !$(changed).checked;
+        status.textContent = error.message;
+      }
+    }
+
     const THEME_LABELS = { default: 'Default', minimal: 'Minimal',
                            terminal: 'Terminal', midnight: 'Midnight' };
 
@@ -2259,6 +2334,7 @@
       $('skills-toggle').checked = !!status.skills_enabled;
       $('full-access-toggle').checked = !!status.full_access_enabled;
       $('heartbeat-toggle').checked = !!status.heartbeat_enabled;
+      renderSpend(status);
       $('abilities-summary').textContent = [
         'Web search on',
         `commands ${status.exec_enabled ? 'on' : 'off'}`,
@@ -2432,6 +2508,9 @@
     $('skills-toggle').addEventListener('change', () => saveAbilities('skills-toggle'));
     $('full-access-toggle').addEventListener('change', () => saveAbilities('full-access-toggle'));
     $('heartbeat-toggle').addEventListener('change', () => saveAbilities('heartbeat-toggle'));
+    $('spend-toggle').addEventListener('change', () => saveSpend('spend-toggle'));
+    ['spend-max-per-day', 'spend-max-per-minute', 'spend-cooldown-min'].forEach(id =>
+      $(id).addEventListener('change', () => saveSpend(null)));
     $('ssh-toggle').addEventListener('change', toggleSsh);
     $('save-ssh-key').addEventListener('click', saveSshKey);
     $('install-devtools').addEventListener('click', () => installDevtools('claude'));

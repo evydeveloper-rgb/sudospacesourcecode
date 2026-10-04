@@ -470,6 +470,12 @@ def setup_status(include_sensitive=False):
         # On by default, like exec -- the device speaking first is the point.
         # Reflects the systemd timer, which is the single source of truth.
         "heartbeat_enabled": heartbeat_enabled(),
+        # Local cost circuit breaker — what the owner set, plus live counts.
+        "spend_enabled": bool(cfg.get("spend_enabled", True)),
+        "spend_max_per_day": int(cfg.get("spend_max_per_day", 300)),
+        "spend_max_per_minute": int(cfg.get("spend_max_per_minute", 12)),
+        "spend_cooldown_min": int(cfg.get("spend_cooldown_min", 30)),
+        "spend_status": spend_guard("status"),
         "openrouter_key_source": (
             "own" if cfg.get("openrouter_key_source") == "own" else "sudo"
         ) if BILLING_ENABLED else "own",
@@ -808,6 +814,40 @@ def clean_agent_text(text: str) -> str:
     return cleaned or text.strip()
 
 
+SPEND_GUARD = "/usr/local/bin/sudo-spend-guard.py"
+
+
+class SpendGuardError(RuntimeError):
+    """Raised when the local spend breaker has paused the agent."""
+
+
+def spend_guard(action: str) -> dict:
+    """Call the on-device circuit breaker. Fails OPEN -- if the guard is
+    missing or misbehaving we allow the turn rather than lock the owner out.
+    """
+    if not os.path.isfile(SPEND_GUARD):
+        return {"allowed": True}
+    try:
+        proc = subprocess.run(
+            ["python3", SPEND_GUARD, action],
+            capture_output=True, text=True, timeout=10,
+        )
+        return json.loads(proc.stdout or "{}") or {"allowed": True}
+    except (OSError, subprocess.SubprocessError, json.JSONDecodeError, ValueError):
+        return {"allowed": True}
+
+
+def spend_guard_message(result: dict) -> str:
+    """A human line for the user when the breaker refuses a turn."""
+    if result.get("reason") == "daily_cap":
+        return ("I've hit the daily message limit set on this device, so I'm "
+                "taking a break until tomorrow. You can raise it in Settings.")
+    detail = result.get("detail") or "a heavy burst of messages"
+    mins = max(1, round((result.get("retry_after") or 60) / 60))
+    return (f"Pausing for about {mins} min — that was {detail}. This is a "
+            "safety cap so I don't burn through your API budget; it clears itself.")
+
+
 def picoclaw_chat(message: str, session_key: str = DASHBOARD_SESSION) -> str:
     if not os.path.isfile(PICOCLAW_BIN):
         raise RuntimeError("PicoClaw not installed on this device")
@@ -833,6 +873,12 @@ def picoclaw_chat(message: str, session_key: str = DASHBOARD_SESSION) -> str:
     env["TERM"] = "dumb"
     env["PICOCLAW_LOG_LEVEL"] = "error"
 
+    # Cost circuit breaker: this call reaches a paid model, so it is the unit
+    # the budget is counted in. Check before spending, record after.
+    gate = spend_guard("check")
+    if not gate.get("allowed", True):
+        raise SpendGuardError(spend_guard_message(gate))
+
     proc = subprocess.run(
         [PICOCLAW_BIN, "agent", "-m", message, "--session", session_key],
         capture_output=True,
@@ -846,6 +892,7 @@ def picoclaw_chat(message: str, session_key: str = DASHBOARD_SESSION) -> str:
         if "insufficient" in err.lower() or "credit" in err.lower():
             raise RuntimeError("Insufficient credits — top up at /billing.html")
         raise RuntimeError(err[:500])
+    spend_guard("record")
     return clean_agent_text(proc.stdout or proc.stderr or "") or "(empty response)"
 
 
@@ -1545,9 +1592,15 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                 self.send_json({"error": "Invalid JSON"}, code=400)
                 return True
             cfg = read_json_file(CONFIG)
-            for flag in ("exec_enabled", "subagent_enabled", "skills_enabled", "full_access_enabled"):
+            for flag in ("exec_enabled", "subagent_enabled", "skills_enabled", "full_access_enabled", "spend_enabled"):
                 if flag in body:
                     cfg[flag] = bool(body.get(flag))
+            for num in ("spend_max_per_day", "spend_max_per_minute", "spend_cooldown_min"):
+                if num in body:
+                    try:
+                        cfg[num] = max(1, int(body.get(num)))
+                    except (TypeError, ValueError):
+                        pass
             write_json_file(CONFIG, cfg)
             if "heartbeat_enabled" in body:
                 # Not a config value: the timer itself is the state. Enabling
@@ -1794,6 +1847,10 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             try:
                 reply = picoclaw_chat(message, session_key)
                 self.send_json({"reply": reply, "source": "cloud"})
+            except SpendGuardError as exc:
+                # Breaker tripped: the turn was never sent, so tell the user
+                # plainly instead of surfacing it as an error.
+                self.send_json({"reply": str(exc), "source": "guard"})
             except subprocess.TimeoutExpired:
                 self.send_json({"error": "Agent timed out"}, code=504)
             except Exception as exc:

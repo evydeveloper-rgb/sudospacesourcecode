@@ -103,6 +103,7 @@ cp "${BOOT}/sudo-pi/set-hostname.sh" /usr/local/bin/sudo-set-hostname.sh
 cp "${BOOT}/sudo-pi/install-whatsapp-bridge.sh" /usr/local/bin/sudo-install-whatsapp-bridge.sh
 cp "${BOOT}/sudo-pi/unlink-whatsapp.sh" /usr/local/bin/sudo-unlink-whatsapp.sh
 cp "${BOOT}/sudo-pi/sudo-heartbeat.sh" /usr/local/bin/sudo-heartbeat.sh
+cp "${BOOT}/sudo-pi/spend-guard.py" /usr/local/bin/sudo-spend-guard.py
 cp "${BOOT}/sudo-pi/trigger-cloud-init.py" /opt/sudo-pi/
 chmod +x /usr/local/bin/sudo-device-id.sh \
          /usr/local/bin/sudo-device-secrets.sh \
@@ -112,7 +113,8 @@ chmod +x /usr/local/bin/sudo-device-id.sh \
          /usr/local/bin/sudo-setup-ssh.sh \
          /usr/local/bin/sudo-install-local-model.sh \
          /usr/local/bin/sudo-set-hostname.sh          /usr/local/bin/sudo-install-whatsapp-bridge.sh          /usr/local/bin/sudo-unlink-whatsapp.sh \
-         /usr/local/bin/sudo-heartbeat.sh
+         /usr/local/bin/sudo-heartbeat.sh \
+         /usr/local/bin/sudo-spend-guard.py
 
 if [ -f "${BOOT}/sudo-api/api.url.default" ] && [ "${BILLING_ON}" = "1" ]; then
     cp "${BOOT}/sudo-api/api.url.default" /etc/sudo/api.url
