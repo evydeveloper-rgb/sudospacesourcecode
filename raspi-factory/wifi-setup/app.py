@@ -496,15 +496,24 @@ def restore_hotspot():
     return True
 
 
+# How long the device waits, after handing over the success page, before it
+# drops its own AP to join the home network. Originally 3s -- just enough for
+# the page and its stylesheet to load -- which meant the address on it could
+# only be glimpsed before the page died. It is now a real reading window: the
+# owner is told to screenshot or copy the address, and needs a moment to do it.
+JOIN_GRACE_SECONDS = 30
+
+
 def switch_to_wifi(ssid, password, country, username=""):
     """Join the home network after the browser has its page.
 
-    Runs on a thread so the response is already on the wire. A short delay
-    gives the phone time to finish loading the page and its stylesheet before
-    the AP disappears underneath it.
+    Runs on a thread so the response is already on the wire. The delay is a
+    deliberate reading window, not a page-load wait: once the join starts the
+    AP drops, the phone disconnects, and this page is gone for good -- so the
+    address on it has to be readable before that happens.
     """
     def run():
-        time.sleep(3)
+        time.sleep(JOIN_GRACE_SECONDS)
         if not connect_wifi(ssid, password, country, username):
             # connect_wifi has already restored the AP. No marker is written,
             # so the portal stays up and the owner can try again.

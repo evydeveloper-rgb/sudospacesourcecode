@@ -74,10 +74,11 @@
   <h1>Joining "{{SSID}}"</h1>
 
   <div class="notice" id="notice">
-    <strong>Copy the address below before you leave this page.</strong>
+    <strong>Save the address below before you leave this page.</strong>
     sudo is about to drop its own Wi‑Fi and join yours, which disconnects your
-    phone and closes this page. Switch back to your home Wi‑Fi, wait about a
-    minute, then paste it into your browser.
+    phone and closes this page — so this is your only chance to read it. Copy
+    it, or just screenshot this page. Switch back to your home Wi‑Fi, wait
+    about a minute, then open it.
   </div>
 
   <div class="next">
@@ -163,10 +164,11 @@
       }
       var notice = document.getElementById('notice');
       notice.classList.add('found');
-      notice.innerHTML = '<strong>sudo is on ' + (data.ssid || 'your network') +
-        '.</strong> Switch this phone back to your home Wi‑Fi and open the ' +
-        'address below.';
-      document.getElementById('addr-head').textContent = 'Open one of these:';
+      notice.innerHTML = '<strong>Screenshot this page now.</strong> sudo is on ' +
+        (data.ssid || 'your network') + ', and this page is about to close. The ' +
+        'address below is the only way back in — copy it or screenshot it before ' +
+        'you switch Wi‑Fi.';
+      document.getElementById('addr-head').textContent = 'Your address — save it:';
       statusLine.textContent = '';
       doneBtn.classList.remove('hidden');
     } else if (data.state === 'failed') {
