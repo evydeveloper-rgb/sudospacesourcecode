@@ -564,6 +564,13 @@ done
 echo "no usable address after ${GRACE}s — reopening setup"
 # Clearing the marker is what flips the ConditionPathExists on both units.
 rm -f "$MARKER"
+# That only helps for this boot. A configured device has these two units
+# disabled (install-factory.sh and finalize_setup both turn them off), so
+# without enabling them here the next reboot starts nothing: the marker is
+# gone, the hotspot is not enabled and the dashboard is conditioned out --
+# no network, no hotspot, no dashboard. finalize_setup disables them again
+# once the owner has joined a network.
+systemctl enable raspi-hotspot.service wifi-setup.service 2>&1 || true
 # The dashboard is already holding port 80 from this boot, and the portal
 # wants the same port. Stop it first or the portal cannot bind and the
 # hotspot appears with nothing serving it.
