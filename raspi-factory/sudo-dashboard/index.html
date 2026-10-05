@@ -2815,12 +2815,35 @@
         if (state.tab === 'chat') scrollChat('auto');
       }).observe($('chat-form'));
     }
-    // .chat-view.active's height was fixed against 100dvh, which on a lot of
-    // mobile browsers does not shrink for the on-screen keyboard -- only the
-    // visual viewport does. The box stayed full height, so its bottom edge
-    // (the composer) sat exactly where the keyboard now covers it.
-    // --vvh tracks the real, keyboard-aware height instead; CSS falls back
-    // to 100dvh wherever this hasn't run yet.
+    // The chat composer must sit right on top of the on-screen keyboard, with
+    // nothing between them. Two things measure that now:
+    //   - focus/blur on the input. Exact, and true on every device: while the
+    //     field is focused the keyboard is up, so the bottom-nav lane is
+    //     dropped and the composer has nothing between it and the keys. This
+    //     is the reliable signal -- the old height comparison was not, because
+    //     Android shrinks window.innerHeight *with* the keyboard, so
+    //     "h < innerHeight - 120" never became true and the 72px lane stayed
+    //     put, leaving exactly the gap Evy hit.
+    //   - the visual viewport height, as a fallback for the moment before
+    //     focus settles or on browsers with no focus event timing we can trust.
+    let composerFocused = false;
+    // Ignore a blur that lands within a few ms of a refocus (mobile Safari
+    // blurs then refocuses on submit); it would flash the lane back in mid-typing.
+    let lastFocusAt = 0;
+    const chatInput = $('chat-input');
+    chatInput.addEventListener('focus', () => {
+      lastFocusAt = Date.now();
+      composerFocused = true;
+      setKeyboardOpen(true);
+    });
+    chatInput.addEventListener('blur', () => {
+      if (Date.now() - lastFocusAt < 250) return;
+      composerFocused = false;
+      setKeyboardOpen(false);
+    });
+    function setKeyboardOpen(open) {
+      document.body.classList.toggle('keyboard-open', open);
+    }
     function syncViewportHeight() {
       if (!window.visualViewport) return;
       const h = window.visualViewport.height;
@@ -2832,12 +2855,15 @@
       // ready yet" and left on the 100dvh fallback instead.
       if (!h || h < 200) return;
       document.documentElement.style.setProperty('--vvh', `${h}px`);
-      // The visual viewport is shorter than the layout viewport exactly when
-      // the on-screen keyboard is covering the difference. Flag it so the
-      // chat can drop the bottom-nav lane while the keyboard is up, instead of
-      // leaving a dead gap above the composer.
-      const keyboardOpen = h < (window.innerHeight - 120);
-      document.body.classList.toggle('keyboard-open', keyboardOpen);
+      // Track the tallest height seen as the keyboard-free baseline, and call
+      // it "open" once the viewport is meaningfully shorter than that. Using a
+      // running baseline instead of window.innerHeight is what works on
+      // Android, where innerHeight shrinks alongside the keyboard.
+      if (!syncViewportHeight.baseline || h > syncViewportHeight.baseline) {
+        syncViewportHeight.baseline = h;
+      }
+      const sunken = h < syncViewportHeight.baseline - 120;
+      setKeyboardOpen(composerFocused || sunken);
     }
     if (window.visualViewport) {
       syncViewportHeight();

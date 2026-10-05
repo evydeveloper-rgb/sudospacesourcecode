@@ -232,7 +232,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   padding-bottom: 10px;
   overflow: hidden;
 }
-body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 6px; }
+body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
 .chat-heading { width: 100%; flex: none; margin-bottom: 12px; }
 .public-link-strip {
   width: min(100%, 720px); margin: -8px auto 16px; padding: 9px 12px;
