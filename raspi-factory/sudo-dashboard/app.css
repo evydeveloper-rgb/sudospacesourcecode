@@ -257,9 +257,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   overflow: hidden;
 }
 body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
-.chat-heading { width: 100%; flex: none; margin-bottom: 12px; }
 .public-link-strip {
-  width: min(100%, 720px); margin: -8px auto 16px; padding: 9px 12px;
+  width: min(100%, 720px); margin: 0 auto 16px; padding: 9px 12px;
   display: flex; justify-content: space-between; align-items: center;
   border-radius: 12px; background: var(--ok-tint);
   color: var(--ok-ink); font-size: .76rem; font-weight: 650;
@@ -542,12 +541,12 @@ body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
 .bottom-nav {
   position: fixed; z-index: 20; left: 50%; bottom: 0; transform: translateX(-50%);
   width: min(100%, 900px); height: calc(72px + var(--safe-bottom));
-  padding: 7px 18px var(--safe-bottom); display: grid; grid-template-columns: repeat(3, 1fr);
+  padding: 7px 8px var(--safe-bottom); display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
   background: rgba(251, 247, 235,.94); backdrop-filter: blur(18px);
   border-top: 1px solid rgba(22, 19, 17,.1);
 }
 .bottom-nav button {
-  min-width: 64px; min-height: 58px; border: 0; background: transparent; color: var(--faint);
+  min-width: 0; min-height: 58px; border: 0; background: transparent; color: var(--faint);
   display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 4px;
   cursor: pointer; font-size: .64rem; font-weight: 700;
 }
@@ -591,9 +590,6 @@ body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
 
 @media (max-height: 650px) {
   .chat-view.active { padding-top: 14px; }
-  .chat-heading { margin-bottom: 10px; }
-  .chat-heading .eyebrow { display: none; }
-  .chat-heading h1 { font-size: 1.65rem; }
   .icon-button { width: 40px; height: 40px; }
 }
 

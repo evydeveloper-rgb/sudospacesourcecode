@@ -147,12 +147,7 @@
         </div>
       </section>
 
-      <section class="view chat-view active" id="view-chat" aria-labelledby="chat-title">
-        <div class="view-heading chat-heading">
-          <div>
-            <h1 id="chat-title"><span id="agent-title">sudo</span></h1>
-          </div>
-        </div>
+      <section class="view chat-view active" id="view-chat" aria-label="Chat">
         <div class="public-link-strip" id="public-link-strip" hidden>
           <span>Available anywhere</span>
           <button id="copy-public-link" type="button">copy link</button>
@@ -2891,7 +2886,6 @@
     function renderStatus(status) {
       state.status = status;
       applyAgentName(status);
-      $('agent-title').textContent = status.agent_name || 'sudo';
       $('user-name').value = status.user_name || '';
       $('agent-name').value = status.agent_name || 'sudo';
       $('model').value = status.model || 'sudo-default';
