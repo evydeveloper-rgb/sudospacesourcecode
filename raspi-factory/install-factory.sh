@@ -141,6 +141,7 @@ cp "${BOOT}/sudo-pi/sudo-heartbeat.sh" /usr/local/bin/sudo-heartbeat.sh
 cp "${BOOT}/sudo-pi/spend-guard.py" /usr/local/bin/sudo-spend-guard.py
 cp "${BOOT}/sudo-pi/sudo-update.sh" /usr/local/bin/sudo-update.sh
 cp "${BOOT}/sudo-pi/reset-setup.sh" /usr/local/bin/sudo-reset-setup.sh
+cp "${BOOT}/sudo-pi/sudo-autoupdate.sh" /usr/local/bin/sudo-autoupdate.sh
 cp "${BOOT}/sudo-pi/trigger-cloud-init.py" /opt/sudo-pi/
 # The bundle this device was built from, kept on-device as the update baseline.
 # Lets an update (or a rollback) apply over Wi-Fi without a network round-trip.
@@ -165,7 +166,7 @@ chmod +x /usr/local/bin/sudo-device-id.sh \
          /usr/local/bin/sudo-heartbeat.sh \
          /usr/local/bin/sudo-spend-guard.py \
          /usr/local/bin/sudo-update.sh \
-         /usr/local/bin/sudo-reset-setup.sh
+         /usr/local/bin/sudo-reset-setup.sh /usr/local/bin/sudo-autoupdate.sh
 
 if [ -f "${BOOT}/sudo-api/api.url.default" ] && [ "${BILLING_ON}" = "1" ]; then
     cp "${BOOT}/sudo-api/api.url.default" /etc/sudo/api.url
@@ -287,6 +288,9 @@ EOF
 systemctl daemon-reload 2>/dev/null || true
 # Enabled by default -- see the note above. Settings can turn it back off.
 systemctl enable --now sudo-heartbeat.timer 2>/dev/null || true
+
+# Automatic updates: on unless the owner has switched them off in Settings.
+/usr/local/bin/sudo-autoupdate.sh default 2>/dev/null || true
 
 # ── Sudo Dashboard (LAN + remote tunnel both use :80) ───────────────────────
 cat > /etc/systemd/system/sudo-dashboard.service << 'EOF'

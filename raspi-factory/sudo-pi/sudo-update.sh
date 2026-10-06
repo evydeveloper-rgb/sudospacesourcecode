@@ -346,6 +346,10 @@ systemctl restart sudo-dashboard.service >>"$LOG" 2>&1 || true
 # active, and a plain restart would wake picoclaw on an OpenClaw device.
 systemctl try-restart picoclaw-gateway.service >>"$LOG" 2>&1 || true
 
+# Devices that predate automatic updates get them on their first update,
+# unless the owner already switched them off.
+[ -x "$BIN_DIR/sudo-autoupdate.sh" ] && "$BIN_DIR/sudo-autoupdate.sh" default >>"$LOG" 2>&1 || true
+
 rm -rf "$STAGE"
 write_status "done" "Updated to ${LATEST}." "$LATEST" "$LATEST"
 log "updated $CURRENT -> $LATEST"
