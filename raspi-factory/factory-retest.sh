@@ -59,6 +59,7 @@ PY
     mkdir -p /opt/sudo/agent-workspace
     rm -f /opt/sudo/picoclaw/config.json
     rm -rf /opt/sudo/openclaw
+    rm -f /opt/sudo/dashboard-chat.json
 
     bash /boot/firmware/install-factory.sh
 

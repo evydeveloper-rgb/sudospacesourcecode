@@ -33,10 +33,6 @@
             <span class="rail-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7H6a5 5 0 0 0 0 10h3M15 7h3a5 5 0 0 1 0 10h-3M8 12h8"/></svg></span>
             <span>Connectors</span>
           </button>
-          <button type="button" data-tab="settings">
-            <span class="rail-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 6H10M6 6H3M21 12h-7M10 12H3M21 18h-3M14 18H3"/><circle cx="8" cy="6" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="16" cy="18" r="2"/></svg></span>
-            <span>Settings</span>
-          </button>
         </nav>
       </div>
       <div class="rail-foot">
@@ -45,6 +41,9 @@
           <span id="rail-name">sudo</span>
           <small id="rail-sub">Session active</small>
         </div>
+        <button type="button" class="rail-gear" data-tab="settings" aria-label="Settings" title="Settings">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
       </div>
     </aside>
 
@@ -288,16 +287,9 @@
 
               <label for="composio-key">Composio API key</label>
               <input id="composio-key" type="password" autocomplete="off" spellcheck="false" placeholder="paste your key">
-              <p class="microcopy">From <strong>composio.dev</strong> → Settings → API Keys. Stored on this device only.</p>
+              <p class="microcopy">From <strong>dashboard.composio.dev</strong> → Connect → Settings → Sessions &amp; API Key. It starts with <code>ck_</code>. Stored on this device only — saving it switches connectors on.</p>
               <button class="primary-button" id="save-composio" type="button">Save key</button>
-
-              <div class="access-row">
-                <div>
-                  <strong>Use connectors</strong>
-                  <small>Let sudo act in your connected apps. Leave off if the agent starts erroring.</small>
-                </div>
-                <label class="switch"><input type="checkbox" id="composio-toggle"><span></span></label>
-              </div>
+              <button class="ghost-button" id="remove-composio" type="button" hidden>Remove key</button>
               <p class="form-status" id="composio-status" role="status"></p>
 
               <div class="settings-subgroup">what you can connect</div>
@@ -332,30 +324,6 @@
               <div class="info-bubble" id="cli-info">
                 Command-line programs already on the device — <code>git</code>, <code>curl</code>, <code>ffmpeg</code>, and anything else you install. The broadest option and the one with the fewest guardrails.<br><br>
                 Turned on under <strong>What sudo can do → Run commands on this device</strong>. Read the warning there first: a web page can contain text written to trick an agent into running something harmful.
-              </div>
-
-              <div class="settings-subgroup">GitHub</div>
-              <p class="section-intro">Give sudo a GitHub token and it can work with your repositories directly — cloning one, pushing changes, opening an issue — instead of only talking you through it.</p>
-              <label for="github-username">GitHub username <span class="optional-tag">optional</span></label>
-              <input id="github-username" autocomplete="off" spellcheck="false" placeholder="your-handle">
-              <label for="github-token">Personal access token</label>
-              <input id="github-token" type="password" autocomplete="off" spellcheck="false" placeholder="ghp_… or github_pat_…">
-              <p class="microcopy">Create one at <strong>github.com → Settings → Developer settings → Personal access tokens</strong>. Choose only the scopes sudo needs; a fine-grained token limited to the repos you care about is the safest. Stored on this device only.</p>
-              <button class="primary-button" id="save-github" type="button">Save token</button>
-
-              <div class="access-row">
-                <div>
-                  <strong>Let sudo use my repos</strong>
-                  <small>When off, the token is saved but sudo cannot reach GitHub.</small>
-                </div>
-                <label class="switch"><input type="checkbox" id="github-toggle"><span></span></label>
-              </div>
-              <p class="form-status" id="github-status" role="status"></p>
-
-              <button class="info-link" type="button" aria-expanded="false" aria-controls="github-info">What the token can do ⓘ</button>
-              <div class="info-bubble" id="github-info">
-                A token is a key to your GitHub account. What it can reach is exactly what you ticked when you made it — repo access lets sudo clone, push and open issues; nothing else.<br><br>
-                <strong>Treat it like a password.</strong> Keep it off unless you want sudo working in your repos, and revoke it on GitHub the moment you are done. It is stored on this device only and never leaves it except to talk to GitHub.
               </div>
             </div>
           </section>
@@ -983,6 +951,37 @@
               </div>
             </div>
           </section>
+          <section class="setting-card" id="github-setting">
+            <button class="setting-head" type="button" aria-expanded="false">
+              <span class="setting-icon">⌥</span>
+              <span><strong>GitHub</strong><small id="github-summary">Not connected</small></span>
+              <span class="chevron">›</span>
+            </button>
+            <div class="setting-body">
+              <p class="section-intro">Give sudo a GitHub token and it can work with your repositories directly — cloning one, pushing changes, opening an issue — instead of only talking you through it.</p>
+              <label for="github-username">GitHub username <span class="optional-tag">optional</span></label>
+              <input id="github-username" autocomplete="off" spellcheck="false" placeholder="your-handle">
+              <label for="github-token">Personal access token</label>
+              <input id="github-token" type="password" autocomplete="off" spellcheck="false" placeholder="ghp_… or github_pat_…">
+              <p class="microcopy">Create one at <strong>github.com → Settings → Developer settings → Personal access tokens</strong>. Choose only the scopes sudo needs; a fine-grained token limited to the repos you care about is the safest. Stored on this device only.</p>
+              <button class="primary-button" id="save-github" type="button">Save token</button>
+
+              <div class="access-row">
+                <div>
+                  <strong>Let sudo use my repos</strong>
+                  <small>When off, the token is saved but sudo cannot reach GitHub.</small>
+                </div>
+                <label class="switch"><input type="checkbox" id="github-toggle"><span></span></label>
+              </div>
+              <p class="form-status" id="github-status" role="status"></p>
+
+              <button class="info-link" type="button" aria-expanded="false" aria-controls="github-info">What the token can do ⓘ</button>
+              <div class="info-bubble" id="github-info">
+                A token is a key to your GitHub account. What it can reach is exactly what you ticked when you made it — repo access lets sudo clone, push and open issues; nothing else.<br><br>
+                <strong>Treat it like a password.</strong> Keep it off unless you want sudo working in your repos, and revoke it on GitHub the moment you are done. It is stored on this device only and never leaves it except to talk to GitHub.
+              </div>
+            </div>
+          </section>
           <div class="settings-group">billing &amp; credits</div>
           <section class="setting-card" id="billing-setting">
             <button class="setting-head" type="button" aria-expanded="false">
@@ -1097,7 +1096,7 @@
       if (tab !== 'channels') stopWhatsappPoll();
       document.querySelectorAll('.view').forEach(view => view.classList.toggle('active', view.id === `view-${tab}`));
 
-      document.querySelectorAll('.bottom-nav button, .rail-nav button').forEach(button => {
+      document.querySelectorAll('.bottom-nav button, .rail-nav button, .rail-gear').forEach(button => {
         const active = button.dataset.tab === tab;
         button.classList.toggle('active', active);
         button.setAttribute('aria-current', active ? 'page' : 'false');
@@ -1171,6 +1170,64 @@
         .filter(turn => turn.text);
     }
 
+    // The agent answers in Markdown. Only a small, safe subset is drawn --
+    // bold, italic, code, links, bullet and numbered lists -- built as DOM
+    // nodes, never innerHTML, so nothing in a reply can inject markup.
+    function renderInline(text) {
+      const frag = document.createDocumentFragment();
+      const pattern = /(\*\*([^*]+)\*\*|__([^_]+)__|`([^`]+)`|\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)|\*([^*\s][^*]*)\*|(?<![A-Za-z0-9])_([^_\s][^_]*)_(?![A-Za-z0-9]))/g;
+      let last = 0;
+      for (const m of text.matchAll(pattern)) {
+        if (m.index > last) frag.append(text.slice(last, m.index));
+        let node;
+        if (m[2] || m[3]) { node = document.createElement('strong'); node.append(renderInline(m[2] || m[3])); }
+        else if (m[4]) { node = document.createElement('code'); node.textContent = m[4]; }
+        else if (m[5]) {
+          node = document.createElement('a');
+          node.href = m[6]; node.target = '_blank'; node.rel = 'noopener noreferrer';
+          node.textContent = m[5];
+        }
+        else { node = document.createElement('em'); node.append(renderInline(m[7] || m[8])); }
+        frag.append(node);
+        last = m.index + m[0].length;
+      }
+      if (last < text.length) frag.append(text.slice(last));
+      return frag;
+    }
+
+    function renderRich(text) {
+      const frag = document.createDocumentFragment();
+      let list = null;
+      let needBreak = false;
+      for (const raw of String(text).split('\n')) {
+        const line = raw.trimEnd();
+        const bullet = line.match(/^\s*[-*•]\s+(.*)$/);
+        const numbered = line.match(/^\s*\d+[.)]\s+(.*)$/);
+        if (bullet || numbered) {
+          const tag = bullet ? 'UL' : 'OL';
+          if (!list || list.tagName !== tag) { list = document.createElement(tag); frag.append(list); }
+          const li = document.createElement('li');
+          li.append(renderInline((bullet || numbered)[1]));
+          list.append(li);
+          needBreak = false;
+          continue;
+        }
+        if (list && !line.trim()) continue;
+        list = null;
+        if (needBreak) frag.append(document.createElement('br'));
+        const heading = line.match(/^\s*#{1,6}\s+(.*)$/);
+        if (heading) {
+          const strong = document.createElement('strong');
+          strong.append(renderInline(heading[1]));
+          frag.append(strong);
+        } else {
+          frag.append(renderInline(line));
+        }
+        needBreak = true;
+      }
+      return frag;
+    }
+
     function addMessage(role, text) {
       const item = document.createElement('div');
       item.className = `message ${role}`;
@@ -1178,7 +1235,12 @@
       avatar.className = 'message-avatar';
       avatar.textContent = role === 'agent' ? (state.status?.agent_name || 's').slice(0, 1).toLowerCase() : 'you';
       const bubble = document.createElement('div');
-      bubble.textContent = text;
+      if (role === 'agent') {
+        bubble.className = 'rich';
+        bubble.append(renderRich(text));
+      } else {
+        bubble.textContent = text;
+      }
       item.append(avatar, bubble);
       $('messages').appendChild(item);
       scrollChat(role === 'agent' ? 'smooth' : 'auto');
@@ -1220,7 +1282,7 @@
         const data = await api('/api/agent/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message, history }),
+          body: JSON.stringify({ message, history, record: true }),
         }, 130000, 'That is taking longer than expected — the agent may '
           + 'be starting up for the first time. It is still working; try again shortly.');
         addMessage('agent', data.reply || '(no response)');
@@ -1436,7 +1498,7 @@
         // isConnected: a reply arriving after the thread was cleared -- a reset,
         // a re-run of setup -- must not put a stray line back into it.
         if (reply && looksLikeGreeting(reply) && node.isConnected) {
-          node.querySelector('div').textContent = reply;
+          node.querySelector('div').replaceChildren(renderRich(reply));
           scrollChat();
         }
       } catch (_) {
@@ -2137,9 +2199,29 @@
 
     // The composer's + starts a clean conversation, the same thing the old
     // header button did before the composer absorbed it.
-    function startFreshChat() {
+    async function startFreshChat() {
+      try {
+        await api('/api/agent/chat/fresh', { method: 'POST' });
+      } catch (_) {
+        // Clearing the screen still helps; the saved copy returns on refresh.
+      }
       $('messages').replaceChildren();
       addMessage('agent', 'fresh start. what are we working on?');
+    }
+
+    // The conversation lives on the device, so a refresh -- or the dashboard
+    // opened on another phone -- carries on where it left off.
+    async function loadChatHistory() {
+      try {
+        const data = await api('/api/agent/chat/history');
+        const messages = (data && data.messages) || [];
+        if (!messages.length || $('messages').children.length) return;
+        messages.forEach(m => addMessage(m.role === 'user' ? 'user' : 'agent', m.text || ''));
+        state.greeted = true;
+        scrollChat('auto');
+      } catch (_) {
+        // No history is not an error; the greeting covers an empty thread.
+      }
     }
 
     // --- provider keys ---------------------------------------------------
@@ -2366,21 +2448,25 @@
       }
     }
 
-    async function toggleComposio() {
+    function renderComposio(status) {
+      $('remove-composio').hidden = !status.has_composio;
+      $('composio-status').textContent = status.has_composio ? 'Key saved — connectors on.' : '';
+    }
+
+    async function removeComposio() {
       const status = $('composio-status');
-      status.textContent = 'Saving…';
+      status.textContent = 'Removing…';
       try {
         const data = await api('/api/agent/provider-keys', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ composio_enabled: $('composio-toggle').checked }),
+          body: JSON.stringify({ composio_api_key: '' }),
         });
         state.status = data;
-        status.textContent = data.composio_enabled ? 'Connectors on.' : 'Connectors off.';
-        setTimeout(() => { status.textContent = ''; }, 2500);
+        renderComposio(data);
+        status.textContent = 'Key removed — connectors off.';
       } catch (error) {
         status.textContent = error.message;
-        $('composio-toggle').checked = !$('composio-toggle').checked;
       }
     }
 
@@ -2431,16 +2517,18 @@
 
     async function saveComposio() {
       const status = $('composio-status');
+      const key = $('composio-key').value.trim();
+      if (!key) { status.textContent = 'Paste a key first.'; return; }
       status.textContent = 'Saving\u2026';
       try {
         const data = await api('/api/agent/provider-keys', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ composio_api_key: $('composio-key').value.trim() }),
+          body: JSON.stringify({ composio_api_key: key }),
         });
         $('composio-key').value = '';
-        status.textContent = 'Saved.';
-        setTimeout(() => { status.textContent = ''; }, 2000);
+        state.status = data;
+        renderComposio(data);
       } catch (error) {
         status.textContent = error.message;
       }
@@ -2495,6 +2583,8 @@
       if (status.github_username) $('github-username').value = status.github_username;
       const hint = status.github_token_hint ? `saved token ends in ${status.github_token_hint}` : 'no token saved';
       $('github-status').textContent = hint;
+      $('github-summary').textContent = !status.github_token_hint ? 'Not connected'
+        : (status.github_enabled ? 'Connected' : 'Token saved · off');
     }
 
     // --- Wi-Fi picker --------------------------------------------------
@@ -2897,7 +2987,7 @@
       renderDeviceRail(status);
       renderProviders(status.provider_key_hints);
       if (status.hostname) $('device-name').value = status.hostname;
-      $('composio-toggle').checked = !!status.composio_enabled;
+      renderComposio(status);
       setRouting(status.routing_mode || 'auto', false);
       if (status.answering_with) $('answering-with').textContent = status.answering_with.label;
       $('prefer-local-toggle').checked = !!status.prefer_local;
@@ -3039,6 +3129,7 @@
         }
         throw error;
       }
+      await loadChatHistory();
       renderStatus(status);
       loadBilling();
       api('/api/agent/ssh').then(renderSsh).catch(() => {});
@@ -3059,7 +3150,7 @@
       }
     }
 
-    document.querySelectorAll('.bottom-nav button, .rail-nav button').forEach(button => button.addEventListener('click', () => setTab(button.dataset.tab)));
+    document.querySelectorAll('.bottom-nav button, .rail-nav button, .rail-gear').forEach(button => button.addEventListener('click', () => setTab(button.dataset.tab)));
     document.querySelectorAll('.setting-head').forEach(button => button.addEventListener('click', () => {
       openSettingPage(button.closest('.setting-card').id);
     }));
@@ -3167,7 +3258,7 @@
     $('remote-pw-copy').addEventListener('click', event =>
       copyText($('remote-pw-value').textContent.trim(), event.currentTarget));
     $('prefer-local-toggle').addEventListener('change', togglePreferLocal);
-    $('composio-toggle').addEventListener('change', toggleComposio);
+    $('remove-composio').addEventListener('click', removeComposio);
     $('save-profile').addEventListener('click', saveProfile);
     $('subscribe-button').addEventListener('click', subscribe);
     $('remote-toggle').addEventListener('change', toggleRemote);

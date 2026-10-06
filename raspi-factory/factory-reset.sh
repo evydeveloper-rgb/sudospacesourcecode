@@ -77,6 +77,7 @@ rm -rf /opt/sudo/agent-workspace
 mkdir -p /opt/sudo/agent-workspace
 rm -f /opt/sudo/picoclaw/config.json
 rm -rf /opt/sudo/openclaw
+rm -f /opt/sudo/dashboard-chat.json
 
 # 4b) Tear down any terminal access — a factory unit ships with sshd off,
 # no stored password, and none of our injected keys or sshd drop-ins.

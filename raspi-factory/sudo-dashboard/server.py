@@ -161,6 +161,31 @@ def read_json_file(path, default=None):
         return default if default is not None else {}
 
 
+CHAT_LOG = "/opt/sudo/dashboard-chat.json"
+CHAT_LOG_MAX = 200
+_chat_log_lock = threading.Lock()
+
+
+def read_chat_log() -> list:
+    data = read_json_file(CHAT_LOG, {}) or {}
+    return data.get("messages", []) if isinstance(data, dict) else []
+
+
+def write_chat_log(messages: list) -> None:
+    write_json_file(CHAT_LOG, {"messages": messages[-CHAT_LOG_MAX:]})
+
+
+def append_chat_log(user_text: str, agent_text: str) -> None:
+    """The dashboard conversation, kept on the device so a page refresh -- or
+    opening the dashboard on another phone -- picks it back up."""
+    now = int(time.time())
+    with _chat_log_lock:
+        write_chat_log(read_chat_log() + [
+            {"role": "user", "text": user_text, "at": now},
+            {"role": "agent", "text": agent_text, "at": now},
+        ])
+
+
 def write_json_file(path, data):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     tmp = path + ".tmp"
@@ -619,7 +644,7 @@ def setup_status(include_sensitive=False):
         "answering_with": answering_with(cfg),
         "provider_key_hints": provider_key_hints(cfg),
         "has_composio": bool(cfg.get("composio_api_key")),
-        "composio_enabled": bool(cfg.get("composio_enabled")),
+        "composio_enabled": bool(cfg.get("composio_api_key")),
         # GitHub token for cloning/pushing the owner's own repos. Same
         # never-return-the-secret rule as the other keys: only a tail hint.
         "has_github_token": bool(cfg.get("github_token")),
@@ -2380,9 +2405,6 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                         stored.pop(name, None)
                 cfg["provider_keys"] = stored
 
-            if "composio_enabled" in body:
-                cfg["composio_enabled"] = bool(body.get("composio_enabled"))
-
             if "composio_api_key" in body:
                 composio = str(body.get("composio_api_key") or "").strip()
                 if composio:
@@ -2450,6 +2472,20 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             self.send_json({"ok": True, **setup_status(include_sensitive=False)})
             return True
 
+        if path == "/api/agent/chat/history" and self.command == "GET":
+            self.send_json({"messages": read_chat_log()})
+            return True
+
+        if path == "/api/agent/chat/fresh" and self.command == "POST":
+            # A fresh chat is fresh for the agent too: new thread, so it does
+            # not keep answering from the conversation that was just cleared.
+            cfg = read_json_file(CONFIG)
+            cfg["dashboard_session"] = f"{DASHBOARD_SESSION}-{int(time.time())}"
+            write_json_file(CONFIG, cfg)
+            write_chat_log([])
+            self.send_json({"ok": True})
+            return True
+
         if path == "/api/agent/chat" and self.command == "POST":
             ip = self.client_ip()
             if not rate_allow(f"chat:{ip}", CHAT_MAX, CHAT_WINDOW):
@@ -2482,18 +2518,28 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             # transcript under this key; the local model still gets the
             # explicit history above. Defaults to the dashboard session so a
             # plain chat POST from the web box is still one conversation.
-            session_key = (body.get("session") or "").strip() or DASHBOARD_SESSION
+            session_key = ((body.get("session") or "").strip()
+                           or cfg.get("dashboard_session") or DASHBOARD_SESSION)
+            # Only the dashboard's own chat box asks for this; the WhatsApp
+            # bridge and the scripted greeting do not.
+            record = bool(body.get("record"))
+
+            def reply_json(payload):
+                if record and payload.get("reply"):
+                    append_chat_log(message, payload["reply"])
+                self.send_json(payload)
+
             if cfg.get("prefer_local") or not effective_openrouter_key(cfg):
                 reply = local_model_chat(message, history, cfg)
                 if reply:
-                    self.send_json({"reply": reply, "source": "local"})
+                    reply_json({"reply": reply, "source": "local"})
                     return True
                 if effective_openrouter_key(cfg):
                     reply = agent_chat(message, session_key)
-                    self.send_json({"reply": reply, "source": "cloud",
-                                    "note": "on-device model unavailable"})
+                    reply_json({"reply": reply, "source": "cloud",
+                                "note": "on-device model unavailable"})
                     return True
-                self.send_json({
+                reply_json({
                     "reply": "I can't reply yet — add an API key in "
                              "Settings and I'll wake up properly.",
                     "source": "none",
@@ -2501,11 +2547,11 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                 return True
             try:
                 reply = agent_chat(message, session_key)
-                self.send_json({"reply": reply, "source": "cloud"})
+                reply_json({"reply": reply, "source": "cloud"})
             except SpendGuardError as exc:
                 # Breaker tripped: the turn was never sent, so tell the user
                 # plainly instead of surfacing it as an error.
-                self.send_json({"reply": str(exc), "source": "guard"})
+                reply_json({"reply": str(exc), "source": "guard"})
             except subprocess.TimeoutExpired:
                 self.send_json({"error": "Agent timed out"}, code=504)
             except Exception as exc:

@@ -113,12 +113,12 @@ if sudo.get("skills_enabled", False):
 else:
     print("Skills: off (weather only)")
 
-# Connectors: Composio's hosted MCP server (Streamable HTTP). Only
-# with a key AND the owner's opt-in, like before. The key sits in this
+# Connectors: Composio's hosted MCP server (Streamable HTTP), on whenever
+# a key is saved -- removing the key is the off switch. The key sits in this
 # root-only file as a literal header -- not the gateway environment, which
 # every shell command the agent runs would inherit.
 composio_key = (sudo.get("composio_api_key") or "").strip()
-if composio_key and sudo.get("composio_enabled"):
+if composio_key:
     cfg["mcp"] = {"servers": {"composio": {
         # Composio's current endpoint and header, per its MCP setup page. The
         # older mcp.composio.dev/mcp + x-api-key that picoclaw was given
@@ -130,8 +130,6 @@ if composio_key and sudo.get("composio_enabled"):
         "connectTimeout": 10,
     }}}
     print("Connectors (Composio): on")
-elif composio_key:
-    print("Connectors (Composio): key saved, switched off")
 else:
     print("Connectors (Composio): no key")
 

@@ -130,15 +130,13 @@ print(f"Skills: {'on' if sudo.get('skills_enabled') else 'off'}")
 #   "failed to load MCP servers: ... session not found"
 # and the chat stopped working entirely. Connectors are a bonus feature;
 # they must never be able to silence the agent. Off unless asked for.
-composio_on = bool(composio_key) and bool(sudo.get("composio_enabled", False))
+composio_on = bool(composio_key)
 cfg["tools"]["mcp"]["enabled"] = composio_on
 if not composio_on:
     # Drop the server definition too, so nothing can dial it by accident.
     cfg["tools"]["mcp"]["servers"] = {}
 if composio_on:
     print("Composio MCP enabled — connectors available")
-elif composio_key:
-    print("Composio key saved but connectors are off — enable in Settings")
 else:
     print("No Composio API key — MCP disabled")
 

@@ -104,6 +104,7 @@ rm -rf /opt/sudo/agent-workspace
 mkdir -p /opt/sudo/agent-workspace
 rm -f /opt/sudo/picoclaw/config.json
 rm -rf /opt/sudo/openclaw
+rm -f /opt/sudo/dashboard-chat.json
 
 # NOTE: no SSH teardown here on purpose — see the header. factory-reset.sh
 # owns that, and only for a device that is truly leaving.
