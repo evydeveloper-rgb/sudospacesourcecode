@@ -113,8 +113,24 @@ if sudo.get("skills_enabled", False):
 else:
     print("Skills: off (weather only)")
 
-if sudo.get("composio_api_key") and sudo.get("composio_enabled"):
-    print("Connectors (Composio): not wired to OpenClaw yet")
+# Connectors: Composio's hosted MCP server, same endpoint picoclaw used. Only
+# with a key AND the owner's opt-in, like before. The key sits in this
+# root-only file as a literal header -- not the gateway environment, which
+# every shell command the agent runs would inherit.
+composio_key = (sudo.get("composio_api_key") or "").strip()
+if composio_key and sudo.get("composio_enabled"):
+    cfg["mcp"] = {"servers": {"composio": {
+        "url": "https://mcp.composio.dev/mcp",
+        "transport": "streamable-http",
+        "headers": {"x-api-key": composio_key},
+        "timeout": 30,
+        "connectTimeout": 10,
+    }}}
+    print("Connectors (Composio): on")
+elif composio_key:
+    print("Connectors (Composio): key saved, switched off")
+else:
+    print("Connectors (Composio): no key")
 
 tools["deny"] = sorted(deny)
 
