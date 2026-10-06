@@ -1272,6 +1272,8 @@ def openclaw_whatsapp_state() -> dict:
         "install": {"state": install.get("state", "absent"), "message": install.get("message", "")},
         "owner_number": cfg.get("whatsapp_owner_number") or numbers.get("owner") or "",
         "accounts": {},
+        "read_others": bool(cfg.get("whatsapp_read_others", False)),
+        "in_summary": bool(cfg.get("whatsapp_in_summary", False)),
     }
     if not state["installed"]:
         return state
@@ -2080,6 +2082,27 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             self.send_json(openclaw_whatsapp_state())
             return True
 
+        if path == "/api/agent/whatsapp/preferences" and self.command == "POST":
+            try:
+                body = self.read_body_json()
+            except (ValueError, json.JSONDecodeError):
+                self.send_json({"error": "Invalid JSON"}, code=400)
+                return True
+            if not isinstance(body, dict):
+                self.send_json({"error": "Invalid JSON"}, code=400)
+                return True
+            cfg = read_json_file(CONFIG)
+            # Partial updates: a toggle sends only its own field.
+            if "read_others" in body:
+                cfg["whatsapp_read_others"] = bool(body.get("read_others"))
+            if "in_summary" in body:
+                cfg["whatsapp_in_summary"] = bool(body.get("in_summary"))
+            write_json_file(CONFIG, cfg)
+            run_configure_picoclaw()
+            self.send_json({"read_others": bool(cfg.get("whatsapp_read_others", False)),
+                            "in_summary": bool(cfg.get("whatsapp_in_summary", False))})
+            return True
+
         if path == "/api/agent/whatsapp/qr" and self.command == "POST":
             try:
                 body = self.read_body_json()
@@ -2752,6 +2775,7 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             "/chat.html",
             "/connectors.html",
             "/channels.html",
+            "/setup.html",
             "/billing.html",
             "/onboarding.html",
             "/login.html",
