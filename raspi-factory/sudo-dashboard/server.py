@@ -1154,6 +1154,21 @@ def openclaw_chat(message: str, session_key: str = DASHBOARD_SESSION) -> str:
     return reply or "(empty response)"
 
 
+def devtools_state(tool: str) -> dict:
+    """Progress of an on-demand Claude Code / Codex install, from the status
+    file install-devtools.sh writes. The binary itself lands under the owner's
+    home (~/.npm-global), which ProtectHome hides from this service, so the
+    status file is the only thing it can see."""
+    data = read_json_file(f"{DEVTOOLS_STATUS}-{tool}", {}) or {}
+    state = data.get("state") or "idle"
+    message = data.get("message") or ""
+    # A reboot mid-install would otherwise leave this stuck on "installing".
+    if state == "installing" and time.time() - float(data.get("updated") or 0) > DEVTOOLS_STALE_SECS:
+        state, message = "failed", "Installation stopped unexpectedly. Try again."
+    return {"tool": tool, "label": DEVTOOLS[tool][0], "state": state,
+            "message": message, "installed": state == "done"}
+
+
 OPENCLAW_RPC_URL = "http://127.0.0.1:18790/api/v1/admin/rpc"
 OPENCLAW_PLUGIN_DIR = "/opt/sudo/openclaw/npm/projects"
 WA_OC_STATUS = "/var/lib/sudo-openclaw-whatsapp-status.json"
