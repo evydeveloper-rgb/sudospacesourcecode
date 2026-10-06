@@ -352,6 +352,12 @@ body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
 .mini-app.pink { background: linear-gradient(135deg, var(--pink), #fde9ef); }
 .mini-app.yellow { background: linear-gradient(135deg, var(--yellow), #fff5cc); }
 .mini-app.lilac { background: linear-gradient(135deg, var(--sky-tint), #e6f0f8); }
+.mini-app.create {
+  display: block; width: 100%; text-align: left; font: inherit; color: inherit; cursor: pointer;
+  background: var(--surface); border: 1.5px dashed var(--line-2); box-shadow: none;
+}
+.mini-app.create:hover { border-color: var(--primary); }
+.mini-app.create .mini-icon { background: var(--primary); color: var(--on-primary); }
 .mini-icon {
   width: 42px; height: 42px; display: grid; place-items: center;
   border-radius: var(--radius); background: rgba(255,255,255,.56); font-size: 1.35rem; font-weight: 700;
@@ -497,6 +503,12 @@ body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
 }
 .channel-tip strong { display: block; margin-bottom: 2px; color: var(--ink); }
 .channel-tip a { color: var(--primary); font-weight: 650; }
+.channel-tip small { display: block; margin-top: 6px; color: var(--faint); font-size: .7rem; }
+.wa-move-desktop {
+  margin: 0 0 12px; padding: 12px 14px; border-radius: 12px;
+  background: var(--accent-soft); color: var(--ink); font-size: .8rem; line-height: 1.45;
+}
+.wa-move-desktop strong { display: block; margin-bottom: 2px; }
 .whatsapp-panel-body { text-align: left; }
 .wa-account {
   margin-top: 12px; padding: 12px 14px; border: 1px solid var(--line);
@@ -507,7 +519,11 @@ body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
   margin-bottom: 4px; text-align: left;
 }
 .wa-account-head small { color: var(--muted); font-size: .72rem; }
-.wa-account .microcopy { text-align: left; }
+.wa-account .microcopy, .wa-account label { text-align: left; }
+.wa-needs {
+  margin: 8px 0 4px; padding: 10px 12px; border-radius: 10px; text-align: left;
+  background: var(--accent-soft); color: var(--ink); font-size: .78rem; line-height: 1.45;
+}
 .wa-number-row { display: flex; gap: 8px; align-items: stretch; margin-top: 7px; }
 .setting-body .wa-number-row input { flex: 1; min-width: 0; margin-top: 0; }
 .wa-number-row .primary-button { width: auto; flex: none; min-height: 49px; margin-top: 0; padding: 0 18px; }
@@ -654,19 +670,13 @@ body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
 .info-link:hover, .info-link[aria-expanded="true"] { color: var(--accent); }
 .info-link:focus-visible { outline: 3px solid rgba(52, 0, 117, .25); outline-offset: 2px; border-radius: 5px; }
 
-/* Connectors tab — browse preview of the Composio catalog. A responsive grid
-   of logo tiles the owner can scan before deciding to connect anything. */
+/* Connectors tab — a showcase of well-known apps the agent can connect to. */
 .connector-browse { margin-top: 6px; }
 .connector-browse-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-.connector-browse-head input {
-  flex: 1; min-width: 0; height: 40px; padding: 0 12px;
-  border: 1px solid var(--line); border-radius: 11px;
-  background: var(--surface); color: var(--ink); font-size: .82rem;
-}
-.connector-browse-head input:focus-visible { outline: 3px solid rgba(52, 0, 117, .25); outline-offset: 1px; }
-.connector-count { flex: none; color: var(--faint); font: 650 .66rem/1 var(--font-mono); }
+.connector-headline { font-size: .95rem; font-weight: 750; color: var(--ink); }
 .connector-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
 @media (min-width: 560px) { .connector-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 900px) { .connector-grid { grid-template-columns: repeat(4, 1fr); } }
 .connector-tile {
   display: flex; align-items: center; gap: 10px; padding: 10px 11px;
   border: 1px solid var(--line); border-radius: 13px;
@@ -686,19 +696,9 @@ body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
   font-size: .78rem; font-weight: 700; line-height: 1.15;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.connector-meta small {
-  color: var(--faint); font: 600 .62rem/1.2 var(--font-mono);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.connector-meta small.nolock { color: var(--ok); }
-.connector-note { margin: 10px 1px 0; color: var(--muted); font-size: .68rem; line-height: 1.45; }
-.connector-empty {
-  grid-column: 1 / -1; padding: 18px 14px; text-align: center;
-  border: 1px dashed var(--line-2); border-radius: 13px;
-  color: var(--muted); font-size: .74rem; line-height: 1.5;
-}
-.connector-skeleton { height: 56px; border-radius: 13px; background: var(--surface-low); animation: connector-pulse 1.2s ease-in-out infinite; }
-@keyframes connector-pulse { 50% { opacity: .45; } }
+.connector-note { margin: 10px 1px 0; color: var(--muted); font-size: .74rem; line-height: 1.45; }
+.connector-note a { color: var(--primary); font-weight: 650; }
+.composio-link { display: inline-block; margin-top: 4px; color: var(--primary); font-size: .82rem; font-weight: 700; }
 
 .info-bubble {
   display: none; margin: 8px 0 0; padding: 11px 12px;

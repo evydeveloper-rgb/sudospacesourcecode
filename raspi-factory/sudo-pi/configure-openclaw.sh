@@ -134,12 +134,14 @@ else:
     print("Connectors (Composio): no key")
 
 # WhatsApp, once the owner has added it (install-openclaw-whatsapp.sh). Two
-# possible accounts, chosen in Channels:
-#   owner -- linked to the owner's own WhatsApp. The agent lives in their
-#            "Message yourself" chat and never answers anyone else.
-#   agent -- the agent's own number (a second SIM). It answers only the owner.
-# admin-http-rpc is what lets the dashboard fetch QR codes from the gateway;
-# it is only reachable on loopback with the gateway token.
+# accounts, both always offered in Channels; the owner links either or both:
+#   owner -- the owner's own WhatsApp. The agent lives in their "Message
+#            yourself" chat and never answers anyone else.
+#   agent -- the agent's own number (a second SIM the owner owns). It
+#            answers only the owner.
+# Whichever is linked is how the agent reaches the owner; with both linked it
+# uses its own number (defaultAccount). admin-http-rpc is what lets the
+# dashboard fetch QR codes from the gateway; loopback only, gateway token.
 import glob
 whatsapp_installed = bool(glob.glob("/opt/sudo/openclaw/npm/projects/openclaw-whatsapp-*"))
 if whatsapp_installed:
@@ -148,40 +150,42 @@ if whatsapp_installed:
         if pid not in plugins.setdefault("allow", []):
             plugins["allow"].append(pid)
         plugins.setdefault("entries", {})[pid] = {"enabled": True}
-    mode = sudo.get("whatsapp_mode") or "agent"
     numbers = sudo.get("whatsapp_numbers") or {}
     owner_number = (sudo.get("whatsapp_owner_number") or numbers.get("owner") or "").strip()
     allow = [owner_number] if owner_number else []
-    accounts = {}
-    if mode in ("owner", "both"):
-        accounts["owner"] = {"selfChatMode": True, "dmPolicy": "allowlist", "allowFrom": allow}
-    if mode in ("agent", "both"):
-        accounts["agent"] = {"dmPolicy": "allowlist", "allowFrom": allow}
+    default_account = "agent" if numbers.get("agent") or not numbers.get("owner") else "owner"
     cfg.setdefault("channels", {})["whatsapp"] = {
         "enabled": True,
         "dmPolicy": "allowlist",
         "allowFrom": allow,
         "groupPolicy": "disabled",
-        "accounts": accounts,
+        "defaultAccount": default_account,
+        "accounts": {
+            "owner": {"selfChatMode": True, "dmPolicy": "allowlist", "allowFrom": allow},
+            "agent": {"dmPolicy": "allowlist", "allowFrom": allow},
+        },
     }
-    print(f"WhatsApp: mode {mode}, owner number {'known' if owner_number else 'not known yet'}")
+    print(f"WhatsApp: reaches the owner via {default_account}, owner number "
+          f"{'known' if owner_number else 'not known yet'}")
 
     # Tell the agent who is who. TOOLS.md is one of the files OpenClaw puts in
     # front of the model on every turn, and Sudo has no other use for it.
     # Without this a message arriving through the owner's account and one
     # through the agent's own number look the same to it.
     user = sudo.get("user_name") or "your owner"
-    agent_number = numbers.get("agent") or "not linked yet"
     lines = ["# TOOLS", "", "## WhatsApp — who is who", ""]
-    if "owner" in accounts:
-        linked = "linked" if numbers.get("owner") else "set up, not linked yet"
-        lines.append(f"- **{user}'s own WhatsApp** (account `owner`, {linked}). "
-                     f"You only ever speak in {user}'s \"Message yourself\" chat there — anything "
-                     f"in that chat is {user} talking to you. Never message {user}'s contacts "
-                     "from this account.")
-    if "agent" in accounts:
-        lines.append(f"- **Your own WhatsApp number** (account `agent`) is {agent_number}. "
+    if numbers.get("owner"):
+        lines.append(f"- **{user}'s own WhatsApp** (account `owner`) is linked. You only ever speak "
+                     f"in {user}'s \"Message yourself\" chat there — anything in that chat is {user} "
+                     f"talking to you. Never message {user}'s contacts from this account.")
+    if numbers.get("agent"):
+        lines.append(f"- **Your own WhatsApp number** (account `agent`) is {numbers['agent']}. "
                      f"Messages there come from {user}; you reply as yourself, from your own number.")
+    if not numbers:
+        lines.append("- No WhatsApp account is linked yet.")
+    else:
+        via = "your own number" if default_account == "agent" else f"{user}'s \"Message yourself\" chat"
+        lines.append(f"- When you message {user} first (a reminder, a check-in), use {via}.")
     lines.append(f"- {user}'s number: {owner_number or 'not known yet'}.")
     open("/opt/sudo/agent-workspace/TOOLS.md", "w", encoding="utf-8").write("\n".join(lines) + "\n")
 else:

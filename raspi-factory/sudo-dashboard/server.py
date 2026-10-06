@@ -96,16 +96,9 @@ UPDATE_SCRIPT = "/usr/local/bin/sudo-update.sh"
 UPDATE_STATUS = "/var/lib/sudo-update-status.json"
 VERSION_FILE = "/opt/sudo/version"
 
-# Composio — the connector layer behind the dashboard's Connectors tab. The
-# catalog is read straight from Composio's public API with the owner's own key,
-# and the logo files come from their public logo CDN. Both are cached briefly so
-# opening the tab (and every keystroke in its search box) does not fan out to
-# Composio each time.
-COMPOSIO_API = "https://backend.composio.dev/api/v3"
+# Composio's public logo CDN, for the Connectors tab's app showcase. Proxied
+# and cached on disk (see send_composio_logo), so no key is involved.
 COMPOSIO_LOGO = "https://logos.composio.dev/api"
-COMPOSIO_CACHE_TTL = 600         # seconds a toolkit page stays warm
-_composio_cache: dict[str, tuple[float, list]] = {}
-_composio_lock = threading.Lock()
 RESET_SCRIPT = "/usr/local/bin/sudo-reset-setup.sh"
 RESET_STATUS = "/var/lib/sudo-reset-status.json"
 # Small enough to answer in about a second on a 4GB Pi. It greets and keeps
@@ -1168,7 +1161,6 @@ WA_OC_STATUS = "/var/lib/sudo-openclaw-whatsapp-status.json"
 WA_OC_INSTALL = next((p for p in ("/usr/local/bin/sudo-install-openclaw-whatsapp.sh",
                                   "/usr/local/bin/install-openclaw-whatsapp.sh")
                       if os.path.isfile(p)), "/usr/local/bin/sudo-install-openclaw-whatsapp.sh")
-WA_MODES = ("owner", "agent", "both")
 E164 = re.compile(r"^\+[1-9]\d{6,14}$")
 
 
@@ -1215,7 +1207,6 @@ def openclaw_whatsapp_state() -> dict:
     state = {
         "installed": openclaw_whatsapp_installed(),
         "install": {"state": install.get("state", "absent"), "message": install.get("message", "")},
-        "mode": cfg.get("whatsapp_mode") or "agent",
         "owner_number": cfg.get("whatsapp_owner_number") or numbers.get("owner") or "",
         "accounts": {},
     }
@@ -1392,42 +1383,6 @@ def cloud_request(method: str, path: str, body: dict | None = None, timeout: int
         return 502, {"error": str(exc)}
 
 
-def composio_key() -> str:
-    return str(read_json_file(CONFIG).get("composio_api_key") or "").strip()
-
-
-def composio_request(method: str, path: str, body: dict | None = None, timeout: int = 20):
-    """Call Composio with the owner's key. Returns (status, payload).
-
-    Never raises: the dashboard renders this, and a Composio outage must read
-    as 'could not load connectors' rather than taking the settings page down.
-    """
-    key = composio_key()
-    if not key:
-        return 400, {"error": "no_composio_key"}
-    data = None if body is None else json.dumps(body).encode("utf-8")
-    req = urllib.request.Request(
-        COMPOSIO_API + path,
-        data=data,
-        headers={"x-api-key": key, "Content-Type": "application/json",
-                 "Accept": "application/json", "User-Agent": "sudo-dashboard/1.0"},
-        method=method,
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
-            raw = resp.read().decode("utf-8")
-            return resp.status, (json.loads(raw) if raw else {})
-    except urllib.error.HTTPError as exc:
-        raw = exc.read().decode("utf-8", errors="replace")
-        try:
-            payload = json.loads(raw) if raw else {"error": str(exc)}
-        except json.JSONDecodeError:
-            payload = {"error": raw[:300] or str(exc)}
-        return exc.code, payload
-    except Exception as exc:
-        return 502, {"error": str(exc)}
-
-
 def _logo_is_miss(path: str) -> bool:
     """A zero-byte cache file is a remembered 404, not a logo."""
     try:
@@ -1454,68 +1409,6 @@ def _fetch_logo(slug: str) -> tuple[int, bytes | dict, str]:
         return exc.code, b"", "image/svg+xml"
     except Exception:
         return 502, b"", "image/svg+xml"
-
-
-def _composio_slim(item: dict) -> dict:
-    """Trim one toolkit record to what the grid actually draws.
-
-    Keeps the wire payload small: the catalog runs to hundreds of entries and
-    a Pi serving this over its own Wi-Fi does not need every category and
-    timestamp along for the ride.
-    """
-    meta = item.get("meta") or {}
-    slug = item.get("slug") or ""
-    return {
-        "slug": slug,
-        "name": item.get("name") or slug,
-        "description": (meta.get("description") or "")[:200],
-        "logo": COMPOSIO_LOGO + "/" + slug,
-        "url": "https://composio.dev/toolkits/" + slug,
-        "tools": meta.get("tools_count") or 0,
-        "auth": bool(item.get("auth_schemes")),
-        "no_auth": bool(item.get("no_auth")),
-    }
-
-
-def _composio_error_text(status: int, message) -> str:
-    """Turn a Composio API failure into a line the owner can act on."""
-    if status in (400, 401):
-        return "That Composio key was not accepted. Check it in your Composio settings."
-    if status == 404:
-        return "Composio could not find that (their API may have moved)."
-    if status == 429:
-        return "Composio is rate-limiting this device. Try again in a minute."
-    if status == 502:
-        return "Could not reach Composio — the device may be offline."
-    return str(message or "Composio returned an error")
-
-
-def composio_catalog(limit: int = 60, search: str = "") -> tuple[int, dict]:
-    """The Composio toolkit catalog, cached for a short while.
-
-    Keyed on (limit, search) so the preview and the search box do not evict
-    each other. Returns (status, {"toolkits": [...]}) — status mirrors what
-    Composio said, so the UI can distinguish 'no key' from 'service down'.
-    """
-    cache_key = f"{limit}:{(search or '').strip().lower()}"
-    now = time.time()
-    with _composio_lock:
-        hit = _composio_cache.get(cache_key)
-        if hit and now - hit[0] < COMPOSIO_CACHE_TTL:
-            return 200, {"toolkits": hit[1], "cached": True}
-    q = f"/toolkits?limit={int(limit)}&sort_by=usage"
-    if search.strip():
-        q += "&search=" + urllib.parse.quote(search.strip())
-    status, payload = composio_request("GET", q)
-    if status != 200:
-        return status, payload if isinstance(payload, dict) else {"error": str(payload)}
-    items = payload.get("items") or []
-    slim = [_composio_slim(it) for it in items if it.get("slug")]
-    with _composio_lock:
-        if len(_composio_cache) > 32:
-            _composio_cache.clear()
-        _composio_cache[cache_key] = (now, slim)
-    return 200, {"toolkits": slim, "total": payload.get("total_items")}
 
 
 class DashboardHandler(http.server.BaseHTTPRequestHandler):
@@ -1800,31 +1693,6 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
 
         if path == "/api/config":
             self.send_json(setup_status(include_sensitive=True))
-            return True
-
-        if path == "/api/connectors":
-            # The browse-a-catalog preview for the Connectors tab. Needs the
-            # owner's key; without one there is nothing to show, so say so
-            # rather than making the tab look broken.
-            qs = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
-            try:
-                limit = max(6, min(120, int(qs.get("limit", ["60"])[0])))
-            except (ValueError, TypeError):
-                limit = 60
-            search = qs.get("search", [""])[0]
-            if not composio_key():
-                self.send_json({"needs_key": True, "toolkits": []})
-                return True
-            status, data = composio_catalog(limit=limit, search=search)
-            if status != 200:
-                message = (data or {}).get("error") if isinstance(data, dict) else str(data)
-                self.send_json({
-                    "needs_key": status in (400, 401),
-                    "error": _composio_error_text(status, message),
-                    "toolkits": [],
-                })
-                return True
-            self.send_json(data)
             return True
 
         if path == "/api/connectors/logo":
@@ -2123,28 +1991,22 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             self.send_json(openclaw_whatsapp_state())
             return True
 
-        if path == "/api/agent/whatsapp/mode" and self.command == "POST":
+        if path == "/api/agent/whatsapp/owner-number" and self.command == "POST":
             try:
                 body = self.read_body_json()
             except (ValueError, json.JSONDecodeError):
                 self.send_json({"error": "Invalid JSON"}, code=400)
                 return True
+            number = re.sub(r"[\s()-]", "", str(body.get("owner_number") or ""))
+            if number and not E164.match(number):
+                self.send_json({"error": "Use your full number with country code, like +15551234567"},
+                               code=400)
+                return True
             cfg = read_json_file(CONFIG)
-            if "mode" in body:
-                if body["mode"] not in WA_MODES:
-                    self.send_json({"error": "Unknown mode"}, code=400)
-                    return True
-                cfg["whatsapp_mode"] = body["mode"]
-            if "owner_number" in body:
-                number = re.sub(r"[\s()-]", "", str(body.get("owner_number") or ""))
-                if number and not E164.match(number):
-                    self.send_json({"error": "Use your full number with country code, like +15551234567"},
-                                   code=400)
-                    return True
-                if number:
-                    cfg["whatsapp_owner_number"] = number
-                else:
-                    cfg.pop("whatsapp_owner_number", None)
+            if number:
+                cfg["whatsapp_owner_number"] = number
+            else:
+                cfg.pop("whatsapp_owner_number", None)
             write_json_file(CONFIG, cfg)
             run_configure_picoclaw()
             self.send_json(openclaw_whatsapp_state())

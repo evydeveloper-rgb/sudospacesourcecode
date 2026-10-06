@@ -222,6 +222,10 @@
             <div class="mini-icon">⌂</div><span class="soon">coming soon</span>
             <h2>Home</h2><p>Lights, locks, and small daily routines.</p>
           </article>
+          <button type="button" class="mini-app create" id="create-app">
+            <div class="mini-icon">+</div>
+            <h2>Create your own</h2><p>Describe what you want and sudo builds it with you.</p>
+          </button>
         </div>
       </section>
 
@@ -261,6 +265,8 @@
                 <a href="https://www.amazon.com/dp/B08H5SM9M9" target="_blank" rel="noopener noreferrer">get a Tello SIM</a>.
                 With a second number you can make a separate WhatsApp account for your agent, so it messages
                 you from its own contact instead of inside your own chat.
+                <small>Not sponsored — it’s just what we use. Any carrier that gives you a number that can
+                receive a text will work, so we’d encourage you to look around for what suits you.</small>
               </div>
 
               <div class="whatsapp-panel" id="whatsapp-panel" hidden>
@@ -292,17 +298,17 @@
               <button class="primary-button" id="save-composio" type="button">Save key</button>
               <button class="ghost-button" id="remove-composio" type="button" hidden>Remove key</button>
               <p class="form-status" id="composio-status" role="status"></p>
+              <a class="composio-link" id="composio-link" href="https://dashboard.composio.dev" target="_blank" rel="noopener noreferrer">New to Composio? Sign in or create a free account →</a>
 
               <div class="settings-subgroup">what you can connect</div>
               <div class="connector-browse">
                 <div class="connector-browse-head">
-                  <label class="sr-only" for="connector-search">Search connectors</label>
-                  <input id="connector-search" type="search" autocomplete="off" spellcheck="false" placeholder="Search apps — gmail, slack, stripe…">
-                  <span class="connector-count" id="connector-count"></span>
+                  <strong class="connector-headline">1,600+ apps your agent can use</strong>
                 </div>
-                <div class="connector-grid" id="connector-grid" aria-live="polite"></div>
-                <p class="connector-note" id="connector-note">
-                  A taste of what's available. ✔ marks ones sudo could use with no login at all.
+                <div class="connector-grid" id="connector-grid"></div>
+                <p class="connector-note">
+                  …and much more. To connect one, just ask your agent — it sends you a sign-in link.
+                  <a href="https://composio.dev/toolkits" target="_blank" rel="noopener noreferrer">See every app</a>
                 </p>
               </div>
 
@@ -2016,15 +2022,18 @@
     // talks in the "Message yourself" chat; the agent's number only answers
     // the owner.
     const WA_ACCOUNTS = {
-      owner: { title: 'Your WhatsApp', scanWith: 'your own phone',
-               how: 'Talk to your agent in your “Message yourself” chat. It never messages your contacts.' },
-      agent: { title: 'Agent’s own number', scanWith: 'the phone with your agent’s SIM',
-               how: 'Your agent gets its own contact and messages you from it. It only answers you.' },
+      owner: {
+        title: 'Your WhatsApp', scanWith: 'your own phone',
+        how: 'Talk to your agent in your “Message yourself” chat. It never messages your contacts.',
+      },
+      agent: {
+        title: 'Agent’s own number', scanWith: 'the phone with your agent’s SIM',
+        how: 'Your agent gets its own WhatsApp contact and messages you from it. It only answers you.',
+        needs: 'You’ll need a second SIM or phone number that you own. Put it in a spare phone, '
+          + 'create a new WhatsApp account on that number for your agent, then scan the code below '
+          + 'from that phone.',
+      },
     };
-
-    function waAccountsFor(mode) {
-      return mode === 'both' ? ['owner', 'agent'] : [mode];
-    }
 
     function renderOcWhatsapp(info) {
       stopWhatsappPoll();
@@ -2048,42 +2057,27 @@
         return;
       }
 
-      const label = document.createElement('label');
-      label.htmlFor = 'wa-mode';
-      label.textContent = 'Where your agent lives on WhatsApp';
-      const select = document.createElement('select');
-      select.id = 'wa-mode';
-      [['owner', 'Your WhatsApp — chat in “Message yourself”'],
-       ['agent', 'Its own number — a separate contact'],
-       ['both', 'Both']].forEach(([value, text]) => {
-        const option = document.createElement('option');
-        option.value = value; option.textContent = text;
-        select.append(option);
-      });
-      select.value = info.mode;
-      select.addEventListener('change', () => saveWaMode({ mode: select.value }));
-      body.append(label, select);
-
-      const accounts = waAccountsFor(info.mode);
-      if (accounts.includes('agent') && !info.owner_number) {
-        const numLabel = document.createElement('label');
-        numLabel.htmlFor = 'wa-owner-number';
-        numLabel.textContent = 'Your WhatsApp number';
-        const row = document.createElement('div');
-        row.className = 'wa-number-row';
-        const input = document.createElement('input');
-        input.id = 'wa-owner-number'; input.type = 'tel'; input.placeholder = '+15551234567';
-        const save = document.createElement('button');
-        save.type = 'button'; save.className = 'primary-button'; save.textContent = 'Save';
-        save.addEventListener('click', () => saveWaMode({ owner_number: input.value.trim() }));
-        row.append(input, save);
-        const hint = document.createElement('p');
-        hint.className = 'microcopy';
-        hint.textContent = 'So your agent knows it’s you. With country code. Linking your own WhatsApp below fills this in for you.';
-        body.append(numLabel, row, hint);
+      // Linking means pointing a phone camera at the QR, which is awkward when
+      // the QR is on that same phone. A coarse pointer means a touchscreen.
+      if (window.matchMedia('(pointer: coarse)').matches) {
+        const host = state.status && state.status.hostname;
+        const move = document.createElement('div');
+        move.className = 'wa-move-desktop';
+        const head = document.createElement('strong');
+        head.textContent = 'Easier on a computer';
+        const text = document.createElement('span');
+        text.textContent = 'You’ll scan a QR code with your phone’s camera, so open this page on a computer first'
+          + (host ? ` — go to ${host}.local` : '') + ', then come back to Channels → WhatsApp there.';
+        move.append(head, text);
+        body.append(move);
       }
 
-      accounts.forEach(id => body.append(renderWaAccount(id, info.accounts[id] || {})));
+      const intro = document.createElement('p');
+      intro.className = 'microcopy';
+      intro.textContent = 'Link one or both. With both, your agent messages you from its own number.';
+      body.append(intro);
+
+      ['owner', 'agent'].forEach(id => body.append(renderWaAccount(id, info.accounts[id] || {}, info)));
 
       const status = document.createElement('p');
       status.className = 'form-status'; status.id = 'wa-status';
@@ -2098,7 +2092,7 @@
       }
     }
 
-    function renderWaAccount(id, account) {
+    function renderWaAccount(id, account, info) {
       const meta = WA_ACCOUNTS[id];
       const box = document.createElement('div');
       box.className = 'wa-account';
@@ -2123,6 +2117,33 @@
         unlink.addEventListener('click', () => unlinkOcWhatsapp(id));
         box.append(unlink);
         return box;
+      }
+
+      if (meta.needs) {
+        const needs = document.createElement('p');
+        needs.className = 'wa-needs';
+        needs.textContent = meta.needs;
+        box.append(needs);
+      }
+
+      // The agent's number only answers the owner, so it has to know the
+      // owner's number. Linking the owner's own WhatsApp fills it in.
+      if (id === 'agent' && !info.owner_number) {
+        const numLabel = document.createElement('label');
+        numLabel.htmlFor = 'wa-owner-number';
+        numLabel.textContent = 'Your own WhatsApp number';
+        const row = document.createElement('div');
+        row.className = 'wa-number-row';
+        const input = document.createElement('input');
+        input.id = 'wa-owner-number'; input.type = 'tel'; input.placeholder = '+15551234567';
+        const save = document.createElement('button');
+        save.type = 'button'; save.className = 'primary-button'; save.textContent = 'Save';
+        save.addEventListener('click', () => saveOwnerNumber(input.value.trim()));
+        row.append(input, save);
+        const hint = document.createElement('p');
+        hint.className = 'microcopy';
+        hint.textContent = 'So your agent knows it’s you messaging it. With country code.';
+        box.append(numLabel, row, hint);
       }
 
       const qr = state.waQr && state.waQr[id];
@@ -2175,13 +2196,13 @@
       }
     }
 
-    async function saveWaMode(change) {
+    async function saveOwnerNumber(number) {
       const status = $('wa-status');
       if (status) status.textContent = 'Saving…';
       try {
-        renderOcWhatsapp(await api('/api/agent/whatsapp/mode', {
+        renderOcWhatsapp(await api('/api/agent/whatsapp/owner-number', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(change),
+          body: JSON.stringify({ owner_number: number }),
         }, 30000));
       } catch (error) {
         if ($('wa-status')) $('wa-status').textContent = error.message;
@@ -2655,6 +2676,9 @@
     function renderComposio(status) {
       $('remove-composio').hidden = !status.has_composio;
       $('composio-status').textContent = status.has_composio ? 'Key saved — connectors on.' : '';
+      $('composio-link').textContent = status.has_composio
+        ? 'Manage your connected apps on Composio →'
+        : 'New to Composio? Sign in or create a free account →';
     }
 
     async function removeComposio() {
@@ -2884,13 +2908,22 @@
     }
 
     // --- Connectors preview --------------------------------------------
-    // Shows a slice of the Composio catalog as soon as the Connectors tab is
-    // opened, so the owner can see what's on offer before connecting
-    // anything. Loaded lazily (never on page load) and only once per visit;
-    // a search box filters over the loaded set and can fetch more.
-    let connectorsLoaded = false;
-    let connectorsLoading = false;
-    let connectorsSearchTimer = null;
+    // A fixed showcase of well-known apps, not a live catalog: the agent's
+    // Composio key (ck_) is not accepted by Composio's catalog API, so a live
+    // list only ever showed an error. Logos come through the device's own
+    // cached logo proxy, which needs no key.
+    const FEATURED_CONNECTORS = [
+      ['gmail', 'Gmail'], ['googledocs', 'Google Docs'], ['googlesheets', 'Google Sheets'],
+      ['googlecalendar', 'Google Calendar'], ['googledrive', 'Google Drive'], ['googlemeet', 'Google Meet'],
+      ['googlephotos', 'Google Photos'], ['outlook', 'Outlook'], ['microsoft_teams', 'Microsoft Teams'],
+      ['slack', 'Slack'], ['notion', 'Notion'], ['github', 'GitHub'], ['supabase', 'Supabase'],
+      ['linkedin', 'LinkedIn'], ['twitter', 'X (Twitter)'], ['facebook', 'Facebook'],
+      ['instagram', 'Instagram'], ['youtube', 'YouTube'], ['reddit', 'Reddit'], ['shopify', 'Shopify'],
+      ['canva', 'Canva'], ['docusign', 'DocuSign'], ['eventbrite', 'Eventbrite'], ['coinbase', 'Coinbase'],
+      ['metaads', 'Meta Ads'], ['googleads', 'Google Ads'], ['tiktok_ads', 'TikTok Ads'],
+      ['browserbase_tool', 'Browserbase'],
+    ];
+    let connectorsRendered = false;
 
     function connectorTile(item) {
       const tile = document.createElement('a');
@@ -2918,76 +2951,16 @@
       meta.className = 'connector-meta';
       const name = document.createElement('strong');
       name.textContent = item.name || item.slug;
-      const sub = document.createElement('small');
-      if (item.no_auth) { sub.textContent = '✓ no login needed'; sub.classList.add('nolock'); }
-      else if (item.tools) { sub.textContent = item.tools + ' tool' + (item.tools === 1 ? '' : 's'); }
-      else { sub.textContent = 'connect to use'; }
-      meta.append(name, sub);
+      meta.append(name);
       tile.append(logo, meta);
       return tile;
     }
 
-    function renderConnectors(items, note) {
-      const grid = $('connector-grid');
-      const count = $('connector-count');
-      grid.replaceChildren();
-      if (note) {
-        const empty = document.createElement('div');
-        empty.className = 'connector-empty';
-        empty.textContent = note;
-        grid.appendChild(empty);
-        count.textContent = '';
-        return;
-      }
-      if (!items.length) {
-        const empty = document.createElement('div');
-        empty.className = 'connector-empty';
-        empty.textContent = 'No connectors match that search.';
-        grid.appendChild(empty);
-        count.textContent = '0';
-        return;
-      }
-      grid.replaceChildren(...items.map(connectorTile));
-      count.textContent = items.length + ' app' + (items.length === 1 ? '' : 's');
-    }
-
-    function connectorsSkeleton() {
-      const grid = $('connector-grid');
-      grid.replaceChildren(...Array.from({ length: 6 }, () => {
-        const b = document.createElement('div');
-        b.className = 'connector-skeleton';
-        return b;
-      }));
-      $('connector-count').textContent = '';
-    }
-
-    async function loadConnectors(search) {
-      if (connectorsLoading) return;
-      connectorsLoading = true;
-      connectorsSkeleton();
-      try {
-        const q = search ? ('?search=' + encodeURIComponent(search)) : '?limit=60';
-        const data = await api('/api/connectors' + q, {}, 20000, 'Connectors took too long to load.');
-        if (data.needs_key) {
-          renderConnectors([], 'Save a Composio key above and the apps you can connect will appear here.');
-        } else if (data.error) {
-          renderConnectors([], data.error);
-        } else {
-          renderConnectors(data.toolkits || []);
-          $('connector-note').hidden = !(data.total && data.total > (data.toolkits || []).length);
-        }
-      } catch (error) {
-        renderConnectors([], error.message);
-      } finally {
-        connectorsLoading = false;
-        connectorsLoaded = true;
-      }
-    }
-
-    // Called when the Connectors tab opens — loads the catalog the first time,
-    // so opening the settings page stays cheap for the other tabs.
     function maybeLoadConnectors() {
-      if (!connectorsLoaded) loadConnectors('');
+      if (connectorsRendered) return;
+      connectorsRendered = true;
+      $('connector-grid').replaceChildren(
+        ...FEATURED_CONNECTORS.map(([slug, name]) => connectorTile({ slug, name })));
     }
 
     async function selectPersonality(value) {
@@ -3366,6 +3339,13 @@
       event.target.style.height = `${Math.min(event.target.scrollHeight, 128)}px`;
     });
     $('composer-add').addEventListener('click', startFreshChat);
+    $('create-app').addEventListener('click', () => {
+      setTab('chat');
+      const input = $('chat-input');
+      input.value = 'Help me build an app that ';
+      input.focus();
+      input.setSelectionRange(input.value.length, input.value.length);
+    });
     $('composer-model').addEventListener('click', () => {
       setTab('settings');
       openSettingPage('routing-setting');
@@ -3446,11 +3426,6 @@
     $('github-toggle').addEventListener('change', toggleGithub);
     $('wifi-refresh').addEventListener('click', openWifi);
     $('wifi-connect').addEventListener('click', connectWifi);
-    $('connector-search').addEventListener('input', event => {
-      clearTimeout(connectorsSearchTimer);
-      const value = event.target.value.trim();
-      connectorsSearchTimer = setTimeout(() => loadConnectors(value), 250);
-    });
     $('save-auto-key').addEventListener('click', saveAutoKey);
     $('save-hostname').addEventListener('click', saveHostname);
     $('login-go').addEventListener('click', submitLogin);
