@@ -299,7 +299,9 @@ if [ -d "$root/whatsapp-bridge" ]; then
     log "whatsapp deps changed -- reinstalling"
     ( cd "$WHATSAPP_DIR" && npm install --omit=dev --no-audit --no-fund ) >>"$LOG" 2>&1 \
       || log "whatsapp dependency install reported an issue"
-    systemctl restart sudo-whatsapp-bridge.service >>"$LOG" 2>&1 || true
+    # try-restart: a plain restart also starts a stopped bridge, which on an
+    # OpenClaw device (bridge deliberately off) put a second WhatsApp socket up.
+    systemctl try-restart sudo-whatsapp-bridge.service >>"$LOG" 2>&1 || true
   fi
 fi
 
