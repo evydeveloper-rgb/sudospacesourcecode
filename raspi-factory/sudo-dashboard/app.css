@@ -63,11 +63,11 @@
   --faint: var(--ink-3);
   --accent: var(--coral);
   --accent-soft: var(--coral-tint);
-  /* The composer's send button follows the reference mock: a filled blue with
-     a white glyph. Kept as its own pair so it stays put regardless of the
-     theme's accent (coral, or dark grey under the mono theme). */
-  --send-bg: #1a73e8;
-  --send-on: #ffffff;
+  /* The composer's send button, filled in sudo's own accent, with the glyph in
+     the theme's ink so it stays legible when the accent is coral or the mono
+     theme's dark grey. */
+  --send-bg: var(--accent);
+  --send-on: var(--ink);
   --mint: var(--violet-tint);
   --pink: var(--coral-tint);
   --yellow: var(--amber-tint);
@@ -334,7 +334,7 @@ body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
   border: 0; border-radius: 11px; background: var(--send-bg); cursor: pointer;
   transition: transform .16s ease, opacity .16s ease, background .16s ease;
 }
-.send-button:hover { background: #1668cf; }
+.send-button:hover { filter: brightness(.95); }
 .send-button:active { transform: scale(.94); }
 .send-button:disabled { opacity: .45; cursor: wait; }
 .send-button svg { width: 20px; fill: none; stroke: var(--send-on); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
