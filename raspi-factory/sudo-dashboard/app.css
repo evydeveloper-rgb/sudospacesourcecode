@@ -669,6 +669,14 @@ body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
 }
 .info-link:hover, .info-link[aria-expanded="true"] { color: var(--accent); }
 .info-link:focus-visible { outline: 3px solid rgba(52, 0, 117, .25); outline-offset: 2px; border-radius: 5px; }
+/* A key explanation people should not miss: a filled pill, not a footnote. */
+.info-link.info-link-strong {
+  margin-top: 14px; padding: 10px 14px; border-radius: 999px;
+  background: var(--violet-tint); color: var(--primary);
+  font-size: .86rem; font-weight: 700;
+}
+.info-link.info-link-strong:hover,
+.info-link.info-link-strong[aria-expanded="true"] { background: var(--primary); color: var(--on-primary); }
 
 /* Connectors tab — a showcase of well-known apps the agent can connect to. */
 .connector-browse { margin-top: 6px; }

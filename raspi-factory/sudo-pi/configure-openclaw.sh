@@ -117,6 +117,11 @@ else:
 # a key is saved -- removing the key is the off switch. The key sits in this
 # root-only file as a literal header -- not the gateway environment, which
 # every shell command the agent runs would inherit.
+# TOOLS.md is one of the files OpenClaw puts in front of the model on every
+# turn, and Sudo has no other use for it: it carries what the agent should
+# know about its connectors and WhatsApp.
+tools_md = []
+
 composio_key = (sudo.get("composio_api_key") or "").strip()
 if composio_key:
     cfg["mcp"] = {"servers": {"composio": {
@@ -130,6 +135,16 @@ if composio_key:
         "connectTimeout": 10,
     }}}
     print("Connectors (Composio): on")
+    # Composio's endpoint fails on and off (502s from its side); a turn that
+    # starts during one has no composio__ tools, and the agent then told the
+    # owner it knew nothing about connectors.
+    tools_md += ["## Connectors (Composio)", "",
+                 "- Connectors are switched on: you can act in the person's apps (Gmail, Calendar, "
+                 "Drive and more) through your `composio__` tools, and send them a sign-in link to "
+                 "connect a new app.",
+                 "- If you have no `composio__` tools right now, Composio's service is having "
+                 "trouble. Say the app connections are temporarily unavailable and to try again in "
+                 "a few minutes. Never say connectors aren't set up.", ""]
 else:
     print("Connectors (Composio): no key")
 
@@ -168,12 +183,10 @@ if whatsapp_installed:
     print(f"WhatsApp: reaches the owner via {default_account}, owner number "
           f"{'known' if owner_number else 'not known yet'}")
 
-    # Tell the agent who is who. TOOLS.md is one of the files OpenClaw puts in
-    # front of the model on every turn, and Sudo has no other use for it.
-    # Without this a message arriving through the owner's account and one
-    # through the agent's own number look the same to it.
+    # Tell the agent who is who. Without this a message arriving through the
+    # owner's account and one through the agent's own number look the same.
     user = sudo.get("user_name") or "your owner"
-    lines = ["# TOOLS", "", "## WhatsApp — who is who", ""]
+    lines = ["## WhatsApp — who is who", ""]
     if numbers.get("owner"):
         lines.append(f"- **{user}'s own WhatsApp** (account `owner`) is linked. You only ever speak "
                      f"in {user}'s \"Message yourself\" chat there — anything in that chat is {user} "
@@ -187,13 +200,15 @@ if whatsapp_installed:
         via = "your own number" if default_account == "agent" else f"{user}'s \"Message yourself\" chat"
         lines.append(f"- When you message {user} first (a reminder, a check-in), use {via}.")
     lines.append(f"- {user}'s number: {owner_number or 'not known yet'}.")
-    open("/opt/sudo/agent-workspace/TOOLS.md", "w", encoding="utf-8").write("\n".join(lines) + "\n")
+    tools_md += lines + [""]
 else:
     print("WhatsApp (OpenClaw): not added")
-    try:
-        os.remove("/opt/sudo/agent-workspace/TOOLS.md")
-    except FileNotFoundError:
-        pass
+
+tools_path = "/opt/sudo/agent-workspace/TOOLS.md"
+if tools_md:
+    open(tools_path, "w", encoding="utf-8").write("# TOOLS\n\n" + "\n".join(tools_md))
+elif os.path.exists(tools_path):
+    os.remove(tools_path)
 
 tools["deny"] = sorted(deny)
 

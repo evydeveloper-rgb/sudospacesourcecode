@@ -1237,7 +1237,12 @@ def openclaw_whatsapp_state() -> dict:
         account_id = account.get("accountId")
         if account_id not in ("owner", "agent"):
             continue
-        number = _linked_number(account) if account.get("linked") else ""
+        number = ""
+        if account.get("linked"):
+            # channels.status does not report the linked number on 2026.6.11;
+            # WhatsApp's own creds.json does (me.id = "<number>:<device>@...").
+            creds = read_json_file(f"/opt/sudo/openclaw/credentials/whatsapp/{account_id}/creds.json", {}) or {}
+            number = _linked_number(account) or _linked_number({"self": (creds.get("me") or {}).get("id", "")})
         if number and numbers.get(account_id) != number:
             numbers[account_id] = number
             learned = True
