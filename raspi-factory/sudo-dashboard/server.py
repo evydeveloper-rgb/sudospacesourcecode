@@ -88,6 +88,17 @@ WHATSAPP_UNLINK_SCRIPT = "/usr/local/bin/sudo-unlink-whatsapp.sh"
 UPDATE_SCRIPT = "/usr/local/bin/sudo-update.sh"
 UPDATE_STATUS = "/var/lib/sudo-update-status.json"
 VERSION_FILE = "/opt/sudo/version"
+
+# Composio — the connector layer behind the dashboard's Connectors tab. The
+# catalog is read straight from Composio's public API with the owner's own key,
+# and the logo files come from their public logo CDN. Both are cached briefly so
+# opening the tab (and every keystroke in its search box) does not fan out to
+# Composio each time.
+COMPOSIO_API = "https://backend.composio.dev/api/v3"
+COMPOSIO_LOGO = "https://logos.composio.dev/api"
+COMPOSIO_CACHE_TTL = 600         # seconds a toolkit page stays warm
+_composio_cache: dict[str, tuple[float, list]] = {}
+_composio_lock = threading.Lock()
 RESET_SCRIPT = "/usr/local/bin/sudo-reset-setup.sh"
 RESET_STATUS = "/var/lib/sudo-reset-status.json"
 # Small enough to answer in about a second on a 4GB Pi. It greets and keeps
@@ -322,9 +333,17 @@ def gen_password(length=16):
 
 SSH_SETUP_SCRIPT = "/usr/local/bin/sudo-setup-ssh.sh"
 HOSTNAME_SCRIPT = "/usr/local/bin/sudo-set-hostname.sh"
+WIFI_SCRIPT = "/usr/local/bin/sudo-wifi.sh"
 # RFC 1123, lowercased. Also the shape of a usable mDNS name.
 HOSTNAME_RE = re.compile(r"^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$")
 SSH_PENDING_KEY = "/etc/sudo/ssh_key_pending"
+# GitHub tokens: classic (ghp_), fine-grained (github_pat_), and the older
+# oauth/app/server-to-server shapes GitHub has issued over the years. Loosened
+# deliberately -- a wrong vendor prefix should not block a perfectly good
+# token -- with a length cap so nothing enormous is stored.
+GITHUB_TOKEN_RE = re.compile(
+    r"^(ghp_|github_pat_|gho_|ghu_|ghs_|ghr_|gh[a-z]_)?[A-Za-z0-9_]{16,255}$"
+)
 
 
 def run_privileged(unit, script, *args, wait=True, timeout=60):
@@ -369,6 +388,97 @@ def install_ssh_key(public_key: str):
 
 def disable_ssh():
     run_privileged("sudo-ssh-setup", SSH_SETUP_SCRIPT, "disable")
+
+
+def parse_kv(text: str) -> dict:
+    """One 'key=value' per line -> a dict. First '=' is the separator, so a
+    value may itself contain '='. Repeated keys become a list.
+
+    This is the read side of the wifi.sh line protocol. Values arrive already
+    newline-stripped by the helper; this stays tolerant anyway.
+    """
+    out: dict = {}
+    for line in (text or "").splitlines():
+        if not line or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        key = key.strip()
+        if not key:
+            continue
+        if key in out:
+            if not isinstance(out[key], list):
+                out[key] = [out[key]]
+            out[key].append(value)
+        else:
+            out[key] = value
+    return out
+
+
+def wifi_networks(text: str) -> list:
+    """Parse the 'net=ssid|signal|security|enterprise' lines from wifi.sh.
+
+    Split on '|' with a bounded split: an SSID may legitimately contain a pipe
+    (rare but legal), and only the last three fields are structurally fixed, so
+    the split is done from the right.
+    """
+    nets = []
+    for line in (text or "").splitlines():
+        if not line.startswith("net="):
+            continue
+        raw = line[4:]
+        parts = raw.rsplit("|", 3)
+        if len(parts) != 4:
+            continue
+        ssid, signal, security, enterprise = parts
+        if not ssid:
+            continue
+        nets.append({
+            "ssid": ssid,
+            "signal": int(signal) if signal.isdigit() else 0,
+            "security": security,
+            "enterprise": enterprise == "1",
+            "open": security == "",
+        })
+    return nets
+
+
+def wifi_current() -> dict:
+    """Which Wi-Fi the device is on right now.
+
+    System-settings call, so it is done in-process rather than through the
+    privileged helper: reading interface state needs no /etc write.
+    """
+    state, device, ssid, ip = "unknown", "wlan0", "", ""
+    try:
+        r = subprocess.run(
+            ["nmcli", "-t", "-f", "DEVICE,TYPE,STATE", "device", "status"],
+            capture_output=True, text=True, timeout=5,
+        )
+        for line in r.stdout.splitlines():
+            cols = line.split(":")
+            if len(cols) >= 3 and cols[1] == "wifi" and cols[2] == "connected":
+                device, state = cols[0], "connected"
+                break
+        else:
+            state = "disconnected"
+        if state == "connected":
+            r = subprocess.run(
+                ["nmcli", "-t", "-f", "GENERAL.CONNECTION", "device", "show", device],
+                capture_output=True, text=True, timeout=5,
+            )
+            ssid = parse_kv(r.stdout.replace("GENERAL.CONNECTION:", "ssid=")).get("ssid", "")
+            r = subprocess.run(
+                ["nmcli", "-t", "-f", "IP4.ADDRESS", "device", "show", device],
+                capture_output=True, text=True, timeout=5,
+            )
+            for line in r.stdout.splitlines():
+                if ":" in line:
+                    ip = line.split(":", 1)[1].strip().split("/")[0]
+                    if ip:
+                        break
+    except Exception:
+        state = "unavailable"
+    return {"state": state, "device": device, "ssid": ssid, "ip": ip}
 
 
 def read_agent_files():
@@ -502,11 +612,20 @@ def setup_status(include_sensitive=False):
         "provider_key_hints": provider_key_hints(cfg),
         "has_composio": bool(cfg.get("composio_api_key")),
         "composio_enabled": bool(cfg.get("composio_enabled")),
+        # GitHub token for cloning/pushing the owner's own repos. Same
+        # never-return-the-secret rule as the other keys: only a tail hint.
+        "has_github_token": bool(cfg.get("github_token")),
+        "github_token_hint": (cfg.get("github_token") or "")[-4:] or None,
+        "github_username": cfg.get("github_username") or None,
+        "github_enabled": bool(cfg.get("github_enabled", False)),
         "update": update_state(),
         "routing_mode": (
             cfg.get("routing_mode") if cfg.get("routing_mode") in ROUTING_MODES else "auto"
         ),
         "country": read_wifi_country(),
+        # Cheap read of what we are attached to, so the Settings card can show
+        # the current network without triggering a scan on every status poll.
+        "wifi": wifi_current(),
         "remote_access": bool(cfg.get("remote_access", False)),
         "remote_enabled": remote_enabled(),
         "public_url": url,
@@ -1088,6 +1207,132 @@ def cloud_request(method: str, path: str, body: dict | None = None, timeout: int
         return 502, {"error": str(exc)}
 
 
+def composio_key() -> str:
+    return str(read_json_file(CONFIG).get("composio_api_key") or "").strip()
+
+
+def composio_request(method: str, path: str, body: dict | None = None, timeout: int = 20):
+    """Call Composio with the owner's key. Returns (status, payload).
+
+    Never raises: the dashboard renders this, and a Composio outage must read
+    as 'could not load connectors' rather than taking the settings page down.
+    """
+    key = composio_key()
+    if not key:
+        return 400, {"error": "no_composio_key"}
+    data = None if body is None else json.dumps(body).encode("utf-8")
+    req = urllib.request.Request(
+        COMPOSIO_API + path,
+        data=data,
+        headers={"x-api-key": key, "Content-Type": "application/json",
+                 "Accept": "application/json", "User-Agent": "sudo-dashboard/1.0"},
+        method=method,
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            raw = resp.read().decode("utf-8")
+            return resp.status, (json.loads(raw) if raw else {})
+    except urllib.error.HTTPError as exc:
+        raw = exc.read().decode("utf-8", errors="replace")
+        try:
+            payload = json.loads(raw) if raw else {"error": str(exc)}
+        except json.JSONDecodeError:
+            payload = {"error": raw[:300] or str(exc)}
+        return exc.code, payload
+    except Exception as exc:
+        return 502, {"error": str(exc)}
+
+
+def _logo_is_miss(path: str) -> bool:
+    """A zero-byte cache file is a remembered 404, not a logo."""
+    try:
+        return os.path.getsize(path) == 0
+    except OSError:
+        return True
+
+
+def _fetch_logo(slug: str) -> tuple[int, bytes | dict, str]:
+    """Fetch one logo from Composio's public logo CDN.
+
+    Returns (status, body, content_type). Composio serves SVGs; if they ever
+    serve a raster instead, the content-type comes back with it so the
+    browser still renders it.
+    """
+    req = urllib.request.Request(
+        COMPOSIO_LOGO + "/" + slug,
+        headers={"Accept": "image/svg+xml,image/*", "User-Agent": "sudo-dashboard/1.0"},
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            return resp.status, resp.read(), (resp.headers.get("Content-Type") or "image/svg+xml").split(";")[0]
+    except urllib.error.HTTPError as exc:
+        return exc.code, b"", "image/svg+xml"
+    except Exception:
+        return 502, b"", "image/svg+xml"
+
+
+def _composio_slim(item: dict) -> dict:
+    """Trim one toolkit record to what the grid actually draws.
+
+    Keeps the wire payload small: the catalog runs to hundreds of entries and
+    a Pi serving this over its own Wi-Fi does not need every category and
+    timestamp along for the ride.
+    """
+    meta = item.get("meta") or {}
+    slug = item.get("slug") or ""
+    return {
+        "slug": slug,
+        "name": item.get("name") or slug,
+        "description": (meta.get("description") or "")[:200],
+        "logo": COMPOSIO_LOGO + "/" + slug,
+        "url": "https://composio.dev/toolkits/" + slug,
+        "tools": meta.get("tools_count") or 0,
+        "auth": bool(item.get("auth_schemes")),
+        "no_auth": bool(item.get("no_auth")),
+    }
+
+
+def _composio_error_text(status: int, message) -> str:
+    """Turn a Composio API failure into a line the owner can act on."""
+    if status in (400, 401):
+        return "That Composio key was not accepted. Check it in your Composio settings."
+    if status == 404:
+        return "Composio could not find that (their API may have moved)."
+    if status == 429:
+        return "Composio is rate-limiting this device. Try again in a minute."
+    if status == 502:
+        return "Could not reach Composio — the device may be offline."
+    return str(message or "Composio returned an error")
+
+
+def composio_catalog(limit: int = 60, search: str = "") -> tuple[int, dict]:
+    """The Composio toolkit catalog, cached for a short while.
+
+    Keyed on (limit, search) so the preview and the search box do not evict
+    each other. Returns (status, {"toolkits": [...]}) — status mirrors what
+    Composio said, so the UI can distinguish 'no key' from 'service down'.
+    """
+    cache_key = f"{limit}:{(search or '').strip().lower()}"
+    now = time.time()
+    with _composio_lock:
+        hit = _composio_cache.get(cache_key)
+        if hit and now - hit[0] < COMPOSIO_CACHE_TTL:
+            return 200, {"toolkits": hit[1], "cached": True}
+    q = f"/toolkits?limit={int(limit)}&sort_by=usage"
+    if search.strip():
+        q += "&search=" + urllib.parse.quote(search.strip())
+    status, payload = composio_request("GET", q)
+    if status != 200:
+        return status, payload if isinstance(payload, dict) else {"error": str(payload)}
+    items = payload.get("items") or []
+    slim = [_composio_slim(it) for it in items if it.get("slug")]
+    with _composio_lock:
+        if len(_composio_cache) > 32:
+            _composio_cache.clear()
+        _composio_cache[cache_key] = (now, slim)
+    return 200, {"toolkits": slim, "total": payload.get("total_items")}
+
+
 class DashboardHandler(http.server.BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
     server_version = "SudoDashboard/2"
@@ -1185,6 +1430,53 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             code=code,
             content_type="application/json",
             extra_headers=headers,
+        )
+
+    def send_composio_logo(self, slug: str):
+        """Fetch a toolkit logo (SVG) from Composio and cache it on disk.
+
+        The device may be offline while its dashboard is up on the home
+        network, so the browser must never fetch the logo itself. Cache files
+        live under /var/lib so they survive an app update (which replaces
+        /opt/sudo-dashboard wholesale) but not a factory reset (which is what
+        we want).
+        """
+        cache_dir = "/var/lib/sudo-logos"
+        cache_path = os.path.join(cache_dir, slug + ".svg")
+        data = None
+        ctype = "image/svg+xml"
+        if os.path.isfile(cache_path) and not _logo_is_miss(cache_path):
+            try:
+                with open(cache_path, "rb") as f:
+                    data = f.read()
+            except OSError:
+                data = None
+        if data is None:
+            status, payload, ctype = _fetch_logo(slug)
+            if status == 200 and isinstance(payload, bytes) and payload:
+                data = payload
+                try:
+                    os.makedirs(cache_dir, exist_ok=True)
+                    with open(cache_path, "wb") as f:
+                        f.write(data)
+                except OSError:
+                    pass
+            else:
+                # Remember a miss so a grid full of unknown slugs does not
+                # re-fetch every logo on every open. 404 is the right answer
+                # and the UI falls back to a monogram.
+                try:
+                    os.makedirs(cache_dir, exist_ok=True)
+                    with open(cache_path, "wb") as f:
+                        f.write(b"")
+                except OSError:
+                    pass
+                self.send_error(404)
+                return
+        self.send_bytes(
+            data,
+            content_type=ctype,
+            extra_headers=[("Cache-Control", "public, max-age=86400")],
         )
 
     def read_body(self) -> bytes:
@@ -1323,6 +1615,45 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
 
         if path == "/api/config":
             self.send_json(setup_status(include_sensitive=True))
+            return True
+
+        if path == "/api/connectors":
+            # The browse-a-catalog preview for the Connectors tab. Needs the
+            # owner's key; without one there is nothing to show, so say so
+            # rather than making the tab look broken.
+            qs = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            try:
+                limit = max(6, min(120, int(qs.get("limit", ["60"])[0])))
+            except (ValueError, TypeError):
+                limit = 60
+            search = qs.get("search", [""])[0]
+            if not composio_key():
+                self.send_json({"needs_key": True, "toolkits": []})
+                return True
+            status, data = composio_catalog(limit=limit, search=search)
+            if status != 200:
+                message = (data or {}).get("error") if isinstance(data, dict) else str(data)
+                self.send_json({
+                    "needs_key": status in (400, 401),
+                    "error": _composio_error_text(status, message),
+                    "toolkits": [],
+                })
+                return True
+            self.send_json(data)
+            return True
+
+        if path == "/api/connectors/logo":
+            # Proxied rather than hot-linked: the dashboard runs on the home
+            # network and may have no route to the internet, and this keeps
+            # the whole grid inside one origin (no third-party requests from
+            # the owner's device). Cached on disk so a household of phones
+            # fetches each logo once.
+            qs = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            slug = (qs.get("slug", [""])[0] or "").strip().lower()
+            if not slug or not re.fullmatch(r"[a-z0-9][a-z0-9._-]{0,63}", slug):
+                self.send_error(400)
+                return True
+            self.send_composio_logo(slug)
             return True
 
         if path == "/api/access":
@@ -1886,6 +2217,53 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                             "changed": True})
             return True
 
+        if path == "/api/device/wifi" and self.command == "GET":
+            # Current network plus the nearby list, in one call: the Settings
+            # card needs both to draw itself, and they share the scan cost.
+            scan = run_privileged("sudo-wifi-scan", WIFI_SCRIPT, "scan", wait=True, timeout=30)
+            self.send_json({
+                "current": wifi_current(),
+                "networks": wifi_networks(scan.stdout),
+                "country": read_wifi_country(),
+            })
+            return True
+
+        if path == "/api/device/wifi/connect" and self.command == "POST":
+            try:
+                body = self.read_body_json()
+            except (ValueError, json.JSONDecodeError):
+                self.send_json({"error": "Invalid JSON"}, code=400)
+                return True
+            ssid = str(body.get("ssid") or "").strip()
+            password = str(body.get("password") or "")
+            username = str(body.get("username") or "").strip()
+            if not ssid or len(ssid) > 64:
+                self.send_json({"error": "Pick a network first."}, code=400)
+                return True
+            # Newlines would break the helper's line protocol, and a name that
+            # starts with '-' could be read as an nmcli/awk option.
+            if any(c in ssid for c in "\n\r") or ssid.startswith("-"):
+                self.send_json({"error": "That network name cannot be used."}, code=400)
+                return True
+            if len(password) > 256 or any(c in password for c in "\n\r"):
+                self.send_json({"error": "That password cannot be used."}, code=400)
+                return True
+
+            # The switch drops this connection, so the reply must go out before
+            # the join is allowed to complete -- hence wait=False. If it fails,
+            # the device simply stays where it was; the polled current-network
+            # read is what reflects reality either way.
+            run_privileged(
+                "sudo-wifi-connect", WIFI_SCRIPT, "connect", ssid, password, username,
+                wait=False, timeout=10,
+            )
+            self.send_json({
+                "ok": True, "connecting": True, "ssid": ssid,
+                "note": "If you were on this network's dashboard, it will come back "
+                        "on the new address in a few seconds.",
+            })
+            return True
+
         if path == "/api/agent/provider-keys" and self.command == "POST":
             try:
                 body = self.read_body_json()
@@ -1940,6 +2318,31 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                     cfg["composio_api_key"] = composio
                 else:
                     cfg.pop("composio_api_key", None)
+
+            # GitHub token + username. Same delete-on-empty contract as the
+            # other secrets: an absent field leaves the stored value alone.
+            if "github_token" in body:
+                gh = str(body.get("github_token") or "").strip()
+                if gh:
+                    if len(gh) > 255 or not GITHUB_TOKEN_RE.match(gh):
+                        self.send_json({
+                            "error": "That does not look like a GitHub token. "
+                                     "Copy a personal access token (starts with ghp_ "
+                                     "or github_pat_)."
+                        }, code=400)
+                        return True
+                    cfg["github_token"] = gh
+                else:
+                    cfg.pop("github_token", None)
+            if "github_username" in body:
+                ghu = str(body.get("github_username") or "").strip().lstrip("@")
+                if ghu:
+                    cfg["github_username"] = ghu[:64]
+                else:
+                    cfg.pop("github_username", None)
+
+            if "github_enabled" in body:
+                cfg["github_enabled"] = bool(body.get("github_enabled"))
 
             write_json_file(CONFIG, cfg)  # chmod 600
             run_configure_picoclaw()
@@ -2110,6 +2513,7 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
         if path in {
             "/dashboard.html",
             "/chat.html",
+            "/connectors.html",
             "/billing.html",
             "/onboarding.html",
             "/login.html",

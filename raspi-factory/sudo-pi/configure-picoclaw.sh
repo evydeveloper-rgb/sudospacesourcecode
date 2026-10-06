@@ -142,6 +142,51 @@ elif composio_key:
 else:
     print("No Composio API key — MCP disabled")
 
+# GitHub token: the agent's own way to reach the owner's repos (cloning,
+# pushing, filing issues) without a web login. Two places, because the agent
+# reaches GitHub two ways:
+#   1. picoclaw's registry/skill layer reads tools.skills.registries.github
+#   2. a plain `git clone` inside exec reads GH_TOKEN/GITHUB_TOKEN from the
+#      process environment, which the gateway unit loads from /etc/sudo/agent.env
+# Only written when the owner has pasted a token AND switched it on — like
+# Composio, a credential is inert until asked for.
+github_token = (sudo.get("github_token") or "").strip()
+github_username = (sudo.get("github_username") or "").strip()
+github_on = bool(github_token) and bool(sudo.get("github_enabled", False))
+AGENT_ENV = "/etc/sudo/agent.env"
+if github_on:
+    reg = cfg.setdefault("tools", {}).setdefault("skills", {}).setdefault("registries", {})
+    reg["github"] = {
+        "base_url": "https://github.com",
+        "auth_token": github_token,
+        "proxy": "",
+    }
+    if github_username:
+        reg["github"]["username"] = github_username
+    cfg.setdefault("tools", {}).setdefault("github", {})["enabled"] = True
+    with open(AGENT_ENV, "w", encoding="utf-8") as f:
+        f.write("# Written by configure-picoclaw.sh -- GitHub access for the agent.\n")
+        f.write(f"GH_TOKEN={github_token}\n")
+        f.write(f"GITHUB_TOKEN={github_token}\n")
+        # Never sit at a hidden username/password prompt: exec has no terminal.
+        f.write("GIT_TERMINAL_PROMPT=0\n")
+    os.chmod(AGENT_ENV, 0o600)
+    print("GitHub token applied — the agent can reach your repos")
+elif github_token:
+    print("GitHub token saved but access is off — enable in Settings")
+else:
+    print("No GitHub token — repo access disabled")
+
+# Remove a previously written env file once access is turned off, rather than
+# leaving a live token behind on disk for a switch the owner believes is off.
+if not github_on:
+    try:
+        os.remove(AGENT_ENV)
+    except FileNotFoundError:
+        pass
+    except OSError as exc:
+        print(f"Could not remove {AGENT_ENV}: {exc}")
+
 # --- Write config ---
 pathlib.Path(os.path.dirname(out_config)).mkdir(parents=True, exist_ok=True)
 pathlib.Path(workspace).mkdir(parents=True, exist_ok=True)
@@ -275,6 +320,24 @@ print("  Workspace: sessions/ ready")
 PY
 
 echo "=== configure-picoclaw complete $(date) ==="
+
+# GitHub access reaches the agent's shell (git clone/push under exec) through
+# the process environment, which systemd only injects via a unit. Managed as a
+# drop-in rather than in the base unit so that changing it needs no reflash and
+# an OTA update converges every device: present while a token is on, removed
+# the moment it is switched off. daemon-reload before the restart below.
+GATEWAY_DROPIN="/etc/systemd/system/picoclaw-gateway.service.d"
+if [ -f /etc/sudo/agent.env ]; then
+    mkdir -p "$GATEWAY_DROPIN"
+    cat > "$GATEWAY_DROPIN/10-github.env.conf" << 'EOF'
+[Service]
+EnvironmentFile=-/etc/sudo/agent.env
+EOF
+    echo "GitHub env drop-in installed"
+else
+    rm -f "$GATEWAY_DROPIN/10-github.env.conf" 2>/dev/null || true
+fi
+systemctl daemon-reload 2>/dev/null || true
 
 if systemctl is-active picoclaw-gateway.service >/dev/null 2>&1; then
   systemctl restart picoclaw-gateway.service || true

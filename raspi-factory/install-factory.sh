@@ -100,6 +100,7 @@ cp "${BOOT}/sudo-pi/install-devtools.sh" /usr/local/bin/sudo-install-devtools.sh
 cp "${BOOT}/sudo-pi/setup-ssh.sh" /usr/local/bin/sudo-setup-ssh.sh
 cp "${BOOT}/sudo-pi/install-local-model.sh" /usr/local/bin/sudo-install-local-model.sh
 cp "${BOOT}/sudo-pi/set-hostname.sh" /usr/local/bin/sudo-set-hostname.sh
+cp "${BOOT}/sudo-pi/wifi.sh" /usr/local/bin/sudo-wifi.sh
 cp "${BOOT}/sudo-pi/install-whatsapp-bridge.sh" /usr/local/bin/sudo-install-whatsapp-bridge.sh
 cp "${BOOT}/sudo-pi/unlink-whatsapp.sh" /usr/local/bin/sudo-unlink-whatsapp.sh
 cp "${BOOT}/sudo-pi/sudo-heartbeat.sh" /usr/local/bin/sudo-heartbeat.sh
@@ -124,6 +125,7 @@ chmod +x /usr/local/bin/sudo-device-id.sh \
          /usr/local/bin/sudo-setup-ssh.sh \
          /usr/local/bin/sudo-install-local-model.sh \
          /usr/local/bin/sudo-set-hostname.sh \
+         /usr/local/bin/sudo-wifi.sh \
          /usr/local/bin/sudo-install-whatsapp-bridge.sh \
          /usr/local/bin/sudo-unlink-whatsapp.sh \
          /usr/local/bin/sudo-heartbeat.sh \

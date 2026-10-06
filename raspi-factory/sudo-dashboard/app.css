@@ -63,6 +63,11 @@
   --faint: var(--ink-3);
   --accent: var(--coral);
   --accent-soft: var(--coral-tint);
+  /* The composer's send button follows the reference mock: a filled blue with
+     a white glyph. Kept as its own pair so it stays put regardless of the
+     theme's accent (coral, or dark grey under the mono theme). */
+  --send-bg: #1a73e8;
+  --send-on: #ffffff;
   --mint: var(--violet-tint);
   --pink: var(--coral-tint);
   --yellow: var(--amber-tint);
@@ -148,7 +153,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   color: var(--ink);
   text-decoration: none;
   font-family: var(--font-mono);
-  font-size: 1.35rem;
+  font-size: 1.65rem;
   font-weight: 800;
   letter-spacing: -.08em;
 }
@@ -163,6 +168,25 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   margin-left: .10em;
   background: var(--accent);
   vertical-align: baseline;
+}
+/* The "beta" badge beside the wordmark. Deliberately not letter-spaced like
+   the wordmark and set well below it, so it reads as a tag rather than part of
+   the name. Superscript keeps it clear of the coral block. */
+.wordmark .wordmark-beta {
+  display: inline-block;
+  margin-left: .6em;
+  padding: 2px 6px;
+  border: 1px solid var(--line-2);
+  border-radius: 6px;
+  background: var(--surface-soft);
+  color: var(--muted);
+  font-family: var(--font-sans);
+  font-size: .5rem;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  vertical-align: super;
 }
 .device-state {
   display: flex; align-items: center; gap: 7px;
@@ -280,24 +304,40 @@ body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
 .composer {
   width: min(100%, 720px); flex: none; margin: 0 auto;
   position: relative; z-index: 15;
-  display: flex; align-items: flex-end; gap: 9px;
-  padding: 7px; border: 1px solid rgba(22, 19, 17,.14); border-radius: 20px;
-  background: rgba(251, 247, 235,.94); box-shadow: var(--shadow); backdrop-filter: blur(16px);
+  display: flex; align-items: flex-end; gap: 8px;
+  padding: 8px; border: 1px solid var(--line-2); border-radius: 14px;
+  background: var(--surface); box-shadow: 0 1px 3px rgba(22, 19, 17,.06), var(--shadow);
 }
 .composer textarea {
-  flex: 1; resize: none; min-height: 46px; max-height: 128px;
+  flex: 1; resize: none; min-height: 42px; max-height: 128px;
   border: 0; outline: 0; background: transparent; color: var(--ink);
-  font-size: 1rem; line-height: 1.45; padding: 11px 9px;
+  font-size: 1rem; line-height: 1.45; padding: 10px 4px;
 }
 .composer textarea::placeholder { color: var(--faint); }
-.send-button {
-  width: 46px; height: 46px; flex: none; display: grid; place-items: center;
-  border: 0; border-radius: 15px; background: var(--accent); cursor: pointer;
-  transition: transform .16s ease, opacity .16s ease;
+/* Composer actions: the + (fresh chat) and the model chip. Both are plain
+   icon buttons that sit inline with the field, so they stay quiet until
+   touched. */
+.composer-add, .composer-model {
+  flex: none; align-self: center; display: grid; place-items: center;
+  border: 0; background: transparent; color: var(--muted); cursor: pointer;
+  border-radius: 10px; height: 42px;
 }
+.composer-add { width: 40px; }
+.composer-add svg { width: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.composer-add:hover, .composer-model:hover { color: var(--ink); background: var(--surface-soft); }
+.composer-add:focus-visible, .composer-model:focus-visible { outline: 3px solid rgba(52, 0, 117, .22); outline-offset: 2px; }
+.composer-model { width: auto; grid-auto-flow: column; gap: 5px; padding: 0 9px; }
+.composer-model svg { width: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.composer-model em { font-style: normal; font-size: .78rem; font-weight: 650; color: currentColor; }
+.send-button {
+  width: 42px; height: 42px; flex: none; align-self: center; display: grid; place-items: center;
+  border: 0; border-radius: 11px; background: var(--send-bg); cursor: pointer;
+  transition: transform .16s ease, opacity .16s ease, background .16s ease;
+}
+.send-button:hover { background: #1668cf; }
 .send-button:active { transform: scale(.94); }
 .send-button:disabled { opacity: .45; cursor: wait; }
-.send-button svg { width: 21px; fill: none; stroke: var(--ink); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.send-button svg { width: 20px; fill: none; stroke: var(--send-on); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
 /* Apps */
 .app-grid {
@@ -324,6 +364,10 @@ body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
 
 /* Settings */
 .settings-list { max-width: 720px; margin: 0 auto; display: grid; gap: 11px; }
+/* Connectors lives in its own tab now, not behind a Settings row, so its card
+   has no header to separate the body from -- drop the divider that assumed one. */
+.connectors-panel .setting-body { border-top: 0; padding-top: 2px; }
+.connectors-panel .setting-body .section-intro:first-child { margin-top: 4px; }
 .setting-card {
   border-radius: var(--radius-lg);
   overflow: hidden; border: 1px solid rgba(22, 19, 17,.11); border-radius: 19px;
@@ -588,6 +632,52 @@ body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
 }
 .info-link:hover, .info-link[aria-expanded="true"] { color: var(--accent); }
 .info-link:focus-visible { outline: 3px solid rgba(52, 0, 117, .25); outline-offset: 2px; border-radius: 5px; }
+
+/* Connectors tab — browse preview of the Composio catalog. A responsive grid
+   of logo tiles the owner can scan before deciding to connect anything. */
+.connector-browse { margin-top: 6px; }
+.connector-browse-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.connector-browse-head input {
+  flex: 1; min-width: 0; height: 40px; padding: 0 12px;
+  border: 1px solid var(--line); border-radius: 11px;
+  background: var(--surface); color: var(--ink); font-size: .82rem;
+}
+.connector-browse-head input:focus-visible { outline: 3px solid rgba(52, 0, 117, .25); outline-offset: 1px; }
+.connector-count { flex: none; color: var(--faint); font: 650 .66rem/1 var(--font-mono); }
+.connector-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+@media (min-width: 560px) { .connector-grid { grid-template-columns: repeat(3, 1fr); } }
+.connector-tile {
+  display: flex; align-items: center; gap: 10px; padding: 10px 11px;
+  border: 1px solid var(--line); border-radius: 13px;
+  background: var(--surface); text-decoration: none; color: var(--ink);
+  min-height: 56px; transition: border-color .15s ease, transform .12s ease;
+}
+.connector-tile:hover { border-color: var(--line-2); }
+.connector-tile:active { transform: scale(.98); }
+.connector-logo {
+  width: 30px; height: 30px; flex: none; border-radius: 8px;
+  display: grid; place-items: center; overflow: hidden; background: var(--surface-low);
+}
+.connector-logo img { width: 22px; height: 22px; object-fit: contain; display: block; }
+.connector-logo .mono { font: 750 .72rem/1 var(--font-mono); color: var(--primary); text-transform: uppercase; }
+.connector-meta { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.connector-meta strong {
+  font-size: .78rem; font-weight: 700; line-height: 1.15;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.connector-meta small {
+  color: var(--faint); font: 600 .62rem/1.2 var(--font-mono);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.connector-meta small.nolock { color: var(--ok); }
+.connector-note { margin: 10px 1px 0; color: var(--muted); font-size: .68rem; line-height: 1.45; }
+.connector-empty {
+  grid-column: 1 / -1; padding: 18px 14px; text-align: center;
+  border: 1px dashed var(--line-2); border-radius: 13px;
+  color: var(--muted); font-size: .74rem; line-height: 1.5;
+}
+.connector-skeleton { height: 56px; border-radius: 13px; background: var(--surface-low); animation: connector-pulse 1.2s ease-in-out infinite; }
+@keyframes connector-pulse { 50% { opacity: .45; } }
 
 .info-bubble {
   display: none; margin: 8px 0 0; padding: 11px 12px;
@@ -951,7 +1041,7 @@ body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
     position: sticky; top: 0; height: 100dvh;
   }
   .rail-brand { padding: 22px 20px; }
-  .rail-brand .wordmark { font-size: 1.25rem; }
+  .rail-brand .wordmark { font-size: 1.5rem; }
   .rail-section { padding: 6px 14px; flex-grow: 1; }
   .rail-label {
     margin: 10px 8px 8px; color: var(--muted);
@@ -1067,3 +1157,34 @@ body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
   font-size: .78rem; font-weight: 700; cursor: pointer;
 }
 .addr-row button:hover { background: var(--surface-soft); }
+
+/* Wi-Fi picker in Access & network. A short scannable list of nearby
+   networks; the selected row is the one the password field below applies to. */
+.mini-button {
+  flex: none; align-self: center; padding: 8px 14px;
+  border: 1px solid var(--line); border-radius: 11px;
+  background: var(--surface); color: var(--ink);
+  font-size: .76rem; font-weight: 700; cursor: pointer;
+}
+.mini-button:hover { background: var(--surface-soft); }
+.mini-button:focus-visible { outline: 3px solid rgba(52, 0, 117, .25); outline-offset: 2px; }
+.wifi-box { margin-top: 10px; }
+.wifi-list {
+  max-height: 220px; overflow-y: auto; margin-top: 6px;
+  border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--surface-soft);
+}
+.wifi-list .microcopy { padding: 12px; margin: 0; }
+.wifi-option {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 11px 12px; border: 0; border-bottom: 1px solid var(--line);
+  background: none; color: var(--ink); text-align: left; cursor: pointer;
+  font: inherit;
+}
+.wifi-option:last-child { border-bottom: 0; }
+.wifi-option:hover { background: var(--surface); }
+.wifi-option[aria-pressed="true"] { background: var(--primary-fixed); }
+.wifi-option .wifi-name { flex: 1; min-width: 0; font-size: .84rem; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wifi-option .wifi-lock { flex: none; color: var(--faint); font-size: .7rem; }
+.wifi-option .wifi-bars { flex: none; color: var(--faint); font: 650 .66rem/1 var(--font-mono); }
+.optional-tag { color: var(--faint); font-weight: 500; font-size: .68rem; }

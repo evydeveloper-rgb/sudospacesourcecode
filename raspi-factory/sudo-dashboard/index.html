@@ -13,7 +13,7 @@
     <!-- Desktop only (>=1024px). The design's rail tracks setup progress, but
          setup happens on the phone, so it carries the real navigation. -->
     <aside class="side-rail" aria-label="Primary navigation">
-      <div class="rail-brand"><a class="wordmark" href="/" aria-label="Sudo home">sudo<span aria-hidden="true"></span></a></div>
+      <div class="rail-brand"><a class="wordmark" href="/" aria-label="Sudo home">sudo<span aria-hidden="true"></span><em class="wordmark-beta">beta</em></a></div>
       <div class="rail-section">
         <p class="rail-label">menu</p>
         <nav class="rail-nav">
@@ -24,6 +24,10 @@
           <button type="button" data-tab="apps">
             <span class="rail-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>
             <span>Apps</span>
+          </button>
+          <button type="button" data-tab="connectors">
+            <span class="rail-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7H6a5 5 0 0 0 0 10h3M15 7h3a5 5 0 0 1 0 10h-3M8 12h8"/></svg></span>
+            <span>Connectors</span>
           </button>
           <button type="button" data-tab="settings">
             <span class="rail-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 6H10M6 6H3M21 12h-7M10 12H3M21 18h-3M14 18H3"/><circle cx="8" cy="6" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="16" cy="18" r="2"/></svg></span>
@@ -41,7 +45,7 @@
     </aside>
 
     <header class="topbar">
-      <a class="wordmark" href="/" aria-label="Sudo home">sudo<span aria-hidden="true"></span></a>
+      <a class="wordmark" href="/" aria-label="Sudo home">sudo<span aria-hidden="true"></span><em class="wordmark-beta">beta</em></a>
       <div class="device-state" id="device-state-wrap"><i aria-hidden="true"></i><span id="device-state">online</span></div>
       <div class="step-chip" id="step-chip" hidden>Step <span id="step-now">1</span> of 3</div>
     </header>
@@ -143,11 +147,8 @@
         <div class="view-heading chat-heading">
           <div>
             <p class="eyebrow">your teammate</p>
-            <h1 id="chat-title"><span id="agent-title">sudo</span><span id="chat-title-suffix"> is ready.</span></h1>
+            <h1 id="chat-title"><span id="agent-title">sudo</span></h1>
           </div>
-          <button class="icon-button" id="new-chat" type="button" aria-label="Clear conversation" title="Clear conversation">
-            <span aria-hidden="true">＋</span>
-          </button>
         </div>
         <div class="public-link-strip" id="public-link-strip" hidden>
           <span>Available anywhere</span>
@@ -189,10 +190,17 @@
           <span></span><span></span><span></span><em>thinking</em>
         </div>
         <form class="composer" id="chat-form">
+          <button class="composer-add" id="composer-add" type="button" aria-label="Start a fresh chat" title="Fresh chat">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
           <label class="sr-only" for="chat-input">Message your agent</label>
           <textarea id="chat-input" rows="1" maxlength="2000" placeholder="ask sudo anything…" enterkeyhint="send"></textarea>
+          <button class="composer-model" id="composer-model" type="button" aria-label="Model: Automatic" title="Choose the model">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>
+            <em id="composer-model-label">Auto</em>
+          </button>
           <button class="send-button" id="send-button" type="submit" aria-label="Send message">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m22 2-11 11M22 2l-7 20-4-9-9-4 20-7Z"/></svg>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
           </button>
         </form>
       </section>
@@ -222,6 +230,95 @@
             <div class="mini-icon">⌂</div><span class="soon">coming soon</span>
             <h2>Home</h2><p>Lights, locks, and small daily routines.</p>
           </article>
+        </div>
+      </section>
+
+      <section class="view" id="view-connectors" aria-labelledby="connectors-title">
+        <div class="view-heading">
+          <div>
+            <p class="eyebrow">plug in your other apps</p>
+            <h1 id="connectors-title">Connectors</h1>
+            <p class="lede">Let sudo use your other apps — sending email, adding calendar events, filing issues — instead of only talking about them.</p>
+          </div>
+        </div>
+        <div class="settings-list connectors-panel">
+          <section class="setting-card open" id="connectors-setting">
+            <div class="setting-body">
+              <p class="section-intro">Connectors let sudo use your other apps — sending email, adding calendar events, filing issues — instead of only talking about them.</p>
+
+              <label for="composio-key">Composio API key</label>
+              <input id="composio-key" type="password" autocomplete="off" spellcheck="false" placeholder="paste your key">
+              <p class="microcopy">From <strong>composio.dev</strong> → Settings → API Keys. Stored on this device only.</p>
+              <button class="primary-button" id="save-composio" type="button">Save key</button>
+
+              <div class="access-row">
+                <div>
+                  <strong>Use connectors</strong>
+                  <small>Let sudo act in your connected apps. Leave off if the agent starts erroring.</small>
+                </div>
+                <label class="switch"><input type="checkbox" id="composio-toggle"><span></span></label>
+              </div>
+              <p class="form-status" id="composio-status" role="status"></p>
+
+              <div class="settings-subgroup">what you can connect</div>
+              <div class="connector-browse">
+                <div class="connector-browse-head">
+                  <label class="sr-only" for="connector-search">Search connectors</label>
+                  <input id="connector-search" type="search" autocomplete="off" spellcheck="false" placeholder="Search apps — gmail, slack, stripe…">
+                  <span class="connector-count" id="connector-count"></span>
+                </div>
+                <div class="connector-grid" id="connector-grid" aria-live="polite"></div>
+                <p class="connector-note" id="connector-note">
+                  A taste of what's available. ✔ marks ones sudo could use with no login at all.
+                </p>
+              </div>
+
+              <button class="info-link" type="button" aria-expanded="false" aria-controls="composio-info">What is Composio ⓘ</button>
+              <div class="info-bubble" id="composio-info">
+                One account that holds your logins for a few hundred apps — Gmail, Calendar, Slack, Notion, GitHub. You sign in to each app once on their site, and sudo can then act in it.<br><br>
+                <strong>Why not just give sudo my passwords?</strong> It never sees them. Composio holds the connection and hands out access that you can revoke per app, whenever you like.
+              </div>
+
+              <div class="settings-subgroup">other ways to extend sudo</div>
+
+              <button class="info-link" type="button" aria-expanded="false" aria-controls="mcp-info">MCP servers ⓘ</button>
+              <div class="info-bubble" id="mcp-info">
+                <strong>MCP</strong> is an open standard for giving an agent new abilities. An MCP server is a small program exposing tools — read this database, search these docs, control this app — and sudo can call them.<br><br>
+                Composio is the no-setup option; MCP is what you reach for when you want something specific or self-hosted. It runs on your device, so nothing leaves your network.<br><br>
+                <em>Not wired up yet</em> — it needs the same care as running commands, since an MCP server is code you chose to trust.
+              </div>
+
+              <button class="info-link" type="button" aria-expanded="false" aria-controls="cli-info">CLI tools ⓘ</button>
+              <div class="info-bubble" id="cli-info">
+                Command-line programs already on the device — <code>git</code>, <code>curl</code>, <code>ffmpeg</code>, and anything else you install. The broadest option and the one with the fewest guardrails.<br><br>
+                Turned on under <strong>What sudo can do → Run commands on this device</strong>. Read the warning there first: a web page can contain text written to trick an agent into running something harmful.
+              </div>
+
+              <div class="settings-subgroup">GitHub</div>
+              <p class="section-intro">Give sudo a GitHub token and it can work with your repositories directly — cloning one, pushing changes, opening an issue — instead of only talking you through it.</p>
+              <label for="github-username">GitHub username <span class="optional-tag">optional</span></label>
+              <input id="github-username" autocomplete="off" spellcheck="false" placeholder="your-handle">
+              <label for="github-token">Personal access token</label>
+              <input id="github-token" type="password" autocomplete="off" spellcheck="false" placeholder="ghp_… or github_pat_…">
+              <p class="microcopy">Create one at <strong>github.com → Settings → Developer settings → Personal access tokens</strong>. Choose only the scopes sudo needs; a fine-grained token limited to the repos you care about is the safest. Stored on this device only.</p>
+              <button class="primary-button" id="save-github" type="button">Save token</button>
+
+              <div class="access-row">
+                <div>
+                  <strong>Let sudo use my repos</strong>
+                  <small>When off, the token is saved but sudo cannot reach GitHub.</small>
+                </div>
+                <label class="switch"><input type="checkbox" id="github-toggle"><span></span></label>
+              </div>
+              <p class="form-status" id="github-status" role="status"></p>
+
+              <button class="info-link" type="button" aria-expanded="false" aria-controls="github-info">What the token can do ⓘ</button>
+              <div class="info-bubble" id="github-info">
+                A token is a key to your GitHub account. What it can reach is exactly what you ticked when you made it — repo access lets sudo clone, push and open issues; nothing else.<br><br>
+                <strong>Treat it like a password.</strong> Keep it off unless you want sudo working in your repos, and revoke it on GitHub the moment you are done. It is stored on this device only and never leaves it except to talk to GitHub.
+              </div>
+            </div>
+          </section>
         </div>
       </section>
 
@@ -348,51 +445,6 @@
                 <strong>Gemma 3 270M</strong>, about 200MB, running on the Pi rather than in the cloud. It greets you and keeps sudo talking when there is no API key or no internet.<br><br>
                 It is deliberately small: quick to answer, but it cannot browse, remember past chats, or answer factual questions. Those go to the cloud model.<br><br>
                 It downloads by itself a few minutes after the device first joins Wi-Fi. If it says <em>not installed</em> long after that, the device could not reach the download.
-              </div>
-            </div>
-          </section>
-          <section class="setting-card" id="connectors-setting">
-            <button class="setting-head" type="button">
-              <span class="setting-icon">⚯</span>
-              <span><strong>Connectors</strong><small id="connectors-summary">Not connected</small></span>
-              <span class="chevron">&rsaquo;</span>
-            </button>
-            <div class="setting-body">
-              <p class="section-intro">Connectors let sudo use your other apps — sending email, adding calendar events, filing issues — instead of only talking about them.</p>
-
-              <label for="composio-key">Composio API key</label>
-              <input id="composio-key" type="password" autocomplete="off" spellcheck="false" placeholder="paste your key">
-              <p class="microcopy">From <strong>composio.dev</strong> → Settings → API Keys. Stored on this device only.</p>
-              <button class="primary-button" id="save-composio" type="button">Save key</button>
-
-              <div class="access-row">
-                <div>
-                  <strong>Use connectors</strong>
-                  <small>Let sudo act in your connected apps. Leave off if the agent starts erroring.</small>
-                </div>
-                <label class="switch"><input type="checkbox" id="composio-toggle"><span></span></label>
-              </div>
-              <p class="form-status" id="composio-status" role="status"></p>
-
-              <button class="info-link" type="button" aria-expanded="false" aria-controls="composio-info">What is Composio ⓘ</button>
-              <div class="info-bubble" id="composio-info">
-                One account that holds your logins for a few hundred apps — Gmail, Calendar, Slack, Notion, GitHub. You sign in to each app once on their site, and sudo can then act in it.<br><br>
-                <strong>Why not just give sudo my passwords?</strong> It never sees them. Composio holds the connection and hands out access that you can revoke per app, whenever you like.
-              </div>
-
-              <div class="settings-subgroup">other ways to extend sudo</div>
-
-              <button class="info-link" type="button" aria-expanded="false" aria-controls="mcp-info">MCP servers ⓘ</button>
-              <div class="info-bubble" id="mcp-info">
-                <strong>MCP</strong> is an open standard for giving an agent new abilities. An MCP server is a small program exposing tools — read this database, search these docs, control this app — and sudo can call them.<br><br>
-                Composio is the no-setup option; MCP is what you reach for when you want something specific or self-hosted. It runs on your device, so nothing leaves your network.<br><br>
-                <em>Not wired up yet</em> — it needs the same care as running commands, since an MCP server is code you chose to trust.
-              </div>
-
-              <button class="info-link" type="button" aria-expanded="false" aria-controls="cli-info">CLI tools ⓘ</button>
-              <div class="info-bubble" id="cli-info">
-                Command-line programs already on the device — <code>git</code>, <code>curl</code>, <code>ffmpeg</code>, and anything else you install. The broadest option and the one with the fewest guardrails.<br><br>
-                Turned on under <strong>What sudo can do → Run commands on this device</strong>. Read the warning there first: a web page can contain text written to trick an agent into running something harmful.
               </div>
             </div>
           </section>
@@ -710,14 +762,40 @@
                 <div><strong>Home network</strong><small>Anyone on this Wi-Fi can open the dashboard.</small></div>
                 <span class="status-pill good">connected</span>
               </div>
+
               <div class="access-row">
-                <div><strong>Access from anywhere</strong><small>Creates a temporary public Cloudflare link.</small></div>
+                <div>
+                  <strong>Wi-Fi</strong>
+                  <small id="wifi-current">Checking…</small>
+                </div>
+                <button class="mini-button" id="wifi-refresh" type="button">Change</button>
+              </div>
+
+              <div class="access-row">
+                <div>
+                  <strong>Access from anywhere</strong>
+                  <small>Creates a temporary public Cloudflare link.</small>
+                </div>
                 <label class="switch">
                   <input id="remote-toggle" type="checkbox">
                   <span aria-hidden="true"></span>
                   <em class="sr-only">Toggle remote access</em>
                 </label>
               </div>
+
+              <div class="wifi-box" id="wifi-box" hidden>
+                <div class="wifi-list" id="wifi-list" aria-live="polite">
+                  <p class="microcopy" id="wifi-list-note">Scanning for networks…</p>
+                </div>
+                <label for="wifi-password">Password</label>
+                <input id="wifi-password" type="password" autocomplete="off" spellcheck="false" placeholder="network password">
+                <label for="wifi-username" id="wifi-username-label" hidden>Username <span class="optional-tag">this network asks for one</span></label>
+                <input id="wifi-username" autocomplete="off" spellcheck="false" placeholder="username" hidden>
+                <button class="primary-button" id="wifi-connect" type="button">Join network</button>
+                <p class="form-status" id="wifi-status" role="status"></p>
+                <p class="microcopy" id="wifi-hint">Pick a network above, type its password, then join. If you are opening the dashboard on the home network, the page will drop for a few seconds while sudo moves — it comes back on the new address.</p>
+              </div>
+
               <button class="info-btn" type="button" data-info="remote-info" aria-expanded="false" aria-label="About access from anywhere">i</button>
               <div class="info-bubble" id="remote-info">
                 Normally your dashboard only works on your home Wi‑Fi. Turn this on and sudo creates a public web address that reaches your device from anywhere — useful on the go.<br><br>
@@ -951,6 +1029,9 @@
       <button type="button" data-tab="apps">
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>apps</span>
       </button>
+      <button type="button" data-tab="connectors">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7H6a5 5 0 0 0 0 10h3M15 7h3a5 5 0 0 1 0 10h-3M8 12h8"/></svg><span>connect</span>
+      </button>
       <button type="button" data-tab="settings">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 6H10M6 6H3M21 12h-7M10 12H3M21 18h-3M14 18H3"/><circle cx="8" cy="6" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="16" cy="18" r="2"/></svg><span>settings</span>
       </button>
@@ -1004,41 +1085,8 @@
       $('device-state-wrap').hidden = tab === 'welcome';
       if (tab !== 'settings' && state.settingPage) closeSettingPage();
       document.querySelectorAll('.view').forEach(view => view.classList.toggle('active', view.id === `view-${tab}`));
-  
-    // Browser/phone back moves within the app rather than leaving it.
-    // Refresh when the tab is looked at again, rather than polling a device
-    // that is usually idle.
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') refreshStatus();
-    });
-    window.addEventListener('focus', refreshStatus);
 
-    // While a screen is sitting on the welcome flow it is the one place
-    // staleness actually costs something: setup finished elsewhere would
-    // otherwise leave this screen inviting a second, conflicting setup. Poll
-    // only in that state, and only while the screen is actually being looked
-    // at, so an idle device is not questioned every few seconds forever.
-    setInterval(() => {
-      if (document.visibilityState !== 'visible') return;
-      // Through the welcome flow, staleness costs something: setup finished
-      // elsewhere would leave this screen inviting a second, conflicting one.
-      if (state.tab === 'welcome') { refreshStatus(); return; }
-      // On the chat screen, keep asking only until the brain can answer. The
-      // first-run model download takes minutes and finishes after setup, and
-      // without this the "setting up" banner stayed up even once the agent was
-      // ready -- nothing was left to clear it. Once it is ready, stop; there
-      // is nothing more to watch.
-      if (state.tab === 'chat' && !modelSettled(state.status)) refreshStatus();
-    }, 15000);
-
-    window.addEventListener('popstate', event => {
-      const entry = event.state || {};
-      const tab = entry.tab || 'chat';
-      if (state.tab !== tab) setTab(tab, true);
-      if (entry.settingPage) openSettingPage(entry.settingPage, true);
-      else if (state.settingPage) closeSettingPage(true);
-    });
-    document.querySelectorAll('.bottom-nav button, .rail-nav button').forEach(button => {
+      document.querySelectorAll('.bottom-nav button, .rail-nav button').forEach(button => {
         const active = button.dataset.tab === tab;
         button.classList.toggle('active', active);
         button.setAttribute('aria-current', active ? 'page' : 'false');
@@ -1053,7 +1101,42 @@
       else history.pushState(entry, '', path);
       window.scrollTo({ top: 0, behavior: 'smooth' });
       if (tab === 'chat') scrollChat('auto');
+      // The catalog is fetched the first time the Connectors tab is opened, so
+      // the other tabs never pay for it.
+      if (tab === 'connectors') maybeLoadConnectors();
     }
+
+    // Browser/phone back moves within the app rather than leaving it.
+    window.addEventListener('popstate', event => {
+      const entry = event.state || {};
+      const tab = entry.tab || 'chat';
+      if (state.tab !== tab) setTab(tab, true);
+      if (entry.settingPage) openSettingPage(entry.settingPage, true);
+      else if (state.settingPage) closeSettingPage(true);
+    });
+
+    // Refresh when the tab is looked at again, rather than polling a device
+    // that is usually idle.
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') refreshStatus();
+    });
+    window.addEventListener('focus', refreshStatus);
+
+    // While a screen is sitting on the welcome flow it is the one place
+    // staleness actually costs something: setup finished elsewhere would
+    // otherwise leave this screen inviting a second, conflicting setup. Poll
+    // only in that state, and only while the screen is actually being looked
+    // at, so an idle device is not questioned every few seconds forever.
+    setInterval(() => {
+      if (document.visibilityState !== 'visible') return;
+      if (state.tab === 'welcome') { refreshStatus(); return; }
+      // On the chat screen, keep asking only until the brain can answer. The
+      // first-run model download takes minutes and finishes after setup, and
+      // without this the "setting up" banner stayed up even once the agent was
+      // ready -- nothing was left to clear it. Once it is ready, stop; there
+      // is nothing more to watch.
+      if (state.tab === 'chat' && !modelSettled(state.status)) refreshStatus();
+    }, 15000);
 
     function scrollChat(behavior = 'smooth') {
       requestAnimationFrame(() => {
@@ -1698,7 +1781,7 @@
       const card = $(id);
       if (!card) return;
       state.settingPage = id;
-      document.querySelector('.settings-list').classList.add('detail-open');
+      document.querySelector('#view-settings .settings-list').classList.add('detail-open');
       document.querySelectorAll('.setting-card').forEach(c => c.classList.toggle('active-page', c === card));
       $('detail-title').textContent = card.querySelector('.setting-head strong').textContent;
       if (!silent) history.pushState({ tab: 'settings', settingPage: id }, '', '/onboarding.html');
@@ -1710,7 +1793,7 @@
     function closeSettingPage(silent) {
       stopWhatsappPoll();
       state.settingPage = null;
-      document.querySelector('.settings-list').classList.remove('detail-open');
+      document.querySelector('#view-settings .settings-list').classList.remove('detail-open');
       document.querySelectorAll('.setting-card').forEach(c => c.classList.remove('active-page'));
       $('detail-bar').hidden = true;
       document.querySelector('#view-settings .view-heading').hidden = false;
@@ -1971,11 +2054,9 @@
       const text = $('model-loading-text');
       const bar = $('model-progress');
       const fill = $('model-progress-fill');
-      const suffix = $('chat-title-suffix');
 
       if (ready) {
         banner.hidden = true;
-        if (suffix) suffix.textContent = ' is ready.';
         return;
       }
 
@@ -1993,7 +2074,6 @@
         // ready" wording that promises this resolves on its own.
         text.textContent = "Having trouble installing my on-device brain. Add an API "
           + 'key in Settings so I can chat while that gets sorted out.';
-        if (suffix) suffix.textContent = ' needs an API key to chat right now.';
       } else if (localState === 'installing' && pct !== null) {
         // A real percentage, so show real movement rather than a bar that
         // sits still and then jumps to done -- which reads as frozen.
@@ -2004,11 +2084,9 @@
           bar.setAttribute('aria-valuenow', String(pct));
           fill.style.width = Math.max(4, Math.min(100, pct)) + '%';
         }
-        if (suffix) suffix.textContent = ' is getting ready…';
       } else {
         text.textContent = 'Still setting up my on-device brain — first replies can '
           + "take a few minutes. I'll be ready shortly, no need to do anything.";
-        if (suffix) suffix.textContent = ' is getting ready…';
       }
       banner.hidden = false;
     }
@@ -2025,7 +2103,30 @@
       $('routing-summary').textContent = auto
         ? 'Automatic'
         : ($('model').selectedOptions[0]?.textContent.split('·')[0].trim() || 'Fixed');
+      renderComposerModel();
       if (save) saveProfile();
+    }
+
+    // The composer's model chip mirrors the routing choice: "Auto" while sudo
+    // picks the model itself, otherwise the chosen model's short name. Tapping
+    // it opens Model & routing in Settings rather than duplicating the picker.
+    function renderComposerModel() {
+      const chip = $('composer-model');
+      const label = $('composer-model-label');
+      if (!chip || !label) return;
+      const auto = state.routing !== 'fixed';
+      const name = auto
+        ? 'Auto'
+        : (($('model').selectedOptions[0]?.textContent.split('·')[0].trim()) || 'Model');
+      label.textContent = name;
+      chip.setAttribute('aria-label', `Model: ${auto ? 'Automatic' : name}`);
+    }
+
+    // The composer's + starts a clean conversation, the same thing the old
+    // header button did before the composer absorbed it.
+    function startFreshChat() {
+      $('messages').replaceChildren();
+      addMessage('agent', 'fresh start. what are we working on?');
     }
 
     // --- provider keys ---------------------------------------------------
@@ -2262,11 +2363,6 @@
           body: JSON.stringify({ composio_enabled: $('composio-toggle').checked }),
         });
         state.status = data;
-        // Keep the card summary in step with the switch immediately -- it
-        // otherwise only caught up on the next status poll.
-        $('connectors-summary').textContent = data.has_composio
-          ? (data.composio_enabled ? 'Connectors on' : 'Key saved, connectors off')
-          : 'Not connected';
         status.textContent = data.composio_enabled ? 'Connectors on.' : 'Connectors off.';
         setTimeout(() => { status.textContent = ''; }, 2500);
       } catch (error) {
@@ -2330,7 +2426,6 @@
           body: JSON.stringify({ composio_api_key: $('composio-key').value.trim() }),
         });
         $('composio-key').value = '';
-        $('connectors-summary').textContent = data.has_composio ? 'Composio connected' : 'Not connected';
         status.textContent = 'Saved.';
         setTimeout(() => { status.textContent = ''; }, 2000);
       } catch (error) {
@@ -2338,7 +2433,257 @@
       }
     }
 
-    function selectPersonality(value) {
+    async function saveGithub() {
+      const status = $('github-status');
+      const token = $('github-token').value.trim();
+      const username = $('github-username').value.trim();
+      if (!token && !username) { status.textContent = 'Paste a token first.'; return; }
+      status.textContent = 'Saving\u2026';
+      // Only send fields with content, so saving a username alone cannot wipe
+      // a stored token (and vice versa).
+      const payload = {};
+      if (token) payload.github_token = token;
+      if (username) payload.github_username = username;
+      try {
+        const data = await api('/api/agent/provider-keys', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        $('github-token').value = '';
+        renderGithub(data);
+        status.textContent = 'Saved.';
+        setTimeout(() => { status.textContent = ''; }, 2000);
+      } catch (error) {
+        status.textContent = error.message;
+      }
+    }
+
+    async function toggleGithub() {
+      const toggle = $('github-toggle');
+      toggle.disabled = true;
+      try {
+        const data = await api('/api/agent/provider-keys', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ github_enabled: toggle.checked }),
+        });
+        renderGithub(data);
+      } catch (error) {
+        toggle.checked = !toggle.checked;
+        $('github-status').textContent = error.message;
+      } finally {
+        toggle.disabled = false;
+      }
+    }
+
+    function renderGithub(status) {
+      $('github-toggle').checked = !!status.github_enabled;
+      if (status.github_username) $('github-username').value = status.github_username;
+      const hint = status.github_token_hint ? `saved token ends in ${status.github_token_hint}` : 'no token saved';
+      $('github-status').textContent = hint;
+    }
+
+    // --- Wi-Fi picker --------------------------------------------------
+    // Lists nearby networks and lets the owner move the device to another one.
+    // The switch drops the dashboard's own connection for a few seconds, so
+    // a join is fire-and-forget: this confirms the request went out, then the
+    // current-network line catches up on its own once the device is back.
+    let wifiPending = '';
+
+    function renderWifi(data) {
+      const current = data.current || {};
+      const label = current.state === 'connected'
+        ? `${current.ssid || 'unknown'}${current.ip ? ' · ' + current.ip : ''}`
+        : (current.state === 'unavailable' ? 'Wi-Fi not available on this device' : 'Not connected');
+      $('wifi-current').textContent = label;
+      const list = $('wifi-list');
+      const nets = data.networks || [];
+      list.replaceChildren();
+      if (!nets.length) {
+        const p = document.createElement('p');
+        p.className = 'microcopy';
+        p.textContent = 'No networks found. Move the device nearer the router and try again.';
+        list.append(p);
+        return;
+      }
+      nets.forEach(net => {
+        const row = document.createElement('button');
+        row.type = 'button';
+        row.className = 'wifi-option';
+        row.setAttribute('aria-pressed', String(net.ssid === wifiPending));
+        const name = document.createElement('span');
+        name.className = 'wifi-name';
+        name.textContent = net.ssid;
+        const lock = document.createElement('span');
+        lock.className = 'wifi-lock';
+        lock.textContent = net.open ? 'open' : (net.enterprise ? 'enterprise' : 'secured');
+        const bars = document.createElement('span');
+        bars.className = 'wifi-bars';
+        bars.textContent = `${net.signal}%`;
+        row.append(name, lock, bars);
+        row.addEventListener('click', () => selectWifi(net));
+        list.append(row);
+      });
+    }
+
+    function selectWifi(net) {
+      wifiPending = net.ssid;
+      document.querySelectorAll('.wifi-option').forEach(btn =>
+        btn.setAttribute('aria-pressed', String(btn.querySelector('.wifi-name').textContent === net.ssid)));
+      // Enterprise networks want a username too; a plain one does not.
+      $('wifi-username').hidden = !net.enterprise;
+      $('wifi-username-label').hidden = !net.enterprise;
+      $('wifi-password').placeholder = net.open ? 'no password needed' : 'network password';
+      $('wifi-status').textContent = `Selected ${net.ssid}.`;
+    }
+
+    async function openWifi() {
+      $('wifi-box').hidden = false;
+      $('wifi-status').textContent = '';
+      const note = $('wifi-list-note');
+      if (note) note.textContent = 'Scanning for networks\u2026';
+      try {
+        const data = await api('/api/device/wifi', {}, 30000);
+        renderWifi(data);
+      } catch (error) {
+        $('wifi-status').textContent = error.message;
+      }
+    }
+
+    async function connectWifi() {
+      if (!wifiPending) { $('wifi-status').textContent = 'Pick a network from the list first.'; return; }
+      const btn = $('wifi-connect');
+      btn.disabled = true;
+      $('wifi-status').textContent = 'Joining\u2026';
+      try {
+        const data = await api('/api/device/wifi/connect', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ssid: wifiPending,
+            password: $('wifi-password').value,
+            username: $('wifi-username').value.trim(),
+          }),
+        }, 20000);
+        $('wifi-status').textContent = data.note
+          || `Joining ${data.ssid}. This page may drop for a few seconds.`;
+        $('wifi-password').value = '';
+      } catch (error) {
+        $('wifi-status').textContent = error.message;
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    // --- Connectors preview --------------------------------------------
+    // Shows a slice of the Composio catalog as soon as the Connectors tab is
+    // opened, so the owner can see what's on offer before connecting
+    // anything. Loaded lazily (never on page load) and only once per visit;
+    // a search box filters over the loaded set and can fetch more.
+    let connectorsLoaded = false;
+    let connectorsLoading = false;
+    let connectorsSearchTimer = null;
+
+    function connectorTile(item) {
+      const tile = document.createElement('a');
+      tile.className = 'connector-tile';
+      tile.href = item.url || ('https://composio.dev/toolkits/' + item.slug);
+      tile.target = '_blank';
+      tile.rel = 'noopener';
+      const logo = document.createElement('span');
+      logo.className = 'connector-logo';
+      const img = document.createElement('img');
+      img.loading = 'lazy';
+      img.alt = '';
+      img.src = '/api/connectors/logo?slug=' + encodeURIComponent(item.slug);
+      // The proxied logo can 404 (unknown slug, or the device was offline when
+      // it was first asked for); fall back to a monogram tile rather than a
+      // broken-image icon.
+      img.addEventListener('error', () => {
+        const mono = document.createElement('span');
+        mono.className = 'mono';
+        mono.textContent = (item.name || item.slug || '?').slice(0, 2);
+        logo.replaceChildren(mono);
+      });
+      logo.appendChild(img);
+      const meta = document.createElement('span');
+      meta.className = 'connector-meta';
+      const name = document.createElement('strong');
+      name.textContent = item.name || item.slug;
+      const sub = document.createElement('small');
+      if (item.no_auth) { sub.textContent = '✓ no login needed'; sub.classList.add('nolock'); }
+      else if (item.tools) { sub.textContent = item.tools + ' tool' + (item.tools === 1 ? '' : 's'); }
+      else { sub.textContent = 'connect to use'; }
+      meta.append(name, sub);
+      tile.append(logo, meta);
+      return tile;
+    }
+
+    function renderConnectors(items, note) {
+      const grid = $('connector-grid');
+      const count = $('connector-count');
+      grid.replaceChildren();
+      if (note) {
+        const empty = document.createElement('div');
+        empty.className = 'connector-empty';
+        empty.textContent = note;
+        grid.appendChild(empty);
+        count.textContent = '';
+        return;
+      }
+      if (!items.length) {
+        const empty = document.createElement('div');
+        empty.className = 'connector-empty';
+        empty.textContent = 'No connectors match that search.';
+        grid.appendChild(empty);
+        count.textContent = '0';
+        return;
+      }
+      grid.replaceChildren(...items.map(connectorTile));
+      count.textContent = items.length + ' app' + (items.length === 1 ? '' : 's');
+    }
+
+    function connectorsSkeleton() {
+      const grid = $('connector-grid');
+      grid.replaceChildren(...Array.from({ length: 6 }, () => {
+        const b = document.createElement('div');
+        b.className = 'connector-skeleton';
+        return b;
+      }));
+      $('connector-count').textContent = '';
+    }
+
+    async function loadConnectors(search) {
+      if (connectorsLoading) return;
+      connectorsLoading = true;
+      connectorsSkeleton();
+      try {
+        const q = search ? ('?search=' + encodeURIComponent(search)) : '?limit=60';
+        const data = await api('/api/connectors' + q, {}, 20000, 'Connectors took too long to load.');
+        if (data.needs_key) {
+          renderConnectors([], 'Save a Composio key above and the apps you can connect will appear here.');
+        } else if (data.error) {
+          renderConnectors([], data.error);
+        } else {
+          renderConnectors(data.toolkits || []);
+          $('connector-note').hidden = !(data.total && data.total > (data.toolkits || []).length);
+        }
+      } catch (error) {
+        renderConnectors([], error.message);
+      } finally {
+        connectorsLoading = false;
+        connectorsLoaded = true;
+      }
+    }
+
+    // Called when the Connectors tab opens — loads the catalog the first time,
+    // so opening the settings page stays cheap for the other tabs.
+    function maybeLoadConnectors() {
+      if (!connectorsLoaded) loadConnectors('');
+    }
+
+    async function selectPersonality(value) {
       state.personality = value;
       document.querySelectorAll('#personality-options button').forEach(button => {
         const selected = button.dataset.value === value;
@@ -2534,14 +2879,13 @@
       $('model').value = status.model || 'sudo-default';
       $('remote-toggle').checked = status.remote_access !== false;
       $('wifi-country').value = status.country || 'US';
+      if (status.wifi) renderWifi({ current: status.wifi });
+      renderGithub(status);
       applyTheme(status.theme || 'default');
       renderDeviceRail(status);
       renderProviders(status.provider_key_hints);
       if (status.hostname) $('device-name').value = status.hostname;
       $('composio-toggle').checked = !!status.composio_enabled;
-      $('connectors-summary').textContent = status.has_composio
-        ? (status.composio_enabled ? 'Connectors on' : 'Key saved, connectors off')
-        : 'Not connected';
       setRouting(status.routing_mode || 'auto', false);
       if (status.answering_with) $('answering-with').textContent = status.answering_with.label;
       $('prefer-local-toggle').checked = !!status.prefer_local;
@@ -2666,6 +3010,7 @@
     async function init() {
       const path = location.pathname;
       if (path.includes('onboarding')) setTab('settings');
+      else if (path.includes('connectors')) setTab('connectors');
       else if (path === '/' || path.includes('dashboard')) setTab('apps');
       else setTab('chat');
 
@@ -2712,12 +3057,13 @@
       event.target.style.height = 'auto';
       event.target.style.height = `${Math.min(event.target.scrollHeight, 128)}px`;
     });
+    $('composer-add').addEventListener('click', startFreshChat);
+    $('composer-model').addEventListener('click', () => {
+      setTab('settings');
+      openSettingPage('routing-setting');
+    });
     $('chat-input').addEventListener('keydown', event => {
       if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); $('chat-form').requestSubmit(); }
-    });
-    $('new-chat').addEventListener('click', () => {
-      $('messages').replaceChildren();
-      addMessage('agent', 'fresh start. what are we working on?');
     });
     // Inline explanations: tap to open, tap again (or open another) to close.
     document.querySelectorAll('.info-btn, .info-link').forEach(button => {
@@ -2788,6 +3134,15 @@
       b.addEventListener('click', () => setRouting(b.dataset.value, true)));
     $('model').addEventListener('change', () => setRouting(state.routing, true));
     $('save-composio').addEventListener('click', saveComposio);
+    $('save-github').addEventListener('click', saveGithub);
+    $('github-toggle').addEventListener('change', toggleGithub);
+    $('wifi-refresh').addEventListener('click', openWifi);
+    $('wifi-connect').addEventListener('click', connectWifi);
+    $('connector-search').addEventListener('input', event => {
+      clearTimeout(connectorsSearchTimer);
+      const value = event.target.value.trim();
+      connectorsSearchTimer = setTimeout(() => loadConnectors(value), 250);
+    });
     $('save-auto-key').addEventListener('click', saveAutoKey);
     $('save-hostname').addEventListener('click', saveHostname);
     $('login-go').addEventListener('click', submitLogin);
