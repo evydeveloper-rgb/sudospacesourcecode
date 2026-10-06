@@ -1161,6 +1161,95 @@ def openclaw_chat(message: str, session_key: str = DASHBOARD_SESSION) -> str:
     return reply or "(empty response)"
 
 
+OPENCLAW_RPC_URL = "http://127.0.0.1:18790/api/v1/admin/rpc"
+OPENCLAW_PLUGIN_DIR = "/opt/sudo/openclaw/npm/projects"
+WA_OC_STATUS = "/var/lib/sudo-openclaw-whatsapp-status.json"
+# The installer names helpers sudo-*.sh; the OTA updater uses the repo name.
+WA_OC_INSTALL = next((p for p in ("/usr/local/bin/sudo-install-openclaw-whatsapp.sh",
+                                  "/usr/local/bin/install-openclaw-whatsapp.sh")
+                      if os.path.isfile(p)), "/usr/local/bin/sudo-install-openclaw-whatsapp.sh")
+WA_MODES = ("owner", "agent", "both")
+E164 = re.compile(r"^\+[1-9]\d{6,14}$")
+
+
+def openclaw_rpc(method: str, params: dict | None = None, timeout: int = 30) -> dict:
+    """Call a gateway control method over the loopback admin endpoint."""
+    token = (read_text(OPENCLAW_TOKEN_FILE) or "").strip()
+    request = urllib.request.Request(
+        OPENCLAW_RPC_URL, method="POST",
+        data=json.dumps({"method": method, "params": params or {}}).encode("utf-8"),
+        headers={"Content-Type": "application/json", "Authorization": f"Bearer {token}"},
+    )
+    with urllib.request.urlopen(request, timeout=timeout) as response:
+        data = json.loads(response.read().decode("utf-8"))
+    if not data.get("ok", False):
+        raise RuntimeError(str((data.get("error") or {}).get("message") or data.get("error") or "gateway error"))
+    return data.get("payload") or {}
+
+
+def openclaw_whatsapp_installed() -> bool:
+    try:
+        return any(n.startswith("openclaw-whatsapp-") for n in os.listdir(OPENCLAW_PLUGIN_DIR))
+    except OSError:
+        return False
+
+
+def _linked_number(account: dict) -> str:
+    """The phone number an account is linked as, whichever field the gateway
+    reports it in. Empty until linked."""
+    for key in ("selfE164", "e164", "selfNumber", "phoneNumber", "number", "self"):
+        value = account.get(key)
+        if isinstance(value, dict):
+            value = value.get("e164") or value.get("number") or value.get("jid")
+        if isinstance(value, str) and value:
+            digits = re.sub(r"[^\d]", "", value.split("@")[0].split(":")[0])
+            if 7 <= len(digits) <= 15:
+                return "+" + digits
+    return ""
+
+
+def openclaw_whatsapp_state() -> dict:
+    cfg = read_json_file(CONFIG)
+    install = read_json_file(WA_OC_STATUS, {}) or {}
+    numbers = dict(cfg.get("whatsapp_numbers") or {})
+    state = {
+        "installed": openclaw_whatsapp_installed(),
+        "install": {"state": install.get("state", "absent"), "message": install.get("message", "")},
+        "mode": cfg.get("whatsapp_mode") or "agent",
+        "owner_number": cfg.get("whatsapp_owner_number") or numbers.get("owner") or "",
+        "accounts": {},
+    }
+    if not state["installed"]:
+        return state
+    try:
+        payload = openclaw_rpc("channels.status", timeout=15)
+    except Exception as exc:
+        state["error"] = f"WhatsApp is starting up ({exc})"
+        return state
+    learned = False
+    for account in (payload.get("channelAccounts") or {}).get("whatsapp", []):
+        account_id = account.get("accountId")
+        if account_id not in ("owner", "agent"):
+            continue
+        number = _linked_number(account) if account.get("linked") else ""
+        if number and numbers.get(account_id) != number:
+            numbers[account_id] = number
+            learned = True
+        state["accounts"][account_id] = {
+            "linked": bool(account.get("linked")),
+            "connected": bool(account.get("connected")),
+            "number": (number or numbers.get(account_id, "")) if account.get("linked") else "",
+        }
+    if learned:
+        cfg = read_json_file(CONFIG)
+        cfg["whatsapp_numbers"] = numbers
+        write_json_file(CONFIG, cfg)
+        # The owner's number is what both accounts allow in, and the agent is
+        # told which number is whose -- apply it now it is known.
+        run_configure_picoclaw()
+    return state
+
+
 def agent_chat(message: str, session_key: str = DASHBOARD_SESSION) -> str:
     if agent_backend() == "openclaw":
         return openclaw_chat(message, session_key)
@@ -2014,6 +2103,92 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                      "installed": False, "user": user}
                 )
                 return True
+
+        # ── WhatsApp through OpenClaw (owner's account, agent's own number) ──
+        if path == "/api/agent/whatsapp" and self.command == "GET":
+            self.send_json({"backend": agent_backend(), **openclaw_whatsapp_state()})
+            return True
+
+        if path == "/api/agent/whatsapp/setup" and self.command == "POST":
+            if agent_backend() != "openclaw":
+                self.send_json({"error": "This needs the OpenClaw agent"}, code=409)
+                return True
+            write_json_file(WA_OC_STATUS, {"state": "installing", "message": "Starting…",
+                                           "updated": int(time.time() * 1000)})
+            result = run_privileged("sudo-openclaw-whatsapp", WA_OC_INSTALL, wait=False, timeout=20)
+            if result.returncode != 0:
+                write_json_file(WA_OC_STATUS, {"state": "error",
+                                               "message": "Could not start the installer.",
+                                               "updated": int(time.time() * 1000)})
+            self.send_json(openclaw_whatsapp_state())
+            return True
+
+        if path == "/api/agent/whatsapp/mode" and self.command == "POST":
+            try:
+                body = self.read_body_json()
+            except (ValueError, json.JSONDecodeError):
+                self.send_json({"error": "Invalid JSON"}, code=400)
+                return True
+            cfg = read_json_file(CONFIG)
+            if "mode" in body:
+                if body["mode"] not in WA_MODES:
+                    self.send_json({"error": "Unknown mode"}, code=400)
+                    return True
+                cfg["whatsapp_mode"] = body["mode"]
+            if "owner_number" in body:
+                number = re.sub(r"[\s()-]", "", str(body.get("owner_number") or ""))
+                if number and not E164.match(number):
+                    self.send_json({"error": "Use your full number with country code, like +15551234567"},
+                                   code=400)
+                    return True
+                if number:
+                    cfg["whatsapp_owner_number"] = number
+                else:
+                    cfg.pop("whatsapp_owner_number", None)
+            write_json_file(CONFIG, cfg)
+            run_configure_picoclaw()
+            self.send_json(openclaw_whatsapp_state())
+            return True
+
+        if path == "/api/agent/whatsapp/qr" and self.command == "POST":
+            try:
+                body = self.read_body_json()
+            except (ValueError, json.JSONDecodeError):
+                body = {}
+            account = body.get("account")
+            if account not in ("owner", "agent"):
+                self.send_json({"error": "Unknown account"}, code=400)
+                return True
+            try:
+                payload = openclaw_rpc("web.login.start", {"accountId": account}, timeout=45)
+            except Exception as exc:
+                self.send_json({"error": f"Could not get a code yet — {exc}"}, code=502)
+                return True
+            self.send_json({"qr": payload.get("qrDataUrl"), "message": payload.get("message", "")})
+            return True
+
+        if path == "/api/agent/whatsapp/unlink" and self.command == "POST":
+            try:
+                body = self.read_body_json()
+            except (ValueError, json.JSONDecodeError):
+                body = {}
+            account = body.get("account")
+            if account not in ("owner", "agent"):
+                self.send_json({"error": "Unknown account"}, code=400)
+                return True
+            try:
+                openclaw_rpc("channels.logout", {"channel": "whatsapp", "accountId": account})
+            except Exception as exc:
+                self.send_json({"error": str(exc)}, code=502)
+                return True
+            cfg = read_json_file(CONFIG)
+            numbers = dict(cfg.get("whatsapp_numbers") or {})
+            numbers.pop(account, None)
+            cfg["whatsapp_numbers"] = numbers
+            write_json_file(CONFIG, cfg)
+            run_configure_picoclaw()
+            self.send_json(openclaw_whatsapp_state())
+            return True
 
         if path == "/api/agent/channels/whatsapp":
             if self.command == "GET":

@@ -70,7 +70,6 @@
 
           <!-- step 1 — put it on the home screen -->
           <div class="welcome-step" id="welcome-step0">
-            <p class="eyebrow">hello</p>
             <h1 id="welcome-title">let’s make this yours.</h1>
             <p class="lede">First, keep me somewhere easy to reach. There’s no app to install — this page becomes the app.</p>
 
@@ -86,7 +85,6 @@
 
           <!-- step 2 — how it should look -->
           <div class="welcome-step" id="welcome-step1" hidden>
-            <p class="eyebrow">look</p>
             <h1>pick how I should look.</h1>
             <p class="lede">Pick a look to start with — tap one to try it. Later on you and I can shape this into something properly yours: your own colours, your own layout, whatever you actually use it for.</p>
 
@@ -115,7 +113,6 @@
 
           <!-- step 3 — names -->
           <div class="welcome-step" id="welcome-step2" hidden>
-            <p class="eyebrow">names</p>
             <h1>say hi to each other.</h1>
             <p class="lede">Two things and we can start talking. Everything else can wait — it’s all in Settings later.</p>
 
@@ -134,7 +131,6 @@
 
       <section class="view welcome-view" id="view-login" aria-labelledby="login-title">
         <div class="welcome-inner">
-          <p class="eyebrow">locked</p>
           <h1 id="login-title">this one needs a password.</h1>
           <p class="lede">You are opening sudo over its public link, so it asks before letting anyone in. The password is shown in Settings when you open the dashboard at home.</p>
 
@@ -205,7 +201,6 @@
       <section class="view" id="view-apps" aria-labelledby="apps-title">
         <div class="view-heading">
           <div>
-            <p class="eyebrow">your little tools</p>
             <h1 id="apps-title">Apps</h1>
             <p class="lede">Focused spaces sudo can help you run.</p>
           </div>
@@ -233,7 +228,6 @@
       <section class="view" id="view-channels" aria-labelledby="channels-title">
         <div class="view-heading">
           <div>
-            <p class="eyebrow">where you talk to sudo</p>
             <h1 id="channels-title">Channels</h1>
             <p class="lede">Choose where you want to talk with sudo.</p>
           </div>
@@ -261,6 +255,14 @@
                 </div>
               </div>
 
+              <div class="channel-tip">
+                <strong>Want to give your agent its own phone number?</strong>
+                We use Tello, a third-party phone carrier —
+                <a href="https://www.amazon.com/dp/B08H5SM9M9" target="_blank" rel="noopener noreferrer">get a Tello SIM</a>.
+                With a second number you can make a separate WhatsApp account for your agent, so it messages
+                you from its own contact instead of inside your own chat.
+              </div>
+
               <div class="whatsapp-panel" id="whatsapp-panel" hidden>
                 <div class="whatsapp-panel-body" id="whatsapp-panel-body"></div>
                 <button class="whatsapp-panel-close" type="button" id="whatsapp-panel-close">Close</button>
@@ -275,7 +277,6 @@
       <section class="view" id="view-connectors" aria-labelledby="connectors-title">
         <div class="view-heading">
           <div>
-            <p class="eyebrow">plug in your other apps</p>
             <h1 id="connectors-title">Connectors</h1>
             <p class="lede">Let sudo use your other apps — sending email, adding calendar events, filing issues — instead of only talking about them.</p>
           </div>
@@ -333,7 +334,6 @@
       <section class="view" id="view-settings" aria-labelledby="settings-title">
         <div class="view-heading">
           <div>
-            <p class="eyebrow">make this box yours</p>
             <h1 id="settings-title">Settings</h1>
           </div>
         </div>
@@ -1973,6 +1973,20 @@
       $('whatsapp-panel').hidden = false;
       $('whatsapp-panel-body').innerHTML = '<p>Starting…</p>';
       try {
+        const oc = await api('/api/agent/whatsapp', {}, 20000);
+        if (oc.backend === 'openclaw') {
+          state.waQr = {};
+          if (!oc.installed && oc.install.state !== 'installing') {
+            renderOcWhatsapp(await api('/api/agent/whatsapp/setup', { method: 'POST' }, 30000));
+          } else {
+            renderOcWhatsapp(oc);
+          }
+          return;
+        }
+      } catch (_) {
+        // Older device without the OpenClaw endpoints: fall through to the bridge.
+      }
+      try {
         const info = await api('/api/agent/channels/whatsapp', { method: 'POST' }, 20000);
         renderWhatsappPanel(info);
       } catch (error) {
@@ -1994,6 +2008,196 @@
         $('whatsapp-panel').hidden = true;
       } catch (error) {
         $('whatsapp-panel-body').innerHTML = `<p class="whatsapp-error">${error.message}</p>`;
+      }
+    }
+
+    // --- WhatsApp through OpenClaw: the owner's own account, the agent's own
+    // number, or both. Each has its own QR. The owner's account only ever
+    // talks in the "Message yourself" chat; the agent's number only answers
+    // the owner.
+    const WA_ACCOUNTS = {
+      owner: { title: 'Your WhatsApp', scanWith: 'your own phone',
+               how: 'Talk to your agent in your “Message yourself” chat. It never messages your contacts.' },
+      agent: { title: 'Agent’s own number', scanWith: 'the phone with your agent’s SIM',
+               how: 'Your agent gets its own contact and messages you from it. It only answers you.' },
+    };
+
+    function waAccountsFor(mode) {
+      return mode === 'both' ? ['owner', 'agent'] : [mode];
+    }
+
+    function renderOcWhatsapp(info) {
+      stopWhatsappPoll();
+      state.waInfo = info;
+      state.waQr = state.waQr || {};
+      const body = $('whatsapp-panel-body');
+      $('whatsapp-panel').hidden = false;
+      body.replaceChildren();
+
+      if (!info.installed) {
+        const p = document.createElement('p');
+        if (info.install.state === 'error') {
+          p.className = 'whatsapp-error';
+          p.textContent = info.install.message || 'Setup stopped. Tap Set up to try again.';
+          body.append(p);
+          return;
+        }
+        p.textContent = info.install.message || 'Setting up WhatsApp…';
+        body.append(p);
+        whatsappPollTimer = setTimeout(pollOcWhatsapp, 3000);
+        return;
+      }
+
+      const label = document.createElement('label');
+      label.htmlFor = 'wa-mode';
+      label.textContent = 'Where your agent lives on WhatsApp';
+      const select = document.createElement('select');
+      select.id = 'wa-mode';
+      [['owner', 'Your WhatsApp — chat in “Message yourself”'],
+       ['agent', 'Its own number — a separate contact'],
+       ['both', 'Both']].forEach(([value, text]) => {
+        const option = document.createElement('option');
+        option.value = value; option.textContent = text;
+        select.append(option);
+      });
+      select.value = info.mode;
+      select.addEventListener('change', () => saveWaMode({ mode: select.value }));
+      body.append(label, select);
+
+      const accounts = waAccountsFor(info.mode);
+      if (accounts.includes('agent') && !info.owner_number) {
+        const numLabel = document.createElement('label');
+        numLabel.htmlFor = 'wa-owner-number';
+        numLabel.textContent = 'Your WhatsApp number';
+        const row = document.createElement('div');
+        row.className = 'wa-number-row';
+        const input = document.createElement('input');
+        input.id = 'wa-owner-number'; input.type = 'tel'; input.placeholder = '+15551234567';
+        const save = document.createElement('button');
+        save.type = 'button'; save.className = 'primary-button'; save.textContent = 'Save';
+        save.addEventListener('click', () => saveWaMode({ owner_number: input.value.trim() }));
+        row.append(input, save);
+        const hint = document.createElement('p');
+        hint.className = 'microcopy';
+        hint.textContent = 'So your agent knows it’s you. With country code. Linking your own WhatsApp below fills this in for you.';
+        body.append(numLabel, row, hint);
+      }
+
+      accounts.forEach(id => body.append(renderWaAccount(id, info.accounts[id] || {})));
+
+      const status = document.createElement('p');
+      status.className = 'form-status'; status.id = 'wa-status';
+      if (info.error) status.textContent = info.error;
+      body.append(status);
+
+      const anyLinked = Object.values(info.accounts || {}).some(a => a.linked);
+      $('whatsapp-summary').textContent = anyLinked ? 'connected' : 'not connected';
+      // Keep watching while a code is on screen or the gateway is still waking.
+      if (Object.keys(state.waQr || {}).length || info.error) {
+        whatsappPollTimer = setTimeout(pollOcWhatsapp, 3000);
+      }
+    }
+
+    function renderWaAccount(id, account) {
+      const meta = WA_ACCOUNTS[id];
+      const box = document.createElement('div');
+      box.className = 'wa-account';
+      const head = document.createElement('div');
+      head.className = 'wa-account-head';
+      const title = document.createElement('strong');
+      title.textContent = meta.title;
+      const badge = document.createElement('small');
+      badge.textContent = account.linked
+        ? 'Linked' + (account.number ? ` as ${account.number}` : '')
+        : 'Not linked';
+      head.append(title, badge);
+      const how = document.createElement('p');
+      how.className = 'microcopy';
+      how.textContent = meta.how;
+      box.append(head, how);
+
+      if (account.linked) {
+        delete state.waQr[id];
+        const unlink = document.createElement('button');
+        unlink.type = 'button'; unlink.className = 'whatsapp-unlink'; unlink.textContent = 'Unlink';
+        unlink.addEventListener('click', () => unlinkOcWhatsapp(id));
+        box.append(unlink);
+        return box;
+      }
+
+      const qr = state.waQr && state.waQr[id];
+      if (qr && qr.src) {
+        const p = document.createElement('p');
+        p.innerHTML = `Scan with <strong>${meta.scanWith}</strong>: WhatsApp → Settings → Linked Devices → Link a Device.`;
+        const img = document.createElement('img');
+        img.className = 'whatsapp-qr'; img.alt = `${meta.title} pairing code`; img.src = qr.src;
+        box.append(p, img);
+      } else {
+        const show = document.createElement('button');
+        show.type = 'button'; show.className = 'primary-button'; show.textContent = 'Show QR code';
+        show.addEventListener('click', () => loadWaQr(id));
+        box.append(show);
+      }
+      return box;
+    }
+
+    async function loadWaQr(id) {
+      state.waQr = state.waQr || {};
+      state.waQr[id] = { loading: true };
+      const status = $('wa-status');
+      if (status) status.textContent = 'Getting a code…';
+      try {
+        const data = await api('/api/agent/whatsapp/qr', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ account: id }),
+        }, 60000);
+        // WhatsApp codes go stale in well under a minute; fetch a fresh one.
+        state.waQr[id] = { src: data.qr, at: Date.now() };
+        renderOcWhatsapp(state.waInfo);
+      } catch (error) {
+        delete state.waQr[id];
+        if ($('wa-status')) $('wa-status').textContent = error.message;
+      }
+    }
+
+    async function pollOcWhatsapp() {
+      try {
+        const info = await api('/api/agent/whatsapp', {}, 20000);
+        for (const [id, qr] of Object.entries(state.waQr || {})) {
+          if (qr.src && Date.now() - qr.at > 25000 && !(info.accounts[id] || {}).linked) {
+            loadWaQr(id);
+            return;
+          }
+        }
+        renderOcWhatsapp(info);
+      } catch (_) {
+        whatsappPollTimer = setTimeout(pollOcWhatsapp, 4000);
+      }
+    }
+
+    async function saveWaMode(change) {
+      const status = $('wa-status');
+      if (status) status.textContent = 'Saving…';
+      try {
+        renderOcWhatsapp(await api('/api/agent/whatsapp/mode', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(change),
+        }, 30000));
+      } catch (error) {
+        if ($('wa-status')) $('wa-status').textContent = error.message;
+      }
+    }
+
+    async function unlinkOcWhatsapp(id) {
+      const status = $('wa-status');
+      if (status) status.textContent = 'Unlinking…';
+      try {
+        renderOcWhatsapp(await api('/api/agent/whatsapp/unlink', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ account: id }),
+        }, 30000));
+      } catch (error) {
+        if ($('wa-status')) $('wa-status').textContent = error.message;
       }
     }
 

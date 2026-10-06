@@ -216,15 +216,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   max-width: 720px; margin: 0 auto 24px;
 }
 .view-heading h1 {
-  margin: 2px 0 0; font-size: clamp(2rem, 8vw, 3rem); line-height: 1.03;
+  margin: 2px 0 0; font-size: clamp(1.6rem, 6vw, 2.1rem); line-height: 1.08;
   letter-spacing: -.055em; font-weight: 750;
 }
-.eyebrow {
-  margin: 0; color: var(--muted); font: 650 .72rem/1.2 var(--font-mono);
-  text-transform: lowercase; letter-spacing: .04em;
-}
-/* Terminal prompt in front of each eyebrow — the brand's own tic. */
-.eyebrow::before { content: "$ "; color: var(--primary); font-weight: 700; }
 
 /* Settings section dividers ("your agent" / "device" / "account") */
 .settings-group {
@@ -497,6 +491,26 @@ body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
   border-radius: 10px; background: var(--surface); color: var(--error);
   font-size: .72rem; font-weight: 700; cursor: pointer;
 }
+.channel-tip {
+  margin-top: 12px; padding: 12px 14px; border-radius: 12px;
+  background: var(--surface-soft); color: var(--muted); font-size: .78rem; line-height: 1.5;
+}
+.channel-tip strong { display: block; margin-bottom: 2px; color: var(--ink); }
+.channel-tip a { color: var(--primary); font-weight: 650; }
+.whatsapp-panel-body { text-align: left; }
+.wa-account {
+  margin-top: 12px; padding: 12px 14px; border: 1px solid var(--line);
+  border-radius: 12px; background: var(--surface); text-align: center;
+}
+.wa-account-head {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 10px;
+  margin-bottom: 4px; text-align: left;
+}
+.wa-account-head small { color: var(--muted); font-size: .72rem; }
+.wa-account .microcopy { text-align: left; }
+.wa-number-row { display: flex; gap: 8px; align-items: stretch; margin-top: 7px; }
+.setting-body .wa-number-row input { flex: 1; min-width: 0; margin-top: 0; }
+.wa-number-row .primary-button { width: auto; flex: none; min-height: 49px; margin-top: 0; padding: 0 18px; }
 .primary-button {
   width: 100%; min-height: 50px; margin-top: 18px; border: 0; border-radius: var(--radius);
   background: var(--accent); color: var(--ink); font-weight: 800; cursor: pointer;
@@ -586,7 +600,7 @@ body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
 
 @media (max-width: 390px) {
   .view { padding-inline: 13px; }
-  .view-heading h1 { font-size: 1.9rem; }
+  .view-heading h1 { font-size: 1.6rem; }
   .option-grid { grid-template-columns: 1fr; }
   .setting-head { grid-template-columns: 40px minmax(0, 1fr) 20px; gap: 9px; padding-inline: 11px; }
   .setting-icon { width: 40px; height: 40px; }

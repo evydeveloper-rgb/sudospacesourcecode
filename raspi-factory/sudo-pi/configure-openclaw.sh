@@ -133,6 +133,64 @@ if composio_key:
 else:
     print("Connectors (Composio): no key")
 
+# WhatsApp, once the owner has added it (install-openclaw-whatsapp.sh). Two
+# possible accounts, chosen in Channels:
+#   owner -- linked to the owner's own WhatsApp. The agent lives in their
+#            "Message yourself" chat and never answers anyone else.
+#   agent -- the agent's own number (a second SIM). It answers only the owner.
+# admin-http-rpc is what lets the dashboard fetch QR codes from the gateway;
+# it is only reachable on loopback with the gateway token.
+import glob
+whatsapp_installed = bool(glob.glob("/opt/sudo/openclaw/npm/projects/openclaw-whatsapp-*"))
+if whatsapp_installed:
+    plugins = cfg.setdefault("plugins", {})
+    for pid in ("whatsapp", "admin-http-rpc"):
+        if pid not in plugins.setdefault("allow", []):
+            plugins["allow"].append(pid)
+        plugins.setdefault("entries", {})[pid] = {"enabled": True}
+    mode = sudo.get("whatsapp_mode") or "agent"
+    numbers = sudo.get("whatsapp_numbers") or {}
+    owner_number = (sudo.get("whatsapp_owner_number") or numbers.get("owner") or "").strip()
+    allow = [owner_number] if owner_number else []
+    accounts = {}
+    if mode in ("owner", "both"):
+        accounts["owner"] = {"selfChatMode": True, "dmPolicy": "allowlist", "allowFrom": allow}
+    if mode in ("agent", "both"):
+        accounts["agent"] = {"dmPolicy": "allowlist", "allowFrom": allow}
+    cfg.setdefault("channels", {})["whatsapp"] = {
+        "enabled": True,
+        "dmPolicy": "allowlist",
+        "allowFrom": allow,
+        "groupPolicy": "disabled",
+        "accounts": accounts,
+    }
+    print(f"WhatsApp: mode {mode}, owner number {'known' if owner_number else 'not known yet'}")
+
+    # Tell the agent who is who. TOOLS.md is one of the files OpenClaw puts in
+    # front of the model on every turn, and Sudo has no other use for it.
+    # Without this a message arriving through the owner's account and one
+    # through the agent's own number look the same to it.
+    user = sudo.get("user_name") or "your owner"
+    agent_number = numbers.get("agent") or "not linked yet"
+    lines = ["# TOOLS", "", "## WhatsApp — who is who", ""]
+    if "owner" in accounts:
+        linked = "linked" if numbers.get("owner") else "set up, not linked yet"
+        lines.append(f"- **{user}'s own WhatsApp** (account `owner`, {linked}). "
+                     f"You only ever speak in {user}'s \"Message yourself\" chat there — anything "
+                     f"in that chat is {user} talking to you. Never message {user}'s contacts "
+                     "from this account.")
+    if "agent" in accounts:
+        lines.append(f"- **Your own WhatsApp number** (account `agent`) is {agent_number}. "
+                     f"Messages there come from {user}; you reply as yourself, from your own number.")
+    lines.append(f"- {user}'s number: {owner_number or 'not known yet'}.")
+    open("/opt/sudo/agent-workspace/TOOLS.md", "w", encoding="utf-8").write("\n".join(lines) + "\n")
+else:
+    print("WhatsApp (OpenClaw): not added")
+    try:
+        os.remove("/opt/sudo/agent-workspace/TOOLS.md")
+    except FileNotFoundError:
+        pass
+
 tools["deny"] = sorted(deny)
 
 out = "/opt/sudo/openclaw/openclaw.json"
