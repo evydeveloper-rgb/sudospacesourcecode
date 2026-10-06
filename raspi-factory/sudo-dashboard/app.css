@@ -698,6 +698,7 @@ body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
 }
 .connector-note { margin: 10px 1px 0; color: var(--muted); font-size: .74rem; line-height: 1.45; }
 .connector-note a { color: var(--primary); font-weight: 650; }
+.info-bubble a { color: var(--primary); font-weight: 650; }
 .composio-link { display: inline-block; margin-top: 4px; color: var(--primary); font-size: .82rem; font-weight: 700; }
 
 .info-bubble {
