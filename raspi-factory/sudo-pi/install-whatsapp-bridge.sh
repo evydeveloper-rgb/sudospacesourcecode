@@ -71,8 +71,36 @@ set_status installing "Downloading the WhatsApp connector…"
 
 # ── Hand off to systemd, which owns it from here ────────────────────────────
 set_status installing "Starting…"
-systemctl enable --now sudo-whatsapp-bridge.service \
+
+# The unit sandboxes the bridge with ReadWritePaths, and systemd refuses to
+# start a unit at all when one of those paths is missing (status=226/
+# NAMESPACE) -- a reset or an unlink deletes them, and the bridge is what
+# would recreate them, so it looped on "Starting…" forever. Make the paths
+# optional here, which also fixes devices whose unit predates the fix (an
+# OTA update does not rewrite unit files).
+mkdir -p /opt/sudo/whatsapp /opt/sudo/whatsapp-auth
+DROPIN=/etc/systemd/system/sudo-whatsapp-bridge.service.d
+mkdir -p "$DROPIN"
+printf '[Service]\nReadWritePaths=\nReadWritePaths=-/opt/sudo/whatsapp-auth -/opt/sudo/whatsapp /var/lib /var/log\n' \
+  > "$DROPIN/10-optional-paths.conf"
+systemctl daemon-reload
+systemctl reset-failed sudo-whatsapp-bridge.service 2>/dev/null || true
+
+restarts_before=$(systemctl show -p NRestarts --value sudo-whatsapp-bridge.service 2>/dev/null || echo 0)
+systemctl enable sudo-whatsapp-bridge.service \
+  && systemctl restart sudo-whatsapp-bridge.service \
   || fail "Installed, but the service would not start — see ${LOG}"
+
+# `enable --now` reports success the moment systemd accepts the job, even if
+# the process dies straight away. Watch it for a few seconds so a crash shows
+# up as an error on screen instead of a "Starting…" that never ends.
+sleep 12
+restarts_after=$(systemctl show -p NRestarts --value sudo-whatsapp-bridge.service 2>/dev/null || echo 0)
+if ! systemctl is-active --quiet sudo-whatsapp-bridge.service \
+   || [ "${restarts_after:-0}" -gt "${restarts_before:-0}" ]; then
+  journalctl -u sudo-whatsapp-bridge.service -n 20 --no-pager >> "$LOG" 2>&1 || true
+  fail "The WhatsApp connector keeps stopping — see ${LOG}"
+fi
 
 # No "done" here: the bridge process itself takes over status updates the
 # moment it starts (qr, connected, error, …), and it would be lying to freeze

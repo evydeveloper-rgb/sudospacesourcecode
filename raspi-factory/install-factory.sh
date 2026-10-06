@@ -26,7 +26,7 @@ cp "${BOOT}/sudo-dashboard/sudo-wordmark.svg" /opt/sudo-dashboard/
 
 # ── WhatsApp bridge (source only -- npm install happens on demand, once
 # there is internet to fetch it with; see sudo-pi/install-whatsapp-bridge.sh)
-mkdir -p /opt/whatsapp-bridge /opt/sudo/whatsapp-auth
+mkdir -p /opt/whatsapp-bridge /opt/sudo/whatsapp-auth /opt/sudo/whatsapp
 cp "${BOOT}/whatsapp-bridge/package.json" /opt/whatsapp-bridge/
 cp "${BOOT}/whatsapp-bridge/bridge.js" /opt/whatsapp-bridge/
 
@@ -227,7 +227,7 @@ NoNewPrivileges=true
 ProtectSystem=full
 ProtectHome=true
 PrivateTmp=true
-ReadWritePaths=/opt/sudo/whatsapp-auth /opt/sudo/whatsapp /var/lib /var/log
+ReadWritePaths=-/opt/sudo/whatsapp-auth -/opt/sudo/whatsapp /var/lib /var/log
 StandardOutput=journal
 StandardError=journal
 
