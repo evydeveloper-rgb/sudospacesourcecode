@@ -168,16 +168,6 @@
             <button id="cloud-nudge-dismiss" type="button" aria-label="Dismiss">×</button>
           </div>
         </div>
-        <div class="setup-more" id="setup-more" hidden>
-          <div>
-            <strong>Want to go further?</strong>
-            <small>Pick a personality, change the model, or let sudo do more — now that you’ve met.</small>
-          </div>
-          <div class="setup-more-actions">
-            <button id="setup-more-go" type="button">Open settings</button>
-            <button id="setup-more-dismiss" type="button" aria-label="Dismiss">×</button>
-          </div>
-        </div>
         <div class="message-thread" id="messages" role="log" aria-live="polite" aria-relevant="additions"></div>
         <div class="thinking" id="thinking" hidden>
           <span></span><span></span><span></span><em>thinking</em>
@@ -1423,8 +1413,6 @@
         ensureGreeting(true);
         renderStatus(data);
         setTab('chat');
-        try { localStorage.setItem('sudo-offer-more', 'pending'); } catch (_) {}
-        maybeOfferMore();
       } catch (error) {
         status.textContent = error.message;
         button.disabled = false;
@@ -1524,18 +1512,6 @@
       } catch (_) {
         // Keep the written greeting. A greeting is not worth an error message.
       }
-    }
-
-    function maybeOfferMore() {
-      let flag = null;
-      try { flag = localStorage.getItem('sudo-offer-more'); } catch (_) {}
-      if (flag !== 'pending') return;
-      $('setup-more').hidden = false;
-    }
-
-    function dismissOfferMore() {
-      $('setup-more').hidden = true;
-      try { localStorage.setItem('sudo-offer-more', 'done'); } catch (_) {}
     }
 
     function selectKeySource(value) {
@@ -3350,7 +3326,7 @@
       loadAgentFiles();
       loadRemotePassword();
       initInstallHint();
-      if (status.profile_done) maybeOfferMore();
+      try { localStorage.removeItem('sudo-offer-more'); } catch (_) {}
 
       applyBillingVisibility();
 
@@ -3435,7 +3411,6 @@
     $('welcome-agent').addEventListener('keydown', event => {
       if (event.key === 'Enter') finishWelcome();
     });
-    $('setup-more-go').addEventListener('click', () => { dismissOfferMore(); setTab('settings'); });
     $('cloud-nudge-go').addEventListener('click', () => {
       window.open('https://openrouter.ai/?utm_source=sudo', '_blank', 'noopener');
     });
@@ -3453,7 +3428,6 @@
     $('reset-word').addEventListener('keydown', event => {
       if (event.key === 'Enter') runReset();
     });
-    $('setup-more-dismiss').addEventListener('click', dismissOfferMore);
     document.querySelectorAll('#theme-options button').forEach(b =>
       b.addEventListener('click', () => chooseTheme(b.dataset.value)));
     document.querySelectorAll('#routing-options button').forEach(b =>

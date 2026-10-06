@@ -793,7 +793,6 @@ body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
 }
 .welcome-inner .primary-button { margin-top: 22px; }
 
-/* Offer to go deeper — only after they've met the agent */
 /* Shown above the composer while nothing can actually answer yet -- the
    on-device model still installing, most commonly. Without this the only
    feedback was the chat title's permanently-optimistic "is ready.", so a
@@ -822,27 +821,8 @@ body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
   transition: width .4s var(--ease-out);
 }
 
-.setup-more {
-  width: min(100%, 720px); margin: 0 auto 14px; padding: 11px 12px;
-  display: flex; align-items: center; justify-content: space-between; gap: 10px;
-  border: 1px solid var(--line); border-left: 3px solid var(--violet);
-  border-radius: var(--radius); background: var(--color-bg-raised);
-}
-.setup-more strong { display: block; font-size: .8rem; }
-.setup-more small { display: block; margin-top: 3px; color: var(--muted); font-size: .69rem; line-height: 1.4; }
-.setup-more-actions { display: flex; align-items: center; gap: 4px; flex: none; }
-.setup-more-actions button:first-child {
-  padding: 8px 11px; border: 1px solid var(--line); border-radius: 10px;
-  background: var(--surface-soft); font-size: .72rem; font-weight: 700; cursor: pointer;
-}
-.setup-more-actions button:last-child {
-  width: 30px; height: 30px; border: 0; border-radius: 50%;
-  background: transparent; color: var(--muted); font-size: 1.15rem; cursor: pointer;
-}
-
 /* Chat: the nudge to connect a cloud model while the small one is answering.
-   Violet left rail, same family as .setup-more so it reads as a suggestion
-   rather than an error. */
+   Violet left rail so it reads as a suggestion rather than an error. */
 .cloud-nudge {
   width: min(100%, 720px); margin: 0 auto 10px; padding: 10px 12px;
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
@@ -911,7 +891,7 @@ body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
 .primary-button:active { transform: scale(.985); }
 
 /* Cards lift the way the Stitch surfaces do */
-.setting-card, .mini-app, .how-box, .install-hint, .setup-more, .agent-file {
+.setting-card, .mini-app, .how-box, .install-hint, .agent-file {
   box-shadow: var(--shadow-glass);
 }
 .setting-card { border-color: var(--line); background: var(--surface); }
