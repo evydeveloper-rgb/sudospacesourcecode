@@ -1194,6 +1194,11 @@ def openclaw_chat(message: str, session_key: str = DASHBOARD_SESSION) -> str:
     spend_guard("record")
     choices = data.get("choices") or [{}]
     reply = ((choices[0].get("message") or {}).get("content") or "").strip()
+    # OpenClaw appends "⚠️ 🛠️ <step> failed" when one of the agent's own
+    # behind-the-scenes steps fails, even with a good answer above it. Its only
+    # off switch is wired to heartbeats, so drop those lines here.
+    kept = [line for line in reply.splitlines() if not line.lstrip().startswith("⚠️ 🛠️")]
+    reply = "\n".join(kept).strip()
     return reply or "(empty response)"
 
 
