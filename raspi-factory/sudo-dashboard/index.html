@@ -17,6 +17,11 @@
       <div class="rail-section">
         <p class="rail-label">menu</p>
         <nav class="rail-nav">
+          <button type="button" data-tab="setup" class="setup-nav" hidden>
+            <span class="rail-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V4M4 4h11l-2 4 2 4H4"/></svg></span>
+            <span>Finish setup</span>
+            <em class="setup-badge" aria-hidden="true"></em>
+          </button>
           <button type="button" data-tab="chat" class="active">
             <span class="rail-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg></span>
             <span>Chat</span>
@@ -168,16 +173,6 @@
             <button id="cloud-nudge-dismiss" type="button" aria-label="Dismiss">×</button>
           </div>
         </div>
-        <div class="setup-more" id="setup-more" hidden>
-          <div>
-            <strong>Want to go further?</strong>
-            <small>Pick a personality, change the model, or let sudo do more — now that you’ve met.</small>
-          </div>
-          <div class="setup-more-actions">
-            <button id="setup-more-go" type="button">Open settings</button>
-            <button id="setup-more-dismiss" type="button" aria-label="Dismiss">×</button>
-          </div>
-        </div>
         <div class="message-thread" id="messages" role="log" aria-live="polite" aria-relevant="additions"></div>
         <div class="thinking" id="thinking" hidden>
           <span></span><span></span><span></span><em>thinking</em>
@@ -196,6 +191,377 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
           </button>
         </form>
+      </section>
+
+      <section class="view" id="view-setup" aria-labelledby="setup-title">
+        <div class="view-heading">
+          <div>
+            <h1 id="setup-title">Finish setup</h1>
+            <p class="lede">Three steps turn sudo from a friendly chat into a real helper. Do them in any order. This tab tucks itself away once all three are done.</p>
+          </div>
+        </div>
+
+        <!-- Shared arrowhead. Kept outside the collapsible steps: a marker
+             defined inside a display:none subtree does not render elsewhere. -->
+        <svg class="svg-defs" width="0" height="0" aria-hidden="true" focusable="false">
+          <defs>
+            <marker id="dg-arrowhead" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="dg-head" d="M0 0L10 5L0 10z"/></marker>
+          </defs>
+        </svg>
+
+        <div class="setup-guide">
+          <div class="setup-progress">
+            <div class="setup-ring-wrap" aria-hidden="true">
+              <svg class="setup-ring" viewBox="0 0 44 44">
+                <circle class="ring-track" cx="22" cy="22" r="18"/>
+                <circle class="ring-fill" id="setup-ring-fill" cx="22" cy="22" r="18" pathLength="100" stroke-dasharray="0 100"/>
+              </svg>
+              <span id="setup-ring-num">0/3</span>
+            </div>
+            <div class="setup-progress-copy">
+              <strong id="setup-count" role="status">0 of 3 done</strong>
+              <small id="setup-next">Next: connect a cloud model</small>
+            </div>
+            <ol class="setup-track">
+              <li><button type="button" data-open-step="cloud"><i aria-hidden="true">1</i><span>Cloud model</span></button></li>
+              <li><button type="button" data-open-step="whatsapp"><i aria-hidden="true">2</i><span>WhatsApp</span></button></li>
+              <li><button type="button" data-open-step="apps"><i aria-hidden="true">3</i><span>Your apps</span></button></li>
+            </ol>
+          </div>
+
+          <div class="setup-alldone" id="setup-alldone" hidden>
+            <svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="22"/><path d="M14 25l7 7 13-15"/></svg>
+            <h2>All set.</h2>
+            <p>Your agent has a cloud brain, WhatsApp and your apps. This tab will tuck itself away now. Everything here lives on in Settings, Channels and Connectors.</p>
+            <button class="primary-button" type="button" data-go="chat">Go to chat</button>
+          </div>
+
+          <!-- Step 1 -->
+          <article class="milestone" id="step-cloud">
+            <h2 class="milestone-title">
+              <button type="button" class="milestone-head" aria-expanded="false" aria-controls="step-cloud-body">
+                <span class="milestone-num" aria-hidden="true">1</span>
+                <span class="milestone-copy"><strong>Connect a cloud model</strong><small>Give your agent a proper brain · about 5 minutes</small></span>
+                <span class="milestone-pill">To do</span>
+                <span class="chevron" aria-hidden="true">›</span>
+              </button>
+            </h2>
+            <div class="milestone-body" id="step-cloud-body" hidden>
+              <p class="milestone-done-note" hidden>Done. Your agent is answering with a cloud model. The rest is here whenever you want to read it again.</p>
+
+              <h3>What’s on your Sudo today</h3>
+              <p>Your Sudo already has a brain of its own: <strong>Gemma 3 270M</strong>, a small model that runs entirely on the device. “270M” means 270 million <em>parameters</em>, the numbers a model learns with. More parameters usually means a more capable model.</p>
+
+              <figure class="size-chart">
+                <div class="size-row">
+                  <span class="size-label">On your Sudo · Gemma 3 270M</span>
+                  <span class="size-value">270 million</span>
+                  <span class="size-track" aria-hidden="true"><span class="size-bar local" style="--w: 8.6%"></span></span>
+                </div>
+                <div class="size-row">
+                  <span class="size-label">Most a Pi 5 (4GB) can run*</span>
+                  <span class="size-value">≈ 4 billion</span>
+                  <span class="size-track" aria-hidden="true"><span class="size-bar pi" style="--w: 32%"></span></span>
+                </div>
+                <div class="size-row wide">
+                  <span class="size-label">Frontier cloud models (ChatGPT, Claude…)</span>
+                  <span class="size-value">Not published · estimated hundreds of billions to trillions</span>
+                  <span class="size-track" aria-hidden="true"><span class="size-bar frontier" style="--w: 92%"></span><span class="size-range"></span></span>
+                </div>
+                <div class="size-axis" aria-hidden="true">
+                  <span style="--x: 0%">100M</span><span style="--x: 20%">1B</span><span style="--x: 40%">10B</span><span style="--x: 60%">100B</span><span style="--x: 80%">1T</span><span style="--x: 100%">10T</span>
+                </div>
+                <figcaption class="microcopy">Parameters, on a log scale: each gridline is 10× the one before. OpenAI does not publish how big ChatGPT’s frontier model is, so that bar is an outside estimate, shown fading out. *A rule of thumb, not a hard limit.</figcaption>
+              </figure>
+
+              <details class="guide-details">
+                <summary>Why about 4 billion on a Pi?</summary>
+                <div>
+                  <p>The Pi 5 in your Sudo has 4GB of memory, shared with everything else it runs. As a rule of thumb that fits a model of roughly 4 billion parameters at most, and only heavily compressed (“quantized”), so each parameter takes about half a byte instead of two. Anything bigger simply doesn’t fit, and even that size answers slowly.</p>
+                </div>
+              </details>
+
+              <div class="setup-callout">
+                <strong>Our advice</strong>
+                The on-device model is fine for a chat. For everyday work like email, research and planning, we recommend a cloud model.
+              </div>
+
+              <h3>What your agent is made of</h3>
+              <figure class="guide-figure">
+                <svg class="anatomy" viewBox="0 0 340 262" role="img" aria-labelledby="anatomy-title anatomy-desc">
+                  <title id="anatomy-title">What an agent is made of</title>
+                  <desc id="anatomy-desc">Memory, context and tools stay with you. The LLM plugs in underneath and can be swapped for ChatGPT, Claude, DeepSeek or any other model.</desc>
+                  <rect class="dg-shell" x="8" y="8" width="324" height="160" rx="18"/>
+                  <text class="dg-cap" x="24" y="31">YOURS TO KEEP · GROWS EVERY DAY</text>
+                  <g class="dg-keep">
+                    <rect x="24" y="42" width="92" height="54" rx="12"/>
+                    <rect x="124" y="42" width="92" height="54" rx="12"/>
+                    <rect x="224" y="42" width="92" height="54" rx="12"/>
+                    <text class="dg-t" x="70" y="66">Memory</text><text class="dg-s" x="70" y="84">what it knows</text>
+                    <text class="dg-t" x="170" y="66">Context</text><text class="dg-s" x="170" y="84">your life, files</text>
+                    <text class="dg-t" x="270" y="66">Tools</text><text class="dg-s" x="270" y="84">apps, the web</text>
+                  </g>
+                  <rect class="dg-socket" x="64" y="108" width="212" height="50" rx="13"/>
+                  <rect class="dg-chip" x="74" y="115" width="192" height="36" rx="9"/>
+                  <text class="dg-t" x="170" y="138">LLM · swappable</text>
+                  <path class="dg-arrow" d="M69 204 C69 186 96 178 108 162"/>
+                  <path class="dg-arrow" d="M271 204 C271 186 244 178 232 162"/>
+                  <text class="dg-s" x="170" y="192">swap any time</text>
+                  <g class="dg-alt">
+                    <rect x="24" y="206" width="90" height="34" rx="17"/>
+                    <rect x="125" y="206" width="90" height="34" rx="17"/>
+                    <rect x="226" y="206" width="90" height="34" rx="17"/>
+                    <text class="dg-t" x="69" y="228">ChatGPT</text>
+                    <text class="dg-t" x="170" y="228">Claude</text>
+                    <text class="dg-t" x="271" y="228">DeepSeek</text>
+                  </g>
+                  <text class="dg-s" x="170" y="256">…or almost any other model</text>
+                </svg>
+              </figure>
+              <p><strong>Memory, context and tools are yours.</strong> They’re what your agent knows about you and can do for you, and they grow every day you use it.</p>
+              <p><strong>The LLM is the swappable part.</strong> AI companies keep leapfrogging each other: one month ChatGPT leads, the next it’s Claude or DeepSeek. With Sudo you’re not locked in. Switch models and keep your memory and context. No starting over.</p>
+
+              <h3>OpenRouter: one key, nearly every model</h3>
+              <figure class="guide-figure">
+                <svg class="flow" viewBox="0 0 340 158" role="img" aria-labelledby="flow-title">
+                  <title id="flow-title">You add credit to OpenRouter; Sudo uses one OpenRouter key; OpenRouter reaches OpenAI, Anthropic, Google, DeepSeek and many more.</title>
+                  <rect class="dg-node" x="6" y="16" width="78" height="40" rx="12"/><text class="dg-t" x="45" y="41">You</text>
+                  <rect class="dg-node" x="6" y="98" width="78" height="40" rx="12"/><text class="dg-t" x="45" y="123">Sudo</text>
+                  <rect class="dg-hub" x="122" y="52" width="100" height="50" rx="13"/><text class="dg-t on-hub" x="172" y="82">OpenRouter</text>
+                  <path class="dg-arrow" d="M84 36 C104 36 106 62 120 66"/>
+                  <path class="dg-arrow" d="M84 118 C104 118 106 92 120 88"/>
+                  <text class="dg-s" x="103" y="25">credit</text>
+                  <text class="dg-s" x="103" y="150">one key</text>
+                  <g class="dg-fan">
+                    <path d="M222 77 L256 19"/><path d="M222 77 L256 49"/><path d="M222 77 L256 79"/><path d="M222 77 L256 109"/><path d="M222 77 L256 139"/>
+                  </g>
+                  <g class="dg-alt">
+                    <rect x="256" y="8" width="80" height="22" rx="11"/><rect x="256" y="38" width="80" height="22" rx="11"/><rect x="256" y="68" width="80" height="22" rx="11"/><rect x="256" y="98" width="80" height="22" rx="11"/><rect x="256" y="128" width="80" height="22" rx="11"/>
+                    <text class="dg-s" x="296" y="23">OpenAI</text><text class="dg-s" x="296" y="53">Anthropic</text><text class="dg-s" x="296" y="83">Google</text><text class="dg-s" x="296" y="113">DeepSeek</text><text class="dg-s" x="296" y="143">+ many more</text>
+                  </g>
+                </svg>
+              </figure>
+              <p>OpenRouter is one account with one universal API key that reaches nearly every AI model. You top up credit there, and it pays the AI companies for you.</p>
+              <ol class="setup-steps">
+                <li>Create an account at <a href="https://openrouter.ai" target="_blank" rel="noopener noreferrer">openrouter.ai</a>.</li>
+                <li>Add credit. You choose how much.</li>
+                <li>Create a key under <a href="https://openrouter.ai/settings/keys" target="_blank" rel="noopener noreferrer">Keys</a> and paste it into Sudo: Settings → API keys. It starts with <code>sk-or-</code>.</li>
+              </ol>
+
+              <div class="fact-grid">
+                <div class="fact">
+                  <strong>Sudo takes no cut</strong>
+                  <p>You pay the AI companies through OpenRouter. Your key stays on this device, and we never see your bill.</p>
+                </div>
+                <div class="fact">
+                  <strong>OpenRouter’s small fee</strong>
+                  <p>OpenRouter adds a fee when you buy credit: 5.5% by card (5% with crypto). Model prices are passed through with no markup. Sudo adds nothing. <a href="https://openrouter.ai/pricing" target="_blank" rel="noopener noreferrer">Their pricing</a></p>
+                </div>
+                <div class="fact">
+                  <strong>See every cent</strong>
+                  <p>Your OpenRouter account shows credit left and a log of every request: which model, how many tokens, what it cost. <a href="https://openrouter.ai/settings/credits" target="_blank" rel="noopener noreferrer">Credits</a> · <a href="https://openrouter.ai/activity" target="_blank" rel="noopener noreferrer">Activity</a></p>
+                </div>
+                <div class="fact">
+                  <strong>A spending guard</strong>
+                  <p>Sudo’s circuit breaker pauses your agent once it hits a daily message limit. You choose the limit.</p>
+                  <button class="soft-button" type="button" data-go="spend">Open Spending guard</button>
+                </div>
+              </div>
+
+              <h3>What it costs</h3>
+              <p>Models charge per token, roughly ¾ of a word, and prices differ hugely:</p>
+              <table class="price-table">
+                <thead>
+                  <tr><th scope="col">Model</th><th scope="col" class="num">In</th><th scope="col" class="num">Out</th></tr>
+                </thead>
+                <tbody>
+                  <tr class="recommended">
+                    <th scope="row"><span class="price-name">DeepSeek V4 Flash <em>recommended</em></span><span class="price-bar" aria-hidden="true"><i style="--w: 1.9%"></i></span></th>
+                    <td class="num">$0.14</td><td class="num">$0.28</td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><span class="price-name">GPT-4o mini</span><span class="price-bar" aria-hidden="true"><i style="--w: 4%"></i></span></th>
+                    <td class="num">$0.15</td><td class="num">$0.60</td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><span class="price-name">MiniMax M3</span><span class="price-bar" aria-hidden="true"><i style="--w: 8%"></i></span></th>
+                    <td class="num">$0.30</td><td class="num">$1.20</td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><span class="price-name">Gemini 2.5 Flash</span><span class="price-bar" aria-hidden="true"><i style="--w: 16.7%"></i></span></th>
+                    <td class="num">$0.30</td><td class="num">$2.50</td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><span class="price-name">Claude Sonnet 4.5</span><span class="price-bar" aria-hidden="true"><i style="--w: 100%"></i></span></th>
+                    <td class="num">$3.00</td><td class="num">$15.00</td>
+                  </tr>
+                </tbody>
+              </table>
+              <p class="microcopy">US dollars per million tokens on openrouter.ai, as of October 2026. Bars show the output price to scale. DeepSeek V4 Flash is served by several providers at different prices; this is the rate most of them charge. Prices change, so check a model’s page for today’s.</p>
+
+              <div class="estimate">
+                <b>$10–15</b>
+                <span>a month is what most people should expect with DeepSeek V4 Flash as the main model, our recommended default. <small>A typical estimate, not a guarantee: heavy use, helpers and pricier models cost more.</small></span>
+              </div>
+
+              <h3>Prefer fully private?</h3>
+              <p>Switch back to the on-device model any time in Settings → Model &amp; routing → <em>Keep it on this device</em>. It’s fully private and free. We’re also working on fine-tuned, compressed local models made for Sudo. Coming soon.</p>
+              <button class="soft-button" type="button" data-go="routing">Open Model &amp; routing</button>
+
+              <div class="milestone-actions">
+                <button class="primary-button" type="button" data-go="providers">Add my OpenRouter key</button>
+                <a class="text-link" href="https://openrouter.ai" target="_blank" rel="noopener noreferrer">Open openrouter.ai →</a>
+              </div>
+              <div class="prompt-try">
+                <span>Then try asking</span>
+                <button class="prompt-chip" type="button" data-prompt="Please switch to the new MiniMax model">“Please switch to the new MiniMax model”</button>
+                <p class="microcopy">Puts it in the chat box. Nothing is sent until you press send.</p>
+              </div>
+            </div>
+          </article>
+
+          <!-- Step 2 -->
+          <article class="milestone" id="step-whatsapp">
+            <h2 class="milestone-title">
+              <button type="button" class="milestone-head" aria-expanded="false" aria-controls="step-whatsapp-body">
+                <span class="milestone-num" aria-hidden="true">2</span>
+                <span class="milestone-copy"><strong>Connect WhatsApp</strong><small>Talk to your agent where you already chat · about 5 minutes</small></span>
+                <span class="milestone-pill">To do</span>
+                <span class="chevron" aria-hidden="true">›</span>
+              </button>
+            </h2>
+            <div class="milestone-body" id="step-whatsapp-body" hidden>
+              <p class="milestone-done-note" hidden>Done. WhatsApp is linked. The options below are still yours to change.</p>
+
+              <h3>Two ways to link it</h3>
+              <div class="wa-options">
+                <div class="wa-option">
+                  <svg viewBox="0 0 180 112" aria-hidden="true">
+                    <rect class="ph-body" x="60" y="4" width="60" height="96" rx="9"/>
+                    <rect class="ph-head" x="61" y="5" width="58" height="16" rx="8"/>
+                    <circle class="ph-you" cx="71" cy="13" r="4"/>
+                    <rect class="bub-you" x="80" y="28" width="34" height="11" rx="5"/>
+                    <rect class="bub-agent" x="66" y="44" width="40" height="16" rx="5"/>
+                    <rect class="bub-you" x="86" y="65" width="28" height="11" rx="5"/>
+                    <rect class="bub-agent" x="66" y="81" width="32" height="11" rx="5"/>
+                    <text x="90" y="110">your phone</text>
+                  </svg>
+                  <h4>Your own WhatsApp</h4>
+                  <ul>
+                    <li>Your agent lives in your “Message yourself” chat.</li>
+                    <li>It never messages your contacts.</li>
+                    <li>Nothing extra to buy.</li>
+                  </ul>
+                </div>
+                <div class="wa-option">
+                  <svg viewBox="0 0 180 112" aria-hidden="true">
+                    <rect class="ph-body" x="14" y="4" width="60" height="96" rx="9"/>
+                    <rect class="ph-head" x="15" y="5" width="58" height="16" rx="8"/>
+                    <circle class="ph-agent" cx="25" cy="13" r="4"/>
+                    <rect class="bub-agent" x="28" y="34" width="40" height="16" rx="5"/>
+                    <rect class="bub-agent" x="36" y="56" width="32" height="11" rx="5"/>
+                    <path class="dg-arrow" d="M78 52 L100 52"/>
+                    <rect class="ph-body" x="106" y="4" width="60" height="96" rx="9"/>
+                    <rect class="ph-head" x="107" y="5" width="58" height="16" rx="8"/>
+                    <circle class="ph-agent" cx="117" cy="13" r="4"/>
+                    <rect class="bub-agent" x="112" y="34" width="40" height="16" rx="5"/>
+                    <rect class="bub-you" x="128" y="56" width="32" height="11" rx="5"/>
+                    <text x="44" y="110">agent’s SIM</text>
+                    <text x="136" y="110">your phone</text>
+                  </svg>
+                  <h4>Its own number</h4>
+                  <ul>
+                    <li>You need a second SIM or phone number that you own.</li>
+                    <li>Make a new WhatsApp account on it for your agent.</li>
+                    <li>Your agent messages you from its own contact.</li>
+                  </ul>
+                </div>
+              </div>
+              <p>You can link both. Then your agent reaches you from its own number.</p>
+              <div class="setup-callout">
+                <strong>Easiest on a computer</strong>
+                You’ll scan a QR code with your phone’s camera, so open this page on a computer first, then go to Channels → WhatsApp.
+              </div>
+
+              <h3>Your privacy choices</h3>
+              <p>Both are off until you switch them on. Change them any time here or in Channels.</p>
+              <div class="wa-prefs guide-prefs">
+                <div class="access-row">
+                  <div>
+                    <strong>Let my agent read my other WhatsApp chats</strong>
+                    <small>Read-only: it can see your chats with other people on your own linked WhatsApp, and never replies to them.</small>
+                  </div>
+                  <label class="switch">
+                    <input id="guide-wa-read-others" type="checkbox" data-wa-pref="read_others">
+                    <span aria-hidden="true"></span>
+                    <em class="sr-only">Let my agent read my other WhatsApp chats</em>
+                  </label>
+                </div>
+                <button class="info-link" type="button" aria-expanded="false" aria-controls="guide-wa-read-info">What this allows ⓘ</button>
+                <div class="info-bubble" id="guide-wa-read-info" data-clone="wa-read-info"></div>
+                <div class="access-row">
+                  <div>
+                    <strong>Include WhatsApp in my daily summary</strong>
+                    <small>Your daily summary and reminders also list who may still need a reply. Needs the switch above on.</small>
+                  </div>
+                  <label class="switch">
+                    <input id="guide-wa-in-summary" type="checkbox" data-wa-pref="in_summary">
+                    <span aria-hidden="true"></span>
+                    <em class="sr-only">Include WhatsApp in my daily summary</em>
+                  </label>
+                </div>
+                <p class="form-status" role="status"></p>
+              </div>
+
+              <div class="milestone-actions">
+                <button class="primary-button" type="button" data-go="whatsapp">Set up WhatsApp in Channels</button>
+              </div>
+              <div class="prompt-try">
+                <span>Then try asking</span>
+                <button class="prompt-chip" type="button" data-prompt="Send me my daily to-do on my WhatsApp">“Send me my daily to-do on my WhatsApp”</button>
+                <p class="microcopy">Puts it in the chat box. Nothing is sent until you press send.</p>
+              </div>
+            </div>
+          </article>
+
+          <!-- Step 3 -->
+          <article class="milestone" id="step-apps">
+            <h2 class="milestone-title">
+              <button type="button" class="milestone-head" aria-expanded="false" aria-controls="step-apps-body">
+                <span class="milestone-num" aria-hidden="true">3</span>
+                <span class="milestone-copy"><strong>Connect your apps</strong><small>Let your agent use Gmail, Calendar, Shopify and more · about 5 minutes</small></span>
+                <span class="milestone-pill">To do</span>
+                <span class="chevron" aria-hidden="true">›</span>
+              </button>
+            </h2>
+            <div class="milestone-body" id="step-apps-body" hidden>
+              <p class="milestone-done-note" hidden>Done. Your Composio key is saved. Ask your agent to connect any app.</p>
+
+              <h3>What Composio is</h3>
+              <p>Composio keeps ready-made connections to 1,600+ apps. You sign in to an app once, and your agent can use it: send the email, add the event, check the order.</p>
+              <div class="connector-grid guide-connectors" id="guide-connectors"></div>
+              <button class="info-link info-link-strong" type="button" aria-expanded="false" aria-controls="guide-composio-info">Why we use it, how logins work, and your privacy ⓘ</button>
+              <div class="info-bubble" id="guide-composio-info" data-clone="composio-info"></div>
+
+              <h3>Get your key in three steps</h3>
+              <ol class="setup-steps">
+                <li>Make a free account at <a href="https://dashboard.composio.dev" target="_blank" rel="noopener noreferrer">dashboard.composio.dev</a>.</li>
+                <li>Go to Connect → Settings → Sessions &amp; API Key and copy your key. It starts with <code>ck_</code>.</li>
+                <li>Paste it in Connectors and press <em>Save key</em>.</li>
+              </ol>
+              <p>Then, to connect an app, just ask your agent. It sends you a sign-in link for that app.</p>
+
+              <div class="milestone-actions">
+                <button class="primary-button" type="button" data-go="connectors">Open Connectors</button>
+              </div>
+              <div class="prompt-try">
+                <span>Then try asking</span>
+                <button class="prompt-chip" type="button" data-prompt="Please help me connect to my Shopify store">“Please help me connect to my Shopify store”</button>
+                <p class="microcopy">Puts it in the chat box. Nothing is sent until you press send.</p>
+              </div>
+            </div>
+          </article>
+        </div>
       </section>
 
       <section class="view" id="view-apps" aria-labelledby="apps-title">
@@ -272,6 +638,40 @@
               <div class="whatsapp-panel" id="whatsapp-panel" hidden>
                 <div class="whatsapp-panel-body" id="whatsapp-panel-body"></div>
                 <button class="whatsapp-panel-close" type="button" id="whatsapp-panel-close">Close</button>
+              </div>
+
+              <div class="wa-prefs" id="wa-prefs">
+                <div class="settings-subgroup">WhatsApp options</div>
+                <div class="access-row">
+                  <div>
+                    <strong>Let my agent read my other WhatsApp chats</strong>
+                    <small>Off by default. Read-only: it can see your chats with other people on your own linked WhatsApp, and never replies to them.</small>
+                  </div>
+                  <label class="switch">
+                    <input id="wa-read-others" type="checkbox" data-wa-pref="read_others">
+                    <span aria-hidden="true"></span>
+                    <em class="sr-only">Let my agent read my other WhatsApp chats</em>
+                  </label>
+                </div>
+                <button class="info-link" type="button" aria-expanded="false" aria-controls="wa-read-info">What this allows ⓘ</button>
+                <div class="info-bubble" id="wa-read-info">
+                  <strong>What it allows.</strong> Your agent can read the chats on <em>your own</em> linked WhatsApp, meaning your conversations with other people, so it can remind you of things and notice who is waiting on you.<br><br>
+                  <strong>What it never does.</strong> It never replies to anyone in those chats or messages them. It still only talks to you.<br><br>
+                  <strong>Only your own account.</strong> This applies only to the WhatsApp linked as “Your WhatsApp”. The agent’s own number has no other chats to read.<br><br>
+                  <strong>Off by default.</strong> Nothing is read until you switch it on. Switching it off stops it.
+                </div>
+                <div class="access-row">
+                  <div>
+                    <strong>Include WhatsApp in my daily summary</strong>
+                    <small>Off by default. Your daily summary and reminders also list who may still need a reply. Needs the switch above on.</small>
+                  </div>
+                  <label class="switch">
+                    <input id="wa-in-summary" type="checkbox" data-wa-pref="in_summary">
+                    <span aria-hidden="true"></span>
+                    <em class="sr-only">Include WhatsApp in my daily summary</em>
+                  </label>
+                </div>
+                <p class="form-status" role="status"></p>
               </div>
 
               <p class="form-status channel-status" id="channel-status" role="status"></p>
@@ -1048,6 +1448,10 @@
     </main>
 
     <nav class="bottom-nav" aria-label="Primary navigation">
+      <button type="button" data-tab="setup" class="setup-nav" hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V4M4 4h11l-2 4 2 4H4"/></svg><span>setup</span>
+        <em class="setup-badge" aria-hidden="true"></em>
+      </button>
       <button type="button" data-tab="chat" class="active">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg><span>chat</span>
       </button>
@@ -1128,6 +1532,7 @@
       let path = tab === 'chat' ? '/chat.html' : tab === 'settings' ? '/onboarding.html' : '/';
       if (tab === 'connectors') path = '/connectors.html';
       else if (tab === 'channels') path = '/channels.html';
+      else if (tab === 'setup') path = '/setup.html';
       const entry = { tab, settingPage: null };
       if (silent) history.replaceState(entry, '', path);
       else history.pushState(entry, '', path);
@@ -1136,6 +1541,10 @@
       // The catalog is fetched the first time the Connectors tab is opened, so
       // the other tabs never pay for it.
       if (tab === 'connectors') maybeLoadConnectors();
+      if (tab === 'setup' && state.status) {
+        renderSetupGuide();
+        loadWhatsappInfo();
+      }
     }
 
     // Browser/phone back moves within the app rather than leaving it.
@@ -1423,8 +1832,6 @@
         ensureGreeting(true);
         renderStatus(data);
         setTab('chat');
-        try { localStorage.setItem('sudo-offer-more', 'pending'); } catch (_) {}
-        maybeOfferMore();
       } catch (error) {
         status.textContent = error.message;
         button.disabled = false;
@@ -1524,18 +1931,6 @@
       } catch (_) {
         // Keep the written greeting. A greeting is not worth an error message.
       }
-    }
-
-    function maybeOfferMore() {
-      let flag = null;
-      try { flag = localStorage.getItem('sudo-offer-more'); } catch (_) {}
-      if (flag !== 'pending') return;
-      $('setup-more').hidden = false;
-    }
-
-    function dismissOfferMore() {
-      $('setup-more').hidden = true;
-      try { localStorage.setItem('sudo-offer-more', 'done'); } catch (_) {}
     }
 
     function selectKeySource(value) {
@@ -2052,6 +2447,9 @@
     function renderOcWhatsapp(info) {
       stopWhatsappPoll();
       state.waInfo = info;
+      state.waChecked = true;
+      renderWaPrefs(info);
+      renderSetupGuide();
       state.waQr = state.waQr || {};
       const body = $('whatsapp-panel-body');
       $('whatsapp-panel').hidden = false;
@@ -2234,6 +2632,50 @@
       } catch (error) {
         if ($('wa-status')) $('wa-status').textContent = error.message;
       }
+    }
+
+    // The same two switches appear in Channels and in Finish setup; every
+    // copy is drawn from one saved state so they never disagree.
+    function renderWaPrefs(prefs) {
+      if (!prefs || !('read_others' in prefs)) return;
+      state.waPrefs = { read_others: !!prefs.read_others, in_summary: !!prefs.in_summary };
+      document.querySelectorAll('[data-wa-pref]').forEach(input => {
+        input.checked = state.waPrefs[input.dataset.waPref];
+      });
+    }
+
+    async function saveWaPref(input) {
+      const field = input.dataset.waPref;
+      const value = input.checked;
+      const copies = document.querySelectorAll(`[data-wa-pref="${field}"]`);
+      const status = input.closest('.wa-prefs').querySelector('.form-status');
+      copies.forEach(copy => { copy.checked = value; copy.disabled = true; });
+      status.textContent = 'Saving…';
+      try {
+        renderWaPrefs(await api('/api/agent/whatsapp/preferences', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ [field]: value }),
+        }, 20000));
+        status.textContent = 'Saved.';
+        setTimeout(() => { if (status.textContent === 'Saved.') status.textContent = ''; }, 2000);
+      } catch (error) {
+        copies.forEach(copy => { copy.checked = !value; });
+        status.textContent = error.message;
+      } finally {
+        copies.forEach(copy => { copy.disabled = false; });
+      }
+    }
+
+    async function loadWhatsappInfo() {
+      try {
+        const info = await api('/api/agent/whatsapp', {}, 20000);
+        state.waInfo = info;
+        renderWaPrefs(info);
+      } catch (_) {
+        // A slow gateway; the status flag still covers step 2.
+      }
+      state.waChecked = true;
+      renderSetupGuide();
     }
 
     // --- model routing --------------------------------------------------
@@ -3000,6 +3442,133 @@
         ...FEATURED_CONNECTORS.map(([slug, name]) => connectorTile({ slug, name })));
     }
 
+    // --- Finish setup ---------------------------------------------------
+    const SETUP_STEPS = [
+      { key: 'cloud', label: 'Cloud model', next: 'connect a cloud model' },
+      { key: 'whatsapp', label: 'WhatsApp', next: 'connect WhatsApp' },
+      { key: 'apps', label: 'Your apps', next: 'connect your apps' },
+    ];
+    const GUIDE_CONNECTORS = ['gmail', 'googlecalendar', 'shopify', 'notion', 'slack', 'googledrive', 'outlook', 'github'];
+
+    function setupProgress() {
+      const s = state.status || {};
+      const accounts = (state.waInfo && state.waInfo.accounts) || {};
+      return {
+        cloud: (s.answering_with && s.answering_with.where === 'cloud')
+          || Object.values(s.provider_key_hints || {}).some(Boolean) || !!s.has_own_key,
+        whatsapp: !!((accounts.owner || {}).linked || (accounts.agent || {}).linked || s.whatsapp_connected),
+        apps: !!s.has_composio,
+      };
+    }
+
+    function renderSetupGuide() {
+      const s = state.status;
+      if (!s) return;
+      const done = setupProgress();
+      const count = SETUP_STEPS.filter(step => done[step.key]).length;
+      const left = SETUP_STEPS.length - count;
+      const allDone = left === 0;
+      // Wait for the WhatsApp check before showing the tab, so a device that
+      // is already fully set up never flashes it.
+      const showNav = !!s.profile_done && !!state.waChecked && !allDone;
+      document.querySelectorAll('.setup-nav').forEach(button => {
+        button.hidden = !showNav;
+        button.setAttribute('aria-label', `Finish setup, ${left} ${left === 1 ? 'step' : 'steps'} left`);
+        button.querySelector('.setup-badge').textContent = String(left);
+      });
+      $('setup-count').textContent = `${count} of ${SETUP_STEPS.length} done`;
+      $('setup-ring-num').textContent = `${count}/${SETUP_STEPS.length}`;
+      $('setup-ring-fill').setAttribute('stroke-dasharray', `${(count / SETUP_STEPS.length) * 100} 100`);
+      const next = SETUP_STEPS.find(step => !done[step.key]);
+      $('setup-next').textContent = next ? `Next: ${next.next}` : 'All three done. Nice work.';
+      $('setup-alldone').hidden = !allDone;
+      SETUP_STEPS.forEach((step, i) => {
+        const isDone = done[step.key];
+        const card = $(`step-${step.key}`);
+        card.classList.toggle('done', isDone);
+        card.querySelector('.milestone-pill').textContent = isDone ? 'Done' : 'To do';
+        card.querySelector('.milestone-num').textContent = isDone ? '✓' : String(i + 1);
+        card.querySelector('.milestone-done-note').hidden = !isDone;
+        const track = document.querySelector(`.setup-track [data-open-step="${step.key}"]`);
+        track.closest('li').classList.toggle('done', isDone);
+        track.closest('li').classList.toggle('current', next === step);
+        track.querySelector('i').textContent = isDone ? '✓' : String(i + 1);
+        track.setAttribute('aria-label', `Step ${i + 1}, ${step.label}: ${isDone ? 'done' : 'to do'}`);
+      });
+      // Open the first unfinished step once; after that the person decides.
+      if (!state.setupOpened && next && state.waChecked) {
+        state.setupOpened = true;
+        toggleMilestone(next.key, true);
+      }
+    }
+
+    function toggleMilestone(key, open) {
+      const card = $(`step-${key}`);
+      const head = card.querySelector('.milestone-head');
+      const body = card.querySelector('.milestone-body');
+      const opening = open === undefined ? body.hidden : open;
+      body.hidden = !opening;
+      head.setAttribute('aria-expanded', String(opening));
+      card.classList.toggle('open', opening);
+    }
+
+    // Sample prompts are drafted, never sent: the person reads and sends.
+    function draftInChat(text) {
+      setTab('chat');
+      const input = $('chat-input');
+      input.value = text;
+      input.dispatchEvent(new Event('input'));
+      input.focus();
+      input.setSelectionRange(text.length, text.length);
+    }
+
+    function revealField(id) {
+      setTimeout(() => {
+        const field = $(id);
+        if (!field) return;
+        field.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        // On a touchscreen focusing a text box throws up the keyboard over
+        // what they came to read, so only move focus with a mouse.
+        if (field.tagName === 'BUTTON' || window.matchMedia('(pointer: fine)').matches) {
+          field.focus({ preventScroll: true });
+        }
+      }, 80);
+    }
+
+    const SETUP_DESTINATIONS = {
+      chat: () => setTab('chat'),
+      providers: () => { setTab('settings'); openSettingPage('providers-setting'); },
+      spend: () => { setTab('settings'); openSettingPage('spend-setting'); },
+      routing: () => { setTab('settings'); openSettingPage('routing-setting'); },
+      whatsapp: () => { setTab('channels'); revealField('whatsapp-connect'); },
+      connectors: () => { setTab('connectors'); revealField('composio-key'); },
+    };
+
+    function initSetupGuide() {
+      document.querySelectorAll('[data-clone]').forEach(target => {
+        const source = $(target.dataset.clone);
+        if (source) target.replaceChildren(...[...source.childNodes].map(node => node.cloneNode(true)));
+      });
+      const names = Object.fromEntries(FEATURED_CONNECTORS);
+      $('guide-connectors').replaceChildren(
+        ...GUIDE_CONNECTORS.map(slug => connectorTile({ slug, name: names[slug] || slug })));
+      document.querySelectorAll('.milestone-head').forEach(head => head.addEventListener('click', () =>
+        toggleMilestone(head.closest('.milestone').id.replace('step-', ''))));
+      document.querySelectorAll('[data-open-step]').forEach(button => button.addEventListener('click', () => {
+        const key = button.dataset.openStep;
+        toggleMilestone(key, true);
+        const head = $(`step-${key}`).querySelector('.milestone-head');
+        head.scrollIntoView({ block: 'start', behavior: 'smooth' });
+        head.focus({ preventScroll: true });
+      }));
+      document.querySelectorAll('[data-prompt]').forEach(button =>
+        button.addEventListener('click', () => draftInChat(button.dataset.prompt)));
+      document.querySelectorAll('[data-go]').forEach(button =>
+        button.addEventListener('click', () => SETUP_DESTINATIONS[button.dataset.go]()));
+      document.querySelectorAll('[data-wa-pref]').forEach(input =>
+        input.addEventListener('change', () => saveWaPref(input)));
+    }
+
     async function selectPersonality(value) {
       state.personality = value;
       document.querySelectorAll('#personality-options button').forEach(button => {
@@ -3211,6 +3780,7 @@
       renderCloudNudge(status);
       renderUpdate(status.update);
       renderWhatsappSummary(status);
+      renderSetupGuide();
       $('exec-toggle').checked = !!status.exec_enabled;
       $('subagent-toggle').checked = !!status.subagent_enabled;
       $('skills-toggle').checked = !!status.skills_enabled;
@@ -3325,7 +3895,8 @@
 
     async function init() {
       const path = location.pathname;
-      if (path.includes('onboarding')) setTab('settings');
+      if (path.includes('setup')) setTab('setup');
+      else if (path.includes('onboarding')) setTab('settings');
       else if (path.includes('connectors')) setTab('connectors');
       else if (path.includes('channels')) setTab('channels');
       else if (path === '/' || path.includes('dashboard')) setTab('apps');
@@ -3350,7 +3921,8 @@
       loadAgentFiles();
       loadRemotePassword();
       initInstallHint();
-      if (status.profile_done) maybeOfferMore();
+      try { localStorage.removeItem('sudo-offer-more'); } catch (_) {}
+      if (status.profile_done) loadWhatsappInfo();
 
       applyBillingVisibility();
 
@@ -3376,13 +3948,8 @@
       event.target.style.height = `${Math.min(event.target.scrollHeight, 128)}px`;
     });
     $('composer-add').addEventListener('click', startFreshChat);
-    $('create-app').addEventListener('click', () => {
-      setTab('chat');
-      const input = $('chat-input');
-      input.value = 'Help me build an app that ';
-      input.focus();
-      input.setSelectionRange(input.value.length, input.value.length);
-    });
+    $('create-app').addEventListener('click', () => draftInChat('Help me build an app that '));
+    initSetupGuide();
     $('composer-model').addEventListener('click', () => {
       setTab('settings');
       openSettingPage('routing-setting');
@@ -3435,7 +4002,6 @@
     $('welcome-agent').addEventListener('keydown', event => {
       if (event.key === 'Enter') finishWelcome();
     });
-    $('setup-more-go').addEventListener('click', () => { dismissOfferMore(); setTab('settings'); });
     $('cloud-nudge-go').addEventListener('click', () => {
       window.open('https://openrouter.ai/?utm_source=sudo', '_blank', 'noopener');
     });
@@ -3453,7 +4019,6 @@
     $('reset-word').addEventListener('keydown', event => {
       if (event.key === 'Enter') runReset();
     });
-    $('setup-more-dismiss').addEventListener('click', dismissOfferMore);
     document.querySelectorAll('#theme-options button').forEach(b =>
       b.addEventListener('click', () => chooseTheme(b.dataset.value)));
     document.querySelectorAll('#routing-options button').forEach(b =>
