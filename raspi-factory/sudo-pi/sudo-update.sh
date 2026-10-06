@@ -303,12 +303,25 @@ if [ -d "$root/whatsapp-bridge" ]; then
   fi
 fi
 
-# Helper scripts are flat files in sudo-pi/, installed by name. We copy them
-# wholesale -- new helper scripts added upstream show up here too.
+# Helper scripts are flat files in sudo-pi/. Install each under the name
+# install-factory.sh gives it -- the one the dashboard and the other scripts
+# actually run. Copying them under their repo names instead (as this used
+# to) left every sudo-* copy at its factory version forever, so a fixed
+# helper never reached a device that only updates over Wi-Fi.
 if [ -d "$root/sudo-pi" ]; then
   for f in "$root"/sudo-pi/*.sh "$root"/sudo-pi/*.py; do
     [ -e "$f" ] || continue
-    install -m 0755 "$f" "$BIN_DIR/$(basename "$f")" 2>>"$LOG"
+    name="$(basename "$f")"
+    case "$name" in
+      trigger-cloud-init.py) install -m 0755 "$f" /opt/sudo-pi/trigger-cloud-init.py 2>>"$LOG"; continue ;;
+      setup-remote-access.sh) target="sudo-remote-access.sh" ;;
+      sudo-*) target="$name" ;;
+      *) target="sudo-$name" ;;
+    esac
+    install -m 0755 "$f" "$BIN_DIR/$target" 2>>"$LOG"
+    # Earlier updates left repo-named copies behind; keep them current too
+    # rather than stale, in case anything was pointed at one.
+    [ "$target" != "$name" ] && [ -e "$BIN_DIR/$name" ] && install -m 0755 "$f" "$BIN_DIR/$name" 2>>"$LOG"
   done
 fi
 

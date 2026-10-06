@@ -685,6 +685,33 @@ HEARTBEAT_TIMER = "sudo-heartbeat.timer"
 OWNER_FILE = "/opt/sudo/whatsapp-auth/owner.json"
 
 
+HELPERS_MARKER = "/var/lib/sudo-helpers-renamed"
+UPDATE_BASELINE = "/usr/local/bin/sudo-factory.tar.gz"
+
+
+def finish_first_update():
+    """Re-apply the current bundle once with the updater it just delivered.
+
+    An update runs on the device's *old* sudo-update.sh, which copied helpers
+    under their repo names and left the sudo-* copies -- the ones everything
+    runs -- at their factory version. The new updater installs them properly
+    and turns on automatic updates, but would otherwise only run on the next
+    release. Same bundle, same version; done once (the marker), and never on
+    a fresh install, whose installer writes the marker itself.
+    """
+    if os.path.exists(HELPERS_MARKER) or not os.path.isfile(UPDATE_BASELINE):
+        return
+    if 'target="sudo-$name"' not in (read_text(UPDATE_SCRIPT) or ""):
+        return
+    try:
+        with open(HELPERS_MARKER, "w") as f:
+            f.write(str(int(time.time())))
+        run_privileged("sudo-update-finish", UPDATE_SCRIPT, "--local", UPDATE_BASELINE,
+                       wait=False, timeout=20)
+    except Exception:
+        pass
+
+
 def autoupdate_enabled() -> bool:
     """Whether the daily update timer is on -- read from systemd, like the
     heartbeat, so the switch and the unit cannot disagree."""
@@ -2785,6 +2812,8 @@ if __name__ == "__main__":
     # Ensure secrets exist (offline-safe)
     if os.path.isfile("/usr/local/bin/sudo-device-secrets.sh"):
         subprocess.run(["/usr/local/bin/sudo-device-secrets.sh"], check=False)
+
+    finish_first_update()
 
     os.chdir(ROOT)
 

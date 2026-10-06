@@ -291,6 +291,9 @@ systemctl enable --now sudo-heartbeat.timer 2>/dev/null || true
 
 # Automatic updates: on unless the owner has switched them off in Settings.
 /usr/local/bin/sudo-autoupdate.sh default 2>/dev/null || true
+# Helpers were just installed under their sudo-* names; nothing to redo
+# (see finish_first_update in server.py).
+mkdir -p /var/lib && touch /var/lib/sudo-helpers-renamed
 
 # ── Sudo Dashboard (LAN + remote tunnel both use :80) ───────────────────────
 cat > /etc/systemd/system/sudo-dashboard.service << 'EOF'
