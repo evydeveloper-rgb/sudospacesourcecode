@@ -94,6 +94,10 @@ WHATSAPP_INSTALL_SCRIPT = "/usr/local/bin/sudo-install-whatsapp-bridge.sh"
 WHATSAPP_UNLINK_SCRIPT = "/usr/local/bin/sudo-unlink-whatsapp.sh"
 UPDATE_SCRIPT = "/usr/local/bin/sudo-update.sh"
 UPDATE_STATUS = "/var/lib/sudo-update-status.json"
+AUTOUPDATE_SCRIPT = "/usr/local/bin/sudo-autoupdate.sh"
+AUTOUPDATE_TIMER = "sudo-autoupdate.timer"
+# Shown in Settings so owners can read the code and the release notes.
+SOURCE_REPO_URL = "https://github.com/evydeveloper-rgb/sudospacesourcecode"
 VERSION_FILE = "/opt/sudo/version"
 
 # Composio's public logo CDN, for the Connectors tab's app showcase. Proxied
@@ -637,14 +641,15 @@ def setup_status(include_sensitive=False):
         "answering_with": answering_with(cfg),
         "provider_key_hints": provider_key_hints(cfg),
         "has_composio": bool(cfg.get("composio_api_key")),
-        "composio_enabled": bool(cfg.get("composio_api_key")),
+        "composio_enabled": bool(cfg.get("composio_api_key")) and agent_backend(cfg) == "openclaw",
+        "agent_backend": agent_backend(cfg),
         # GitHub token for cloning/pushing the owner's own repos. Same
         # never-return-the-secret rule as the other keys: only a tail hint.
         "has_github_token": bool(cfg.get("github_token")),
         "github_token_hint": (cfg.get("github_token") or "")[-4:] or None,
         "github_username": cfg.get("github_username") or None,
         "github_enabled": bool(cfg.get("github_enabled", False)),
-        "update": update_state(),
+        "update": {**update_state(), "auto": autoupdate_enabled(), "repo": SOURCE_REPO_URL},
         "routing_mode": (
             cfg.get("routing_mode") if cfg.get("routing_mode") in ROUTING_MODES else "auto"
         ),
@@ -678,6 +683,17 @@ def run_remote_access(enable: bool):
 
 HEARTBEAT_TIMER = "sudo-heartbeat.timer"
 OWNER_FILE = "/opt/sudo/whatsapp-auth/owner.json"
+
+
+def autoupdate_enabled() -> bool:
+    """Whether the daily update timer is on -- read from systemd, like the
+    heartbeat, so the switch and the unit cannot disagree."""
+    try:
+        r = subprocess.run(["systemctl", "is-enabled", AUTOUPDATE_TIMER],
+                           capture_output=True, text=True, timeout=3)
+        return r.stdout.strip() == "enabled"
+    except Exception:
+        return False
 
 
 def heartbeat_enabled():
@@ -2144,7 +2160,22 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                 return True
 
         if path == "/api/agent/update" and self.command == "GET":
-            self.send_json(update_state())
+            self.send_json({**update_state(), "auto": autoupdate_enabled(), "repo": SOURCE_REPO_URL})
+            return True
+
+        if path == "/api/agent/update/auto" and self.command == "POST":
+            try:
+                body = self.read_body_json()
+            except (ValueError, json.JSONDecodeError):
+                body = {}
+            if not os.path.isfile(AUTOUPDATE_SCRIPT):
+                self.send_json({"error": "This device needs one manual update first"}, code=409)
+                return True
+            # Writes unit files under /etc, which this service's sandbox blocks.
+            # Not "sudo-autoupdate": that name is the update service itself.
+            run_privileged("sudo-autoupdate-switch", AUTOUPDATE_SCRIPT,
+                           "on" if body.get("enabled") else "off", timeout=30)
+            self.send_json({**update_state(), "auto": autoupdate_enabled(), "repo": SOURCE_REPO_URL})
             return True
 
         if path == "/api/agent/update" and self.command == "POST":

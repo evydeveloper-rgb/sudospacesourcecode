@@ -122,15 +122,12 @@ print(f"Sub-agents: {'on' if subagent else 'off'}")
 cfg["tools"]["skills"]["enabled"] = bool(sudo.get("skills_enabled", False))
 print(f"Skills: {'on' if sudo.get('skills_enabled') else 'off'}")
 
-# MCP needs a Composio key AND an explicit opt-in.
-#
-# Keying it off the key alone meant that pasting one into Settings took the
-# whole agent down: picoclaw treats a failed MCP connection as fatal, so
-# every message came back as
-#   "failed to load MCP servers: ... session not found"
-# and the chat stopped working entirely. Connectors are a bonus feature;
-# they must never be able to silence the agent. Off unless asked for.
-composio_on = bool(composio_key)
+# Connectors never run under picoclaw. It treats a failed MCP connection as
+# fatal -- every message comes back "failed to load MCP servers" -- and
+# Composio's endpoint fails on and off, so a saved key would silence the
+# agent. They run under OpenClaw, which drops a failing server and carries
+# on (configure-openclaw.sh).
+composio_on = False
 cfg["tools"]["mcp"]["enabled"] = composio_on
 if not composio_on:
     # Drop the server definition too, so nothing can dial it by accident.

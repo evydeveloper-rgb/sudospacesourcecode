@@ -718,10 +718,21 @@
                 <div><strong>Current version</strong><small id="update-current">1.0.0</small></div>
                 <span class="status-pill good" id="update-pill">up to date</span>
               </div>
+              <div class="access-row">
+                <div>
+                  <strong>Automatic updates</strong>
+                  <small>Checks once a day and installs new versions overnight.</small>
+                </div>
+                <label class="switch"><input type="checkbox" id="update-auto"><span></span></label>
+              </div>
               <button class="primary-button" id="update-check" type="button">Check for updates</button>
               <button class="primary-button" id="update-apply" type="button" hidden>Update now</button>
               <p class="microcopy" id="update-message"></p>
               <p class="form-status" id="update-status" role="status"></p>
+              <p class="update-links">
+                <a id="update-releases" href="https://github.com/evydeveloper-rgb/sudospacesourcecode/releases" target="_blank" rel="noopener noreferrer">What’s new in each version</a> ·
+                <a id="update-repo" href="https://github.com/evydeveloper-rgb/sudospacesourcecode" target="_blank" rel="noopener noreferrer">See the code</a>
+              </p>
             </div>
           </section>
           <div class="settings-group">device &amp; developer</div>
@@ -2264,8 +2275,29 @@
       try { localStorage.setItem('sudo-cloud-nudge', 'dismissed'); } catch (_) {}
     }
 
+    async function toggleAutoUpdate() {
+      const toggle = $('update-auto');
+      toggle.disabled = true;
+      try {
+        renderUpdate(await api('/api/agent/update/auto', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ enabled: toggle.checked }),
+        }, 30000));
+      } catch (error) {
+        toggle.checked = !toggle.checked;
+        $('update-status').textContent = error.message;
+      } finally {
+        toggle.disabled = false;
+      }
+    }
+
     function renderUpdate(info) {
       if (!info) return;
+      if ('auto' in info) $('update-auto').checked = !!info.auto;
+      if (info.repo) {
+        $('update-repo').href = info.repo;
+        $('update-releases').href = info.repo + '/releases';
+      }
       const current = info.current || '1.0.0';
       $('update-current').textContent = current;
       $('update-summary').textContent = 'Version ' + current;
@@ -2678,7 +2710,9 @@
 
     function renderComposio(status) {
       $('remove-composio').hidden = !status.has_composio;
-      $('composio-status').textContent = status.has_composio ? 'Key saved — connectors on.' : '';
+      $('composio-status').textContent = !status.has_composio ? ''
+        : status.composio_enabled ? 'Key saved — connectors on.'
+        : 'Key saved — connectors switch on with this device’s next big update.';
       $('composio-link').textContent = status.has_composio
         ? 'Manage your connected apps on Composio →'
         : 'New to Composio? Sign in or create a free account →';
@@ -3411,6 +3445,7 @@
     });
     $('cloud-nudge-dismiss').addEventListener('click', dismissCloudNudge);
     $('update-check').addEventListener('click', () => runUpdate(true));
+    $('update-auto').addEventListener('change', toggleAutoUpdate);
     $('update-apply').addEventListener('click', () => runUpdate(false));
     $('reset-start').addEventListener('click', () => resetArm(true));
     $('reset-cancel').addEventListener('click', () => resetArm(false));
