@@ -330,14 +330,14 @@ body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
 .composer-model svg { width: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
 .composer-model em { font-style: normal; font-size: .78rem; font-weight: 650; color: currentColor; }
 .send-button {
-  width: 42px; height: 42px; flex: none; align-self: center; display: grid; place-items: center;
-  border: 0; border-radius: 11px; background: var(--send-bg); cursor: pointer;
+  width: 36px; height: 36px; flex: none; align-self: center; display: grid; place-items: center;
+  border: 0; border-radius: 10px; background: var(--send-bg); cursor: pointer;
   transition: transform .16s ease, opacity .16s ease, background .16s ease;
 }
 .send-button:hover { filter: brightness(.95); }
 .send-button:active { transform: scale(.94); }
 .send-button:disabled { opacity: .45; cursor: wait; }
-.send-button svg { width: 20px; fill: none; stroke: var(--send-on); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.send-button svg { width: 17px; fill: none; stroke: var(--send-on); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
 /* Apps */
 .app-grid {
@@ -364,10 +364,13 @@ body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
 
 /* Settings */
 .settings-list { max-width: 720px; margin: 0 auto; display: grid; gap: 11px; }
-/* Connectors lives in its own tab now, not behind a Settings row, so its card
-   has no header to separate the body from -- drop the divider that assumed one. */
-.connectors-panel .setting-body { border-top: 0; padding-top: 2px; }
-.connectors-panel .setting-body .section-intro:first-child { margin-top: 4px; }
+/* Connectors and Channels live in their own tabs now, not behind a Settings
+   row, so their cards have no header to separate the body from -- drop the
+   divider that assumed one. */
+.connectors-panel .setting-body,
+.channels-panel .setting-body { border-top: 0; padding-top: 2px; }
+.connectors-panel .setting-body .section-intro:first-child,
+.channels-panel .setting-body .section-intro:first-child { margin-top: 4px; }
 .setting-card {
   border-radius: var(--radius-lg);
   overflow: hidden; border: 1px solid rgba(22, 19, 17,.11); border-radius: 19px;

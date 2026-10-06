@@ -21,6 +21,10 @@
             <span class="rail-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg></span>
             <span>Chat</span>
           </button>
+          <button type="button" data-tab="channels">
+            <span class="rail-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.3-.6L3 21l1.9-5a8.3 8.3 0 0 1-1-4A8.4 8.4 0 0 1 12 3a8.4 8.4 0 0 1 9 8.5Z"/><path d="M8.5 11.5h.01M12 11.5h.01M15.5 11.5h.01"/></svg></span>
+            <span>Channels</span>
+          </button>
           <button type="button" data-tab="apps">
             <span class="rail-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>
             <span>Apps</span>
@@ -230,6 +234,48 @@
             <div class="mini-icon">⌂</div><span class="soon">coming soon</span>
             <h2>Home</h2><p>Lights, locks, and small daily routines.</p>
           </article>
+        </div>
+      </section>
+
+      <section class="view" id="view-channels" aria-labelledby="channels-title">
+        <div class="view-heading">
+          <div>
+            <p class="eyebrow">where you talk to sudo</p>
+            <h1 id="channels-title">Channels</h1>
+            <p class="lede">Choose where you want to talk with sudo.</p>
+          </div>
+        </div>
+        <div class="settings-list channels-panel">
+<section class="setting-card open" id="channels-setting">
+            
+            <div class="setting-body">
+              <p class="section-intro">Choose where you want to talk with sudo.</p>
+              <div class="channel-list">
+                <div class="channel-row">
+                  <span class="channel-logo whatsapp" aria-hidden="true">W</span>
+                  <span class="channel-copy"><strong>WhatsApp</strong><small id="whatsapp-summary">not connected</small></span>
+                  <button class="channel-connect" type="button" id="whatsapp-connect">Set up</button>
+                </div>
+                <div class="channel-row">
+                  <span class="channel-logo telegram" aria-hidden="true">T</span>
+                  <span class="channel-copy"><strong>Telegram</strong><small>Coming soon</small></span>
+                  <span class="channel-soon">Coming soon</span>
+                </div>
+                <div class="channel-row">
+                  <span class="channel-logo wechat" aria-hidden="true">微</span>
+                  <span class="channel-copy"><strong>WeChat</strong><small>Coming soon</small></span>
+                  <span class="channel-soon">Coming soon</span>
+                </div>
+              </div>
+
+              <div class="whatsapp-panel" id="whatsapp-panel" hidden>
+                <div class="whatsapp-panel-body" id="whatsapp-panel-body"></div>
+                <button class="whatsapp-panel-close" type="button" id="whatsapp-panel-close">Close</button>
+              </div>
+
+              <p class="form-status channel-status" id="channel-status" role="status"></p>
+            </div>
+          
         </div>
       </section>
 
@@ -458,40 +504,6 @@
               <p class="section-intro">These plain-text files are your agent's personality and everything it has remembered about you. Nothing is hidden — read any of it.</p>
               <div id="files-list"></div>
               <p class="microcopy">Stored on this device at <code>/opt/sudo/agent-workspace</code>. To edit them, turn on terminal access below.</p>
-            </div>
-          </section>
-          <section class="setting-card" id="channels-setting">
-            <button class="setting-head" type="button" aria-expanded="false">
-              <span class="setting-icon">◌</span>
-              <span><strong>Channels</strong><small>WhatsApp · Telegram · WeChat</small></span>
-              <span class="chevron">›</span>
-            </button>
-            <div class="setting-body">
-              <p class="section-intro">Choose where you want to talk with sudo.</p>
-              <div class="channel-list">
-                <div class="channel-row">
-                  <span class="channel-logo whatsapp" aria-hidden="true">W</span>
-                  <span class="channel-copy"><strong>WhatsApp</strong><small id="whatsapp-summary">not connected</small></span>
-                  <button class="channel-connect" type="button" id="whatsapp-connect">Set up</button>
-                </div>
-                <div class="channel-row">
-                  <span class="channel-logo telegram" aria-hidden="true">T</span>
-                  <span class="channel-copy"><strong>Telegram</strong><small>Coming soon</small></span>
-                  <span class="channel-soon">Coming soon</span>
-                </div>
-                <div class="channel-row">
-                  <span class="channel-logo wechat" aria-hidden="true">微</span>
-                  <span class="channel-copy"><strong>WeChat</strong><small>Coming soon</small></span>
-                  <span class="channel-soon">Coming soon</span>
-                </div>
-              </div>
-
-              <div class="whatsapp-panel" id="whatsapp-panel" hidden>
-                <div class="whatsapp-panel-body" id="whatsapp-panel-body"></div>
-                <button class="whatsapp-panel-close" type="button" id="whatsapp-panel-close">Close</button>
-              </div>
-
-              <p class="form-status channel-status" id="channel-status" role="status"></p>
             </div>
           </section>
           <section class="setting-card" id="theme-setting">
@@ -1026,6 +1038,9 @@
       <button type="button" data-tab="chat" class="active">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg><span>chat</span>
       </button>
+      <button type="button" data-tab="channels">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.3-.6L3 21l1.9-5a8.3 8.3 0 0 1-1-4A8.4 8.4 0 0 1 12 3a8.4 8.4 0 0 1 9 8.5Z"/><path d="M8.5 11.5h.01M12 11.5h.01M15.5 11.5h.01"/></svg><span>channels</span>
+      </button>
       <button type="button" data-tab="apps">
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>apps</span>
       </button>
@@ -1084,6 +1099,8 @@
       $('step-chip').hidden = tab !== 'welcome';
       $('device-state-wrap').hidden = tab === 'welcome';
       if (tab !== 'settings' && state.settingPage) closeSettingPage();
+      // The WhatsApp setup panel polls while it is open; leaving the tab stops it.
+      if (tab !== 'channels') stopWhatsappPoll();
       document.querySelectorAll('.view').forEach(view => view.classList.toggle('active', view.id === `view-${tab}`));
 
       document.querySelectorAll('.bottom-nav button, .rail-nav button').forEach(button => {
@@ -1095,7 +1112,9 @@
       // the browser's back button walked straight out of the app to whatever
       // page came before it. Replaying history passes silent=true so going
       // back does not itself push another entry.
-      const path = tab === 'chat' ? '/chat.html' : tab === 'settings' ? '/onboarding.html' : '/';
+      let path = tab === 'chat' ? '/chat.html' : tab === 'settings' ? '/onboarding.html' : '/';
+      if (tab === 'connectors') path = '/connectors.html';
+      else if (tab === 'channels') path = '/channels.html';
       const entry = { tab, settingPage: null };
       if (silent) history.replaceState(entry, '', path);
       else history.pushState(entry, '', path);
@@ -3011,6 +3030,7 @@
       const path = location.pathname;
       if (path.includes('onboarding')) setTab('settings');
       else if (path.includes('connectors')) setTab('connectors');
+      else if (path.includes('channels')) setTab('channels');
       else if (path === '/' || path.includes('dashboard')) setTab('apps');
       else setTab('chat');
 

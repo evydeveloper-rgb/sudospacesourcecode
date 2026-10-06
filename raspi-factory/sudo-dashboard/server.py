@@ -2514,6 +2514,7 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             "/dashboard.html",
             "/chat.html",
             "/connectors.html",
+            "/channels.html",
             "/billing.html",
             "/onboarding.html",
             "/login.html",
