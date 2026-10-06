@@ -76,6 +76,13 @@ REMOTE_SCRIPT = "/usr/local/bin/sudo-remote-access.sh"
 PICOCLAW_BIN = "/usr/local/bin/picoclaw"
 PICOCLAW_CONFIG = "/opt/sudo/picoclaw/config.json"
 CONFIGURE_SCRIPT = "/usr/local/bin/sudo-configure-picoclaw.sh"
+OPENCLAW_BIN = "/opt/openclaw/node_modules/.bin/openclaw"
+OPENCLAW_CONFIG = "/opt/sudo/openclaw/openclaw.json"
+OPENCLAW_TOKEN_FILE = "/etc/sudo/openclaw_gateway_token"
+# The gateway's own chat endpoint. Going through `openclaw agent` instead
+# costs ~6s of Node start-up per message on a Pi before the model is even asked.
+OPENCLAW_CHAT_URL = "http://127.0.0.1:18790/v1/chat/completions"
+OPENCLAW_STARTUP_WAIT = 60
 
 LOCALMODEL_STATUS = "/var/lib/sudo-localmodel-status"
 LOCALMODEL_SCRIPT = "/usr/local/bin/sudo-install-local-model.sh"
@@ -564,7 +571,8 @@ def setup_status(include_sensitive=False):
         "wifi_done": os.path.isfile(WIFI_MARKER),
         "profile_done": bool(cfg.get("profile_done")),
         "cloud_registered": os.path.isfile("/var/lib/sudo-cloud-registered"),
-        "agent_ready": os.path.isfile(PICOCLAW_CONFIG) and bool(effective_openrouter_key(cfg)),
+        "agent_ready": os.path.isfile(OPENCLAW_CONFIG if agent_backend(cfg) == "openclaw" else PICOCLAW_CONFIG)
+                       and bool(effective_openrouter_key(cfg)),
         "agent_name": cfg.get("agent_name", "sudo"),
         "user_name": cfg.get("user_name"),
         "personality": cfg.get("personality", "friendly"),
@@ -1069,6 +1077,69 @@ def picoclaw_chat(message: str, session_key: str = DASHBOARD_SESSION) -> str:
         raise RuntimeError(err[:500])
     spend_guard("record")
     return clean_agent_text(proc.stdout or proc.stderr or "") or "(empty response)"
+
+
+def agent_backend(cfg=None) -> str:
+    """Which brain answers: OpenClaw once installed, unless the owner pinned
+    picoclaw. Same rule as the end of configure-picoclaw.sh."""
+    cfg = cfg if cfg is not None else read_json_file(CONFIG)
+    if cfg.get("agent_backend") == "picoclaw" or not os.path.isfile(OPENCLAW_BIN):
+        return "picoclaw"
+    return "openclaw"
+
+
+def openclaw_chat(message: str, session_key: str = DASHBOARD_SESSION) -> str:
+    if not os.path.isfile(OPENCLAW_CONFIG) and os.path.isfile(CONFIGURE_SCRIPT):
+        subprocess.run([CONFIGURE_SCRIPT], capture_output=True, timeout=120)
+    token = (read_text(OPENCLAW_TOKEN_FILE) or "").strip()
+    if not os.path.isfile(OPENCLAW_CONFIG) or not token:
+        raise RuntimeError("Agent not configured yet — see /var/log/sudo-openclaw-config.log")
+
+    gate = spend_guard("check")
+    if not gate.get("allowed", True):
+        raise SpendGuardError(spend_guard_message(gate))
+
+    payload = json.dumps({
+        "model": "openclaw",
+        "messages": [{"role": "user", "content": message}],
+    }).encode("utf-8")
+    request = urllib.request.Request(
+        OPENCLAW_CHAT_URL, data=payload, method="POST",
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {token}",
+            "x-openclaw-session-key": session_key,
+        },
+    )
+    # Saving a setting restarts the gateway (~15s on a Pi). A message sent in
+    # that window waits it out instead of failing.
+    deadline = time.time() + OPENCLAW_STARTUP_WAIT
+    while True:
+        try:
+            with urllib.request.urlopen(request, timeout=130) as response:
+                data = json.loads(response.read().decode("utf-8"))
+            break
+        except urllib.error.HTTPError as exc:
+            detail = exc.read().decode("utf-8", "replace")[:300]
+            if "insufficient" in detail.lower() or "credit" in detail.lower():
+                raise RuntimeError("Insufficient credits — top up at /billing.html")
+            raise RuntimeError(f"Agent error ({exc.code}): {detail}")
+        except (urllib.error.URLError, ConnectionError) as exc:
+            if time.time() >= deadline:
+                raise RuntimeError(f"Agent is starting up or unreachable — try again in a moment ({exc})")
+            time.sleep(2)
+        except socket.timeout as exc:
+            raise RuntimeError(f"Agent timed out ({exc})")
+    spend_guard("record")
+    choices = data.get("choices") or [{}]
+    reply = ((choices[0].get("message") or {}).get("content") or "").strip()
+    return reply or "(empty response)"
+
+
+def agent_chat(message: str, session_key: str = DASHBOARD_SESSION) -> str:
+    if agent_backend() == "openclaw":
+        return openclaw_chat(message, session_key)
+    return picoclaw_chat(message, session_key)
 
 
 def remote_password_required() -> bool:
@@ -2418,7 +2489,7 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                     self.send_json({"reply": reply, "source": "local"})
                     return True
                 if effective_openrouter_key(cfg):
-                    reply = picoclaw_chat(message, session_key)
+                    reply = agent_chat(message, session_key)
                     self.send_json({"reply": reply, "source": "cloud",
                                     "note": "on-device model unavailable"})
                     return True
@@ -2429,7 +2500,7 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                 })
                 return True
             try:
-                reply = picoclaw_chat(message, session_key)
+                reply = agent_chat(message, session_key)
                 self.send_json({"reply": reply, "source": "cloud"})
             except SpendGuardError as exc:
                 # Breaker tripped: the turn was never sent, so tell the user

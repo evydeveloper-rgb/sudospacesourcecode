@@ -339,6 +339,22 @@ else
 fi
 systemctl daemon-reload 2>/dev/null || true
 
+# OpenClaw is the brain whenever it is installed, unless the owner pinned
+# picoclaw. Same rule as agent_backend() in server.py.
+backend=$(python3 -c 'import json;print(json.load(open("/opt/sudo/config.json")).get("agent_backend") or "")' 2>/dev/null || true)
+# The installer names helpers sudo-*.sh; the OTA updater installs them by
+# their repo name. Accept either until those agree.
+oc_configure=""
+for c in /usr/local/bin/sudo-configure-openclaw.sh /usr/local/bin/configure-openclaw.sh; do
+  [ -x "$c" ] && { oc_configure="$c"; break; }
+done
+if [ -x /opt/openclaw/node_modules/.bin/openclaw ] && [ "$backend" != "picoclaw" ] \
+   && [ -n "$oc_configure" ]; then
+  "$oc_configure" || echo "configure-openclaw reported an issue"
+  exit 0
+fi
+systemctl disable --now sudo-openclaw-gateway.service 2>/dev/null || true
+
 if systemctl is-active picoclaw-gateway.service >/dev/null 2>&1; then
   systemctl restart picoclaw-gateway.service || true
 else

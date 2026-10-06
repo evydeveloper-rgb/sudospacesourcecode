@@ -46,6 +46,39 @@ if [ -d "${BOOT}/picoclaw/workspace" ]; then
     cp "${BOOT}/picoclaw/workspace/"*.md /opt/picoclaw/workspace/
 fi
 
+# ── OpenClaw (the brain once installed; picoclaw stays as the fallback) ─────
+# The package itself lands in /opt/openclaw via install-openclaw.sh; only
+# Sudo's own base settings ship here.
+mkdir -p /opt/sudo-openclaw /opt/sudo/openclaw
+if [ -f "${BOOT}/openclaw/openclaw.base.json" ]; then
+    cp "${BOOT}/openclaw/openclaw.base.json" /opt/sudo-openclaw/
+fi
+cp "${BOOT}/sudo-pi/configure-openclaw.sh" /usr/local/bin/sudo-configure-openclaw.sh
+cp "${BOOT}/sudo-pi/install-openclaw.sh" /usr/local/bin/sudo-install-openclaw.sh
+chmod +x /usr/local/bin/sudo-configure-openclaw.sh /usr/local/bin/sudo-install-openclaw.sh
+
+cat > /etc/systemd/system/sudo-openclaw-gateway.service << 'EOF'
+[Unit]
+Description=OpenClaw Gateway (Sudo)
+After=network-online.target sudo-cloud-init.service
+Wants=network-online.target
+ConditionPathExists=/opt/sudo/openclaw/openclaw.json
+
+[Service]
+Type=simple
+Environment=HOME=/root
+Environment=OPENCLAW_STATE_DIR=/opt/sudo/openclaw
+Environment=OPENCLAW_CONFIG_PATH=/opt/sudo/openclaw/openclaw.json
+WorkingDirectory=/opt/sudo/agent-workspace
+ExecStart=/opt/openclaw/node_modules/.bin/openclaw gateway run --port 18790
+Restart=on-failure
+RestartSec=5
+User=root
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
 # ── cloudflared (remote link, bundled like picoclaw) ────────────────────────
 if [ -f "${BOOT}/cloudflared/cloudflared" ]; then
     cp "${BOOT}/cloudflared/cloudflared" /usr/local/bin/cloudflared

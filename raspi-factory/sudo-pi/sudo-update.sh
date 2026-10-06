@@ -284,6 +284,7 @@ apply_dir() {
 apply_dir "sudo-dashboard" "$DASHBOARD_DIR"
 apply_dir "wifi-setup"     "$WIFI_DIR"
 apply_dir "picoclaw"       "$PICOCLAW_DIR"
+apply_dir "openclaw"       /opt/sudo-openclaw
 
 # The WhatsApp bridge is app code too. Its dependencies live in node_modules
 # beside it, so a change to package.json (a version pin, a new lib) only takes
@@ -341,7 +342,9 @@ else
 fi
 
 systemctl restart sudo-dashboard.service >>"$LOG" 2>&1 || true
-systemctl restart picoclaw-gateway.service >>"$LOG" 2>&1 || true
+# try-restart: the configure step above already started whichever brain is
+# active, and a plain restart would wake picoclaw on an OpenClaw device.
+systemctl try-restart picoclaw-gateway.service >>"$LOG" 2>&1 || true
 
 rm -rf "$STAGE"
 write_status "done" "Updated to ${LATEST}." "$LATEST" "$LATEST"

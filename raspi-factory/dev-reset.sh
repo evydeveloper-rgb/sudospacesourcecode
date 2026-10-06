@@ -47,7 +47,7 @@ date > "$RECOVER/BACKED-UP-AT.txt"
 
 # 3) Stop the services that own Wi-Fi / portal
 systemctl stop sudo-dashboard.service sudo-remote-access.service \
-    wifi-setup.service raspi-hotspot.service picoclaw-gateway.service \
+    wifi-setup.service raspi-hotspot.service picoclaw-gateway.service sudo-openclaw-gateway.service \
     2>/dev/null || true
 systemctl disable sudo-dashboard.service sudo-cloud-init.service \
     sudo-remote-access.service 2>/dev/null || true
@@ -107,6 +107,7 @@ PY
 rm -rf /opt/sudo/agent-workspace
 mkdir -p /opt/sudo/agent-workspace
 rm -f /opt/sudo/picoclaw/config.json
+rm -rf /opt/sudo/openclaw
 rm -f /boot/firmware/forget-keys
 
 # NOTE: no SSH teardown here on purpose. factory-reset.sh disables sshd and

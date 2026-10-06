@@ -58,6 +58,7 @@ PY
     rm -rf /opt/sudo/agent-workspace
     mkdir -p /opt/sudo/agent-workspace
     rm -f /opt/sudo/picoclaw/config.json
+    rm -rf /opt/sudo/openclaw
 
     bash /boot/firmware/install-factory.sh
 
@@ -81,7 +82,7 @@ PY
     fi
 
     systemctl restart sudo-dashboard.service
-    systemctl restart picoclaw-gateway.service 2>/dev/null || true
+    systemctl try-restart picoclaw-gateway.service 2>/dev/null || true
 fi
 
 rm -f /boot/firmware/factory-retest.sh /boot/firmware/retest-portal.sh

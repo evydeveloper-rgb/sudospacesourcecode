@@ -167,8 +167,8 @@ copy_factory_files() {
         bash "$DOWNLOAD_CF"
     fi
 
-    rm -rf "$boot/wifi-setup" "$boot/sudo-dashboard" "$boot/sudo-pi" "$boot/sudo-api" "$boot/picoclaw" "$boot/cloudflared" "$boot/whatsapp-bridge"
-    mkdir -p "$boot/wifi-setup/templates" "$boot/sudo-dashboard" "$boot/sudo-pi" "$boot/sudo-api" "$boot/picoclaw" "$boot/cloudflared" "$boot/whatsapp-bridge"
+    rm -rf "$boot/wifi-setup" "$boot/sudo-dashboard" "$boot/sudo-pi" "$boot/sudo-api" "$boot/picoclaw" "$boot/openclaw" "$boot/cloudflared" "$boot/whatsapp-bridge"
+    mkdir -p "$boot/wifi-setup/templates" "$boot/sudo-dashboard" "$boot/sudo-pi" "$boot/sudo-api" "$boot/picoclaw" "$boot/openclaw" "$boot/cloudflared" "$boot/whatsapp-bridge"
 
     cp "$WIFI_SETUP/app.py" "$boot/wifi-setup/"
     cp "$WIFI_SETUP/templates/"*.html "$boot/wifi-setup/templates/"
@@ -189,6 +189,7 @@ copy_factory_files() {
     # Agent workspace templates (SOUL/IDENTITY/USER/AGENTS/HEARTBEAT)
     mkdir -p "$boot/picoclaw/workspace"
     cp "$PICOCLAW/workspace/"*.md "$boot/picoclaw/workspace/"
+    cp "$SCRIPT_DIR/openclaw/openclaw.base.json" "$boot/openclaw/"
     cp "$CLOUDFLARED/cloudflared" "$boot/cloudflared/"
 
     cp "$SUDO_PI/"*.sh "$boot/sudo-pi/"
