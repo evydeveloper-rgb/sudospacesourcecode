@@ -8,8 +8,11 @@ NODE_MAJOR=22
 OC_DIR=/opt/openclaw
 BUNDLE=/boot/firmware/openclaw/openclaw-bundle.tar.gz
 LOG=/var/log/sudo-openclaw-install.log
+# Mirrored to the boot partition so a failed first-boot install can be read
+# from any computer the card is plugged into.
+BOOT_LOG=/boot/firmware/openclaw-install.log
 
-exec >> "$LOG" 2>&1
+exec > >(tee -a "$BOOT_LOG" >> "$LOG") 2>&1
 echo "=== install-openclaw $OPENCLAW_VERSION $(date) ==="
 
 node_ok() {

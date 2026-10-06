@@ -190,6 +190,11 @@ copy_factory_files() {
     mkdir -p "$boot/picoclaw/workspace"
     cp "$PICOCLAW/workspace/"*.md "$boot/picoclaw/workspace/"
     cp "$SCRIPT_DIR/openclaw/openclaw.base.json" "$boot/openclaw/"
+    # Prebuilt arm64 OpenClaw (~54MB). Without it the device installs from npm
+    # on first boot, which works but takes longer and needs the registry up.
+    if [ -f "$SCRIPT_DIR/openclaw/openclaw-bundle.tar.gz" ]; then
+        cp "$SCRIPT_DIR/openclaw/openclaw-bundle.tar.gz" "$boot/openclaw/"
+    fi
     cp "$CLOUDFLARED/cloudflared" "$boot/cloudflared/"
 
     cp "$SUDO_PI/"*.sh "$boot/sudo-pi/"

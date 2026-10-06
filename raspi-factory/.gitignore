@@ -20,3 +20,6 @@ dev/authorized_keys
 # Release bundles are built on demand by scripts/publish-release.sh
 sudo-factory.tar.gz
 sudo-factory.tar.gz.sha256
+
+# Prebuilt arm64 OpenClaw for the card, built from a working install
+openclaw/openclaw-bundle.tar.gz

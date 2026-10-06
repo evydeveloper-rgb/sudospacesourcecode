@@ -58,6 +58,29 @@ cp "${BOOT}/sudo-pi/install-openclaw.sh" /usr/local/bin/sudo-install-openclaw.sh
 cp "${BOOT}/sudo-pi/install-openclaw-whatsapp.sh" /usr/local/bin/sudo-install-openclaw-whatsapp.sh
 chmod +x /usr/local/bin/sudo-configure-openclaw.sh /usr/local/bin/sudo-install-openclaw.sh /usr/local/bin/sudo-install-openclaw-whatsapp.sh
 
+# First boot with Wi-Fi: install OpenClaw from the bundle on the card (or npm
+# if the card has none) and hand the agent over to it. Until then picoclaw
+# answers. Stops running once OpenClaw is in place.
+cat > /etc/systemd/system/sudo-openclaw-install.service << 'EOF'
+[Unit]
+Description=Install OpenClaw (Sudo's agent brain)
+After=network-online.target NetworkManager.service
+Wants=network-online.target
+ConditionPathExists=/var/lib/wifi-setup-configured
+ConditionPathExists=!/opt/openclaw/node_modules/.bin/openclaw
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/sudo-install-openclaw.sh
+Environment=HOME=/root
+TimeoutStartSec=1800
+SuccessExitStatus=0 1
+
+[Install]
+WantedBy=multi-user.target
+EOF
+systemctl enable sudo-openclaw-install.service 2>/dev/null || true
+
 cat > /etc/systemd/system/sudo-openclaw-gateway.service << 'EOF'
 [Unit]
 Description=OpenClaw Gateway (Sudo)
