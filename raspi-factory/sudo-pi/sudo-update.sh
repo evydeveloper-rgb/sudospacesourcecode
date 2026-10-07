@@ -310,6 +310,14 @@ fi
 # actually run. Copying them under their repo names instead (as this used
 # to) left every sudo-* copy at its factory version forever, so a fixed
 # helper never reached a device that only updates over Wi-Fi.
+#
+# Most helpers are *.sh/*.py. A few are extensionless executables that the
+# glob cannot see; they are named here so a fix to them reaches existing
+# devices instead of only ever landing on a fresh card.
+#
+# NOTE: single-quoted so these are not function definitions in the embedded
+# Python this script runs later -- they are only referenced from bash.
+EXTRA_HELPERS='sudo-screenshot'
 if [ -d "$root/sudo-pi" ]; then
   for f in "$root"/sudo-pi/*.sh "$root"/sudo-pi/*.py; do
     [ -e "$f" ] || continue
@@ -324,6 +332,11 @@ if [ -d "$root/sudo-pi" ]; then
     # Earlier updates left repo-named copies behind; keep them current too
     # rather than stale, in case anything was pointed at one.
     [ "$target" != "$name" ] && [ -e "$BIN_DIR/$name" ] && install -m 0755 "$f" "$BIN_DIR/$name" 2>>"$LOG"
+  done
+  for name in $EXTRA_HELPERS; do
+    f="$root/sudo-pi/$name"
+    [ -f "$f" ] || continue
+    install -m 0755 "$f" "$BIN_DIR/$name" 2>>"$LOG"
   done
 fi
 
