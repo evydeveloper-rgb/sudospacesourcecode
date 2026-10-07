@@ -329,8 +329,9 @@ fi
 
 # ── Rebuild agent config from template + preserved owner choices ────────────
 # configure-picoclaw.sh reads /opt/sudo/config.json (untouched by this script)
-# and regenerates /opt/sudo/picoclaw/config.json + the identity files, leaving
-# memory/ and sessions/ alone.
+# and regenerates /opt/sudo/picoclaw/config.json + Sudo's own workspace files
+# (AGENTS.md, RUNTIME.md...). The agent's own files (SOUL, IDENTITY, USER,
+# MEMORY), memory/ and sessions/ are left alone.
 if [ -x "$BIN_DIR/sudo-configure-picoclaw.sh" ]; then
   "$BIN_DIR/sudo-configure-picoclaw.sh" >>"$LOG" 2>&1 || log "configure step reported an issue"
 elif [ -x "$BIN_DIR/configure-picoclaw.sh" ]; then

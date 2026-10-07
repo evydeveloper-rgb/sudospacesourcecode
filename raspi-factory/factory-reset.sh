@@ -82,7 +82,7 @@ with open(path, "w", encoding="utf-8") as f:
 os.chmod(path, 0o600)
 PY
 
-rm -rf /opt/sudo/agent-workspace
+rm -rf /opt/sudo/agent-workspace /var/lib/sudo-agent-files.json
 mkdir -p /opt/sudo/agent-workspace
 rm -f /opt/sudo/picoclaw/config.json
 rm -rf /opt/sudo/openclaw

@@ -51,8 +51,10 @@ DEVTOOLS = {"claude": ("Claude Code", "claude"), "codex": ("Codex", "codex")}
 WORKSPACE = "/opt/sudo/agent-workspace"
 # The files that make up the agent's identity and memory. Fixed list rather
 # than a directory walk, so a stray file can never be served.
-AGENT_FILES = ["SOUL.md", "IDENTITY.md", "USER.md", "AGENTS.md", "HEARTBEAT.md",
-               "BOOTSTRAP.md", "RUNTIME.md", "memory/MEMORY.md"]
+# The agent's own files first (it edits these as it learns), then Sudo's.
+# memory/MEMORY.md is where PicoClaw kept long-term memory before OpenClaw.
+AGENT_FILES = ["USER.md", "MEMORY.md", "IDENTITY.md", "SOUL.md", "AGENTS.md", "TOOLS.md",
+               "RUNTIME.md", "HEARTBEAT.md", "BOOTSTRAP.md", "memory/MEMORY.md"]
 # Installing Node takes minutes, so the job runs detached and the dashboard
 # polls this status file rather than holding an HTTP request open.
 DEVTOOLS_STALE_SECS = 15 * 60
@@ -519,7 +521,13 @@ def wifi_current() -> dict:
 def read_agent_files():
     """The agent's own identity/memory files, for the owner to read."""
     out = []
-    for rel in AGENT_FILES:
+    # Daily notes (memory/YYYY-MM-DD.md), newest first, after the main files.
+    try:
+        daily = sorted((n for n in os.listdir(os.path.join(WORKSPACE, "memory"))
+                        if n.endswith(".md") and n != "MEMORY.md"), reverse=True)[:14]
+    except OSError:
+        daily = []
+    for rel in AGENT_FILES + ["memory/" + n for n in daily]:
         path = os.path.join(WORKSPACE, rel)
         if not os.path.isfile(path):
             continue
@@ -528,7 +536,8 @@ def read_agent_files():
                 body = f.read()
         except OSError:
             continue
-        out.append({"name": rel, "bytes": len(body.encode("utf-8")), "content": body})
+        out.append({"name": rel, "bytes": len(body.encode("utf-8")), "content": body,
+                    "modified": int(os.path.getmtime(path) * 1000)})
     return out
 
 

@@ -2191,7 +2191,10 @@
           const size = f.bytes < 1024 ? `${f.bytes} B` : `${(f.bytes / 1024).toFixed(1)} kB`;
           head.innerHTML = '<span class="fname"></span><span class="fsize"></span><span class="chevron">&rsaquo;</span>';
           head.querySelector('.fname').textContent = f.name;
-          head.querySelector('.fsize').textContent = size;
+          // When it last changed, so the owner can see the agent keeping notes.
+          const when = f.modified ? new Date(f.modified).toLocaleString(document.documentElement.lang || undefined,
+            { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
+          head.querySelector('.fsize').textContent = when ? size + ' · ' + when : size;
           const body = document.createElement('pre');
           body.textContent = f.content;   // textContent, never innerHTML
           head.addEventListener('click', () => box.classList.toggle('open'));
