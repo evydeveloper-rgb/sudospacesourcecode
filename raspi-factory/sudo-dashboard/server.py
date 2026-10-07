@@ -1598,6 +1598,82 @@ def read_wa_contacts() -> dict:
     return {"agent_can_add": data.get("agent_can_add", True) is not False, "contacts": contacts}
 
 
+WA_ACTIVITY = "/opt/sudo/whatsapp-activity.json"
+
+
+def crm_people() -> dict:
+    """The owner's contacts, with the recent WhatsApp activity the observer saw.
+    Contacts come from the same file the allow-list uses (whatsapp-contacts.json);
+    the messages come from the observer's activity file. Built for the Contacts
+    app, which is a page of its own rather than a corner of the dashboard --
+    people, who may be messaged, who may be answered, and who is still waiting.
+    """
+    data = read_wa_contacts()
+    raw = data.get("contacts", []) or []
+    activity = read_json_file(WA_ACTIVITY, {}) or {}
+    recent = activity.get("recent", []) if isinstance(activity, dict) else []
+
+    by_number: dict[str, list] = {}
+    for entry in recent if isinstance(recent, list) else []:
+        digits = re.sub(r"[^0-9]", "", str((entry or {}).get("number") or ""))
+        if digits:
+            by_number.setdefault("+" + digits, []).append(entry)
+
+    def last_for(number: str):
+        msgs = by_number.get(number) or []
+        msgs = sorted(msgs, key=lambda m: m.get("ts") or 0)
+        if not msgs:
+            return None, 0
+        last = msgs[-1]
+        return ({
+            "at": last.get("ts"),
+            "from": "them" if last.get("direction") == "in" else "you",
+            "body": last.get("body", ""),
+        }, len(msgs))
+
+    people = []
+    for contact in raw:
+        number = str(contact.get("number") or "")
+        last, count = last_for(number)
+        people.append({
+            "name": contact.get("name", ""),
+            "number": number,
+            "allow_reply": bool(contact.get("allow_reply")),
+            "added_by": contact.get("added_by", "owner"),
+            "last_message": last,
+            "message_count": count,
+            "waiting_on_owner": bool(last and last.get("from") == "them"),
+        })
+    people.sort(key=lambda p: (p["last_message"] or {}).get("at") or 0, reverse=True)
+
+    # People the observer saw who are not on the list yet -- the same people the
+    # agent offers to add in chat. A suggestion, never a send list.
+    listed = {p["number"] for p in people}
+    new_numbers = []
+    for number, msgs in by_number.items():
+        if number in listed:
+            continue
+        last, count = last_for(number)
+        new_numbers.append({
+            "number": number,
+            "name": (last or {}).get("name", "") or "",
+            "last_message": last,
+            "message_count": count,
+            "waiting_on_owner": bool(last and last.get("from") == "them"),
+        })
+    new_numbers.sort(key=lambda p: (p["last_message"] or {}).get("at") or 0, reverse=True)
+
+    state = openclaw_whatsapp_state()
+    return {
+        "owner_number": state.get("owner_number", ""),
+        "read_others": bool(state.get("read_others")),
+        "agent_can_add": bool(data.get("agent_can_add", True)),
+        "agent_number": (state.get("accounts", {}).get("agent") or {}).get("number", ""),
+        "contacts": people,
+        "new_numbers": new_numbers,
+    }
+
+
 def read_wa_observer(cfg: dict | None = None) -> dict:
     """What the sudo-observer plugin is allowed to read. The plugin's own file
     is authoritative once it exists; config.json seeds it on a fresh device."""
@@ -2393,6 +2469,10 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
         # ── WhatsApp through OpenClaw (owner's account, agent's own number) ──
         if path == "/api/agent/whatsapp" and self.command == "GET":
             self.send_json({"backend": agent_backend(), **openclaw_whatsapp_state()})
+            return True
+
+        if path == "/api/agent/crm" and self.command == "GET":
+            self.send_json(crm_people())
             return True
 
         if path == "/api/agent/whatsapp/setup" and self.command == "POST":
@@ -3351,7 +3431,7 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
 
         # One responsive app shell owns each dashboard feature. Keeping these
         # URLs working also preserves old bookmarks and payment return URLs.
-        if path in {
+        if path in (
             "/dashboard.html",
             "/chat.html",
             "/connectors.html",
@@ -3360,7 +3440,8 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             "/billing.html",
             "/onboarding.html",
             "/login.html",
-        }:
+            "/contacts.html",
+        ):
             path = "/index.html"
 
         rel = path.lstrip("/")

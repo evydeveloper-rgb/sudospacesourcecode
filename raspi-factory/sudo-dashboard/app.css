@@ -399,6 +399,106 @@ body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
 .crm-panel #crm-body { margin-top: 12px; }
 .crm-panel .wa-contacts { margin-top: 0; }
 
+/* The Contacts app is a page of its own, reached from the Apps tab. It reads
+   like a small site: its own top bar, tabs, a searchable list of people. */
+.crm-topbar { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px; }
+.crm-back {
+  flex: none; width: 40px; height: 40px; margin-top: 2px; display: grid; place-items: center;
+  border: 1px solid var(--line); border-radius: 12px; background: var(--surface); cursor: pointer;
+}
+.crm-back svg { width: 20px; height: 20px; fill: none; stroke: var(--ink); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.crm-back:hover { border-color: var(--primary); }
+.crm-topbar-title { flex: 1; min-width: 0; }
+.crm-topbar-title h1 { margin: 0; font-size: 1.5rem; letter-spacing: -.02em; }
+.crm-topbar-title .lede { margin: 4px 0 0; }
+.crm-topbar-actions { flex: none; display: flex; gap: 8px; align-self: center; }
+.btn-primary, .btn-secondary {
+  min-height: 42px; padding: 0 16px; border-radius: var(--radius); font-weight: 800; font-size: .82rem;
+  cursor: pointer; border: 1px solid transparent; white-space: nowrap;
+}
+.btn-primary { background: var(--accent); color: var(--ink); box-shadow: 0 6px 16px rgba(232,150,122,.23); }
+.btn-primary:hover { filter: brightness(1.03); }
+.btn-secondary { background: var(--surface); color: var(--ink); border-color: var(--line); }
+.btn-secondary:hover { border-color: var(--primary); }
+.btn-sm { min-height: 36px; padding: 0 12px; font-size: .76rem; }
+
+.crm-tabs { display: flex; align-items: center; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+.crm-tab {
+  display: inline-flex; align-items: center; gap: 7px; padding: 8px 14px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--surface); font-weight: 700; font-size: .8rem; cursor: pointer;
+}
+.crm-tab em { font-style: normal; color: var(--ink-4); font-weight: 600; }
+.crm-tab.active { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.crm-tab.active em { color: rgba(255,255,255,.7); }
+.crm-read-toggle { margin-inline-start: auto !important; display: inline-flex; align-items: center; gap: 8px; }
+.crm-read-toggle .switch-text { font-size: .76rem; font-weight: 700; color: var(--ink-2); }
+
+.crm-card {
+  margin-bottom: 14px; padding: 16px; border: 1px solid var(--line); border-radius: var(--radius-lg);
+  background: var(--surface); animation: enter .2s ease both;
+}
+.crm-card-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.crm-card-head strong { font-size: 1rem; }
+.crm-card .microcopy { margin: 8px 0 14px; }
+.crm-add-grid { display: grid; gap: 10px; }
+@media (min-width: 620px) { .crm-add-grid { grid-template-columns: 1fr 1fr; align-items: center; } .crm-add-grid .btn-primary { grid-column: 2; justify-self: end; } }
+.crm-input {
+  width: 100%; min-height: 46px; padding: 0 14px; border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--surface); font-size: .85rem;
+}
+.crm-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(52,0,117,.12); }
+.crm-error { margin: 10px 0 0; color: var(--error); font-size: .78rem; }
+
+.crm-search { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; padding: 0 14px; min-height: 46px;
+  border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+.crm-search svg { width: 18px; height: 18px; fill: none; stroke: var(--ink-3); stroke-width: 2; stroke-linecap: round; flex: none; }
+.crm-search input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; font-size: .85rem; }
+
+.crm-list { display: grid; gap: 10px; }
+.crm-row {
+  display: grid; grid-template-columns: auto 1fr auto; grid-template-areas: "avatar who meta" "avatar who actions";
+  gap: 2px 14px; align-items: center; padding: 14px 16px; border: 1px solid var(--line);
+  border-radius: var(--radius-lg); background: var(--surface); transition: border-color .15s ease, box-shadow .15s ease;
+}
+.crm-row:hover { border-color: var(--line-2); box-shadow: var(--shadow-glass); }
+.crm-row.waiting { border-inline-start: 3px solid var(--coral); }
+.crm-avatar {
+  grid-area: avatar; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--primary-fixed); color: var(--primary-container); font-weight: 800; font-size: 1rem; flex: none;
+}
+.crm-who { grid-area: who; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.crm-who strong { font-size: .92rem; color: var(--ink); }
+.crm-num { font-size: .76rem; color: var(--ink-3); font-family: var(--font-mono); }
+.crm-last { font-size: .78rem; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 46ch; margin-top: 2px; }
+.crm-meta { grid-area: meta; display: flex; align-items: center; gap: 8px; justify-self: end; }
+.crm-pill { padding: 3px 9px; border-radius: 999px; font-size: .64rem; font-weight: 800; }
+.crm-pill.waiting { background: var(--coral-tint); color: var(--coral-2); }
+.crm-when { font-size: .68rem; color: var(--ink-4); }
+.crm-actions { grid-area: actions; justify-self: end; display: flex; align-items: center; gap: 12px; }
+.crm-reply .switch-text { font-size: .72rem; font-weight: 700; color: var(--ink-2); }
+.crm-remove {
+  border: 0; background: transparent; color: var(--ink-3); font-size: .74rem; font-weight: 700; cursor: pointer;
+  padding: 6px 4px;
+}
+.crm-remove:hover { color: var(--error); }
+.crm-empty { padding: 28px 16px; text-align: center; color: var(--ink-3); font-size: .84rem; }
+.crm-foot { margin-top: 18px; padding: 16px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
+.crm-foot .switch { display: inline-flex; align-items: center; gap: 10px; }
+.crm-foot .switch-text { font-size: .82rem; font-weight: 700; color: var(--ink); }
+
+.toast {
+  position: fixed; z-index: 60; left: 50%; bottom: 90px; transform: translate(-50%, 12px);
+  padding: 11px 18px; border-radius: 999px; background: var(--ink); color: var(--surface);
+  font-size: .8rem; font-weight: 700; opacity: 0; pointer-events: none; transition: opacity .2s ease, transform .2s ease;
+  box-shadow: 0 10px 30px rgba(22,19,17,.25); max-width: 88vw; text-align: center;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+@media (max-width: 619px) {
+  .crm-row { grid-template-columns: auto 1fr; grid-template-areas: "avatar who" "meta meta" "actions actions"; gap: 8px 12px; }
+  .crm-meta, .crm-actions { justify-self: start; }
+  .crm-topbar-actions { flex-direction: column; }
+}
+
 /* "Build your contacts" guide inside the Contacts app. Kept collapsed by
    default: the list is what people come for, the how-to is for when they want
    to grow it. */

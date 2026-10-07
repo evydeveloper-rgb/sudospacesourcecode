@@ -652,48 +652,97 @@
           </button>
         </div>
 
-        <div class="crm-panel" id="crm-panel" hidden>
-          <div class="crm-panel-head">
-            <div>
-              <strong data-i18n="apps.crm">Contacts</strong>
-              <small class="microcopy" data-i18n="apps.crmIntro">The people your agent may message on WhatsApp, and the switch for letting it ask you to add new ones. Same list as Channels → WhatsApp.</small>
-            </div>
-            <button class="whatsapp-panel-close" type="button" id="crm-close" data-i18n="set.channels.close">Close</button>
+      </section>
+
+      <section class="view" id="view-contacts" aria-labelledby="contacts-title">
+        <header class="crm-topbar">
+          <button class="crm-back" type="button" id="crm-back" aria-label="Back" data-i18n-attr="aria-label:crm.back">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <div class="crm-topbar-title">
+            <h1 id="contacts-title" data-i18n="apps.crm">Contacts</h1>
+            <p class="lede" data-i18n="crm.lede">The people in your orbit — who your agent may message, who it may answer, and who is waiting on you.</p>
           </div>
-          <div id="crm-body"></div>
+          <div class="crm-topbar-actions">
+            <button class="btn-secondary" type="button" id="crm-import-btn" data-i18n="crm.import">Import</button>
+            <button class="btn-primary" type="button" id="crm-new-btn" data-i18n="crm.new">New contact</button>
+          </div>
+        </header>
 
-          <details class="crm-guide" id="crm-guide">
-            <summary data-i18n="crm.build.title">Build your contacts — bring them in from LinkedIn and Instagram</summary>
-            <p class="microcopy" data-i18n="crm.build.intro">Add the people you already know. Your agent can then message the ones you allow, remind you who to follow up with, and never lose a thread. Two ways to bring a list in — pick either, or both.</p>
+        <nav class="crm-tabs" role="tablist">
+          <button class="crm-tab active" type="button" role="tab" data-crm-tab="people" aria-selected="true"><span data-i18n="crm.tabPeople">People</span> <em id="crm-count-people"></em></button>
+          <button class="crm-tab" type="button" role="tab" data-crm-tab="new" aria-selected="false"><span data-i18n="crm.tabNew">New numbers</span> <em id="crm-count-new"></em></button>
+          <label class="switch crm-read-toggle">
+            <input type="checkbox" id="crm-read-others"><span aria-hidden="true"></span>
+            <em class="switch-text" data-i18n="crm.readOthers">Read my other chats</em>
+          </label>
+        </nav>
 
-            <h4 data-i18n="crm.build.linkedinTitle">From LinkedIn</h4>
-            <ol class="crm-steps">
-              <li data-i18n-html="crm.build.li1">Open LinkedIn on a computer and go to <strong>My Network → Connections</strong>.</li>
-              <li data-i18n-html="crm.build.li2">Click <strong>Manage synced and imported contacts</strong>, then under <em>Export contacts</em> choose <strong>Export connections</strong>.</li>
-              <li data-i18n="crm.build.li3">LinkedIn emails you a CSV file. Download it.</li>
-              <li data-i18n-html="crm.build.li4">Ask your agent here: <em>“Add these people to my contacts”</em> and attach the CSV, or say <em>“I exported my LinkedIn contacts”</em> and it will walk you through it.</li>
-            </ol>
-            <button class="prompt-chip" type="button" data-prompt="I'd like to add my LinkedIn contacts. I've exported them from LinkedIn — help me bring them in." data-prompt-key="crm.build.liPrompt" data-i18n="crm.build.liPrompt">“Help me add my LinkedIn contacts”</button>
-
-            <h4 data-i18n="crm.build.instagramTitle">From Instagram</h4>
-            <p class="microcopy" data-i18n-html="crm.build.igIntro">Instagram does not let you export your followers in one tap, but you can <strong>download your information</strong> and the list is in there.</p>
-            <ol class="crm-steps">
-              <li data-i18n-html="crm.build.ig1">In the Instagram app: <strong>Profile → menu (☰) → Your activity → Download your information</strong>.</li>
-              <li data-i18n-html="crm.build.ig2">Choose <strong>Followers and following</strong> (deselect the rest to keep it quick), format <strong>JSON</strong>, then <strong>Request download</strong>.</li>
-              <li data-i18n="crm.build.ig3">Instagram emails you a link when it is ready — often within minutes, sometimes a few hours. Download and unzip it.</li>
-              <li data-i18n-html="crm.build.ig4">Ask your agent: <em>“Add the people I follow on Instagram to my contacts”</em> and attach the file. Note that Instagram gives handles, not phone numbers — the agent can keep them as contacts and you add numbers later as you talk.</li>
-            </ol>
-            <button class="prompt-chip" type="button" data-prompt="I downloaded my Instagram information and want to add the people I follow to my contacts." data-prompt-key="crm.build.igPrompt" data-i18n="crm.build.igPrompt">“Help me add my Instagram contacts”</button>
-
-            <h4 data-i18n="crm.build.linkTitle">Linking people to the right number</h4>
-            <p class="microcopy" data-i18n="crm.build.linkIntro">A name is only half of it — to message someone on WhatsApp your agent needs their number. Three ways to close that gap:</p>
-            <ul class="crm-steps">
-              <li data-i18n-html="crm.build.link1">Add the number by hand in the list above (the <strong>Add</strong> box). Fastest for the few people who matter most.</li>
-              <li data-i18n-html="crm.build.link2">Ask your agent: <em>“What is Rosa's number?”</em> once you have talked, and it will match the name to the number it saw.</li>
-              <li data-i18n-html="crm.build.link3">Turn on <strong>Let my agent read my other WhatsApp chats</strong> in Channels → WhatsApp. When someone new writes to you, the agent can ask whether to add them — no typing a number at all.</li>
-            </ul>
-          </details>
+        <div class="crm-card" id="crm-add-card" hidden>
+          <div class="crm-card-head">
+            <strong data-i18n="crm.addTitle">Add someone</strong>
+            <button class="whatsapp-panel-close" type="button" id="crm-add-close" data-i18n="set.channels.close">Close</button>
+          </div>
+          <p class="microcopy" data-i18n="wa.contacts.intro">Besides you, your agent can message these people from its own number: a reminder for someone, or a message you ask it to pass on. Tick “Sudo can reply” for anyone it may also answer when they message it. It only takes instructions from you.</p>
+          <div class="crm-add-grid">
+            <input type="text" id="crm-name" class="crm-input" data-i18n-attr="placeholder:wa.contacts.namePlaceholder,aria-label:wa.contacts.nameLabel" placeholder="Name, e.g. Rosa (sister)">
+            <input type="tel" id="crm-number" class="crm-input" data-i18n-attr="placeholder:wa.contacts.numberPlaceholder,aria-label:wa.contacts.numberLabel" placeholder="+1 555 123 4567">
+            <label class="switch">
+              <input type="checkbox" id="crm-new-reply"><span aria-hidden="true"></span>
+              <em class="switch-text" data-i18n="wa.contacts.canReplyNew">Sudo can reply to them</em>
+            </label>
+            <button class="btn-primary" type="button" id="crm-add-confirm" data-i18n="wa.contacts.add">Add</button>
+          </div>
+          <p class="crm-error" id="crm-add-error" hidden></p>
         </div>
+
+        <label class="crm-search">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input type="search" id="crm-search" data-i18n-attr="placeholder:crm.search">
+        </label>
+
+        <div class="crm-list" id="crm-list" role="list"></div>
+        <div class="crm-empty" id="crm-empty" hidden></div>
+
+        <div class="crm-foot">
+          <label class="switch">
+            <input type="checkbox" id="crm-agent-can-add"><span aria-hidden="true"></span>
+            <em class="switch-text" data-i18n="wa.contacts.agentCanAdd">Let my agent add people when I ask in chat</em>
+          </label>
+          <small class="microcopy" data-i18n="wa.contacts.agentCanAddHint">Say "add my sister Rosa, +1…" and it adds her here. It never adds someone because a website or email asked.</small>
+        </div>
+
+        <details class="crm-guide" id="crm-guide">
+          <summary data-i18n="crm.build.title">Build your contacts — bring them in from LinkedIn and Instagram</summary>
+          <p class="microcopy" data-i18n="crm.build.intro">Add the people you already know. Your agent can then message the ones you allow, remind you who to follow up with, and never lose a thread. Two ways to bring a list in — pick either, or both.</p>
+
+          <h4 data-i18n="crm.build.linkedinTitle">From LinkedIn</h4>
+          <ol class="crm-steps">
+            <li data-i18n-html="crm.build.li1">Open LinkedIn on a computer and go to <strong>My Network → Connections</strong>.</li>
+            <li data-i18n-html="crm.build.li2">Click <strong>Manage synced and imported contacts</strong>, then under <em>Export contacts</em> choose <strong>Export connections</strong>.</li>
+            <li data-i18n="crm.build.li3">LinkedIn emails you a CSV file. Download it.</li>
+            <li data-i18n-html="crm.build.li4">Ask your agent here: <em>“Add these people to my contacts”</em> and attach the CSV, or say <em>“I exported my LinkedIn contacts”</em> and it will walk you through it.</li>
+          </ol>
+          <button class="prompt-chip" type="button" data-prompt="I'd like to add my LinkedIn contacts. I've exported them from LinkedIn — help me bring them in." data-prompt-key="crm.build.liPrompt" data-i18n="crm.build.liPrompt">“Help me add my LinkedIn contacts”</button>
+
+          <h4 data-i18n="crm.build.instagramTitle">From Instagram</h4>
+          <p class="microcopy" data-i18n-html="crm.build.igIntro">Instagram does not let you export your followers in one tap, but you can <strong>download your information</strong> and the list is in there.</p>
+          <ol class="crm-steps">
+            <li data-i18n-html="crm.build.ig1">In the Instagram app: <strong>Profile → menu (☰) → Your activity → Download your information</strong>.</li>
+            <li data-i18n-html="crm.build.ig2">Choose <strong>Followers and following</strong> (deselect the rest to keep it quick), format <strong>JSON</strong>, then <strong>Request download</strong>.</li>
+            <li data-i18n="crm.build.ig3">Instagram emails you a link when it is ready — often within minutes, sometimes a few hours. Download and unzip it.</li>
+            <li data-i18n-html="crm.build.ig4">Ask your agent: <em>“Add the people I follow on Instagram to my contacts”</em> and attach the file. Note that Instagram gives handles, not phone numbers — the agent can keep them as contacts and you add numbers later as you talk.</li>
+          </ol>
+          <button class="prompt-chip" type="button" data-prompt="I downloaded my Instagram information and want to add the people I follow to my contacts." data-prompt-key="crm.build.igPrompt" data-i18n="crm.build.igPrompt">“Help me add my Instagram contacts”</button>
+
+          <h4 data-i18n="crm.build.linkTitle">Linking people to the right number</h4>
+          <p class="microcopy" data-i18n="crm.build.linkIntro">A name is only half of it — to message someone on WhatsApp your agent needs their number. Three ways to close that gap:</p>
+          <ul class="crm-steps">
+            <li data-i18n-html="crm.build.link1">Add the number by hand in the list above (the <strong>Add</strong> box). Fastest for the few people who matter most.</li>
+            <li data-i18n-html="crm.build.link2">Ask your agent: <em>“What is Rosa's number?”</em> once you have talked, and it will match the name to the number it saw.</li>
+            <li data-i18n-html="crm.build.link3">Turn on <strong>Let my agent read my other WhatsApp chats</strong> in Channels → WhatsApp. When someone new writes to you, the agent can ask whether to add them — no typing a number at all.</li>
+          </ul>
+        </details>
       </section>
 
       <section class="view" id="view-channels" aria-labelledby="channels-title">
@@ -1744,6 +1793,7 @@
       if (tab === 'connectors') path = '/connectors.html';
       else if (tab === 'channels') path = '/channels.html';
       else if (tab === 'setup') path = '/setup.html';
+      else if (tab === 'contacts') path = '/contacts.html';
       const entry = { tab, settingPage: null };
       if (silent) history.replaceState(entry, '', path);
       else history.pushState(entry, '', path);
@@ -2963,11 +3013,9 @@
       state.waChecked = true;
       renderWaPrefs(info);
       renderWhatsappSettings(info);
-      // If the Contacts app is open, keep it in step too -- the allow-list
-      // and the read switches are the same state wherever they are shown.
-      if ($('crm-panel') && !$('crm-panel').hidden && $('crm-body')) {
-        $('crm-body').replaceChildren(renderWaContacts(info));
-      }
+      // The Contacts app has its own view; keep it in step when WhatsApp state
+      // is refreshed elsewhere (the allow-list and switches are the same state).
+      if (state.tab === 'contacts' && crm.data) { renderCrm(); }
       renderSetupGuide();
       state.waQr = state.waQr || {};
       const body = $('whatsapp-panel-body');
@@ -3192,21 +3240,243 @@
       });
     }
 
-    // The Contacts app on the Apps tab: the same allow-list the gear shows in
-    // Channels, in its own space for people who think of it as an app.
-    async function openCrm() {
-      $('crm-panel').hidden = false;
-      revealPanel($('crm-panel'));
-      const body = $('crm-body');
-      if (state.waInfo) { body.replaceChildren(renderWaContacts(state.waInfo)); return; }
-      body.replaceChildren();
-      try {
-        const info = await api('/api/agent/whatsapp', {}, 20000);
-        state.waInfo = info;
-        body.replaceChildren(renderWaContacts(info));
-      } catch (_) {
-        // Offline for the moment; the panel title still draws.
+    // A small confirmation that fades on its own. Used where an action has no
+    // visible result of its own (a removal) or to soften a failure.
+    let toastTimer = null;
+    function showToast(message) {
+      let el = $('toast');
+      if (!el) {
+        el = document.createElement('div');
+        el.id = 'toast';
+        el.className = 'toast';
+        document.body.append(el);
       }
+      el.textContent = message;
+      el.classList.add('show');
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+    }
+
+    // The Contacts app: its own page, reached from the Apps tab (and at
+    // /contacts.html). A list of people, who the agent may message, who it may
+    // answer, and who is waiting on a reply -- not just the WhatsApp allow-list.
+    const crm = { data: null, tab: 'people', search: '' };
+
+    async function openCrm() {
+      setTab('contacts');
+      if (crm.data) { renderCrm(); return; }
+      const body = $('crm-list');
+      if (body) body.replaceChildren();
+      try {
+        crm.data = await api('/api/agent/crm', {}, 20000);
+      } catch (_) {
+        crm.data = { contacts: [], new_numbers: [], agent_can_add: true, read_others: false };
+      }
+      renderCrm();
+    }
+
+    function fmtWhen(ts) {
+      if (!ts) return '';
+      const secs = Math.max(0, Math.round((Date.now() - Number(ts)) / 1000));
+      if (secs < 60) return t('time.now');
+      if (secs < 3600) return t('time.minutes', { n: Math.round(secs / 60) });
+      if (secs < 86400) return t('time.hours', { n: Math.round(secs / 3600) });
+      return t('time.days', { n: Math.round(secs / 86400) });
+    }
+
+    function renderCrm() {
+      const d = crm.data || { contacts: [], new_numbers: [] };
+      const people = d.contacts || [];
+      const newNums = d.new_numbers || [];
+      const readOn = !!d.read_others;
+
+      const el = (id) => $(id);
+      if (el('crm-count-people')) el('crm-count-people').textContent = people.length;
+      if (el('crm-count-new')) el('crm-count-new').textContent = newNums.length;
+      if (el('crm-read-others')) el('crm-read-others').checked = readOn;
+      if (el('crm-agent-can-add')) el('crm-agent-can-add').checked = !!d.agent_can_add;
+
+      // Tabs: People vs New numbers. The new-numbers tab only exists once the
+      // read switch is on -- before that there is nothing to have seen.
+      document.querySelectorAll('[data-crm-tab]').forEach(btn => {
+        const id = btn.dataset.crmTab;
+        btn.hidden = id === 'new' && !readOn;
+        const on = id === crm.tab && !btn.hidden;
+        btn.classList.toggle('active', on);
+        btn.setAttribute('aria-selected', on ? 'true' : 'false');
+      });
+      if (crm.tab === 'new' && !readOn) crm.tab = 'people';
+
+      const list = el('crm-list');
+      const empty = el('crm-empty');
+      if (!list) return;
+      list.replaceChildren();
+
+      const source = crm.tab === 'new' ? newNums : people;
+      const q = crm.search.trim().toLowerCase();
+      const shown = !q ? source : source.filter(p =>
+        (p.name || '').toLowerCase().includes(q) || (p.number || '').includes(q));
+
+      if (!shown.length) {
+        if (empty) {
+          empty.hidden = false;
+          if (q) empty.textContent = t('crm.noMatch');
+          else if (crm.tab === 'new') empty.textContent = t('crm.noNew');
+          else empty.textContent = t('wa.contacts.empty');
+        }
+        return;
+      }
+      if (empty) empty.hidden = true;
+
+      shown.forEach(p => list.append(renderCrmRow(p, crm.tab === 'new')));
+    }
+
+    function renderCrmRow(p, isNew) {
+      const row = document.createElement('article');
+      row.className = 'crm-row' + (p.waiting_on_owner ? ' waiting' : '');
+      row.setAttribute('role', 'listitem');
+
+      const avatar = document.createElement('div');
+      avatar.className = 'crm-avatar';
+      avatar.textContent = ((p.name || p.number || '?').trim()[0] || '?').toUpperCase();
+
+      const who = document.createElement('div');
+      who.className = 'crm-who';
+      const nm = document.createElement('strong');
+      nm.textContent = p.name || p.number;
+      const sub = document.createElement('span');
+      sub.className = 'crm-num';
+      if (p.name) sub.textContent = p.number;
+      else sub.textContent = isNew ? t('crm.unknownPerson') : '';
+      who.append(nm);
+      if (sub.textContent) who.append(sub);
+      if (p.last_message && p.last_message.body) {
+        const last = document.createElement('span');
+        last.className = 'crm-last';
+        last.textContent = (p.last_message.from === 'them' ? '' : '↩ ') + p.last_message.body;
+        who.append(last);
+      }
+
+      const meta = document.createElement('div');
+      meta.className = 'crm-meta';
+      if (p.waiting_on_owner) {
+        const w = document.createElement('span');
+        w.className = 'crm-pill waiting';
+        w.textContent = t('crm.waiting');
+        meta.append(w);
+      }
+      if (p.last_message && p.last_message.at) {
+        const when = document.createElement('span');
+        when.className = 'crm-when';
+        when.textContent = fmtWhen(p.last_message.at);
+        meta.append(when);
+      }
+
+      const actions = document.createElement('div');
+      actions.className = 'crm-actions';
+
+      if (isNew) {
+        const add = document.createElement('button');
+        add.type = 'button';
+        add.className = 'btn-primary btn-sm';
+        add.textContent = t('crm.addToList');
+        add.addEventListener('click', () => {
+          $('crm-name').value = p.name || '';
+          $('crm-number').value = p.number || '';
+          $('crm-add-card').hidden = false;
+          revealPanel($('crm-add-card'));
+          crm.tab = 'people';
+        });
+        actions.append(add);
+      } else {
+        const reply = document.createElement('label');
+        reply.className = 'switch crm-reply';
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.checked = !!p.allow_reply;
+        cb.setAttribute('aria-label', t('wa.contacts.canReplyLabel', { name: p.name || p.number }));
+        cb.addEventListener('change', () => saveCrmReply(p.number, cb.checked, cb));
+        const track = document.createElement('span');
+        track.className = 'switch-track';
+        track.setAttribute('aria-hidden', 'true');
+        const txt = document.createElement('span');
+        txt.className = 'switch-text';
+        txt.textContent = t('wa.contacts.canReply');
+        reply.append(cb, track, txt);
+        actions.append(reply);
+
+        const rm = document.createElement('button');
+        rm.type = 'button';
+        rm.className = 'crm-remove';
+        rm.textContent = t('wa.contacts.remove');
+        rm.setAttribute('aria-label', t('wa.contacts.removeLabel', { name: p.name || p.number }));
+        rm.addEventListener('click', () => saveCrmRemove(p.number));
+        actions.append(rm);
+      }
+
+      row.append(avatar, who, meta, actions);
+      return row;
+    }
+
+    async function crmPost(payload) {
+      const info = await api('/api/agent/whatsapp/contacts', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+      }, 20000);
+      // The write returns the same shape openclaw_whatsapp_state() does; refresh
+      // the page's own view so a toggle or add shows immediately.
+      crm.data = await api('/api/agent/crm', {}, 20000).catch(() => crm.data);
+      renderCrm();
+      return info;
+    }
+
+    async function saveCrmReply(number, value, cb) {
+      if (cb) cb.disabled = true;
+      try { await crmPost({ action: 'can_reply', number, value }); }
+      catch (err) { if (cb) cb.checked = !value; showToast(t('crm.saveFailed')); }
+    }
+
+    async function saveCrmRemove(number) {
+      try { await crmPost({ action: 'remove', number }); showToast(t('crm.removed')); }
+      catch (_) { showToast(t('crm.saveFailed')); }
+    }
+
+    async function saveCrmAdd() {
+      const name = $('crm-name').value.trim();
+      const number = $('crm-number').value.trim();
+      const err = $('crm-add-error');
+      err.hidden = true;
+      if (!name || !number) {
+        err.textContent = t('crm.needBoth');
+        err.hidden = false;
+        return;
+      }
+      try {
+        await crmPost({ action: 'add', name, number, can_reply: $('crm-new-reply').checked });
+        $('crm-name').value = '';
+        $('crm-number').value = '';
+        $('crm-new-reply').checked = false;
+        $('crm-add-card').hidden = true;
+        showToast(t('crm.added', { name }));
+      } catch (ex) {
+        err.textContent = (ex && ex.message) || t('crm.saveFailed');
+        err.hidden = false;
+      }
+    }
+
+    async function saveCrmPrefs(payload) {
+      try {
+        const res = await api('/api/agent/whatsapp/preferences', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+        }, 20000);
+        // Turning reading on can surface people we have never seen before, so
+        // refetch the whole view rather than patch one flag -- otherwise the
+        // New numbers tab appears empty until a reload.
+        crm.data = await api('/api/agent/crm', {}, 20000).catch(() => {
+          if (crm.data) crm.data.read_others = res.read_others;
+          return crm.data;
+        });
+        renderCrm();
+      } catch (_) { showToast(t('crm.saveFailed')); }
     }
 
     async function openWhatsappSettings() {
@@ -4973,6 +5243,7 @@
       else if (path.includes('onboarding')) setTab('settings');
       else if (path.includes('connectors')) setTab('connectors');
       else if (path.includes('channels')) setTab('channels');
+      else if (path.includes('contacts')) openCrm();
       else if (path === '/' || path.includes('dashboard')) setTab('apps');
       else setTab('chat');
 
@@ -5138,7 +5409,26 @@
       $('whatsapp-settings-panel').hidden = true;
     });
     $('crm-open').addEventListener('click', openCrm);
-    $('crm-close').addEventListener('click', () => { $('crm-panel').hidden = true; });
+    if ($('crm-back')) $('crm-back').addEventListener('click', () => setTab('apps'));
+    if ($('crm-new-btn')) $('crm-new-btn').addEventListener('click', () => {
+      $('crm-add-card').hidden = false;
+      revealPanel($('crm-add-card'));
+      $('crm-name').focus();
+    });
+    if ($('crm-import-btn')) $('crm-import-btn').addEventListener('click', () => {
+      const guide = $('crm-guide');
+      if (guide) { guide.open = true; revealPanel(guide); }
+    });
+    if ($('crm-add-close')) $('crm-add-close').addEventListener('click', () => { $('crm-add-card').hidden = true; });
+    if ($('crm-add-confirm')) $('crm-add-confirm').addEventListener('click', saveCrmAdd);
+    if ($('crm-number')) $('crm-number').addEventListener('keydown', (e) => { if (e.key === 'Enter') saveCrmAdd(); });
+    if ($('crm-search')) $('crm-search').addEventListener('input', () => { crm.search = $('crm-search').value; renderCrm(); });
+    if ($('crm-read-others')) $('crm-read-others').addEventListener('change', () => saveCrmPrefs({ read_others: $('crm-read-others').checked }));
+    if ($('crm-agent-can-add')) $('crm-agent-can-add').addEventListener('change', () => crmPost({ action: 'agent_can_add', value: $('crm-agent-can-add').checked }).catch(() => showToast(t('crm.saveFailed'))));
+    document.querySelectorAll('[data-crm-tab]').forEach(btn => btn.addEventListener('click', () => { crm.tab = btn.dataset.crmTab; renderCrm(); }));
+    document.querySelectorAll('#view-contacts .prompt-chip').forEach(chip => chip.addEventListener('click', () => {
+      draftInChat(chip.dataset.prompt || chip.textContent);
+    }));
     if ('ResizeObserver' in window) {
       new ResizeObserver(() => {
         if (state.tab === 'chat') scrollChat('auto');
