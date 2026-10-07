@@ -56,7 +56,8 @@ fi
 cp "${BOOT}/sudo-pi/configure-openclaw.sh" /usr/local/bin/sudo-configure-openclaw.sh
 cp "${BOOT}/sudo-pi/install-openclaw.sh" /usr/local/bin/sudo-install-openclaw.sh
 cp "${BOOT}/sudo-pi/install-openclaw-whatsapp.sh" /usr/local/bin/sudo-install-openclaw-whatsapp.sh
-chmod +x /usr/local/bin/sudo-configure-openclaw.sh /usr/local/bin/sudo-install-openclaw.sh /usr/local/bin/sudo-install-openclaw-whatsapp.sh
+cp "${BOOT}/sudo-pi/composio-relay.py" /usr/local/bin/sudo-composio-relay.py
+chmod +x /usr/local/bin/sudo-configure-openclaw.sh /usr/local/bin/sudo-install-openclaw.sh /usr/local/bin/sudo-install-openclaw-whatsapp.sh /usr/local/bin/sudo-composio-relay.py
 
 # First boot with Wi-Fi: install OpenClaw from the bundle on the card (or npm
 # if the card has none) and hand the agent over to it. Until then picoclaw

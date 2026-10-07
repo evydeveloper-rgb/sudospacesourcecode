@@ -124,17 +124,17 @@ tools_md = []
 
 composio_key = (sudo.get("composio_api_key") or "").strip()
 if composio_key:
+    # Through the local relay (sudo-composio-relay.py), not straight to
+    # connect.composio.dev: Composio 502s about half of authenticated
+    # requests and OpenClaw gives up on the first failure. The relay retries
+    # the safe ones and adds the key itself, so the key is not in this file.
     cfg["mcp"] = {"servers": {"composio": {
-        # Composio's current endpoint and header, per its MCP setup page. The
-        # older mcp.composio.dev/mcp + x-api-key that picoclaw was given
-        # answers with an HTML error page.
-        "url": "https://connect.composio.dev/mcp",
+        "url": "http://127.0.0.1:18791/mcp",
         "transport": "streamable-http",
-        "headers": {"x-consumer-api-key": composio_key},
-        "timeout": 30,
-        "connectTimeout": 10,
+        "timeout": 60,
+        "connectTimeout": 15,
     }}}
-    print("Connectors (Composio): on")
+    print("Connectors (Composio): on, via the local relay")
     # Composio's endpoint fails on and off (502s from its side); a turn that
     # starts during one has no composio__ tools, and the agent then told the
     # owner it knew nothing about connectors.
@@ -240,6 +240,43 @@ print(f"Wrote {out} (model {primary})")
 PY
 
 "$OC_BIN" config validate || echo "WARNING: OpenClaw rejected the generated config"
+
+# The Composio relay. Managed here rather than by install-factory.sh so that a
+# device which only ever updates over Wi-Fi (no installer run, and the OTA
+# updater writes no unit files) still gets it.
+RELAY_UNIT=/etc/systemd/system/sudo-composio-relay.service
+RELAY_BIN=/usr/local/bin/sudo-composio-relay.py
+has_composio=$(python3 -c 'import json;print("1" if (json.load(open("/opt/sudo/config.json")).get("composio_api_key") or "").strip() else "")' 2>/dev/null || true)
+if [ -n "$has_composio" ] && [ -f "$RELAY_BIN" ]; then
+  cat > "$RELAY_UNIT" << 'EOF'
+[Unit]
+Description=Sudo Composio relay (retries Composio's flaky MCP endpoint)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /usr/local/bin/sudo-composio-relay.py
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
+EOF
+  systemctl daemon-reload
+  relay_hash=$(cat "$RELAY_BIN" "$RELAY_UNIT" | sha256sum | cut -d' ' -f1)
+  if [ "$(cat "$STATE_DIR/.relay-hash" 2>/dev/null)" != "$relay_hash" ]; then
+    systemctl enable sudo-composio-relay.service 2>/dev/null || true
+    systemctl restart sudo-composio-relay.service
+    printf '%s' "$relay_hash" > "$STATE_DIR/.relay-hash"
+  else
+    systemctl enable --now sudo-composio-relay.service 2>/dev/null || true
+  fi
+  echo "Composio relay: $(systemctl is-active sudo-composio-relay.service)"
+else
+  systemctl disable --now sudo-composio-relay.service 2>/dev/null || true
+  rm -f "$STATE_DIR/.relay-hash"
+fi
 
 # GitHub access for git under exec, same env file configure-picoclaw.sh keeps.
 DROPIN="/etc/systemd/system/${UNIT}.d"
