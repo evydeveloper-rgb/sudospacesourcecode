@@ -1,0 +1,14 @@
+{
+  "id": "sudo-contacts",
+  "contracts": {
+    "tools": ["whatsapp_contacts"]
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "ownerNumber": { "type": "string" },
+      "ownerName": { "type": "string" }
+    }
+  }
+}

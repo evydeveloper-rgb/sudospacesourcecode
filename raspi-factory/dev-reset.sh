@@ -104,7 +104,7 @@ print("kept:", sorted(data.keys()))
 PY
 
 # Agent identity/memory is regenerated from templates on next configure.
-rm -rf /opt/sudo/agent-workspace /var/lib/sudo-agent-files.json
+rm -rf /opt/sudo/agent-workspace /var/lib/sudo-agent-files.json /opt/sudo/whatsapp-contacts.json
 mkdir -p /opt/sudo/agent-workspace
 rm -f /opt/sudo/picoclaw/config.json
 rm -rf /opt/sudo/openclaw

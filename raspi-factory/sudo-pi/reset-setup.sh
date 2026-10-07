@@ -108,7 +108,7 @@ PY
 
 # 5) Wipe the agent workspace + rendered picoclaw config. Both are regenerated
 #    from templates on the next successful configure.
-rm -rf /opt/sudo/agent-workspace /var/lib/sudo-agent-files.json
+rm -rf /opt/sudo/agent-workspace /var/lib/sudo-agent-files.json /opt/sudo/whatsapp-contacts.json
 mkdir -p /opt/sudo/agent-workspace
 rm -f /opt/sudo/picoclaw/config.json
 rm -rf /opt/sudo/openclaw

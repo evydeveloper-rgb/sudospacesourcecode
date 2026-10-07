@@ -2584,6 +2584,7 @@
       body.append(intro);
 
       ['owner', 'agent'].forEach(id => body.append(renderWaAccount(id, info.accounts[id] || {}, info)));
+      body.append(renderWaContacts(info));
 
       const status = document.createElement('p');
       status.className = 'form-status'; status.id = 'wa-status';
@@ -2718,6 +2719,133 @@
         delete state.waQr[id];
         renderOcWhatsapp(state.waInfo);
         if ($('wa-status')) $('wa-status').textContent = error.message;
+      }
+    }
+
+    // Who the agent may message besides the owner. A collapsible list so it
+    // stays out of the way; the sudo-contacts plugin on the gateway enforces it.
+    function renderWaContacts(info) {
+      const data = info.contacts || { agent_can_add: true, contacts: [] };
+      const box = document.createElement('details');
+      box.className = 'wa-contacts';
+      box.open = !!state.waContactsOpen;
+      box.addEventListener('toggle', () => { state.waContactsOpen = box.open; });
+      const summary = document.createElement('summary');
+      summary.textContent = t('wa.contacts.title', { count: data.contacts.length });
+      box.append(summary);
+
+      const intro = document.createElement('p');
+      intro.className = 'microcopy';
+      intro.textContent = t('wa.contacts.intro');
+      box.append(intro);
+      if (!(info.accounts && info.accounts.agent && info.accounts.agent.linked)) {
+        const needs = document.createElement('p');
+        needs.className = 'wa-needs';
+        needs.textContent = t('wa.contacts.needsAgent');
+        box.append(needs);
+      }
+
+      const list = document.createElement('ul');
+      list.className = 'wa-contact-list';
+      if (!data.contacts.length) {
+        const empty = document.createElement('li');
+        empty.className = 'microcopy';
+        empty.textContent = t('wa.contacts.empty');
+        list.append(empty);
+      }
+      data.contacts.forEach(contact => {
+        const row = document.createElement('li');
+        const who = document.createElement('div');
+        const name = document.createElement('strong');
+        name.textContent = contact.name || contact.number;
+        const meta = document.createElement('small');
+        meta.dir = 'ltr';
+        meta.textContent = contact.number;
+        who.append(name, meta);
+        if (contact.added_by === 'agent') {
+          const tag = document.createElement('span');
+          tag.className = 'wa-contact-tag';
+          tag.textContent = t('wa.contacts.addedByAgent');
+          who.append(tag);
+        }
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'wa-contact-remove';
+        remove.textContent = t('wa.contacts.remove');
+        remove.setAttribute('aria-label', t('wa.contacts.removeLabel', { name: contact.name || contact.number }));
+        remove.addEventListener('click', () => saveWaContacts({ action: 'remove', number: contact.number }));
+        row.append(who, remove);
+        list.append(row);
+      });
+      box.append(list);
+
+      // Drafts live in state so the 3-second poll's redraw can't eat them.
+      const draft = state.waContactDraft = state.waContactDraft || { name: '', number: '' };
+      const form = document.createElement('div');
+      form.className = 'wa-contact-add';
+      const nameInput = document.createElement('input');
+      nameInput.type = 'text'; nameInput.placeholder = t('wa.contacts.namePlaceholder');
+      nameInput.setAttribute('aria-label', t('wa.contacts.nameLabel'));
+      nameInput.value = draft.name;
+      nameInput.addEventListener('input', () => { draft.name = nameInput.value; });
+      const numberInput = document.createElement('input');
+      numberInput.type = 'tel'; numberInput.placeholder = '+15551234567'; numberInput.dir = 'ltr';
+      numberInput.setAttribute('aria-label', t('wa.contacts.numberLabel'));
+      numberInput.value = draft.number;
+      numberInput.addEventListener('input', () => { draft.number = numberInput.value; });
+      const add = document.createElement('button');
+      add.type = 'button'; add.className = 'primary-button'; add.textContent = t('wa.contacts.add');
+      add.addEventListener('click', () => saveWaContacts({
+        action: 'add', name: nameInput.value.trim(), number: numberInput.value.trim(),
+      }, true));
+      form.append(nameInput, numberInput, add);
+      box.append(form);
+
+      const row = document.createElement('div');
+      row.className = 'access-row';
+      const label = document.createElement('div');
+      const strong = document.createElement('strong');
+      strong.textContent = t('wa.contacts.agentCanAdd');
+      const small = document.createElement('small');
+      small.textContent = t('wa.contacts.agentCanAddHint');
+      label.append(strong, small);
+      const sw = document.createElement('label');
+      sw.className = 'switch';
+      const input = document.createElement('input');
+      input.type = 'checkbox'; input.checked = !!data.agent_can_add;
+      input.addEventListener('change', () => saveWaContacts({ action: 'agent_can_add', value: input.checked }));
+      const knob = document.createElement('span');
+      knob.setAttribute('aria-hidden', 'true');
+      const sr = document.createElement('em');
+      sr.className = 'sr-only'; sr.textContent = t('wa.contacts.agentCanAdd');
+      sw.append(input, knob, sr);
+      row.append(label, sw);
+      box.append(row);
+
+      const status = document.createElement('p');
+      status.className = 'form-status'; status.id = 'wa-contacts-status';
+      box.append(status);
+      return box;
+    }
+
+    async function saveWaContacts(body, clearDraft) {
+      const status = $('wa-contacts-status');
+      if (status) status.textContent = t('common.saving');
+      try {
+        const info = await api('/api/agent/whatsapp/contacts', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        }, 20000);
+        if (clearDraft) state.waContactDraft = { name: '', number: '' };
+        renderOcWhatsapp(info);
+        const after = $('wa-contacts-status');
+        if (after) {
+          after.textContent = t('common.saved');
+          setTimeout(() => { if (after.textContent === t('common.saved')) after.textContent = ''; }, 2000);
+        }
+      } catch (error) {
+        const after = $('wa-contacts-status');
+        if (after) after.textContent = error.message;
       }
     }
 

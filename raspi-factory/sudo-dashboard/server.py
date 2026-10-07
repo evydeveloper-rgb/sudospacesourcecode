@@ -1303,6 +1303,18 @@ def _linked_number(account: dict) -> str:
     return ""
 
 
+# Who the agent may message on WhatsApp besides the owner. Shared with the
+# sudo-contacts OpenClaw plugin, which enforces it on every outgoing message
+# and lets the agent add people when the owner asks in chat.
+WA_CONTACTS = "/opt/sudo/whatsapp-contacts.json"
+
+
+def read_wa_contacts() -> dict:
+    data = read_json_file(WA_CONTACTS, {}) or {}
+    contacts = [c for c in (data.get("contacts") or []) if isinstance(c, dict) and c.get("number")]
+    return {"agent_can_add": data.get("agent_can_add", True) is not False, "contacts": contacts}
+
+
 def openclaw_whatsapp_state() -> dict:
     cfg = read_json_file(CONFIG)
     install = read_json_file(WA_OC_STATUS, {}) or {}
@@ -1314,6 +1326,7 @@ def openclaw_whatsapp_state() -> dict:
         "accounts": {},
         "read_others": bool(cfg.get("whatsapp_read_others", False)),
         "in_summary": bool(cfg.get("whatsapp_in_summary", False)),
+        "contacts": read_wa_contacts(),
     }
     if not state["installed"]:
         return state
@@ -2119,6 +2132,41 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                 cfg.pop("whatsapp_owner_number", None)
             write_json_file(CONFIG, cfg)
             run_configure_picoclaw()
+            self.send_json(openclaw_whatsapp_state())
+            return True
+
+        if path == "/api/agent/whatsapp/contacts" and self.command == "POST":
+            try:
+                body = self.read_body_json()
+            except (ValueError, json.JSONDecodeError):
+                body = {}
+            if not isinstance(body, dict):
+                body = {}
+            data = read_wa_contacts()
+            action = body.get("action")
+            number = re.sub(r"[\s()-]", "", str(body.get("number") or ""))
+            if action == "add":
+                name = str(body.get("name") or "").strip()[:80]
+                if not E164.match(number):
+                    self.send_json({"error": "Use the full number with country code, like +15551234567"}, code=400)
+                    return True
+                if not name:
+                    self.send_json({"error": "Add a name so you and your agent know who this is"}, code=400)
+                    return True
+                existing = next((c for c in data["contacts"] if c.get("number") == number), None)
+                if existing:
+                    existing["name"] = name
+                else:
+                    data["contacts"].append({"name": name, "number": number, "added_by": "owner",
+                                             "added_at": int(time.time() * 1000)})
+            elif action == "remove":
+                data["contacts"] = [c for c in data["contacts"] if c.get("number") != number]
+            elif action == "agent_can_add":
+                data["agent_can_add"] = bool(body.get("value"))
+            else:
+                self.send_json({"error": "Unknown action"}, code=400)
+                return True
+            write_json_file(WA_CONTACTS, data)
             self.send_json(openclaw_whatsapp_state())
             return True
 

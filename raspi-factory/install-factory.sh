@@ -54,6 +54,10 @@ mkdir -p /opt/sudo-openclaw /opt/sudo/openclaw
 if [ -f "${BOOT}/openclaw/openclaw.base.json" ]; then
     cp "${BOOT}/openclaw/openclaw.base.json" /opt/sudo-openclaw/
 fi
+# Sudo's own OpenClaw plugins (sudo-contacts: who the agent may message).
+if [ -d "${BOOT}/openclaw/plugins" ]; then
+    cp -r "${BOOT}/openclaw/plugins" /opt/sudo-openclaw/
+fi
 cp "${BOOT}/sudo-pi/configure-openclaw.sh" /usr/local/bin/sudo-configure-openclaw.sh
 cp "${BOOT}/sudo-pi/install-openclaw.sh" /usr/local/bin/sudo-install-openclaw.sh
 cp "${BOOT}/sudo-pi/install-openclaw-whatsapp.sh" /usr/local/bin/sudo-install-openclaw-whatsapp.sh

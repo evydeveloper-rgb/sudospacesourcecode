@@ -1,0 +1,10 @@
+{
+  "name": "sudo-contacts",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Limits who the agent can message on WhatsApp to the owner's list.",
+  "type": "module",
+  "openclaw": {
+    "extensions": ["./index.js"]
+  }
+}

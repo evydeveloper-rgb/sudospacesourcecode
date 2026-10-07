@@ -537,6 +537,33 @@ body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
   margin: 8px 0 4px; padding: 10px 12px; border-radius: 10px; text-align: start;
   background: var(--ok-tint); color: var(--ok-ink); font-size: .8rem; font-weight: 700; line-height: 1.45;
 }
+.wa-contacts {
+  margin-top: 14px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px;
+  background: var(--surface); text-align: start;
+}
+.wa-contacts summary { cursor: pointer; font-weight: 700; font-size: .86rem; color: var(--ink); }
+.wa-contacts[open] summary { margin-bottom: 8px; }
+.wa-contact-list { list-style: none; margin: 8px 0; padding: 0; }
+.wa-contact-list li {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 8px 0; border-bottom: 1px solid var(--line);
+}
+.wa-contact-list li:last-child { border-bottom: 0; }
+.wa-contact-list li > div { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; min-width: 0; }
+.wa-contact-list strong { font-size: .84rem; color: var(--ink); }
+.wa-contact-list small { color: var(--muted); font-size: .76rem; }
+.wa-contact-tag {
+  font-size: .68rem; padding: 2px 7px; border-radius: 999px;
+  background: var(--ok-tint); color: var(--ok-ink);
+}
+.wa-contact-remove {
+  flex: none; padding: 5px 10px; border: 1px solid var(--line); border-radius: 999px;
+  background: transparent; color: var(--ink-2); font: inherit; font-size: .74rem; cursor: pointer;
+}
+.wa-contact-add { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; margin: 10px 0 4px; }
+.wa-contact-add input { min-width: 0; margin: 0; }
+.wa-contact-add .primary-button { width: auto; min-height: 44px; margin: 0; padding: 0 16px; }
+@media (max-width: 520px) { .wa-contact-add { grid-template-columns: 1fr; } }
 .wa-number-row { display: flex; gap: 8px; align-items: stretch; margin-top: 7px; }
 .setting-body .wa-number-row input { flex: 1; min-width: 0; margin-top: 0; }
 .wa-number-row .primary-button { width: auto; flex: none; min-height: 49px; margin-top: 0; padding: 0 18px; }

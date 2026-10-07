@@ -191,6 +191,7 @@ copy_factory_files() {
     mkdir -p "$boot/picoclaw/workspace"
     cp "$PICOCLAW/workspace/"*.md "$boot/picoclaw/workspace/"
     cp "$SCRIPT_DIR/openclaw/openclaw.base.json" "$boot/openclaw/"
+    cp -r "$SCRIPT_DIR/openclaw/plugins" "$boot/openclaw/"
     # The version this card carries. Without it the device reports 0.0.0 and
     # its first automatic update treats any release as newer.
     cp "$SCRIPT_DIR/VERSION" "$boot/sudo-version"
