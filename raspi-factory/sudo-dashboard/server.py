@@ -780,12 +780,17 @@ def owner_session_key():
 
 
 def run_configure_picoclaw():
+    """Apply settings, outside this service's sandbox: the configure scripts
+    write unit files and drop-ins under /etc/systemd (the Composio relay, the
+    GitHub env drop-in), which ProtectSystem=full makes read-only for a child
+    of this process. A unique unit name per run so a second Save while one is
+    still applying is not refused."""
     if os.path.isfile(CONFIGURE_SCRIPT):
-        subprocess.Popen(
-            [CONFIGURE_SCRIPT],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
+        try:
+            run_privileged(f"sudo-configure-{int(time.time() * 1000)}", CONFIGURE_SCRIPT,
+                           wait=False, timeout=20)
+        except Exception:
+            pass
 
 
 def local_system_prompt(cfg):
@@ -2300,17 +2305,18 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                 "at": time.time(),
             })
             try:
-                # Runs outside the dashboard's sandbox (it owns /var/lib,
-                # NetworkManager and the service units). Not waited on -- the
-                # script wipes Wi-Fi and brings the hotspot back, so the reply
-                # to this very request is the last thing this dashboard will
-                # ever serve. A short delay lets that reply flush before the
-                # reboot takes the box down.
-                subprocess.Popen(
-                    ["/bin/bash", "-c",
+                # A transient systemd unit, not a child of this process: a child
+                # inherits the dashboard's sandbox (ProtectSystem=full makes
+                # /boot read-only, so the script's first write failed) and its
+                # cgroup, so the script's own "systemctl stop sudo-dashboard"
+                # killed it mid-way. Both happened on every reset until now.
+                # Not waited on: the reply to this request is the last thing
+                # this dashboard serves before the reboot.
+                subprocess.run(
+                    ["systemd-run", "--quiet", "--collect", "--unit=sudo-reset-setup",
+                     "/bin/bash", "-c",
                      f"sleep 1; /bin/bash {RESET_SCRIPT}; sleep 2; /sbin/reboot"],
-                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                    start_new_session=True,
+                    capture_output=True, text=True, timeout=20, check=True,
                 )
             except Exception as exc:
                 write_json_file(RESET_STATUS, {
