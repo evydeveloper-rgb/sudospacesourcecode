@@ -1755,6 +1755,10 @@
       if (silent) history.replaceState(entry, '', path);
       else history.pushState(entry, '', path);
       window.scrollTo({ top: 0, behavior: 'smooth' });
+      // On a phone the scrolling region is #app-main, not the window, so reset
+      // both — a tab should always open at its top.
+      const main = $('app-main');
+      if (main) main.scrollTo({ top: 0, behavior: 'smooth' });
       if (tab === 'chat') scrollChat('auto');
       // The catalog is fetched the first time the Connectors tab is opened, so
       // the other tabs never pay for it.
@@ -3183,10 +3187,23 @@
       if (host) host.replaceChildren(renderWaContacts(info));
     }
 
+    // Bring a panel into view after opening it. On a phone the Apps grid fills
+    // the screen, so a panel that opens below the fold looks like a dead tap.
+    function revealPanel(el) {
+      if (!el) return;
+      requestAnimationFrame(() => {
+        // The scrolling region is #app-main on a phone and the window on
+        // desktop; scrollIntoView on the nearest scrollable ancestor handles
+        // both, so the panel always lands in view after a tap.
+        try { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (_) { el.scrollIntoView(); }
+      });
+    }
+
     // The Contacts app on the Apps tab: the same allow-list the gear shows in
     // Channels, in its own space for people who think of it as an app.
     async function openCrm() {
       $('crm-panel').hidden = false;
+      revealPanel($('crm-panel'));
       const body = $('crm-body');
       if (state.waInfo) { body.replaceChildren(renderWaContacts(state.waInfo)); return; }
       body.replaceChildren();
@@ -3203,6 +3220,7 @@
       $('whatsapp-panel').hidden = true;
       stopWhatsappPoll();
       $('whatsapp-settings-panel').hidden = false;
+      revealPanel($('whatsapp-settings-panel'));
       if (state.waInfo) {
         renderWaPrefs(state.waInfo);
         renderWhatsappSettings(state.waInfo);
