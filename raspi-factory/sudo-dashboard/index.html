@@ -2843,24 +2843,24 @@
       const current = info.current || '1.0.0';
       $('update-current').textContent = current;
       $('update-summary').textContent = t('update.version', { v: current });
-      const state = info.state || 'idle';
+      const phase = info.state || 'idle';
       const pill = $('update-pill');
       const checkBtn = $('update-check');
       const applyBtn = $('update-apply');
       applyBtn.hidden = true;
       checkBtn.disabled = false;
       let tone = 'good', label = t('update.upToDate');
-      if (state === 'available') { tone = 'warn'; label = t('update.available'); }
-      else if (state === 'error') { tone = 'bad'; label = t('update.error'); }
-      else if (state === 'checking' || state === 'downloading' || state === 'applying') {
-        tone = 'warn'; label = t('update.' + state);
+      if (phase === 'available') { tone = 'warn'; label = t('update.available'); }
+      else if (phase === 'error') { tone = 'bad'; label = t('update.error'); }
+      else if (phase === 'checking' || phase === 'downloading' || phase === 'applying') {
+        tone = 'warn'; label = t('update.' + phase);
         checkBtn.disabled = true;
-      } else if (state === 'up-to-date') { label = t('update.upToDate'); }
-      else if (state === 'done') { label = t('update.updated'); }
+      } else if (phase === 'up-to-date') { label = t('update.upToDate'); }
+      else if (phase === 'done') { label = t('update.updated'); }
       pill.textContent = label;
       pill.className = 'status-pill ' + tone;
       $('update-message').textContent = info.message || '';
-      if (state === 'available') applyBtn.hidden = false;
+      if (phase === 'available') applyBtn.hidden = false;
     }
 
     async function runUpdate(checkOnly) {
