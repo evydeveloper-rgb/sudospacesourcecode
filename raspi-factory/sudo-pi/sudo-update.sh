@@ -286,6 +286,13 @@ apply_dir "wifi-setup"     "$WIFI_DIR"
 apply_dir "picoclaw"       "$PICOCLAW_DIR"
 apply_dir "openclaw"       /opt/sudo-openclaw
 
+# Carry the owner's saved choices across versions before the configure step
+# reads them. App code changed; the person's settings must come with it.
+if [ -f "$root/sudo-pi/migrate-config.py" ]; then
+  install -m 0755 "$root/sudo-pi/migrate-config.py" "$BIN_DIR/sudo-migrate-config.py" 2>>"$LOG"
+  python3 "$BIN_DIR/sudo-migrate-config.py" >>"$LOG" 2>&1 || log "config migration reported an issue"
+fi
+
 # The WhatsApp bridge is app code too. Its dependencies live in node_modules
 # beside it, so a change to package.json (a version pin, a new lib) only takes
 # effect after an install -- copy the files, then reinstall if the manifest

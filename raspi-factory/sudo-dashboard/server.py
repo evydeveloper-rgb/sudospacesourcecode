@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 import http.server
+import importlib.util
 import json
 import os
 import re
@@ -3329,6 +3330,18 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
         return True
 
     def serve_static(self, path: str):
+        # The owner's own layer, served from owner data (never overwritten).
+        if path in ("/theme.css", "/overlay.js"):
+            src = "/opt/sudo" + path
+            if not os.path.isfile(src):
+                self.send_error(404)
+                return
+            with open(src, "rb") as f:
+                data = f.read()
+            ctype = "text/css" if path.endswith(".css") else "application/javascript; charset=utf-8"
+            self.send_bytes(data, content_type=ctype)
+            return
+
         if path in ("/", ""):
             status = setup_status()
             if not status["profile_done"]:
@@ -3373,6 +3386,19 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             inject = b'<script>window.SUDO_USE_PROXY=true;</script>'
             data = data.replace(b"</head>", inject + b"</head>", 1)
 
+        # The owner's own layer. theme.css and overlay.js live in /opt/sudo
+        # (owner data, never overwritten by an update) and are pulled into the
+        # page only if they exist. This is the public seam: the look, and a
+        # place to add things, promised to survive releases. Our own markup and
+        # class names stay private and may change.
+        if file_path.endswith("index.html"):
+            if os.path.isfile("/opt/sudo/theme.css"):
+                link = b'<link rel="stylesheet" href="/theme.css">'
+                data = data.replace(b"</head>", link + b"</head>", 1)
+            if os.path.isfile("/opt/sudo/overlay.js"):
+                script = b'<script src="/overlay.js"></script>'
+                data = data.replace(b"</body>", script + b"</body>", 1)
+
         content_type = "text/html; charset=utf-8"
         if file_path.endswith(".js"):
             # i18n.js is UTF-8 (Chinese, Arabic); say so rather than leave the
@@ -3407,7 +3433,32 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
         self.send_error(405)
 
 
+def migrate_config_if_needed() -> None:
+    """Carry the owner's config across versions before anything reads it.
+    An update never overwrites config.json, but a release that renames or
+    reshapes a setting would leave the old key ignored -- the choice still
+    there, just no longer doing anything. This closes that gap. Safe to call
+    every start: it is a no-op once the file is current."""
+    candidates = [
+        "/usr/local/bin/sudo-migrate-config.py",
+        os.path.join(os.path.dirname(ROOT), "sudo-pi", "migrate-config.py"),
+    ]
+    for path in candidates:
+        if not os.path.isfile(path):
+            continue
+        try:
+            spec = importlib.util.spec_from_file_location("sudo_migrate_config", path)
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            module.migrate(CONFIG)
+        except Exception as exc:  # noqa: BLE001 - never block startup on this
+            print(f"config migration skipped: {exc}", flush=True)
+        return
+
+
 if __name__ == "__main__":
+    # Carry the owner's saved choices forward before anything reads them.
+    migrate_config_if_needed()
     # Ensure secrets exist (offline-safe)
     if os.path.isfile("/usr/local/bin/sudo-device-secrets.sh"):
         subprocess.run(["/usr/local/bin/sudo-device-secrets.sh"], check=False)

@@ -310,6 +310,23 @@ if whatsapp_installed:
             f"- If {user} asks you to add people, use `whatsapp_contacts` with action `add`. If they "
             "paste or attach a list, work through it with them and confirm who you added.",
             "",
+            "## Changing how Sudo looks, and adding to it",
+            "",
+            f"- {user} may want to change how Sudo looks or add their own panel. That is welcome. "
+            "You can help them do it, and their changes survive every update.",
+            "- Two files in `/opt/sudo` are theirs, never overwritten by an update:",
+            "`/opt/sudo/theme.css` for the look (colours, spacing, shape) and "
+            "`/opt/sudo/overlay.js` for anything they want to add.",
+            "- A theme must work through the CSS tokens (`--surface`, `--accent`, `--ink`, "
+            "`--line`, `--radius`, ...) — those keep their meaning across releases. Never "
+            "write CSS against our class names; they are private and change.",
+            "- To add something, use the named slots (e.g. `home.panels`) with "
+            "`document.querySelector('[data-sudo-slot=\"...\"]')`. Those anchors stay put.",
+            "- `/opt/sudo/overlay.js` runs with the page's full privileges on this device, so "
+            "only ever write code there that {user} asked for and understands.",
+            "- To go further — rearranging or replacing a whole screen — the honest answer is "
+            "that they would fork it, and then it stops taking updates. Say so plainly.",
+            "",
         ]
         print("WhatsApp contacts: list enforced (sudo-contacts)")
 

@@ -1,0 +1,35 @@
+/* Your theme. Copy this file to /opt/sudo/theme.css and edit it.
+ *
+ * This is the safe way to change how Sudo looks. It survives every update,
+ * because updates only rewrite our app code and never touch /opt/sudo.
+ *
+ * Work with the tokens below, not with our class names. The tokens are the
+ * promise: we keep their meaning stable across releases, so a theme built on
+ * them keeps working even when we change the markup underneath. Class names
+ * are private to us and may change at any time.
+ */
+:root {
+  /* Surfaces and text */
+  --surface: #ffffff;
+  --surface-low: #f6f5f2;
+  --surface-high: #ecebe7;
+  --surface-container: #f1f0ec;
+  --ink: #1c1a17;
+  --ink-2: #4a4640;
+  --ink-3: #8a857c;
+
+  /* The accent colour, and its softer tint */
+  --accent: #e8613c;
+  --on: #e8613c;
+  --on-tint: #fdece6;
+
+  /* Lines and shape */
+  --line: #e2e0da;
+  --radius: 14px;
+
+  /* Example: a warmer, rounder look. Uncomment to try.
+  --accent: #c2410c;
+  --radius: 20px;
+  --surface-low: #faf7f2;
+  */
+}
