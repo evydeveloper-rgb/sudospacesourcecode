@@ -29,7 +29,12 @@
     <!-- Desktop only (>=1024px). The design's rail tracks setup progress, but
          setup happens on the phone, so it carries the real navigation. -->
     <aside class="side-rail" aria-label="Primary navigation" data-i18n-attr="aria-label:nav.primaryNavigation">
-      <div class="rail-brand"><a class="wordmark" href="/" aria-label="Sudo home" data-i18n-attr="aria-label:nav.sudoHome">sudo<span aria-hidden="true"></span><em class="wordmark-beta">beta</em></a></div>
+      <div class="rail-brand">
+        <a class="wordmark" href="/" aria-label="Sudo home" data-i18n-attr="aria-label:nav.sudoHome">sudo<span aria-hidden="true"></span><em class="wordmark-beta">beta</em></a>
+        <button type="button" class="brand-home" data-tab="home" aria-label="Home" title="Home" data-i18n-attr="aria-label:nav.home,title:nav.home">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg>
+        </button>
+      </div>
       <div class="rail-section">
         <p class="rail-label" data-i18n="nav.menu">menu</p>
         <nav class="rail-nav">
@@ -73,7 +78,12 @@
     </aside>
 
     <header class="topbar">
-      <a class="wordmark" href="/" aria-label="Sudo home" data-i18n-attr="aria-label:nav.sudoHome">sudo<span aria-hidden="true"></span><em class="wordmark-beta">beta</em></a>
+      <div class="brand-home-wrap">
+        <a class="wordmark" href="/" aria-label="Sudo home" data-i18n-attr="aria-label:nav.sudoHome">sudo<span aria-hidden="true"></span><em class="wordmark-beta">beta</em></a>
+        <button type="button" class="brand-home" data-tab="home" aria-label="Home" title="Home" data-i18n-attr="aria-label:nav.home,title:nav.home">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg>
+        </button>
+      </div>
       <div class="topbar-right">
         <div class="device-state" id="device-state-wrap"><i aria-hidden="true"></i><span id="device-state">online</span></div>
         <button type="button" class="hub-button" id="hub-button" data-tab="setup" aria-label="Knowledge hub" title="Knowledge hub" hidden data-i18n-attr="aria-label:top.knowledgeHub,title:top.knowledgeHub">
@@ -1711,7 +1721,7 @@
       if (tab === 'home') loadHome();
       document.querySelectorAll('.view').forEach(view => view.classList.toggle('active', view.id === `view-${tab}`));
 
-      document.querySelectorAll('.bottom-nav button, .rail-nav button, .rail-gear, .hub-button').forEach(button => {
+      document.querySelectorAll('.bottom-nav button, .rail-nav button, .rail-gear, .brand-home, .hub-button').forEach(button => {
         const active = button.dataset.tab === tab;
         button.classList.toggle('active', active);
         button.setAttribute('aria-current', active ? 'page' : 'false');
@@ -4836,7 +4846,7 @@
       }
     }
 
-    document.querySelectorAll('.bottom-nav button, .rail-nav button, .rail-gear, .hub-button').forEach(button => button.addEventListener('click', () => setTab(button.dataset.tab)));
+    document.querySelectorAll('.bottom-nav button, .rail-nav button, .rail-gear, .brand-home, .hub-button').forEach(button => button.addEventListener('click', () => setTab(button.dataset.tab)));
     document.querySelectorAll('.setting-head').forEach(button => button.addEventListener('click', () => {
       openSettingPage(button.closest('.setting-card').id);
     }));

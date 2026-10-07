@@ -1763,3 +1763,19 @@ input[type="password"], input[type="tel"], input[type="number"], #ssh-key, #devi
   fill: none; stroke-width: 1.6; stroke-linejoin: round; stroke-linecap: round;
 }
 .home-row.dir .home-row-icon svg { stroke: var(--ink-2); }
+
+/* The home icon beside the "sudo" wordmark (topbar and rail). A quiet,
+   always-there way back to the Home tab, next to the name itself. */
+.brand-home-wrap { display: flex; align-items: center; gap: 10px; }
+.rail-brand { display: flex; align-items: center; gap: 10px; }
+.brand-home {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; padding: 0; border: 0; background: transparent;
+  border-radius: 9px; cursor: pointer; color: var(--ink-3);
+}
+.brand-home:hover { background: var(--surface-container); color: var(--ink); }
+.brand-home svg {
+  width: 19px; height: 19px; fill: none; stroke: currentColor;
+  stroke-width: 1.8; stroke-linejoin: round; stroke-linecap: round;
+}
+.brand-home.active { color: var(--accent); background: var(--surface-container); }
