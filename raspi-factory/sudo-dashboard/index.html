@@ -202,7 +202,7 @@
         <div class="view-heading">
           <div>
             <h1 id="setup-title">Finish setup</h1>
-            <p class="lede" id="setup-lede">Three steps turn sudo from a friendly chat into a real helper. Do them in any order. Once all three are done, this guide moves to the book icon at the top.</p>
+            <p class="lede" id="setup-lede">Three steps turn sudo from a friendly chat into a real helper. Once all three are done, this guide moves to the book icon at the top.</p>
           </div>
         </div>
 
@@ -3493,7 +3493,7 @@
       $('setup-title').textContent = allDone ? 'Knowledge hub' : 'Finish setup';
       $('setup-lede').textContent = allDone
         ? 'How your agent works — models and costs, WhatsApp, and your apps. Come back any time.'
-        : 'Three steps turn sudo from a friendly chat into a real helper. Do them in any order. Once all three are done, this guide moves to the book icon at the top.';
+        : 'Three steps turn sudo from a friendly chat into a real helper. Once all three are done, this guide moves to the book icon at the top.';
       SETUP_STEPS.forEach((step, i) => {
         const isDone = done[step.key];
         const card = $(`step-${step.key}`);
