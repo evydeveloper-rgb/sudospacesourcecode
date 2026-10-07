@@ -4516,10 +4516,44 @@
       }
     }
 
+    // A hidden textarea + execCommand fallback for copying. The modern
+    // clipboard API (navigator.clipboard) only exists in a "secure context"
+    // -- https, or localhost. The dashboard is normally opened at
+    // http://raspberrypi.local, where it is undefined, which is why Copy on
+    // the Cloudflare URL and password did nothing useful there: the old code
+    // threw and dropped straight to a prompt. execCommand('copy') still works
+    // without a secure context, so it is the real path on a plain-HTTP box.
+    function legacyCopy(text) {
+      const area = document.createElement('textarea');
+      area.value = text;
+      area.setAttribute('readonly', '');
+      area.style.position = 'fixed';
+      area.style.top = '-1000px';
+      area.style.opacity = '0';
+      document.body.appendChild(area);
+      let ok = false;
+      try {
+        area.select();
+        area.setSelectionRange(0, text.length);
+        ok = document.execCommand('copy');
+      } catch (_) {
+        ok = false;
+      }
+      document.body.removeChild(area);
+      return ok;
+    }
+
     async function copyText(text, button) {
       if (!text) return;
-      try { await navigator.clipboard.writeText(text); }
-      catch (_) { prompt(t('common.copyPrompt'), text); }
+      let ok = false;
+      if (window.isSecureContext && navigator.clipboard && navigator.clipboard.writeText) {
+        try { await navigator.clipboard.writeText(text); ok = true; }
+        catch (_) { ok = false; }
+      }
+      if (!ok) ok = legacyCopy(text);
+      // Only claim "copied" when a copy actually happened: if both paths
+      // failed we show the selectable prompt instead of a lie.
+      if (!ok) { prompt(t('common.copyPrompt'), text); return; }
       const old = button.textContent;
       button.textContent = t('common.copied');
       setTimeout(() => { button.textContent = old; }, 1500);
