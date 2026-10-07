@@ -65,6 +65,12 @@ DEFAULT_MODEL = "sudo-default"
 # Dashboard colour schemes. Must match the [data-theme=...] blocks in app.css
 # and the options in the Settings picker.
 ALLOWED_THEMES = {"default", "minimal", "terminal", "midnight"}
+# Two separate language choices. ui_language is the dashboard's own words
+# (must match the dictionaries in i18n.js); unset means each browser picks
+# from its own language. agent_language is what the agent replies in;
+# "auto" (or unset) means match the language the person writes in.
+UI_LANGUAGES = {"en", "es", "zh", "ar"}
+AGENT_LANGUAGES = {"auto", "en", "es", "zh", "ar"}
 DEFAULT_THEME = "default"
 
 # Sudo-managed credits / billing + cloud device registration are temporarily
@@ -634,6 +640,10 @@ def setup_status(include_sensitive=False):
         # polls whatsapp_state() directly for the real thing while it is open.
         "whatsapp_connected": whatsapp_state()["state"] == "connected",
         "prefer_local": bool(cfg.get("prefer_local")),
+        "ui_language": cfg.get("ui_language") if cfg.get("ui_language") in UI_LANGUAGES else None,
+        "agent_language": (
+            cfg.get("agent_language") if cfg.get("agent_language") in AGENT_LANGUAGES else "auto"
+        ),
         "remote_password_enabled": bool(cfg.get("remote_password_enabled", True)),
         "has_dashboard_password": bool(
             read_text(PASS_HASH_FILE) or read_text(PASS_FILE)
@@ -2336,6 +2346,38 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             self.send_json({"workspace": WORKSPACE, "files": read_agent_files()})
             return True
 
+        # Dashboard language and the agent's reply language. One handler, two
+        # paths, either field: they are saved independently, and only a change
+        # to the agent's language needs the agent's config rewritten.
+        if path in ("/api/agent/ui-language", "/api/agent/agent-language") and self.command == "POST":
+            try:
+                body = self.read_body_json()
+            except (ValueError, json.JSONDecodeError):
+                self.send_json({"error": "Invalid JSON"}, code=400)
+                return True
+            ui = body.get("ui_language")
+            agent = body.get("agent_language")
+            if ui is None and agent is None:
+                self.send_json({"error": "Nothing to save"}, code=400)
+                return True
+            if ui is not None and ui not in UI_LANGUAGES:
+                self.send_json({"error": "Unknown language"}, code=400)
+                return True
+            if agent is not None and agent not in AGENT_LANGUAGES:
+                self.send_json({"error": "Unknown language"}, code=400)
+                return True
+            cfg = read_json_file(CONFIG)
+            agent_changed = agent is not None and agent != cfg.get("agent_language", "auto")
+            if ui is not None:
+                cfg["ui_language"] = ui
+            if agent is not None:
+                cfg["agent_language"] = agent
+            write_json_file(CONFIG, cfg)
+            if agent_changed:
+                run_configure_picoclaw()
+            self.send_json({"ok": True, **setup_status(include_sensitive=False)})
+            return True
+
         if path == "/api/agent/abilities" and self.command == "POST":
             try:
                 body = self.read_body_json()
@@ -2807,7 +2849,9 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
 
         content_type = "text/html; charset=utf-8"
         if file_path.endswith(".js"):
-            content_type = "application/javascript"
+            # i18n.js is UTF-8 (Chinese, Arabic); say so rather than leave the
+            # browser to guess from the page.
+            content_type = "application/javascript; charset=utf-8"
         elif file_path.endswith(".css"):
             content_type = "text/css"
         elif file_path.endswith(".json"):
