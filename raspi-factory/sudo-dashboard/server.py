@@ -2450,13 +2450,24 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                 existing = next((c for c in data["contacts"] if c.get("number") == number), None)
                 if existing:
                     existing["name"] = name
+                    if "can_reply" in body:
+                        existing["allow_reply"] = bool(body.get("can_reply"))
                 else:
-                    data["contacts"].append({"name": name, "number": number, "added_by": "owner",
-                                             "added_at": int(time.time() * 1000)})
+                    entry = {"name": name, "number": number, "added_by": "owner",
+                             "added_at": int(time.time() * 1000)}
+                    if "can_reply" in body:
+                        entry["allow_reply"] = bool(body.get("can_reply"))
+                    data["contacts"].append(entry)
             elif action == "remove":
                 data["contacts"] = [c for c in data["contacts"] if c.get("number") != number]
             elif action == "agent_can_add":
                 data["agent_can_add"] = bool(body.get("value"))
+            elif action == "can_reply":
+                person = next((c for c in data["contacts"] if c.get("number") == number), None)
+                if not person:
+                    self.send_json({"error": "Nobody on the list matches that"}, code=404)
+                    return True
+                person["allow_reply"] = bool(body.get("value"))
             else:
                 self.send_json({"error": "Unknown action"}, code=400)
                 return True

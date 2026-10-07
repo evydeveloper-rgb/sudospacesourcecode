@@ -3265,7 +3265,27 @@
         remove.textContent = t('wa.contacts.remove');
         remove.setAttribute('aria-label', t('wa.contacts.removeLabel', { name: contact.name || contact.number }));
         remove.addEventListener('click', () => saveWaContacts({ action: 'remove', number: contact.number }));
-        row.append(who, remove);
+        // "Sudo can reply to them": the agent may answer messages this person
+        // sends, not only message them first. Off by default so a person never
+        // gets a reply from the agent unless the owner asked for it.
+        const replyLabel = document.createElement('label');
+        replyLabel.className = 'wa-contact-reply';
+        const replyText = document.createElement('span');
+        replyText.textContent = t('wa.contacts.canReply');
+        const replySwitch = document.createElement('span');
+        replySwitch.className = 'switch';
+        const replyInput = document.createElement('input');
+        replyInput.type = 'checkbox';
+        replyInput.checked = contact.allow_reply === true;
+        replyInput.setAttribute('aria-label', t('wa.contacts.canReplyLabel', { name: contact.name || contact.number }));
+        replyInput.addEventListener('change', () => saveWaContacts({
+          action: 'can_reply', number: contact.number, value: replyInput.checked,
+        }));
+        const replyKnob = document.createElement('span');
+        replyKnob.setAttribute('aria-hidden', 'true');
+        replySwitch.append(replyInput, replyKnob);
+        replyLabel.append(replyText, replySwitch);
+        row.append(who, replyLabel, remove);
         list.append(row);
       });
       box.append(list);
@@ -3288,9 +3308,27 @@
       add.type = 'button'; add.className = 'primary-button'; add.textContent = t('wa.contacts.add');
       add.addEventListener('click', () => saveWaContacts({
         action: 'add', name: nameInput.value.trim(), number: numberInput.value.trim(),
+        can_reply: newReply.checked,
       }, true));
       form.append(nameInput, numberInput, add);
       box.append(form);
+
+      // Whether the person added here may be answered, chosen as they are
+      // added. Off unless ticked.
+      const newReplyRow = document.createElement('label');
+      newReplyRow.className = 'wa-contact-reply new';
+      const newReplyText = document.createElement('span');
+      newReplyText.textContent = t('wa.contacts.canReplyNew');
+      const newReplySwitch = document.createElement('span');
+      newReplySwitch.className = 'switch';
+      const newReply = document.createElement('input');
+      newReply.type = 'checkbox';
+      newReply.setAttribute('aria-label', t('wa.contacts.canReplyNew'));
+      const newReplyKnob = document.createElement('span');
+      newReplyKnob.setAttribute('aria-hidden', 'true');
+      newReplySwitch.append(newReply, newReplyKnob);
+      newReplyRow.append(newReplyText, newReplySwitch);
+      box.append(newReplyRow);
 
       const row = document.createElement('div');
       row.className = 'access-row';
