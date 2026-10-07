@@ -533,6 +533,10 @@ body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
   margin: 8px 0 4px; padding: 10px 12px; border-radius: 10px; text-align: start;
   background: var(--accent-soft); color: var(--ink); font-size: .78rem; line-height: 1.45;
 }
+.wa-ready {
+  margin: 8px 0 4px; padding: 10px 12px; border-radius: 10px; text-align: start;
+  background: var(--ok-tint); color: var(--ok-ink); font-size: .8rem; font-weight: 700; line-height: 1.45;
+}
 .wa-number-row { display: flex; gap: 8px; align-items: stretch; margin-top: 7px; }
 .setting-body .wa-number-row input { flex: 1; min-width: 0; margin-top: 0; }
 .wa-number-row .primary-button { width: auto; flex: none; min-height: 49px; margin-top: 0; padding: 0 18px; }

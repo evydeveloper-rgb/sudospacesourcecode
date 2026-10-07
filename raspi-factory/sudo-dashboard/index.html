@@ -2589,8 +2589,10 @@
 
       const anyLinked = Object.values(info.accounts || {}).some(a => a.linked);
       $('whatsapp-summary').textContent = anyLinked ? t('wa.connected') : t('wa.notConnected');
-      // Keep watching while a code is on screen or the gateway is still waking.
-      if (Object.keys(state.waQr || {}).length || info.error) {
+      // Keep watching while a code is on screen, the gateway is still waking,
+      // or a linked number hasn't come online yet.
+      const settling = Object.values(info.accounts || {}).some(a => a.linked && !a.connected);
+      if (Object.keys(state.waQr || {}).length || info.error || settling) {
         whatsappPollTimer = setTimeout(pollOcWhatsapp, 3000);
       }
     }
@@ -2613,8 +2615,25 @@
       how.textContent = t(meta.how);
       box.append(head, how);
 
+      // The phone has saved the link but the login wait hasn't finished, so
+      // the agent isn't listening on it yet. Keep the wait running.
+      if (account.linked && state.waQr[id]) {
+        const finishing = document.createElement('p');
+        finishing.className = 'wa-ready';
+        finishing.textContent = t('wa.finishing');
+        box.append(finishing);
+        return box;
+      }
+
       if (account.linked) {
-        delete state.waQr[id];
+        if (state.waJustLinked === id && account.connected) {
+          const done = document.createElement('p');
+          done.className = 'wa-ready';
+          done.textContent = t(id === 'agent' ? 'wa.linkedAgent' : 'wa.linkedOwner');
+          box.append(done);
+        } else if (!account.connected) {
+          badge.textContent += ' · ' + t('wa.connecting');
+        }
         const unlink = document.createElement('button');
         unlink.type = 'button'; unlink.className = 'whatsapp-unlink'; unlink.textContent = t('wa.unlink');
         unlink.addEventListener('click', () => unlinkOcWhatsapp(id));
@@ -2655,11 +2674,20 @@
 
       const qr = state.waQr && state.waQr[id];
       if (qr && qr.src) {
+        const ready = document.createElement('p');
+        ready.className = 'wa-ready';
+        ready.textContent = t('wa.readyToPair');
         const p = document.createElement('p');
         I18N.setHtml(p, I18N.tHtml('wa.scanWith', { who: t(meta.scanWith) }));
         const img = document.createElement('img');
         img.className = 'whatsapp-qr'; img.alt = t('wa.pairingAlt', { title: t(meta.title) }); img.src = qr.src;
-        box.append(p, img);
+        img.dataset.account = id;
+        box.append(ready, p, img);
+      } else if (qr && qr.loading) {
+        const getting = document.createElement('p');
+        getting.className = 'microcopy';
+        getting.textContent = t('wa.gettingCode');
+        box.append(getting);
       } else {
         const show = document.createElement('button');
         show.type = 'button'; show.className = 'primary-button'; show.textContent = t('wa.showQr');
@@ -2672,31 +2700,60 @@
     async function loadWaQr(id) {
       state.waQr = state.waQr || {};
       state.waQr[id] = { loading: true };
-      const status = $('wa-status');
-      if (status) status.textContent = t('wa.gettingCode');
+      renderOcWhatsapp(state.waInfo);
       try {
         const data = await api('/api/agent/whatsapp/qr', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ account: id }),
-        }, 60000);
-        // WhatsApp codes go stale in well under a minute; fetch a fresh one.
-        state.waQr[id] = { src: data.qr, at: Date.now() };
+        }, 120000);
+        if (!data.qr) throw new Error(data.message || t('wa.codeFailed'));
+        const login = { src: data.qr, ready: true };
+        state.waQr[id] = login;
         renderOcWhatsapp(state.waInfo);
+        waitWaLogin(id, login);
       } catch (error) {
         delete state.waQr[id];
+        renderOcWhatsapp(state.waInfo);
         if ($('wa-status')) $('wa-status').textContent = error.message;
+      }
+    }
+
+    // Hold a wait open while the code is on screen. WhatsApp rotates the code
+    // every ~20s and the wait hands back each new one; asking for a fresh
+    // login instead would cut off a scan that is mid-way through linking.
+    async function waitWaLogin(id, login) {
+      while (state.waQr && state.waQr[id] === login) {
+        let data;
+        try {
+          data = await api('/api/agent/whatsapp/wait', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ account: id, qr: login.src }),
+          }, 90000);
+        } catch (_) {
+          await new Promise(resolve => setTimeout(resolve, 3000));
+          continue;
+        }
+        if (!state.waQr || state.waQr[id] !== login) return;
+        if (data.connected) {
+          delete state.waQr[id];
+          state.waJustLinked = id;
+          pollOcWhatsapp();
+          return;
+        }
+        if (data.qr) {
+          login.src = data.qr;
+          const img = document.querySelector(`.whatsapp-qr[data-account="${id}"]`);
+          if (img) img.src = data.qr; else renderOcWhatsapp(state.waInfo);
+        } else if (data.restart) {
+          loadWaQr(id);
+          return;
+        }
       }
     }
 
     async function pollOcWhatsapp() {
       try {
         const info = await api('/api/agent/whatsapp', {}, 20000);
-        for (const [id, qr] of Object.entries(state.waQr || {})) {
-          if (qr.src && Date.now() - qr.at > 25000 && !(info.accounts[id] || {}).linked) {
-            loadWaQr(id);
-            return;
-          }
-        }
         renderOcWhatsapp(info);
       } catch (_) {
         whatsappPollTimer = setTimeout(pollOcWhatsapp, 4000);

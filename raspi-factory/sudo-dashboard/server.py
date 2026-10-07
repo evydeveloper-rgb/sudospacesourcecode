@@ -2152,6 +2152,39 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             self.send_json({"qr": payload.get("qrDataUrl"), "message": payload.get("message", "")})
             return True
 
+        # The page holds this open while a code is on screen. The gateway only
+        # starts the account's channel when a wait sees the login finish, so a
+        # scan without it links the phone but leaves nobody listening.
+        if path == "/api/agent/whatsapp/wait" and self.command == "POST":
+            try:
+                body = self.read_body_json()
+            except (ValueError, json.JSONDecodeError):
+                body = {}
+            account = body.get("account")
+            if account not in ("owner", "agent"):
+                self.send_json({"error": "Unknown account"}, code=400)
+                return True
+            params = {"accountId": account, "timeoutMs": 25000}
+            if isinstance(body.get("qr"), str) and body["qr"].startswith("data:image"):
+                params["currentQrDataUrl"] = body["qr"]
+            try:
+                payload = openclaw_rpc_patient("web.login.wait", params, timeout=40)
+            except Exception as exc:
+                self.send_json({"error": str(exc)}, code=502)
+                return True
+            message = str(payload.get("message") or "")
+            # No login in flight (expired, failed or replaced): the page asks
+            # for a fresh code rather than waiting on a dead one.
+            restart = not payload.get("connected") and not payload.get("qrDataUrl") \
+                and not message.startswith("Still waiting")
+            self.send_json({
+                "connected": bool(payload.get("connected")),
+                "qr": payload.get("qrDataUrl"),
+                "restart": restart,
+                "message": message,
+            })
+            return True
+
         if path == "/api/agent/whatsapp/unlink" and self.command == "POST":
             try:
                 body = self.read_body_json()
