@@ -81,9 +81,22 @@ primary = real.get(alias) or real["sudo-default"]
 defaults = cfg.setdefault("agents", {}).setdefault("defaults", {})
 defaults["workspace"] = "/opt/sudo/agent-workspace"
 defaults["model"] = {"primary": primary}
-# agents.defaults.models is an allowlist once set, so every alias the picker
-# offers has to be in it or switching models silently does nothing.
-defaults["models"] = {m: {} for m in real.values() if m.startswith("openrouter/")}
+# The text models are text-only, so a photo the owner sends arrives as a file
+# the model cannot look at -- and the agent answers as if it saw nothing.
+# Point image turns at the same vision pair the Sudo host uses, so the agent
+# on the device sees photos exactly as the host agent does. OpenClaw only
+# reaches for this when the primary model can't take images, so ordinary text
+# turns are unaffected.
+image_model = "openrouter/qwen/qwen3-vl-30b-a3b-instruct"
+image_fallback = "openrouter/google/gemini-3.1-flash-lite"
+defaults["imageModel"] = {"primary": image_model, "fallbacks": [image_fallback]}
+# agents.defaults.models is an allowlist once set, so every model that can be
+# picked -- the aliases, plus the two vision models above -- has to be in it or
+# selecting it silently does nothing.
+allowlist = {m: {} for m in real.values() if m.startswith("openrouter/")}
+allowlist[image_model] = {}
+allowlist[image_fallback] = {}
+defaults["models"] = allowlist
 
 cfg["gateway"]["auth"]["token"] = token
 
