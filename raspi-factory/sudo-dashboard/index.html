@@ -655,19 +655,27 @@
       </section>
 
       <section class="view" id="view-contacts" aria-labelledby="contacts-title">
-        <header class="crm-topbar">
-          <button class="crm-back" type="button" id="crm-back" aria-label="Back" data-i18n-attr="aria-label:crm.back">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
-          </button>
-          <div class="crm-topbar-title">
-            <h1 id="contacts-title" data-i18n="apps.crm">Contacts</h1>
-            <p class="lede" data-i18n="crm.lede">The people in your orbit — who your agent may message, who it may answer, and who is waiting on you.</p>
+        <!-- Site mode: the Contacts app draws its own header, the way the apps
+             in the sites directory do. Hidden while inside the dashboard. -->
+        <header class="crm-site-header" id="crm-site-header">
+          <div class="crm-band">
+            <a class="crm-brand" href="/" data-i18n-attr="aria-label:nav.sudoHome">sudo<span aria-hidden="true"></span><em data-i18n="apps.crm">Contacts</em></a>
+            <nav class="crm-crumb">
+              <a href="/" id="crm-crumb-dash" data-i18n="crm.backToDashboard">Dashboard</a>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+            </nav>
           </div>
-          <div class="crm-topbar-actions">
-            <button class="btn-secondary" type="button" id="crm-import-btn" data-i18n="crm.import">Import</button>
-            <button class="btn-primary" type="button" id="crm-new-btn" data-i18n="crm.new">New contact</button>
+          <div class="crm-site-title">
+            <h1 id="contacts-title" data-i18n="apps.crm">Contacts</h1>
+            <p data-i18n="crm.lede">The people in your orbit — who your agent may message, who it may answer, and who is waiting on you.</p>
           </div>
         </header>
+
+        <div class="crm-site-body">
+        <div class="crm-actions-bar">
+          <button class="btn-secondary" type="button" id="crm-import-btn" data-i18n="crm.import">Import</button>
+          <button class="btn-primary" type="button" id="crm-new-btn" data-i18n="crm.new">New contact</button>
+        </div>
 
         <nav class="crm-tabs" role="tablist">
           <button class="crm-tab active" type="button" role="tab" data-crm-tab="people" aria-selected="true"><span data-i18n="crm.tabPeople">People</span> <em id="crm-count-people"></em></button>
@@ -743,6 +751,7 @@
             <li data-i18n-html="crm.build.link3">Turn on <strong>Let my agent read my other WhatsApp chats</strong> in Channels → WhatsApp. When someone new writes to you, the agent can ask whether to add them — no typing a number at all.</li>
           </ul>
         </details>
+        </div>
       </section>
 
       <section class="view" id="view-channels" aria-labelledby="channels-title">
@@ -1766,6 +1775,11 @@
 
     function setTab(tab, silent) {
       state.tab = tab;
+      // The Contacts app is a site of its own that happens to live on the
+      // dashboard's URL, so it drops the dashboard chrome (rail, top bar,
+      // bottom nav) and stands alone -- the same way the apps in the sites
+      // directory do, without a second port.
+      document.body.classList.toggle('site-mode', tab === 'contacts');
       // The nav is noise until they've actually set the thing up.
       document.querySelector('.bottom-nav').hidden = tab === 'welcome';
       document.querySelector('.side-rail').hidden = tab === 'welcome';
@@ -3264,6 +3278,10 @@
 
     async function openCrm() {
       setTab('contacts');
+      loadCrm();
+    }
+
+    async function loadCrm() {
       if (crm.data) { renderCrm(); return; }
       const body = $('crm-list');
       if (body) body.replaceChildren();
@@ -3273,6 +3291,10 @@
         crm.data = { contacts: [], new_numbers: [], agent_can_add: true, read_others: false };
       }
       renderCrm();
+      // The New-numbers tab only exists once reading is on, and it is a URL
+      // someone can land on directly, so honour it after the data arrives.
+      const want = new URLSearchParams(location.search).get('tab');
+      if (want && (want !== 'new' || crm.data.read_others)) { crm.tab = want; renderCrm(); }
     }
 
     function fmtWhen(ts) {
@@ -5243,8 +5265,7 @@
       else if (path.includes('onboarding')) setTab('settings');
       else if (path.includes('connectors')) setTab('connectors');
       else if (path.includes('channels')) setTab('channels');
-      else if (path.includes('contacts')) openCrm();
-      else if (path === '/' || path.includes('dashboard')) setTab('apps');
+      else if (path.includes('contacts')) openCrm();      else if (path === '/' || path.includes('dashboard')) setTab('apps');
       else setTab('chat');
 
       let status;
@@ -5409,7 +5430,6 @@
       $('whatsapp-settings-panel').hidden = true;
     });
     $('crm-open').addEventListener('click', openCrm);
-    if ($('crm-back')) $('crm-back').addEventListener('click', () => setTab('apps'));
     if ($('crm-new-btn')) $('crm-new-btn').addEventListener('click', () => {
       $('crm-add-card').hidden = false;
       revealPanel($('crm-add-card'));

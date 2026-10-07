@@ -994,6 +994,7 @@ I18N.add('en', {
 
 // ---- Español (neutral, pensado para Latinoamérica) --------------------------
 I18N.add('en', {
+  "crm.backToDashboard": "Dashboard",
   "crm.lede": "The people in your orbit \u2014 who your agent may message, who it may answer, and who is waiting on you.",
   "crm.back": "Back",
   "crm.import": "Import",
@@ -1020,6 +1021,7 @@ I18N.add('en', {
 });
 
 I18N.add('es', {
+  "crm.backToDashboard": "Panel",
   "crm.lede": "Las personas de tu c\u00edrculo \u2014 a qui\u00e9n tu agente puede escribir, a qui\u00e9n puede responder y qui\u00e9n espera algo de ti.",
   "crm.back": "Atr\u00e1s",
   "crm.import": "Importar",
@@ -1046,6 +1048,7 @@ I18N.add('es', {
 });
 
 I18N.add('zh', {
+  "crm.backToDashboard": "\u63a7\u5236\u53f0",
   "crm.lede": "\u4f60\u5468\u56f4\u7684\u4eba\u2014\u2014\u4f60\u7684\u667a\u80fd\u4f53\u53ef\u4ee5\u8054\u7cfb\u8c01\u3001\u53ef\u4ee5\u56de\u590d\u8c01\uff0c\u4ee5\u53ca\u8c01\u5728\u7b49\u4f60\u3002",
   "crm.back": "\u8fd4\u56de",
   "crm.import": "\u5bfc\u5165",
@@ -1072,6 +1075,7 @@ I18N.add('zh', {
 });
 
 I18N.add('ar', {
+  "crm.backToDashboard": "\u0644\u0648\u062d\u0629 \u0627\u0644\u062a\u062d\u0643\u0645",
   "crm.lede": "\u0627\u0644\u0623\u0634\u062e\u0627\u0635 \u0627\u0644\u0645\u062d\u064a\u0637\u0648\u0646 \u0628\u0643 \u2014 \u0645\u0646 \u064a\u0645\u0643\u0646 \u0644\u0648\u0643\u064a\u0644\u0643 \u0645\u0631\u0627\u0633\u0644\u062a\u0647\u060c \u0648\u0645\u0646 \u064a\u0645\u0643\u0646\u0647 \u0627\u0644\u0631\u062f \u0639\u0644\u064a\u0647\u060c \u0648\u0645\u0646 \u064a\u0646\u062a\u0638\u0631\u0643.",
   "crm.back": "\u0631\u062c\u0648\u0639",
   "crm.import": "\u0627\u0633\u062a\u064a\u0631\u0627\u062f",

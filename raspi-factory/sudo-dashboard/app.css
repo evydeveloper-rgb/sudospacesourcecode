@@ -400,18 +400,7 @@ body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
 .crm-panel .wa-contacts { margin-top: 0; }
 
 /* The Contacts app is a page of its own, reached from the Apps tab. It reads
-   like a small site: its own top bar, tabs, a searchable list of people. */
-.crm-topbar { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px; }
-.crm-back {
-  flex: none; width: 40px; height: 40px; margin-top: 2px; display: grid; place-items: center;
-  border: 1px solid var(--line); border-radius: 12px; background: var(--surface); cursor: pointer;
-}
-.crm-back svg { width: 20px; height: 20px; fill: none; stroke: var(--ink); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.crm-back:hover { border-color: var(--primary); }
-.crm-topbar-title { flex: 1; min-width: 0; }
-.crm-topbar-title h1 { margin: 0; font-size: 1.5rem; letter-spacing: -.02em; }
-.crm-topbar-title .lede { margin: 4px 0 0; }
-.crm-topbar-actions { flex: none; display: flex; gap: 8px; align-self: center; }
+   like a small site: its own header, tabs, a searchable list of people. */
 .btn-primary, .btn-secondary {
   min-height: 42px; padding: 0 16px; border-radius: var(--radius); font-weight: 800; font-size: .82rem;
   cursor: pointer; border: 1px solid transparent; white-space: nowrap;
@@ -457,7 +446,7 @@ body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
 .crm-list { display: grid; gap: 10px; }
 .crm-row {
   display: grid; grid-template-columns: auto 1fr auto; grid-template-areas: "avatar who meta" "avatar who actions";
-  gap: 2px 14px; align-items: center; padding: 14px 16px; border: 1px solid var(--line);
+  gap: 2px 14px; align-items: center; padding: 14px 18px 14px 16px; border: 1px solid var(--line);
   border-radius: var(--radius-lg); background: var(--surface); transition: border-color .15s ease, box-shadow .15s ease;
 }
 .crm-row:hover { border-color: var(--line-2); box-shadow: var(--shadow-glass); }
@@ -474,8 +463,9 @@ body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
 .crm-pill { padding: 3px 9px; border-radius: 999px; font-size: .64rem; font-weight: 800; }
 .crm-pill.waiting { background: var(--coral-tint); color: var(--coral-2); }
 .crm-when { font-size: .68rem; color: var(--ink-4); }
-.crm-actions { grid-area: actions; justify-self: end; display: flex; align-items: center; gap: 12px; }
-.crm-reply .switch-text { font-size: .72rem; font-weight: 700; color: var(--ink-2); }
+.crm-actions { grid-area: actions; justify-self: end; display: flex; align-items: center; gap: 12px; white-space: nowrap; }
+.crm-reply { display: inline-flex; align-items: center; gap: 8px; }
+.crm-reply .switch-text { font-size: .72rem; font-weight: 700; color: var(--ink-2); white-space: nowrap; }
 .crm-remove {
   border: 0; background: transparent; color: var(--ink-3); font-size: .74rem; font-weight: 700; cursor: pointer;
   padding: 6px 4px;
@@ -496,8 +486,61 @@ body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
 @media (max-width: 619px) {
   .crm-row { grid-template-columns: auto 1fr; grid-template-areas: "avatar who" "meta meta" "actions actions"; gap: 8px 12px; }
   .crm-meta, .crm-actions { justify-self: start; }
-  .crm-topbar-actions { flex-direction: column; }
 }
+
+/* ==========================================================================
+   Site mode — a feature that is a site of its own on the dashboard's URL.
+   The Contacts app lives here. The rail, top bar and bottom nav come off, the
+   shell becomes a plain full-height page, and the feature draws its own
+   header instead -- the same shape as the apps in the sites directory, but
+   without a second port to run.
+   ========================================================================== */
+body.site-mode { padding: 0; background: var(--background); }
+body.site-mode .side-rail,
+body.site-mode .topbar,
+body.site-mode .bottom-nav,
+body.site-mode .install-hint { display: none !important; }
+body.site-mode .app-shell {
+  width: 100%; max-width: none; height: auto; min-height: var(--vvh, 100dvh);
+  margin: 0; border-radius: 0; box-shadow: none; background: var(--background); display: block;
+}
+body.site-mode #app-main { display: block; overflow: visible; min-height: 0; }
+body.site-mode .view { padding: 0; animation: none; }
+body.site-mode .crm-site-header { display: block; }
+
+/* The Contacts header: coral band, wordmark, the app's own name. Shown only
+   in site mode -- inside the dashboard the view has its own chrome. */
+.crm-site-header {
+  display: none;
+  background: var(--coral); color: #fff; padding: max(16px, var(--safe-top)) 22px 18px;
+}
+.crm-site-header .crm-band { max-width: 880px; margin: 0 auto; display: flex; align-items: center; gap: 14px; }
+.crm-site-header .crm-brand {
+  display: flex; align-items: baseline; gap: 6px; color: #fff; text-decoration: none;
+  font-family: var(--font-mono); font-size: 1.3rem; font-weight: 800; letter-spacing: -.06em;
+}
+.crm-site-header .crm-brand em { font-family: var(--font-sans); font-style: normal; font-size: .68rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; opacity: .8; }
+.crm-site-header .crm-brand span { display: inline-block; width: .3em; height: .58em; background: #fff; margin-inline-start: .1em; }
+.crm-site-header .crm-crumb { margin-inline-start: auto; display: flex; align-items: center; gap: 6px; }
+.crm-site-header .crm-crumb a { color: #fff; text-decoration: none; font-weight: 700; font-size: .8rem; opacity: .9; }
+.crm-site-header .crm-crumb a:hover { opacity: 1; }
+.crm-site-header .crm-crumb svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.crm-site-title { max-width: 880px; margin: 14px auto 0; }
+.crm-site-title h1 { margin: 0; font-size: clamp(1.7rem, 5vw, 2.3rem); letter-spacing: -.03em; color: #fff; }
+.crm-site-title p { margin: 6px 0 0; color: rgba(255,255,255,.9); font-size: .88rem; max-width: 60ch; }
+body.site-mode #view-contacts .crm-tabs,
+body.site-mode #view-contacts .crm-search,
+body.site-mode #view-contacts .crm-card,
+body.site-mode #view-contacts .crm-list,
+body.site-mode #view-contacts .crm-empty,
+body.site-mode #view-contacts .crm-foot,
+body.site-mode #view-contacts .crm-guide,
+body.site-mode #view-contacts .crm-actions-bar {
+  max-width: 880px; margin-inline: auto;
+}
+body.site-mode #view-contacts .crm-list { padding-inline: 0; }
+body.site-mode .crm-site-body { max-width: 880px; margin: 0 auto; padding: 20px 22px 60px; }
+.crm-actions-bar { display: flex; gap: 8px; margin-bottom: 14px; }
 
 /* "Build your contacts" guide inside the Contacts app. Kept collapsed by
    default: the list is what people come for, the how-to is for when they want
