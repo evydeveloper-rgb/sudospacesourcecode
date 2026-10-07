@@ -89,6 +89,14 @@ for key in (
     "exec_enabled", "ssh_enabled", "ssh_auth",
     "openrouter_key_source", "user_openrouter_key", "composio_api_key",
     "composio_enabled", "routing_mode", "prefer_local",
+    # Added since: keys, linked numbers and choices a new owner must not inherit.
+    "provider_keys", "github_token", "github_username", "github_enabled",
+    "whatsapp_mode", "whatsapp_numbers", "whatsapp_owner_number",
+    "whatsapp_read_others", "whatsapp_in_summary",
+    "full_access_enabled", "subagent_enabled", "skills_enabled",
+    "agent_language", "ui_language", "dashboard_session",
+    "spend_enabled", "spend_max_per_day", "spend_max_per_minute", "spend_cooldown_min",
+    "remote_password_enabled", "balance_usd", "subscription_status",
 ):
     data.pop(key, None)
 os.makedirs("/opt/sudo", exist_ok=True)
@@ -104,6 +112,7 @@ rm -rf /opt/sudo/agent-workspace
 mkdir -p /opt/sudo/agent-workspace
 rm -f /opt/sudo/picoclaw/config.json
 rm -rf /opt/sudo/openclaw
+rm -f /etc/sudo/agent.env
 rm -f /opt/sudo/dashboard-chat.json
 
 # NOTE: no SSH teardown here on purpose — see the header. factory-reset.sh
