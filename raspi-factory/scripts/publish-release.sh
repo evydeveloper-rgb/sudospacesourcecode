@@ -25,11 +25,16 @@ SHA_ASSET="sudo-factory.tar.gz.sha256"
 REPO_SLUG="${SUDO_UPDATE_REPO:-evydeveloper-rgb/sudospacesourcecode}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 DRY_RUN=0
+# A prerelease is published for people to try, but GitHub's releases/latest
+# ignores it -- so devices on sudo-update.sh do NOT auto-update to it. That is
+# the safe way to ship a build for review without rolling it out.
+PRERELEASE=${PRERELEASE:-false}
 
 while [ $# -gt 0 ]; do
   case "$1" in
     --repo) REPO_SLUG="$2"; shift 2 ;;
     --dry-run) DRY_RUN=1; shift ;;
+  --prerelease) PRERELEASE=true; shift ;;
     *) echo "usage: publish-release.sh [--repo owner/name] [--dry-run]" >&2; exit 2 ;;
   esac
 done
@@ -53,6 +58,7 @@ TOKEN="$(token || true)"
 
 echo "Repo:    $REPO_SLUG"
 echo "Version: $VERSION  (tag $TAG)"
+echo "Target:  ${TARGET_BRANCH:-main}   Prerelease: $PRERELEASE"
 echo "Bundle:  $ROOT"
 
 # ── Build the bundle ────────────────────────────────────────────────────────
@@ -95,7 +101,7 @@ release_id="$(api "https://api.github.com/repos/$REPO_SLUG/releases/tags/$TAG" 2
 if [ -z "$release_id" ]; then
   echo "Creating release $TAG…"
   release_id="$(api -X POST "https://api.github.com/repos/$REPO_SLUG/releases" \
-    -d "$(python3 -c 'import json,sys; print(json.dumps({"tag_name": sys.argv[1], "name": sys.argv[1], "target_commitish": "main", "generate_release_notes": True}))' "$TAG")" \
+    -d "$(python3 -c 'import json,sys; print(json.dumps({"tag_name": sys.argv[1], "name": sys.argv[1], "target_commitish": sys.argv[2], "generate_release_notes": True, "prerelease": sys.argv[3]=="true"}))' "$TAG" "${TARGET_BRANCH:-main}" "$PRERELEASE")" \
     | python3 -c 'import json,sys; print(json.load(sys.stdin).get("id",""))')"
   [ -n "$release_id" ] || { echo "ERROR: release creation failed" >&2; exit 1; }
 else
