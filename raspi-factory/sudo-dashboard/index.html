@@ -50,6 +50,10 @@
             <span class="rail-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>
             <span data-i18n="nav.apps">Apps</span>
           </button>
+          <button type="button" data-tab="home">
+            <span class="rail-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg></span>
+            <span data-i18n="nav.home">Home</span>
+          </button>
           <button type="button" data-tab="connectors">
             <span class="rail-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7H6a5 5 0 0 0 0 10h3M15 7h3a5 5 0 0 1 0 10h-3M8 12h8"/></svg></span>
             <span data-i18n="nav.connectors">Connectors</span>
@@ -840,6 +844,53 @@
         </div>
       </section>
 
+      <section class="view" id="view-home" aria-labelledby="home-title">
+        <div class="view-heading">
+          <div>
+            <h1 id="home-title" data-i18n="nav.home">Home</h1>
+            <p class="lede" data-i18n="home.lede">Everything on your device, and everything your agent is running on.</p>
+          </div>
+        </div>
+
+        <div class="home-tabs" role="tablist" aria-label="Home sections" data-i18n-attr="aria-label:home.sections">
+          <button type="button" role="tab" class="home-tab active" data-home="files" aria-selected="true" data-i18n="home.tabFiles">Device files</button>
+          <button type="button" role="tab" class="home-tab" data-home="agent" aria-selected="false" data-i18n="home.tabAgent">Agent &amp; models</button>
+        </div>
+
+        <!-- Panel 1: what is on the device. A read-only browser over the
+             folders that matter (agent workspace, /opt/sudo, /etc/sudo,
+             /var/log, /home). No free walk of the filesystem. -->
+        <div class="home-panel" id="home-panel-files">
+          <p class="section-intro" data-i18n="home.filesIntro">The files on this device. Your agent's workspace is where it keeps its notes and memory; the rest is the system it runs on. Read-only — nothing here changes anything.</p>
+          <div class="home-browser">
+            <div class="home-crumbs" id="home-crumbs"></div>
+            <div class="home-list" id="home-list" role="list"></div>
+            <div class="home-preview" id="home-preview" hidden>
+              <div class="home-preview-head">
+                <strong id="home-preview-name"></strong>
+                <button type="button" class="soft-button" id="home-preview-close" data-i18n="common.close">Close</button>
+              </div>
+              <pre id="home-preview-body"></pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel 2: what the agent is running on. Every model it can use,
+             with the ones it only reaches for when a job needs them marked
+             as such — and a plain warning that pinning one model drops the
+             rest. -->
+        <div class="home-panel" id="home-panel-agent" hidden>
+          <div class="model-head">
+            <span class="routing-pill" id="home-routing-pill">Auto</span>
+            <p class="microcopy" id="home-routing-note"></p>
+          </div>
+          <div class="model-grid" id="home-model-grid"></div>
+          <div class="warning-copy" id="home-model-warning" data-i18n-html="home.modelWarning">
+            <strong>Why more than one model.</strong> Automatic lets sudo hand each job to the model that can actually do it — a photo goes to the model that can see, a drawing to the one that can paint. Switching to <em>Always this one</em> in Model &amp; routing forces everything onto a single model, and anything it can't do stops working. That is the trade: one model is simpler, several keep every ability.
+          </div>
+        </div>
+      </section>
+
       <section class="view" id="view-settings" aria-labelledby="settings-title">
         <div class="view-heading">
           <div>
@@ -1590,6 +1641,9 @@
       <button type="button" data-tab="apps">
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span data-i18n="bnav.apps">apps</span>
       </button>
+      <button type="button" data-tab="home">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg><span data-i18n="bnav.home">home</span>
+      </button>
       <button type="button" data-tab="connectors">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7H6a5 5 0 0 0 0 10h3M15 7h3a5 5 0 0 1 0 10h-3M8 12h8"/></svg><span data-i18n="bnav.connect">connect</span>
       </button>
@@ -1652,6 +1706,9 @@
       if (tab !== 'settings' && state.settingPage) closeSettingPage();
       // The WhatsApp setup panel polls while it is open; leaving the tab stops it.
       if (tab !== 'channels') stopWhatsappPoll();
+      // Home is read on demand: load it the first time it is opened, and
+      // refresh the models every time (they change when routing does).
+      if (tab === 'home') loadHome();
       document.querySelectorAll('.view').forEach(view => view.classList.toggle('active', view.id === `view-${tab}`));
 
       document.querySelectorAll('.bottom-nav button, .rail-nav button, .rail-gear, .hub-button').forEach(button => {
@@ -2228,6 +2285,183 @@
         $(ui.status).textContent = error.message;
         $(ui.btn).disabled = false;
       }
+    }
+
+    // ── Home tab ─────────────────────────────────────────────────────────
+    // Two panels: what is on the device (a read-only browser), and what the
+    // agent is running on (every model, and what each is for).
+    let homeFilesLoaded = false;
+
+    function loadHome() {
+      loadHomeModels();
+      if (!homeFilesLoaded) { homeFilesLoaded = true; loadHomeTree(); }
+    }
+
+    document.querySelectorAll('.home-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.home-tab').forEach(t => {
+          const on = t === tab;
+          t.classList.toggle('active', on);
+          t.setAttribute('aria-selected', String(on));
+        });
+        $('home-panel-files').hidden = tab.dataset.home !== 'files';
+        $('home-panel-agent').hidden = tab.dataset.home !== 'agent';
+      });
+    });
+
+    async function loadHomeModels() {
+      const grid = $('home-model-grid');
+      if (!grid) return;
+      try {
+        const data = await api('/api/agent/models');
+        renderHomeModels(data || { entries: [] });
+      } catch (error) {
+        grid.replaceChildren();
+        const msg = document.createElement('p');
+        msg.className = 'microcopy';
+        msg.textContent = error.message;
+        grid.append(msg);
+      }
+    }
+
+    function renderHomeModels(data) {
+      const grid = $('home-model-grid');
+      const pill = $('home-routing-pill');
+      const note = $('home-routing-note');
+      const auto = data.routing !== 'fixed';
+      pill.textContent = auto ? t('routing.auto') : t('routing.fixed');
+      pill.classList.toggle('fixed', !auto);
+      note.textContent = auto ? t('home.routingAuto') : t('home.routingFixed');
+      grid.replaceChildren(...(data.entries || []).map(m => {
+        const card = document.createElement('div');
+        card.className = 'model-card';
+        const head = document.createElement('div');
+        head.className = 'model-card-head';
+        const strong = document.createElement('strong');
+        strong.textContent = t('home.model.' + m.key) || m.label;
+        head.append(strong);
+        if (m.key !== 'chat') {
+          const tag = document.createElement('span');
+          tag.className = 'model-tag';
+          tag.textContent = t('home.whenNeeded');
+          head.append(tag);
+        }
+        const name = document.createElement('code');
+        name.className = 'model-name';
+        name.textContent = m.model;
+        const desc = document.createElement('small');
+        desc.className = 'microcopy';
+        desc.textContent = t('home.modelNote.' + m.key) || m.note;
+        card.append(head, name, desc);
+        return card;
+      }));
+    }
+
+    async function loadHomeTree() {
+      const list = $('home-list');
+      try {
+        const data = await api('/api/device/tree');
+        // Roots arrive as {label, path, children}; the list renders uniform
+        // rows, so normalise them to {name, path, dir} folders.
+        const roots = (data.roots || []).map(r => ({
+          name: r.label, path: r.path, dir: true, bytes: 0, children: r.children || [],
+          meta: r.path,
+        }));
+        state.homeTree = roots;
+        renderHomeList({ label: t('home.device'), path: '', children: roots });
+      } catch (error) {
+        list.replaceChildren();
+        const msg = document.createElement('p');
+        msg.className = 'microcopy';
+        msg.textContent = error.message;
+        list.append(msg);
+      }
+    }
+
+    // The list is one level at a time: the tree endpoint gives the roots and
+    // their immediate children; opening a folder fetches its own children.
+    function renderHomeList(node) {
+      state.homePath = node.path;
+      renderHomeCrumbs(node);
+      const list = $('home-list');
+      list.replaceChildren();
+      const children = node.children || [];
+      if (!children.length) {
+        const msg = document.createElement('p');
+        msg.className = 'microcopy';
+        msg.textContent = t('home.empty');
+        list.append(msg);
+        return;
+      }
+      children.forEach(entry => {
+        const row = document.createElement('button');
+        row.type = 'button';
+        row.className = 'home-row' + (entry.dir ? ' dir' : '');
+        const icon = document.createElement('span');
+        icon.className = 'home-row-icon';
+        // Inline SVG, not an emoji: emoji folder/doc glyphs render
+        // inconsistently across the browsers these devices are opened in.
+        icon.innerHTML = entry.dir
+          ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg>'
+          : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5"/></svg>';
+        const name = document.createElement('span');
+        name.className = 'home-row-name';
+        name.textContent = entry.name;
+        const meta = document.createElement('span');
+        meta.className = 'home-row-meta';
+        meta.textContent = entry.meta || (entry.dir ? '' : fmtBytes(entry.bytes));
+        row.append(icon, name, meta);
+        row.addEventListener('click', () => openHomeEntry(entry));
+        list.append(row);
+      });
+    }
+
+    async function openHomeEntry(entry) {
+      if (entry.dir) {
+        try {
+          const data = await api('/api/device/list?path=' + encodeURIComponent(entry.path));
+          renderHomeList({ label: entry.name, path: data.path, children: data.entries });
+        } catch (error) {
+          showHomePreview(entry.name, error.message);
+        }
+        return;
+      }
+      try {
+        const data = await api('/api/device/read?path=' + encodeURIComponent(entry.path));
+        if (data.binary) return showHomePreview(entry.name, t('home.binaryFile'));
+        if (data.too_large) return showHomePreview(entry.name, t('home.tooLarge'));
+        showHomePreview(entry.name, data.content || '');
+      } catch (error) {
+        showHomePreview(entry.name, error.message);
+      }
+    }
+
+    function renderHomeCrumbs(node) {
+      const wrap = $('home-crumbs');
+      wrap.replaceChildren();
+      const up = document.createElement('button');
+      up.type = 'button';
+      up.className = 'home-crumb up';
+      up.textContent = '\u2191 ' + t('home.up');
+      up.disabled = !node.path;
+      up.addEventListener('click', () => loadHomeTree());
+      const label = document.createElement('span');
+      label.className = 'home-crumb current';
+      label.textContent = node.label || node.path || t('home.device');
+      wrap.append(up, label);
+    }
+
+    function showHomePreview(name, text) {
+      $('home-preview-name').textContent = name;
+      $('home-preview-body').textContent = text;
+      $('home-preview').hidden = false;
+    }
+
+    function fmtBytes(n) {
+      if (!n) return '';
+      if (n < 1024) return n + ' B';
+      if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' kB';
+      return (n / 1048576).toFixed(1) + ' MB';
     }
 
     async function loadAgentFiles() {

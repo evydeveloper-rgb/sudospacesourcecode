@@ -541,6 +541,101 @@ def read_agent_files():
     return out
 
 
+# ── Device files (the Home tab) ─────────────────────────────────────────────
+# A read-only look at what is actually on the device. The owner owns the box,
+# so nothing here is a secret from them -- but it is still deliberately a
+# fixed, small list rather than a free walk of the filesystem. "Everything on
+# the device" here means the folders that matter and that a person would
+# recognise, not /proc, /sys, or the credential stores.
+DEVICE_DIRS = [
+    ("Agent workspace", WORKSPACE),
+    ("/opt/sudo", "/opt/sudo"),
+    ("/etc/sudo", "/etc/sudo"),
+    ("/var/log", "/var/log"),
+    ("/home", "/home"),
+]
+# Files the owner can open, anywhere under the browsable roots.
+DEVICE_READ_ROOTS = [WORKSPACE, "/opt/sudo", "/etc/sudo", "/var/log", "/home"]
+# Secrets stay out of the browser. "Everything on the device" means the files a
+# person would recognise -- not the raw credentials, which have no business
+# being rendered in a web page that can be reached over the public link. The
+# device_secret alone signs login cookies; config.json and openclaw.json hold
+# the API keys and the gateway token; whatsapp-auth holds the paired session.
+DEVICE_DENY_PATHS = {
+    "/etc/sudo/device_secret", "/etc/sudo/dashboard_password",
+    "/etc/sudo/dashboard_password.hash", "/etc/sudo/ssh_password",
+    "/etc/sudo/openclaw_gateway_token", "/etc/sudo/api.url",
+    "/opt/sudo/config.json", "/opt/sudo/openclaw/openclaw.json",
+    "/opt/sudo/agent.env",
+}
+DEVICE_DENY_DIRS = {"/opt/sudo/openclaw/credentials", "/opt/sudo/openclaw/npm",
+                    "/opt/sudo/whatsapp-auth"}
+
+
+def _device_denied(path):
+    real = os.path.realpath(path)
+    if real in DEVICE_DENY_PATHS:
+        return True
+    return any(real == d or real.startswith(d + os.sep) for d in DEVICE_DENY_DIRS)
+DEVICE_TEXT_EXTS = {".md", ".txt", ".json", ".jsonl", ".log", ".sh", ".py", ".js",
+                    ".css", ".html", ".yml", ".yaml", ".conf", ".env", ".service",
+                    ".csv", ".ini", ".toml", ".cfg"}
+DEVICE_TEXT_MAX = 96 * 1024
+
+
+def _device_entry(path):
+    """One row for the file browser: name, kind, size, mtime."""
+    try:
+        st = os.stat(path)
+    except OSError:
+        return None
+    is_dir = os.path.isdir(path)
+    return {
+        "name": os.path.basename(path) or path,
+        "path": path,
+        "dir": is_dir,
+        "bytes": 0 if is_dir else st.st_size,
+        "modified": int(st.st_mtime * 1000),
+    }
+
+
+def list_device_dir(path):
+    """Children of a browsable folder, folders first. None if not allowed."""
+    real = os.path.realpath(path or WORKSPACE)
+    allowed = [os.path.realpath(r) for r in DEVICE_READ_ROOTS]
+    if not any(real == r or real.startswith(r + os.sep) for r in allowed):
+        return None
+    try:
+        names = sorted(os.listdir(real))
+    except OSError as exc:
+        return {"error": str(exc)}
+    rows = [e for e in (_device_entry(os.path.join(real, n)) for n in names)
+            if e and not _device_denied(e["path"])]
+    rows.sort(key=lambda e: (not e["dir"], e["name"].lower()))
+    return rows
+
+
+def read_device_file(path):
+    """Text contents of a browsable file. None if not allowed / not text."""
+    real = os.path.realpath(path)
+    allowed = [os.path.realpath(r) for r in DEVICE_READ_ROOTS]
+    if not any(real == r or real.startswith(r + os.sep) for r in allowed):
+        return None
+    if _device_denied(real):
+        return None
+    if not os.path.isfile(real):
+        return None
+    if os.path.splitext(real)[1].lower() not in DEVICE_TEXT_EXTS:
+        return {"binary": True}
+    if os.path.getsize(real) > DEVICE_TEXT_MAX:
+        return {"too_large": True}
+    try:
+        with open(real, encoding="utf-8", errors="replace") as f:
+            return {"content": f.read()}
+    except OSError:
+        return None
+
+
 def resolve_model(value):
     """Map a stored model alias to one this bundle actually defines.
 
@@ -563,6 +658,88 @@ PROVIDER_LABELS = {
     "openrouter": "OpenRouter", "openai": "OpenAI", "anthropic": "Anthropic",
     "gemini": "Google Gemini", "venice": "Venice AI", "deepseek": "DeepSeek",
 }
+# The vision pair the OpenClaw config points image turns at. Keep in step with
+# configure-openclaw.sh.
+VISION_PRIMARY = "openrouter/qwen/qwen3-vl-30b-a3b-instruct"
+VISION_FALLBACK = "openrouter/google/gemini-3.1-flash-lite"
+IMAGE_GEN_PRIMARY = "openrouter/google/gemini-3.1-flash-image-preview"
+IMAGE_GEN_FALLBACK = "openrouter/google/gemini-3.1-flash-lite-image"
+
+
+def _short(model):
+    """'openrouter/qwen/qwen3-vl-30b-a3b-instruct' -> 'qwen3-vl-30b-a3b-instruct'."""
+    return (model or "").split("/")[-1] or (model or "")
+
+
+def model_map(cfg):
+    """Every model the agent can be running on, and what each one is for.
+
+    The agent itself cannot answer this -- asked what it runs on, it guesses.
+    This is taken from configuration: the chat model it is set to, plus the
+    specialised models it hands off to for jobs the chat model can't do on
+    its own (seeing a photo, drawing one, transcribing a voice note, packing
+    a long conversation down, or thinking harder).
+    """
+    local_ready = (local_model_state() or {}).get("state") == "done"
+    chat_alias = resolve_model(cfg.get("model"))
+    entries = [
+        {"key": "chat", "label": "Answers your messages",
+         "model": _short(real_model_for(chat_alias)),
+         "alias": chat_alias,
+         "note": "The brain behind every reply."},
+        {"key": "vision", "label": "Sees photos you send",
+         "model": _short(VISION_PRIMARY), "alias": "sudo-vision",
+         "note": "Used only when your chat model can't see images itself."},
+        {"key": "image", "label": "Draws pictures",
+         "model": _short(IMAGE_GEN_PRIMARY), "alias": "sudo-image",
+         "note": "For image generation, when you ask it to make a picture."},
+        {"key": "stt", "label": "Hears voice notes",
+         "model": _short(real_model_for("sudo-stt")), "alias": "sudo-stt",
+         "note": "Turns a voice message into text before the agent reads it."},
+        {"key": "tts", "label": "Speaks replies aloud",
+         "model": _short(real_model_for("sudo-tts")), "alias": "sudo-tts",
+         "note": "Only used when a spoken reply is asked for."},
+        {"key": "compact", "label": "Tidies long conversations",
+         "model": _short(real_model_for(chat_alias)), "alias": chat_alias,
+         "note": "Summarises old turns so a long chat keeps fitting."},
+    ]
+    if local_ready:
+        entries.append({"key": "local", "label": "On-device greeter",
+                        "model": LOCAL_MODEL, "alias": "gemma3:270m",
+                        "note": "A small model on the device for quick, private chats."})
+    return {
+        "entries": entries,
+        "routing": "fixed" if cfg.get("routing") == "fixed" else "auto",
+        "vision_primary": VISION_PRIMARY,
+        "vision_fallback": VISION_FALLBACK,
+        "image_primary": IMAGE_GEN_PRIMARY,
+        "image_fallback": IMAGE_GEN_FALLBACK,
+        "chat_accepts_images": chat_model_sees_images(chat_alias),
+    }
+
+
+# Which of the picker's aliases can take an image directly. DeepSeek V4 Flash
+# (the default) cannot, which is the whole reason the vision model exists.
+MODEL_SEES_IMAGES = {
+    "sudo-default": False, "sudo-fast": True, "sudo-budget": True, "sudo-smart": True,
+}
+
+
+def chat_model_sees_images(alias):
+    return bool(MODEL_SEES_IMAGES.get(alias, False))
+
+
+def real_model_for(alias):
+    """The real OpenRouter id behind a picker alias, from the model list Sudo
+    ships. Falls back to the alias itself so the UI never shows a blank."""
+    try:
+        template = read_json_file("/opt/picoclaw/config.template.json", {}) or {}
+        for m in template.get("model_list", []):
+            if m.get("model_name") == alias:
+                return m.get("model") or alias
+    except Exception:
+        pass
+    return alias
 
 
 def answering_with(cfg):
@@ -2481,6 +2658,51 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
 
         if path == "/api/agent/files" and self.command == "GET":
             self.send_json({"workspace": WORKSPACE, "files": read_agent_files()})
+            return True
+
+        # Home tab: what the agent is running on, and what is on the device.
+        if path == "/api/agent/models" and self.command == "GET":
+            self.send_json(model_map(read_json_file(CONFIG)))
+            return True
+
+        if path == "/api/device/tree" and self.command == "GET":
+            # The roots plus the folders directly under each, so the Home tab
+            # can show a browsable starting point without walking everything.
+            roots = []
+            for label, base in DEVICE_DIRS:
+                if not os.path.isdir(base):
+                    continue
+                roots.append({"label": label, "path": base,
+                              "children": list_device_dir(base) or []})
+            self.send_json({"roots": roots})
+            return True
+
+        if path == "/api/device/list" and self.command == "GET":
+            target = (urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query).get("path") or [""])[0]
+            rows = list_device_dir(target or WORKSPACE)
+            if rows is None:
+                self.send_json({"error": "Not a folder you can browse"}, code=403)
+                return True
+            if isinstance(rows, dict) and rows.get("error"):
+                self.send_json({"error": rows["error"]}, code=400)
+                return True
+            self.send_json({"path": os.path.realpath(target or WORKSPACE), "entries": rows})
+            return True
+
+        if path == "/api/device/read" and self.command == "GET":
+            target = (urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query).get("path") or [""])[0]
+            data = read_device_file(target)
+            if data is None:
+                self.send_json({"error": "Not a file you can read"}, code=403)
+                return True
+            if data.get("binary"):
+                self.send_json({"binary": True, "name": os.path.basename(target)})
+                return True
+            if data.get("too_large"):
+                self.send_json({"too_large": True, "name": os.path.basename(target)})
+                return True
+            self.send_json({"path": os.path.realpath(target), "name": os.path.basename(target),
+                            "content": data.get("content", "")})
             return True
 
         # Dashboard language and the agent's reply language. One handler, two

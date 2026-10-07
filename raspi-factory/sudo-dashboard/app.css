@@ -1681,3 +1681,85 @@ input[type="password"], input[type="tel"], input[type="number"], #ssh-key, #devi
 /* The guide's drawings are not mirrored; keep their text anchored the way
    they were drawn (Arabic words still shape and read right-to-left). */
 .guide-figure svg, .wa-option svg { direction: ltr; }
+
+/* ── Home tab ─────────────────────────────────────────────────────────────
+   Two panels: the device's files (read-only browser) and what the agent is
+   running on (every model, and what each is for). */
+.home-tabs {
+  display: inline-flex; gap: 4px; margin: 4px 0 16px; padding: 4px;
+  background: var(--surface-low); border-radius: 999px;
+}
+.home-tab {
+  border: 0; background: transparent; color: var(--ink-2); cursor: pointer;
+  padding: 7px 16px; border-radius: 999px; font-size: .85rem; font-weight: 650;
+}
+.home-tab.active { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+
+.home-browser { display: grid; grid-template-columns: 1fr; gap: 12px; }
+.home-crumbs { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.home-crumb.up {
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink-2);
+  border-radius: 999px; padding: 5px 12px; font-size: .8rem; cursor: pointer;
+}
+.home-crumb.up:disabled { opacity: .4; cursor: default; }
+.home-crumb.current { font-weight: 700; font-size: .85rem; color: var(--ink); }
+
+.home-list {
+  border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden;
+  background: var(--surface);
+}
+.home-row {
+  display: flex; align-items: center; gap: 10px; width: 100%; text-align: start;
+  border: 0; border-bottom: 1px solid var(--line); background: transparent;
+  padding: 10px 14px; cursor: pointer; color: var(--ink); font-size: .86rem;
+}
+.home-row:last-child { border-bottom: 0; }
+.home-row:hover { background: var(--surface-low); }
+.home-row-icon { width: 1.2em; }
+.home-row-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.home-row.dir .home-row-name { font-weight: 650; }
+.home-row-meta { color: var(--ink-3); font-size: .78rem; font-variant-numeric: tabular-nums; }
+
+.home-preview {
+  border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface);
+  padding: 12px 14px;
+}
+.home-preview-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+.home-preview pre {
+  margin: 0; max-height: 46vh; overflow: auto; white-space: pre-wrap; word-break: break-word;
+  font-size: .78rem; line-height: 1.5; color: var(--ink-2);
+}
+
+.model-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+.routing-pill {
+  border-radius: 999px; padding: 4px 12px; font-size: .78rem; font-weight: 700;
+  background: var(--coral-tint, var(--surface-high)); color: var(--ink);
+}
+.routing-pill.fixed { background: var(--surface-high); }
+.model-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+.model-card {
+  border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface);
+  padding: 12px 14px; display: flex; flex-direction: column; gap: 5px;
+}
+.model-card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.model-card-head strong { font-size: .86rem; }
+.model-tag {
+  font-size: .66rem; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-3);
+  border: 1px solid var(--line); border-radius: 999px; padding: 2px 7px; white-space: nowrap;
+}
+.model-name {
+  font-size: .8rem; color: var(--ink); background: var(--surface-low);
+  border-radius: 8px; padding: 3px 7px; align-self: flex-start;
+  word-break: break-all;
+}
+.model-card .microcopy { font-size: .76rem; }
+#home-model-warning { margin-top: 16px; }
+
+@media (min-width: 900px) {
+  .home-browser { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
+.home-row-icon svg {
+  width: 16px; height: 16px; display: block; stroke: var(--ink-3);
+  fill: none; stroke-width: 1.6; stroke-linejoin: round; stroke-linecap: round;
+}
+.home-row.dir .home-row-icon svg { stroke: var(--ink-2); }
