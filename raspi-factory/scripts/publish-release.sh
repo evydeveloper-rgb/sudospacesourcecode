@@ -51,8 +51,21 @@ TAG="${TAG_PREFIX}${VERSION}"
 # carries (the same credential that can push, so it can also release).
 token() {
   if [ -n "${GITHUB_TOKEN:-}" ]; then printf '%s' "$GITHUB_TOKEN"; return; fi
-  git -C "$ROOT" remote get-url origin 2>/dev/null \
-    | sed -n 's#https://[^:]*:\([^@]*\)@github.com/.*#\1#p'
+  local from_remote
+  from_remote="$(git -C "$ROOT" remote get-url origin 2>/dev/null \
+    | sed -n 's#https://[^:]*:\([^@]*\)@github.com/.*#\1#p')"
+  if [ -n "$from_remote" ]; then printf '%s' "$from_remote"; return; fi
+  # A credential helper stores the secret in ~/.git-credentials and hands git a
+  # clean URL, so the URL alone carries no token. Read the store, or releasing
+  # silently fails on exactly the machine that can push.
+  [ -f "$HOME/.git-credentials" ] || return 0
+  python3 - "$HOME/.git-credentials" <<'PY' 2>/dev/null || true
+import re, sys
+for line in open(sys.argv[1]):
+    m = re.search(r'://[^:]+:([^@]+)@github\.com', line)
+    if m:
+        print(m.group(1)); break
+PY
 }
 TOKEN="$(token || true)"
 
