@@ -54,7 +54,12 @@
 
     <header class="topbar">
       <a class="wordmark" href="/" aria-label="Sudo home">sudo<span aria-hidden="true"></span><em class="wordmark-beta">beta</em></a>
-      <div class="device-state" id="device-state-wrap"><i aria-hidden="true"></i><span id="device-state">online</span></div>
+      <div class="topbar-right">
+        <div class="device-state" id="device-state-wrap"><i aria-hidden="true"></i><span id="device-state">online</span></div>
+        <button type="button" class="hub-button" id="hub-button" data-tab="setup" aria-label="Knowledge hub" title="Knowledge hub" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></svg>
+        </button>
+      </div>
       <div class="step-chip" id="step-chip" hidden>Step <span id="step-now">1</span> of 3</div>
     </header>
 
@@ -197,7 +202,7 @@
         <div class="view-heading">
           <div>
             <h1 id="setup-title">Finish setup</h1>
-            <p class="lede">Three steps turn sudo from a friendly chat into a real helper. Do them in any order. This tab tucks itself away once all three are done.</p>
+            <p class="lede" id="setup-lede">Three steps turn sudo from a friendly chat into a real helper. Do them in any order. Once all three are done, this guide moves to the book icon at the top.</p>
           </div>
         </div>
 
@@ -232,7 +237,7 @@
           <div class="setup-alldone" id="setup-alldone" hidden>
             <svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="22"/><path d="M14 25l7 7 13-15"/></svg>
             <h2>All set.</h2>
-            <p>Your agent has a cloud brain, WhatsApp and your apps. This tab will tuck itself away now. Everything here lives on in Settings, Channels and Connectors.</p>
+            <p>Your agent has a cloud brain, WhatsApp and your apps. This guide now lives under the book icon at the top right, so you can come back to it any time.</p>
             <button class="primary-button" type="button" data-go="chat">Go to chat</button>
           </div>
 
@@ -1520,7 +1525,7 @@
       if (tab !== 'channels') stopWhatsappPoll();
       document.querySelectorAll('.view').forEach(view => view.classList.toggle('active', view.id === `view-${tab}`));
 
-      document.querySelectorAll('.bottom-nav button, .rail-nav button, .rail-gear').forEach(button => {
+      document.querySelectorAll('.bottom-nav button, .rail-nav button, .rail-gear, .hub-button').forEach(button => {
         const active = button.dataset.tab === tab;
         button.classList.toggle('active', active);
         button.setAttribute('aria-current', active ? 'page' : 'false');
@@ -3482,6 +3487,13 @@
       const next = SETUP_STEPS.find(step => !done[step.key]);
       $('setup-next').textContent = next ? `Next: ${next.next}` : 'All three done. Nice work.';
       $('setup-alldone').hidden = !allDone;
+      // Done with setup: the guide stays reachable as the Knowledge hub
+      // behind the book icon in the top bar.
+      $('hub-button').hidden = !(s.profile_done && state.waChecked && allDone);
+      $('setup-title').textContent = allDone ? 'Knowledge hub' : 'Finish setup';
+      $('setup-lede').textContent = allDone
+        ? 'How your agent works — models and costs, WhatsApp, and your apps. Come back any time.'
+        : 'Three steps turn sudo from a friendly chat into a real helper. Do them in any order. Once all three are done, this guide moves to the book icon at the top.';
       SETUP_STEPS.forEach((step, i) => {
         const isDone = done[step.key];
         const card = $(`step-${step.key}`);
@@ -3936,7 +3948,7 @@
       }
     }
 
-    document.querySelectorAll('.bottom-nav button, .rail-nav button, .rail-gear').forEach(button => button.addEventListener('click', () => setTab(button.dataset.tab)));
+    document.querySelectorAll('.bottom-nav button, .rail-nav button, .rail-gear, .hub-button').forEach(button => button.addEventListener('click', () => setTab(button.dataset.tab)));
     document.querySelectorAll('.setting-head').forEach(button => button.addEventListener('click', () => {
       openSettingPage(button.closest('.setting-card').id);
     }));

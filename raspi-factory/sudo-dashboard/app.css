@@ -188,6 +188,15 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   text-transform: uppercase;
   vertical-align: super;
 }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.hub-button {
+  width: 34px; height: 34px; padding: 0; display: grid; place-items: center;
+  border: 1px solid var(--line); border-radius: 10px;
+  background: var(--surface); color: var(--primary); cursor: pointer;
+}
+.hub-button:hover, .hub-button.active { background: var(--primary); color: var(--on-primary); border-color: var(--primary); }
+.hub-button svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.hub-button[hidden] { display: none; }
 .device-state {
   display: flex; align-items: center; gap: 7px;
   color: var(--muted); font: 600 .72rem/1 var(--font-mono);
