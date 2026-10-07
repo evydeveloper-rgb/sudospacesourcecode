@@ -1779,3 +1779,40 @@ input[type="password"], input[type="tel"], input[type="number"], #ssh-key, #devi
   stroke-width: 1.8; stroke-linejoin: round; stroke-linecap: round;
 }
 .brand-home.active { color: var(--accent); background: var(--surface-container); }
+
+/* Composer: run-in-the-background toggle, beside the model chip. */
+.composer-bg {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; padding: 0; border: 1px solid var(--line);
+  background: var(--surface); border-radius: 10px; cursor: pointer;
+  color: var(--ink-3); flex: none;
+}
+.composer-bg svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.composer-bg:hover { color: var(--ink); border-color: var(--line-2); }
+.composer-bg.on { color: #fff; border-color: var(--on); background: var(--on); }
+
+/* Tasks panel: background runs, live. */
+.run-list { display: grid; gap: 10px; }
+.run-card {
+  border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface);
+  padding: 12px 14px; display: flex; flex-direction: column; gap: 8px;
+}
+/* A failure earns a quiet side stripe, not a full red frame -- the pill
+   already says what happened, so the border only has to catch the eye. */
+.run-card.failed { border-inline-start: 3px solid var(--error); }
+.run-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.run-head strong { font-size: .86rem; overflow-wrap: anywhere; }
+.run-pill {
+  border-radius: 999px; padding: 3px 10px; font-size: .68rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .03em; white-space: nowrap;
+  background: var(--surface-container); color: var(--ink-2);
+}
+.run-pill.running { background: var(--on-tint); color: var(--on); }
+.run-pill.succeeded { background: var(--ok-tint); color: var(--ok-ink); }
+.run-pill.failed { background: var(--error); color: #fff; }
+.run-reply {
+  margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: .8rem;
+  line-height: 1.5; color: var(--ink-2); background: var(--surface-low);
+  border-radius: 10px; padding: 9px 11px; max-height: 40vh; overflow: auto;
+}
+.run-card .soft-button { align-self: flex-start; }

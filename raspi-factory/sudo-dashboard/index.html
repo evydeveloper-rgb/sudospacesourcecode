@@ -242,6 +242,9 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>
             <em id="composer-model-label">Auto</em>
           </button>
+          <button class="composer-bg" id="composer-bg" type="button" aria-pressed="false" aria-label="Run in the background" title="Run in the background" data-i18n-attr="aria-label:chat.runInBackground,title:chat.runInBackground">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>
+          </button>
           <button class="send-button" id="send-button" type="submit" aria-label="Send message" data-i18n-attr="aria-label:chat.sendMessage">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
           </button>
@@ -865,6 +868,7 @@
         <div class="home-tabs" role="tablist" aria-label="Home sections" data-i18n-attr="aria-label:home.sections">
           <button type="button" role="tab" class="home-tab active" data-home="files" aria-selected="true" data-i18n="home.tabFiles">Device files</button>
           <button type="button" role="tab" class="home-tab" data-home="agent" aria-selected="false" data-i18n="home.tabAgent">Agent &amp; models</button>
+          <button type="button" role="tab" class="home-tab" data-home="tasks" aria-selected="false" data-i18n="home.tabTasks">Tasks</button>
         </div>
 
         <!-- Panel 1: what is on the device. A read-only browser over the
@@ -898,6 +902,14 @@
           <div class="warning-copy" id="home-model-warning" data-i18n-html="home.modelWarning">
             <strong>Why more than one model.</strong> Automatic lets sudo hand each job to the model that can actually do it — a photo goes to the model that can see, a drawing to the one that can paint. Switching to <em>Always this one</em> in Model &amp; routing forces everything onto a single model, and anything it can't do stops working. That is the trade: one model is simpler, several keep every ability.
           </div>
+        </div>
+
+        <!-- Panel 3: work running off to the side. A turn sent with "run in
+             the background" gets its own lane, so it does not hold the chat
+             hostage -- this is where you watch it and read the answer. -->
+        <div class="home-panel" id="home-panel-tasks" hidden>
+          <p class="section-intro" data-i18n="home.tasksIntro">Work sudo is doing off to the side. Send anything long with the clock button next to the message box and it runs here — the chat stays free while it works, and the answer lands back in the conversation when it's done.</p>
+          <div class="run-list" id="run-list" role="list"></div>
         </div>
       </section>
 
@@ -1668,7 +1680,7 @@
     // Flipping this to true restores the Sudo-credits surface and the opt-in
     // device-registration path; nothing else needs to change.
     const BILLING_ENABLED = false;
-    const state = { status: null, greeted: false, finishingWelcome: false, personality: 'friendly', publicUrl: '', tab: 'chat', keySource: 'own', welcomeStep: 0, theme: 'default', settingPage: null, routing: 'auto' };
+    const state = { status: null, greeted: false, finishingWelcome: false, personality: 'friendly', publicUrl: '', tab: 'chat', keySource: 'own', welcomeStep: 0, theme: 'default', settingPage: null, routing: 'auto', runInBackground: false };
     const $ = id => document.getElementById(id);
 
     // Every request is bounded. Without this a stalled connection leaves the
@@ -1887,6 +1899,26 @@
       if (!message || $('send-button').disabled) return;
       input.value = '';
       input.style.height = '';
+      // "Run in the background" hands the turn to a separate lane, so the box
+      // comes back immediately and the agent keeps working on it off to the
+      // side. The Tasks panel shows progress and the answer when it lands.
+      if (state.runInBackground) {
+        addMessage('user', message);
+        scrollChat('smooth');
+        try {
+          await api('/api/agent/runs', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ task: message }),
+          });
+          addMessage('system', t('chat.sentToBackground'));
+          loadRuns();
+        } catch (error) {
+          addMessage('system', error.message);
+        }
+        input.focus();
+        return;
+      }
       $('send-button').disabled = true;
       const thinkingLabel = $('thinking').querySelector('em');
       thinkingLabel.textContent = t('chat.thinking');
@@ -2304,7 +2336,84 @@
 
     function loadHome() {
       loadHomeModels();
+      loadRuns();
       if (!homeFilesLoaded) { homeFilesLoaded = true; loadHomeTree(); }
+    }
+
+    // ── Background runs (the Tasks panel) ────────────────────────────────
+    let runsTimer = null;
+
+    async function loadRuns() {
+      const list = $('run-list');
+      if (!list) return;
+      // While something is running, keep the panel honest on its own; stop
+      // ticking once everything has finished.
+      clearTimeout(runsTimer);
+      try {
+        const data = await api('/api/agent/runs');
+        renderRuns(data.runs || []);
+        if ((data.runs || []).some(r => r.status === 'running')) {
+          runsTimer = setTimeout(loadRuns, 5000);
+        }
+      } catch (error) {
+        list.replaceChildren();
+        const msg = document.createElement('p');
+        msg.className = 'microcopy';
+        msg.textContent = error.message;
+        list.append(msg);
+      }
+    }
+
+    function renderRuns(runs) {
+      const list = $('run-list');
+      list.replaceChildren();
+      if (!runs.length) {
+        const msg = document.createElement('p');
+        msg.className = 'microcopy';
+        msg.textContent = t('home.noTasks');
+        list.append(msg);
+        return;
+      }
+      runs.forEach(run => {
+        const card = document.createElement('div');
+        card.className = 'run-card ' + (run.status || '');
+        const head = document.createElement('div');
+        head.className = 'run-head';
+        const task = document.createElement('strong');
+        task.textContent = run.task || '';
+        const pill = document.createElement('span');
+        pill.className = 'run-pill ' + (run.status || '');
+        pill.textContent = t('home.run.' + run.status) || run.status;
+        head.append(task, pill);
+        card.append(head);
+        if (run.status === 'succeeded' && run.reply) {
+          const body = document.createElement('pre');
+          body.className = 'run-reply';
+          body.textContent = run.reply;
+          card.append(body);
+        } else if (run.status === 'failed') {
+          const body = document.createElement('small');
+          body.className = 'microcopy';
+          body.textContent = run.error || t('home.runFailed');
+          card.append(body);
+        }
+        if (run.status === 'running') {
+          const stop = document.createElement('button');
+          stop.type = 'button';
+          stop.className = 'soft-button';
+          stop.textContent = t('home.stop');
+          stop.addEventListener('click', async () => {
+            stop.disabled = true;
+            try { await api('/api/agent/runs/cancel', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id: run.id }),
+            }); } catch (error) { /* re-list will show the truth */ }
+            loadRuns();
+          });
+          card.append(stop);
+        }
+        list.append(card);
+      });
     }
 
     document.querySelectorAll('.home-tab').forEach(tab => {
@@ -2314,8 +2423,9 @@
           t.classList.toggle('active', on);
           t.setAttribute('aria-selected', String(on));
         });
-        $('home-panel-files').hidden = tab.dataset.home !== 'files';
-        $('home-panel-agent').hidden = tab.dataset.home !== 'agent';
+        ['files', 'agent', 'tasks'].forEach(name => {
+          $('home-panel-' + name).hidden = tab.dataset.home !== name;
+        });
       });
     });
 
@@ -4863,6 +4973,14 @@
     $('composer-model').addEventListener('click', () => {
       setTab('settings');
       openSettingPage('routing-setting');
+    });
+    // Run in the background: a toggle, not a one-shot, so you can send a few
+    // long jobs in a row without re-arming it each time. It stays on until
+    // tapped off.
+    $('composer-bg').addEventListener('click', () => {
+      state.runInBackground = !state.runInBackground;
+      $('composer-bg').classList.toggle('on', state.runInBackground);
+      $('composer-bg').setAttribute('aria-pressed', String(state.runInBackground));
     });
     $('chat-input').addEventListener('keydown', event => {
       if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); $('chat-form').requestSubmit(); }

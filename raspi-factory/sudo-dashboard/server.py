@@ -191,6 +191,107 @@ def append_chat_log(user_text: str, agent_text: str) -> None:
         ])
 
 
+# ── Background runs ──────────────────────────────────────────────────────
+# A long job should not hold the chat hostage. "Run in background" starts the
+# turn in its own session (a suffix on the dashboard key), so the agent works
+# on it while the box stays free for the next message. The run is tracked here
+# on disk, so the Tasks panel can show what is still going and hand back the
+# answer when it lands -- even if the page was closed and reopened meanwhile.
+BG_RUNS = "/opt/sudo/background-runs.json"
+BG_RUN_MAX = 40
+BG_RUN_KEEP = 24 * 3600  # finished runs are kept a day, then forgotten
+_bg_runs_lock = threading.Lock()
+
+
+def _bg_run_new_id() -> str:
+    return f"bg-{int(time.time())}-{os.urandom(3).hex()}"
+
+
+def read_bg_runs() -> list:
+    data = read_json_file(BG_RUNS, {}) or {}
+    return data.get("runs", []) if isinstance(data, dict) else []
+
+
+def write_bg_runs(runs: list) -> None:
+    write_json_file(BG_RUNS, {"runs": runs[-BG_RUN_MAX:]})
+
+
+def bg_run(id_or_session: str) -> dict | None:
+    for run in read_bg_runs():
+        if run.get("id") == id_or_session or run.get("session") == id_or_session:
+            return run
+    return None
+
+
+def bg_runs_public() -> list:
+    """The runs a page should show: everything still going, plus anything that
+    finished in the last day (so the answer is there when they come back)."""
+    cutoff = time.time() - BG_RUN_KEEP
+    out = []
+    for run in read_bg_runs():
+        done = run.get("status") in ("succeeded", "failed")
+        if done and (run.get("finishedAt") or 0) < cutoff:
+            continue
+        out.append({
+            "id": run.get("id"),
+            "task": run.get("task"),
+            "status": run.get("status"),
+            "startedAt": run.get("startedAt"),
+            "finishedAt": run.get("finishedAt"),
+            "reply": run.get("reply"),
+            "error": run.get("error"),
+        })
+    return sorted(out, key=lambda r: r.get("startedAt") or 0, reverse=True)
+
+
+def start_bg_run(task: str) -> dict:
+    """Record the run, then hand the actual turn to a worker thread so the
+    HTTP response returns at once. The run's own session key is the dashboard
+    key plus a suffix -- the same conversation surface, but a lane the agent
+    can work in without the chat waiting behind it."""
+    run = {
+        "id": _bg_run_new_id(),
+        "task": task[:MAX_CHAT_LEN],
+        "status": "running",
+        "startedAt": time.time(),
+        "finishedAt": None,
+        "reply": None,
+        "error": None,
+    }
+    run["session"] = f"{DASHBOARD_SESSION}-bg-{run['id']}"
+    with _bg_runs_lock:
+        write_bg_runs(read_bg_runs() + [run])
+    threading.Thread(target=_bg_run_worker, args=(run["id"],), daemon=True).start()
+    return run
+
+
+def _bg_set(run_id: str, **fields) -> None:
+    with _bg_runs_lock:
+        runs = read_bg_runs()
+        for run in runs:
+            if run.get("id") == run_id:
+                run.update(fields)
+                break
+        write_bg_runs(runs)
+
+
+def _bg_run_worker(run_id: str) -> None:
+    run = bg_run(run_id)
+    if not run:
+        return
+    task = run.get("task") or ""
+    session_key = run.get("session") or DASHBOARD_SESSION
+    try:
+        reply = agent_chat(task, session_key)
+        # The run had its own lane, so it never got the chat box's history and
+        # never wrote to the on-device chat log. Land it in the log now, so the
+        # answer shows up in the conversation the way a normal reply would.
+        append_chat_log(task, reply)
+        _bg_set(run_id, status="succeeded", reply=reply, finishedAt=time.time())
+    except Exception as exc:  # noqa: BLE001 - any failure is just the run failing
+        _bg_set(run_id, status="failed", error=str(exc), finishedAt=time.time())
+
+
 def write_json_file(path, data):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     tmp = path + ".tmp"
@@ -2663,6 +2764,61 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
         # Home tab: what the agent is running on, and what is on the device.
         if path == "/api/agent/models" and self.command == "GET":
             self.send_json(model_map(read_json_file(CONFIG)))
+            return True
+
+        # Background runs: start one, list what is going, read one, or stop it.
+        if path == "/api/agent/runs" and self.command == "GET":
+            self.send_json({"runs": bg_runs_public(), "backend": agent_backend()})
+            return True
+
+        if path == "/api/agent/runs" and self.command == "POST":
+            ip = self.client_ip()
+            if not rate_allow(f"chat:{ip}", CHAT_MAX, CHAT_WINDOW):
+                self.send_json({"error": "Rate limit — slow down"}, code=429)
+                return True
+            try:
+                body = self.read_body_json()
+            except (ValueError, json.JSONDecodeError):
+                self.send_json({"error": "Invalid JSON"}, code=400)
+                return True
+            task = (body.get("task") or body.get("message") or "").strip()
+            if not task:
+                self.send_json({"error": "task required"}, code=400)
+                return True
+            if len(task) > MAX_CHAT_LEN:
+                self.send_json({"error": f"task too long (max {MAX_CHAT_LEN})"}, code=400)
+                return True
+            cfg = read_json_file(CONFIG)
+            if cfg.get("agent_backend") != "picoclaw" and not effective_openrouter_key(cfg):
+                self.send_json({"error": "Add an API key in Settings first."}, code=400)
+                return True
+            run = start_bg_run(task)
+            self.send_json({"ok": True, "run": {
+                "id": run["id"], "task": run["task"], "status": run["status"],
+                "startedAt": run["startedAt"],
+            }})
+            return True
+
+        if path == "/api/agent/runs/cancel" and self.command == "POST":
+            try:
+                body = self.read_body_json()
+            except (ValueError, json.JSONDecodeError):
+                self.send_json({"error": "Invalid JSON"}, code=400)
+                return True
+            run_id = (body.get("id") or "").strip()
+            run = bg_run(run_id) if run_id else None
+            if not run:
+                self.send_json({"error": "run not found"}, code=404)
+                return True
+            if run.get("status") == "running":
+                # Stop the turn the same way the Stop button does, so a stuck
+                # background job does not keep burning tokens invisibly.
+                try:
+                    openclaw_rpc("sessions.abort", {"key": run.get("session")}, timeout=10)
+                except Exception:  # noqa: BLE001 - best effort; mark it stopped
+                    pass
+                _bg_set(run_id, status="failed", error="Stopped", finishedAt=time.time())
+            self.send_json({"ok": True})
             return True
 
         if path == "/api/device/tree" and self.command == "GET":
