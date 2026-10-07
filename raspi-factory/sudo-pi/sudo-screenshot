@@ -1,0 +1,69 @@
+#!/bin/bash
+# sudo-screenshot — take a picture of a web page so the agent can SHOW the
+# owner what it built, instead of describing it.
+#
+# Why this exists: the owner cannot see the agent's work. A page the agent
+# just made, a change to the dashboard, a form that now lines up — all of it
+# is invisible until someone looks. curl and grep cannot see a button that
+# overlaps its label or a tab that never opens. A screenshot can, and the
+# agent can send it over WhatsApp like any other photo.
+#
+# Usage:
+#   sudo-screenshot <url> [out.png] [width] [height]
+#   sudo-screenshot http://127.0.0.1:8080/ /tmp/shot.png 390 844
+#
+# Prints the path it wrote on success (so the agent can attach it), or an
+# error on stderr and a non-zero exit. Chromium is installed on demand by
+# install-devtools.sh (Settings -> Developer access); this script only uses it.
+set -uo pipefail
+
+URL="${1:-}"
+OUT="${2:-/tmp/sudo-screenshot.png}"
+W="${3:-1200}"
+H="${4:-900}"
+
+if [ -z "$URL" ]; then
+  echo "usage: sudo-screenshot <url> [out.png] [width] [height]" >&2
+  exit 2
+fi
+
+# Find a chromium to drive. Names differ across Debian/Raspberry Pi OS.
+CHROME=""
+for c in chromium chromium-browser google-chrome google-chrome-stable; do
+  if command -v "$c" >/dev/null 2>&1; then CHROME="$c"; break; fi
+done
+if [ -z "$CHROME" ]; then
+  echo "No browser installed. Open Settings -> Developer access and install the browser, then try again." >&2
+  exit 3
+fi
+
+mkdir -p "$(dirname "$OUT")"
+rm -f "$OUT"
+
+# --no-sandbox: the gateway runs as root, and Chromium refuses to sandbox as
+# root. --disable-gpu/--hide-scrollbars keep the shot clean on a headless Pi.
+# The disable-* flags stop Chromium phoning home (sync, GCM, component
+# updates) -- on a fresh Pi that chatter can hang the run for a minute or more
+# with no screenshot at the end of it. A throwaway profile dir avoids "profile
+# in use" when two shots overlap, and a timeout guarantees we return.
+PROFILE="$(mktemp -d)"
+trap 'rm -rf "$PROFILE"' EXIT
+
+timeout 60 "$CHROME" \
+  --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage \
+  --hide-scrollbars --force-device-scale-factor=2 \
+  --no-first-run --no-default-browser-check --disable-extensions \
+  --disable-background-networking --disable-sync --disable-component-update \
+  --disable-default-apps --mute-audio \
+  --user-data-dir="$PROFILE" \
+  --window-size="${W},${H}" \
+  --virtual-time-budget=4000 \
+  --screenshot="$OUT" \
+  "$URL" >/dev/null 2>&1
+
+if [ -s "$OUT" ]; then
+  echo "$OUT"
+else
+  echo "Screenshot failed (page unreachable, or it took too long to load): $URL" >&2
+  exit 1
+fi

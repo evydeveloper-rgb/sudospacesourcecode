@@ -160,6 +160,8 @@ cp "${BOOT}/sudo-pi/device-secrets.sh" /usr/local/bin/sudo-device-secrets.sh
 cp "${BOOT}/sudo-pi/cloud-init.sh" /usr/local/bin/sudo-cloud-init.sh
 cp "${BOOT}/sudo-pi/setup-remote-access.sh" /usr/local/bin/sudo-remote-access.sh
 cp "${BOOT}/sudo-pi/install-devtools.sh" /usr/local/bin/sudo-install-devtools.sh
+cp "${BOOT}/sudo-pi/sudo-screenshot" /usr/local/bin/sudo-screenshot
+chmod +x /usr/local/bin/sudo-screenshot
 cp "${BOOT}/sudo-pi/setup-ssh.sh" /usr/local/bin/sudo-setup-ssh.sh
 cp "${BOOT}/sudo-pi/install-local-model.sh" /usr/local/bin/sudo-install-local-model.sh
 cp "${BOOT}/sudo-pi/set-hostname.sh" /usr/local/bin/sudo-set-hostname.sh

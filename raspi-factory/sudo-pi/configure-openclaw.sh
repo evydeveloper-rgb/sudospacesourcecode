@@ -282,6 +282,18 @@ if whatsapp_installed:
                 f"linked yet. Never message {user}'s contacts from {user}'s own account.",
                 "",
             ]
+        tools_md += [
+            "## Contacts",
+            "",
+            f"- The people {user} lets you message live in the Contacts app (the Apps tab) — the "
+            "same list as `whatsapp_contacts`.",
+            f"- When {user} wants to grow that list, the Contacts app already shows how to export "
+            "from LinkedIn (My Network → Connections → Export) and Instagram (Download your "
+            "information → Followers and following). Point them there rather than reciting steps.",
+            f"- If {user} asks you to add people, use `whatsapp_contacts` with action `add`. If they "
+            "paste or attach a list, work through it with them and confirm who you added.",
+            "",
+        ]
         print("WhatsApp contacts: list enforced (sudo-contacts)")
 
     # Reading the owner's other chats: the sudo-observer plugin. Off by
@@ -322,11 +334,41 @@ if whatsapp_installed:
 else:
     print("WhatsApp (OpenClaw): not added")
 
+# Showing the owner what was built. People love seeing the thing, not reading
+# about it: a screenshot of the page or app answers "did it work?" better than
+# any sentence. sudo-screenshot drives the headless browser (Settings ->
+# Developer access); the message tool then sends the picture over WhatsApp.
+# Always offered: if the browser is not installed the script says so plainly,
+# so the agent can tell the owner how to turn it on rather than guess.
+owner = sudo.get("user_name") or "your owner"
+tools_md += [
+    "## Showing the owner what you built",
+    "",
+    f"- {owner} cannot see your work until you show it. When you build or change a page, app, "
+    "form, or anything visual, take a picture and send it — it answers \"did it work?\" far "
+    "better than describing it.",
+    "- Take the picture with the `exec` tool: `sudo-screenshot <url> /tmp/shot.png` (optionally "
+    "a width and height, e.g. `390 844` for a phone-shaped page). It prints the file path on "
+    "success.",
+    f"- Send it with the `message` tool, `mediaUrl` set to that path, to {owner} on WhatsApp. "
+    "A short line of context is enough; do not paste the path as text.",
+    f"- If `sudo-screenshot` reports no browser, tell {owner} to open Settings -> Developer "
+    "access and install the browser, then try again.",
+    "",
+]
+
 tools_path = "/opt/sudo/agent-workspace/TOOLS.md"
 if tools_md:
     open(tools_path, "w", encoding="utf-8").write("# TOOLS\n\n" + "\n".join(tools_md))
 elif os.path.exists(tools_path):
     os.remove(tools_path)
+
+# Let the agent look at a screenshot before sending it, so it can catch a
+# blank page or a layout that did not render instead of forwarding a broken
+# shot. Cheap, and it is the same trick that makes the screenshots trustworthy.
+also = tools.setdefault("alsoAllow", [])
+if "image" not in also:
+    also.append("image")
 
 tools["deny"] = sorted(deny)
 

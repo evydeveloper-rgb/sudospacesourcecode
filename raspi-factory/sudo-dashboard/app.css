@@ -399,6 +399,22 @@ body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
 .crm-panel #crm-body { margin-top: 12px; }
 .crm-panel .wa-contacts { margin-top: 0; }
 
+/* "Build your contacts" guide inside the Contacts app. Kept collapsed by
+   default: the list is what people come for, the how-to is for when they want
+   to grow it. */
+.crm-guide {
+  margin-top: 14px; padding: 12px 14px; border: 1px dashed var(--line);
+  border-radius: var(--radius-lg); background: var(--surface);
+}
+.crm-guide > summary {
+  cursor: pointer; font-weight: 700; font-size: .9rem; color: var(--ink);
+}
+.crm-guide[open] > summary { margin-bottom: 10px; }
+.crm-guide h4 { margin: 14px 0 6px; font-size: .84rem; color: var(--ink); }
+.crm-guide .crm-steps { margin: 6px 0 8px; padding-inline-start: 20px; }
+.crm-guide .crm-steps li { font-size: .84rem; line-height: 1.5; margin-bottom: 5px; color: var(--ink-soft, #555); }
+.crm-guide .prompt-chip { margin-bottom: 6px; }
+
 /* Settings */
 .settings-list { max-width: 720px; margin: 0 auto; display: grid; gap: 11px; }
 /* Connectors and Channels live in their own tabs now, not behind a Settings

@@ -648,6 +648,38 @@
             <button class="whatsapp-panel-close" type="button" id="crm-close" data-i18n="set.channels.close">Close</button>
           </div>
           <div id="crm-body"></div>
+
+          <details class="crm-guide" id="crm-guide">
+            <summary data-i18n="crm.build.title">Build your contacts — bring them in from LinkedIn and Instagram</summary>
+            <p class="microcopy" data-i18n="crm.build.intro">Add the people you already know. Your agent can then message the ones you allow, remind you who to follow up with, and never lose a thread. Two ways to bring a list in — pick either, or both.</p>
+
+            <h4 data-i18n="crm.build.linkedinTitle">From LinkedIn</h4>
+            <ol class="crm-steps">
+              <li data-i18n-html="crm.build.li1">Open LinkedIn on a computer and go to <strong>My Network → Connections</strong>.</li>
+              <li data-i18n-html="crm.build.li2">Click <strong>Manage synced and imported contacts</strong>, then under <em>Export contacts</em> choose <strong>Export connections</strong>.</li>
+              <li data-i18n="crm.build.li3">LinkedIn emails you a CSV file. Download it.</li>
+              <li data-i18n-html="crm.build.li4">Ask your agent here: <em>“Add these people to my contacts”</em> and attach the CSV, or say <em>“I exported my LinkedIn contacts”</em> and it will walk you through it.</li>
+            </ol>
+            <button class="prompt-chip" type="button" data-prompt="I'd like to add my LinkedIn contacts. I've exported them from LinkedIn — help me bring them in." data-prompt-key="crm.build.liPrompt" data-i18n="crm.build.liPrompt">“Help me add my LinkedIn contacts”</button>
+
+            <h4 data-i18n="crm.build.instagramTitle">From Instagram</h4>
+            <p class="microcopy" data-i18n-html="crm.build.igIntro">Instagram does not let you export your followers in one tap, but you can <strong>download your information</strong> and the list is in there.</p>
+            <ol class="crm-steps">
+              <li data-i18n-html="crm.build.ig1">In the Instagram app: <strong>Profile → menu (☰) → Your activity → Download your information</strong>.</li>
+              <li data-i18n-html="crm.build.ig2">Choose <strong>Followers and following</strong> (deselect the rest to keep it quick), format <strong>JSON</strong>, then <strong>Request download</strong>.</li>
+              <li data-i18n="crm.build.ig3">Instagram emails you a link when it is ready — often within minutes, sometimes a few hours. Download and unzip it.</li>
+              <li data-i18n-html="crm.build.ig4">Ask your agent: <em>“Add the people I follow on Instagram to my contacts”</em> and attach the file. Note that Instagram gives handles, not phone numbers — the agent can keep them as contacts and you add numbers later as you talk.</li>
+            </ol>
+            <button class="prompt-chip" type="button" data-prompt="I downloaded my Instagram information and want to add the people I follow to my contacts." data-prompt-key="crm.build.igPrompt" data-i18n="crm.build.igPrompt">“Help me add my Instagram contacts”</button>
+
+            <h4 data-i18n="crm.build.linkTitle">Linking people to the right number</h4>
+            <p class="microcopy" data-i18n="crm.build.linkIntro">A name is only half of it — to message someone on WhatsApp your agent needs their number. Three ways to close that gap:</p>
+            <ul class="crm-steps">
+              <li data-i18n-html="crm.build.link1">Add the number by hand in the list above (the <strong>Add</strong> box). Fastest for the few people who matter most.</li>
+              <li data-i18n-html="crm.build.link2">Ask your agent: <em>“What is Rosa's number?”</em> once you have talked, and it will match the name to the number it saw.</li>
+              <li data-i18n-html="crm.build.link3">Turn on <strong>Let my agent read my other WhatsApp chats</strong> in Channels → WhatsApp. When someone new writes to you, the agent can ask whether to add them — no typing a number at all.</li>
+            </ul>
+          </details>
         </div>
       </section>
 

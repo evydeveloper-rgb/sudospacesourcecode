@@ -13,11 +13,12 @@ STATUS_BASE="/var/lib/sudo-devtools-status"
 LOG="/var/log/sudo-devtools.log"
 NODE_MAJOR="${NODE_MAJOR:-22}"
 
-# Which CLI to install. Adding another is a one-line entry here.
+# Which tool to install. Adding another is a one-line entry here.
 TOOL="${1:-claude}"
 case "$TOOL" in
-  claude) NPM_PKG="@anthropic-ai/claude-code"; BIN_NAME="claude"; LABEL="Claude Code" ;;
-  codex)  NPM_PKG="@openai/codex";             BIN_NAME="codex";  LABEL="Codex" ;;
+  claude)  NPM_PKG="@anthropic-ai/claude-code"; BIN_NAME="claude"; LABEL="Claude Code" ;;
+  codex)   NPM_PKG="@openai/codex";             BIN_NAME="codex";  LABEL="Codex" ;;
+  browser) NPM_PKG="";                          BIN_NAME="";       LABEL="Browser (for screenshots)" ;;
   *) echo "unknown tool: $TOOL"; exit 1 ;;
 esac
 
@@ -65,6 +66,25 @@ command -v git >/dev/null 2>&1 || {
   set_status installing "Installing git…"
   DEBIAN_FRONTEND=noninteractive apt-get install -y git || true
 }
+
+# ── Browser (for screenshots) ───────────────────────────────────────────
+# A headless Chromium, so the agent can take a picture of a page it built
+# and send it to the owner. Installed via apt (big, but a one-time cost) and
+# used by /usr/local/bin/sudo-screenshot. No npm involved, so it stops here.
+if [ "$TOOL" = "browser" ]; then
+  for c in chromium chromium-browser; do
+    command -v "$c" >/dev/null 2>&1 && { set_status done "${LABEL} is already installed."; exit 0; }
+  done
+  set_status installing "Installing the browser (this is the slow part, ~2 min)…"
+  DEBIAN_FRONTEND=noninteractive apt-get update || true
+  DEBIAN_FRONTEND=noninteractive apt-get install -y chromium \
+    || DEBIAN_FRONTEND=noninteractive apt-get install -y chromium-browser \
+    || fail "Browser installation failed — see /var/log/sudo-devtools.log"
+  for c in chromium chromium-browser; do
+    command -v "$c" >/dev/null 2>&1 && { set_status done "${LABEL} is ready."; exit 0; }
+  done
+  fail "Browser installed but the command is missing"
+fi
 
 # ── Claude Code ─────────────────────────────────────────────────────────
 # Install under the user's own npm prefix so it runs without sudo and does
