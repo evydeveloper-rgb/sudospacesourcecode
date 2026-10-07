@@ -691,9 +691,9 @@ body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
 .connector-browse { margin-top: 6px; }
 .connector-browse-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
 .connector-headline { font-size: .95rem; font-weight: 750; color: var(--ink); }
-.connector-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
-@media (min-width: 560px) { .connector-grid { grid-template-columns: repeat(3, 1fr); } }
-@media (min-width: 900px) { .connector-grid { grid-template-columns: repeat(4, 1fr); } }
+.connector-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+@media (min-width: 560px) { .connector-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 900px) { .connector-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 .connector-tile {
   display: flex; align-items: center; gap: 10px; padding: 10px 11px;
   border: 1px solid var(--line); border-radius: 13px;
@@ -1525,6 +1525,10 @@ html:lang(zh) {
 html:lang(ar) {
   --font-sans: system-ui, -apple-system, "Segoe UI", "SF Arabic", "Geeza Pro", "Noto Sans Arabic",
     "Noto Naskh Arabic", Tahoma, sans-serif;
+  /* Latin stays monospaced; Arabic letters fall through to a proper Arabic
+     face instead of a monospaced fallback that stretches them apart. */
+  --font-mono: "JetBrains Mono", "SF Mono", Menlo, Consolas, "Segoe UI", "SF Arabic", "Geeza Pro",
+    "Noto Sans Arabic", Tahoma, monospace;
 }
 /* Arabic letters join; spacing them apart breaks the words. Uppercase-mono
    labels fall back to the sans face for scripts the mono font lacks. */
@@ -1579,3 +1583,6 @@ input[type="password"], input[type="tel"], input[type="number"], #ssh-key, #devi
   min-height: 36px; padding: 0 10px; border: 1px solid var(--line); border-radius: 10px;
   background: var(--surface); color: var(--ink); font-size: .8rem; font-weight: 650; cursor: pointer;
 }
+/* The guide's drawings are not mirrored; keep their text anchored the way
+   they were drawn (Arabic words still shape and read right-to-left). */
+.guide-figure svg, .wa-option svg { direction: ltr; }
