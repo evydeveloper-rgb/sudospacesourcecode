@@ -249,6 +249,10 @@ print(f"Wrote {runtime_path}")
 print(f"Model: {model} | Agent: {agent_name} | MCP: {'on' if composio_on else 'off'}")
 
 # --- Copy workspace files from templates ---
+# "auto" (or unset) adds nothing: the agent already answers in whatever
+# language it is spoken to.
+AGENT_LANGUAGES = {"en": "English", "es": "Spanish", "zh": "Simplified Chinese", "ar": "Arabic"}
+
 PERSONALITY_INTROS = {
     "professional": "You lean precise and formal, but never robotic. Structure your answers clearly.",
     "friendly": "You are warm, encouraging, and conversational. You feel like a friend, not a service.",
@@ -295,6 +299,18 @@ for fname in ["SOUL.md", "IDENTITY.md", "USER.md", "AGENTS.md",
                 "## Vibe\n",
                 f"## Personality Override\n\n{intro}\n\n## Vibe\n"
             )
+        # Settings -> Language -> "Agent's reply language", independent of the
+        # dashboard's own language on purpose. At the very top of SOUL.md:
+        # a "## Language" note at the end of AGENTS.md was injected but the
+        # model kept answering in the language of the question.
+        if fname == "SOUL.md":
+            agent_language = AGENT_LANGUAGES.get(sudo.get("agent_language") or "auto")
+            if agent_language:
+                title, _, rest = content.partition("\n")
+                content = (f"{title}\n\n**You always speak {agent_language}.** Every reply you "
+                           f"write is in {agent_language}, even when the person writes to you in "
+                           "English or another language. Switch only if they ask you to. Names, "
+                           "code and links stay as they are.\n" + rest)
         pathlib.Path(dst).write_text(content, encoding="utf-8")
         print(f"  Workspace: {fname}")
     else:
