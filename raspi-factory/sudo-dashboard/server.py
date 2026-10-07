@@ -1257,6 +1257,22 @@ def openclaw_rpc(method: str, params: dict | None = None, timeout: int = 30) -> 
     return data.get("payload") or {}
 
 
+def openclaw_rpc_patient(method: str, params: dict | None = None, timeout: int = 30, wait: int = 60) -> dict:
+    """openclaw_rpc that rides out a gateway restart: refused connections and
+    404s (gateway up, plugins not loaded yet) are retried for up to `wait` s."""
+    deadline = time.time() + wait
+    while True:
+        try:
+            return openclaw_rpc(method, params, timeout=timeout)
+        except urllib.error.HTTPError as exc:
+            if exc.code not in (404, 502, 503) or time.time() > deadline:
+                raise
+        except urllib.error.URLError as exc:
+            if not isinstance(exc.reason, ConnectionRefusedError) or time.time() > deadline:
+                raise
+        time.sleep(2)
+
+
 def openclaw_whatsapp_installed() -> bool:
     try:
         return any(n.startswith("openclaw-whatsapp-") for n in os.listdir(OPENCLAW_PLUGIN_DIR))
@@ -2128,9 +2144,10 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                 self.send_json({"error": "Unknown account"}, code=400)
                 return True
             try:
-                payload = openclaw_rpc("web.login.start", {"accountId": account}, timeout=45)
+                payload = openclaw_rpc_patient("web.login.start", {"accountId": account}, timeout=45)
             except Exception as exc:
-                self.send_json({"error": f"Could not get a code yet — {exc}"}, code=502)
+                print(f"whatsapp qr ({account}) failed: {exc}", flush=True)
+                self.send_json({"error": "Your agent is still getting WhatsApp ready. Wait a minute, then press Show QR code again."}, code=502)
                 return True
             self.send_json({"qr": payload.get("qrDataUrl"), "message": payload.get("message", "")})
             return True
