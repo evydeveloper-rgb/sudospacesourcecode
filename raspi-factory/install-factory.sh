@@ -21,6 +21,7 @@ mkdir -p /opt/sudo-dashboard
 cp "${BOOT}/sudo-dashboard/index.html" /opt/sudo-dashboard/
 cp "${BOOT}/sudo-dashboard/server.py" /opt/sudo-dashboard/
 cp "${BOOT}/sudo-dashboard/app.css" /opt/sudo-dashboard/
+cp "${BOOT}/sudo-dashboard/i18n.js" /opt/sudo-dashboard/
 cp "${BOOT}/sudo-dashboard/manifest.json" /opt/sudo-dashboard/
 cp "${BOOT}/sudo-dashboard/sudo-wordmark.svg" /opt/sudo-dashboard/
 
