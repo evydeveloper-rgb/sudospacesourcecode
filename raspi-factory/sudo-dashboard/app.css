@@ -377,6 +377,27 @@ body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
   position: absolute; top: 18px; inset-inline-end: 18px; padding: 6px 9px; border-radius: 999px;
   background: rgba(255,255,255,.55); font-size: .64rem; font-weight: 750; letter-spacing: .03em;
 }
+/* An app that exists, as opposed to the "coming soon" placeholders. Same
+   spot as .soon so the row reads consistently. */
+.ready-tag {
+  position: absolute; top: 18px; inset-inline-end: 18px; padding: 6px 9px; border-radius: 999px;
+  background: var(--ok-tint); color: var(--ok-ink); font-size: .64rem; font-weight: 750; letter-spacing: .03em;
+}
+/* The Contacts app -- a real app, so it is a button like "Create your own". */
+.mini-app.crm {
+  display: block; width: 100%; text-align: start; font: inherit; color: inherit; cursor: pointer;
+  background: linear-gradient(135deg, #e4f3ea, #eef7f1);
+}
+.mini-app.crm:hover { border-color: var(--ok); }
+.crm-panel {
+  margin-top: 18px; padding: 16px; border: 1px solid var(--line); border-radius: var(--radius-lg);
+  background: var(--surface-soft); text-align: start; animation: enter .2s ease both;
+}
+.crm-panel-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.crm-panel-head strong { display: block; font-size: 1rem; color: var(--ink); }
+.crm-panel-head .whatsapp-panel-close { margin-top: 0; }
+.crm-panel #crm-body { margin-top: 12px; }
+.crm-panel .wa-contacts { margin-top: 0; }
 
 /* Settings */
 .settings-list { max-width: 720px; margin: 0 auto; display: grid; gap: 11px; }
@@ -454,6 +475,16 @@ body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
   font-size: .72rem; font-weight: 750; cursor: pointer;
 }
 .channel-connect:active { transform: scale(.97); }
+.channel-actions { display: inline-flex; align-items: center; gap: 6px; }
+/* The gear opens WhatsApp settings (the allow-list, the read switches) -- a
+   separate door from "Set up", which only ever links or relinks a number. */
+.channel-gear {
+  width: 42px; height: 42px; display: grid; place-items: center; padding: 0;
+  border: 1px solid var(--line); border-radius: 12px; background: var(--surface);
+  color: var(--ink-2); cursor: pointer;
+}
+.channel-gear:active { transform: scale(.97); }
+.channel-gear svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .channel-status { color: var(--muted); line-height: 1.45; }
 
 /* Honest placeholder for a channel that doesn't exist yet -- not a button,
@@ -567,6 +598,23 @@ body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
 .wa-number-row { display: flex; gap: 8px; align-items: stretch; margin-top: 7px; }
 .setting-body .wa-number-row input { flex: 1; min-width: 0; margin-top: 0; }
 .wa-number-row .primary-button { width: auto; flex: none; min-height: 49px; margin-top: 0; padding: 0 18px; }
+/* The owner's own number, in its own card, above the two pairing cards. It
+   used to sit inside the agent-number card, which read as one confusing ask. */
+.wa-number-section {
+  margin-top: 12px; padding: 12px 14px; border: 1px solid var(--line);
+  border-radius: 12px; background: var(--surface); text-align: start;
+}
+/* WhatsApp settings: the allow-list and the read switches, behind the gear.
+   Same card feel as the pairing panel, laid out left-to-right. */
+.whatsapp-settings-panel {
+  margin-top: 12px; padding: 16px; text-align: start;
+  border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--surface-soft);
+}
+.whatsapp-settings-title { font-weight: 800; font-size: .92rem; color: var(--ink); margin-bottom: 10px; }
+.whatsapp-settings-panel-body { text-align: start; }
+.whatsapp-settings-panel .wa-prefs { margin-top: 0; }
+.whatsapp-settings-panel .wa-contacts { margin-top: 16px; }
 .primary-button {
   width: 100%; min-height: 50px; margin-top: 18px; border: 0; border-radius: var(--radius);
   background: var(--accent); color: var(--ink); font-weight: 800; cursor: pointer;

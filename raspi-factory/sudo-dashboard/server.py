@@ -1307,12 +1307,28 @@ def _linked_number(account: dict) -> str:
 # sudo-contacts OpenClaw plugin, which enforces it on every outgoing message
 # and lets the agent add people when the owner asks in chat.
 WA_CONTACTS = "/opt/sudo/whatsapp-contacts.json"
+# sudo-observer OpenClaw plugin reads this to decide whether it may look at the
+# owner's other chats. Same file the plugin itself uses, so a toggle takes
+# effect on the next message without a restart. config.json only seeds it.
+WA_OBSERVER = "/opt/sudo/whatsapp-observer.json"
 
 
 def read_wa_contacts() -> dict:
     data = read_json_file(WA_CONTACTS, {}) or {}
     contacts = [c for c in (data.get("contacts") or []) if isinstance(c, dict) and c.get("number")]
     return {"agent_can_add": data.get("agent_can_add", True) is not False, "contacts": contacts}
+
+
+def read_wa_observer(cfg: dict | None = None) -> dict:
+    """What the sudo-observer plugin is allowed to read. The plugin's own file
+    is authoritative once it exists; config.json seeds it on a fresh device."""
+    data = read_json_file(WA_OBSERVER, None)
+    if isinstance(data, dict) and "read_others" in data:
+        read_others = data.get("read_others") is True
+    else:
+        seed = cfg if cfg is not None else (read_json_file(CONFIG, {}) or {})
+        read_others = bool(seed.get("whatsapp_read_others", False))
+    return {"read_others": read_others}
 
 
 def openclaw_whatsapp_state() -> dict:
@@ -1324,7 +1340,7 @@ def openclaw_whatsapp_state() -> dict:
         "install": {"state": install.get("state", "absent"), "message": install.get("message", "")},
         "owner_number": cfg.get("whatsapp_owner_number") or numbers.get("owner") or "",
         "accounts": {},
-        "read_others": bool(cfg.get("whatsapp_read_others", False)),
+        "read_others": read_wa_observer(cfg)["read_others"],
         "in_summary": bool(cfg.get("whatsapp_in_summary", False)),
         "contacts": read_wa_contacts(),
     }
@@ -2182,12 +2198,20 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             cfg = read_json_file(CONFIG)
             # Partial updates: a toggle sends only its own field.
             if "read_others" in body:
-                cfg["whatsapp_read_others"] = bool(body.get("read_others"))
+                read_others = bool(body.get("read_others"))
+                cfg["whatsapp_read_others"] = read_others
+                # The observer plugin reads its own file live, so this takes
+                # effect on the very next message -- no gateway restart.
+                write_json_file(WA_OBSERVER, {**read_json_file(WA_OBSERVER, {}),
+                                              "read_others": read_others})
             if "in_summary" in body:
                 cfg["whatsapp_in_summary"] = bool(body.get("in_summary"))
             write_json_file(CONFIG, cfg)
+            # configure-openclaw.sh re-derives the channel config (and, on a
+            # fresh device, seeds the observer file); picoclaw needs it too.
             run_configure_picoclaw()
-            self.send_json({"read_others": bool(cfg.get("whatsapp_read_others", False)),
+            observer = read_wa_observer(cfg)
+            self.send_json({"read_others": observer["read_others"],
                             "in_summary": bool(cfg.get("whatsapp_in_summary", False))})
             return True
 

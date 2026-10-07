@@ -529,11 +529,11 @@
               <div class="wa-prefs guide-prefs">
                 <div class="access-row">
                   <div>
-                    <strong><span data-i18n="guide.wa.letMyAgentRead">Let my agent read my other WhatsApp chats</span> <span class="channel-soon" data-i18n="set.channels.comingSoon">Coming soon</span></strong>
+                    <strong><span data-i18n="guide.wa.letMyAgentRead">Let my agent read my other WhatsApp chats</span></strong>
                     <small data-i18n="guide.wa.readOnlyItCan">Read-only: it can see your chats with other people on your own linked WhatsApp, and never replies to them.</small>
                   </div>
                   <label class="switch">
-                    <input id="guide-wa-read-others" type="checkbox" data-wa-pref="read_others" disabled>
+                    <input id="guide-wa-read-others" type="checkbox" data-wa-pref="read_others">
                     <span aria-hidden="true"></span>
                     <em class="sr-only" data-i18n="guide.wa.letMyAgentRead">Let my agent read my other WhatsApp chats</em>
                   </label>
@@ -542,11 +542,11 @@
                 <div class="info-bubble" id="guide-wa-read-info" data-clone="wa-read-info"></div>
                 <div class="access-row">
                   <div>
-                    <strong><span data-i18n="guide.wa.includeWhatsappInMy">Include WhatsApp in my daily summary</span> <span class="channel-soon" data-i18n="set.channels.comingSoon">Coming soon</span></strong>
+                    <strong><span data-i18n="guide.wa.includeWhatsappInMy">Include WhatsApp in my daily summary</span></strong>
                     <small data-i18n="guide.wa.yourDailySummaryAnd">Your daily summary and reminders also list who may still need a reply. Needs the switch above on.</small>
                   </div>
                   <label class="switch">
-                    <input id="guide-wa-in-summary" type="checkbox" data-wa-pref="in_summary" disabled>
+                    <input id="guide-wa-in-summary" type="checkbox" data-wa-pref="in_summary">
                     <span aria-hidden="true"></span>
                     <em class="sr-only" data-i18n="guide.wa.includeWhatsappInMy">Include WhatsApp in my daily summary</em>
                   </label>
@@ -613,6 +613,10 @@
           </div>
         </div>
         <div class="app-grid">
+          <button type="button" class="mini-app crm" id="crm-open">
+            <div class="mini-icon">◎</div><span class="ready-tag" data-i18n="apps.ready">ready</span>
+            <h2 data-i18n="apps.crm">Contacts</h2><p data-i18n="apps.whoYouTalkToOn">Who you talk to on WhatsApp — and who your agent may message.</p>
+          </button>
           <article class="mini-app mint">
             <div class="mini-icon">↗</div><span class="soon" data-i18n="apps.comingSoon">coming soon</span>
             <h2 data-i18n="apps.financialTracker">Financial tracker</h2><p data-i18n="apps.incomeSpendingAndWhat">Income, spending, and what’s left at a glance.</p>
@@ -634,6 +638,17 @@
             <h2 data-i18n="apps.createYourOwn">Create your own</h2><p data-i18n="apps.describeWhatYouWant">Describe what you want and sudo builds it with you.</p>
           </button>
         </div>
+
+        <div class="crm-panel" id="crm-panel" hidden>
+          <div class="crm-panel-head">
+            <div>
+              <strong data-i18n="apps.crm">Contacts</strong>
+              <small class="microcopy" data-i18n="apps.crmIntro">The people your agent may message on WhatsApp, and the switch for letting it ask you to add new ones. Same list as Channels → WhatsApp.</small>
+            </div>
+            <button class="whatsapp-panel-close" type="button" id="crm-close" data-i18n="set.channels.close">Close</button>
+          </div>
+          <div id="crm-body"></div>
+        </div>
       </section>
 
       <section class="view" id="view-channels" aria-labelledby="channels-title">
@@ -652,7 +667,12 @@
                 <div class="channel-row">
                   <span class="channel-logo whatsapp" aria-hidden="true">W</span>
                   <span class="channel-copy"><strong>WhatsApp</strong><small id="whatsapp-summary">not connected</small></span>
-                  <button class="channel-connect" type="button" id="whatsapp-connect" data-i18n="chat.setUp">Set up</button>
+                  <span class="channel-actions">
+                    <button class="channel-connect" type="button" id="whatsapp-connect" data-i18n="chat.setUp">Set up</button>
+                    <button class="channel-gear" type="button" id="whatsapp-settings-btn" aria-label="WhatsApp settings" title="WhatsApp settings" data-i18n-attr="aria-label:set.channels.settingsTitle,title:set.channels.settingsTitle">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
+                  </span>
                 </div>
                 <div class="channel-row">
                   <span class="channel-logo telegram" aria-hidden="true">T</span>
@@ -681,38 +701,45 @@
                 <button class="whatsapp-panel-close" type="button" id="whatsapp-panel-close" data-i18n="set.channels.close">Close</button>
               </div>
 
-              <div class="wa-prefs" id="wa-prefs">
-                <div class="settings-subgroup" data-i18n="set.channels.whatsappOptions">WhatsApp options</div>
-                <div class="access-row">
-                  <div>
-                    <strong><span data-i18n="guide.wa.letMyAgentRead">Let my agent read my other WhatsApp chats</span> <span class="channel-soon" data-i18n="set.channels.comingSoon">Coming soon</span></strong>
-                    <small data-i18n="set.channels.offByDefaultRead">Off by default. Read-only: it can see your chats with other people on your own linked WhatsApp, and never replies to them.</small>
+              <div class="whatsapp-settings-panel" id="whatsapp-settings-panel" hidden>
+                <div class="whatsapp-settings-title" data-i18n="set.channels.settingsTitle">WhatsApp settings</div>
+                <div class="whatsapp-settings-panel-body" id="whatsapp-settings-body">
+                  <div class="wa-prefs" id="wa-prefs">
+                    <div class="settings-subgroup" data-i18n="set.channels.whatsappOptions">WhatsApp options</div>
+                    <div class="access-row">
+                      <div>
+                        <strong><span data-i18n="guide.wa.letMyAgentRead">Let my agent read my other WhatsApp chats</span></strong>
+                        <small data-i18n="set.channels.offByDefaultRead">Off by default. Read-only: it can see your chats with other people on your own linked WhatsApp, and never replies to them.</small>
+                      </div>
+                      <label class="switch">
+                        <input id="wa-read-others" type="checkbox" data-wa-pref="read_others">
+                        <span aria-hidden="true"></span>
+                        <em class="sr-only" data-i18n="guide.wa.letMyAgentRead">Let my agent read my other WhatsApp chats</em>
+                      </label>
+                    </div>
+                    <button class="info-link" type="button" aria-expanded="false" aria-controls="wa-read-info" data-i18n="guide.wa.whatThisAllows">What this allows ⓘ</button>
+                    <div class="info-bubble" id="wa-read-info" data-i18n-html="set.channels.whatItAllowsYour">
+                      <strong>What it allows.</strong> Your agent can read the chats on <em>your own</em> linked WhatsApp, meaning your conversations with other people, so it can remind you of things and notice who is waiting on you.<br><br>
+                      <strong>What it never does.</strong> It never replies to anyone in those chats or messages them. It still only talks to you.<br><br>
+                      <strong>Only your own account.</strong> This applies only to the WhatsApp linked as “Your WhatsApp”. The agent’s own number has no other chats to read.<br><br>
+                      <strong>Off by default.</strong> Nothing is read until you switch it on. Switching it off stops it.
+                    </div>
+                    <div class="access-row">
+                      <div>
+                        <strong><span data-i18n="guide.wa.includeWhatsappInMy">Include WhatsApp in my daily summary</span></strong>
+                        <small data-i18n="set.channels.offByDefaultYour">Off by default. Your daily summary and reminders also list who may still need a reply. Needs the switch above on.</small>
+                      </div>
+                      <label class="switch">
+                        <input id="wa-in-summary" type="checkbox" data-wa-pref="in_summary">
+                        <span aria-hidden="true"></span>
+                        <em class="sr-only" data-i18n="guide.wa.includeWhatsappInMy">Include WhatsApp in my daily summary</em>
+                      </label>
+                    </div>
+                    <p class="form-status" role="status"></p>
                   </div>
-                  <label class="switch">
-                    <input id="wa-read-others" type="checkbox" data-wa-pref="read_others" disabled>
-                    <span aria-hidden="true"></span>
-                    <em class="sr-only" data-i18n="guide.wa.letMyAgentRead">Let my agent read my other WhatsApp chats</em>
-                  </label>
+                  <div id="wa-settings-contacts"></div>
                 </div>
-                <button class="info-link" type="button" aria-expanded="false" aria-controls="wa-read-info" data-i18n="guide.wa.whatThisAllows">What this allows ⓘ</button>
-                <div class="info-bubble" id="wa-read-info" data-i18n-html="set.channels.whatItAllowsYour">
-                  <strong>What it allows.</strong> Your agent can read the chats on <em>your own</em> linked WhatsApp, meaning your conversations with other people, so it can remind you of things and notice who is waiting on you.<br><br>
-                  <strong>What it never does.</strong> It never replies to anyone in those chats or messages them. It still only talks to you.<br><br>
-                  <strong>Only your own account.</strong> This applies only to the WhatsApp linked as “Your WhatsApp”. The agent’s own number has no other chats to read.<br><br>
-                  <strong>Off by default.</strong> Nothing is read until you switch it on. Switching it off stops it.
-                </div>
-                <div class="access-row">
-                  <div>
-                    <strong><span data-i18n="guide.wa.includeWhatsappInMy">Include WhatsApp in my daily summary</span> <span class="channel-soon" data-i18n="set.channels.comingSoon">Coming soon</span></strong>
-                    <small data-i18n="set.channels.offByDefaultYour">Off by default. Your daily summary and reminders also list who may still need a reply. Needs the switch above on.</small>
-                  </div>
-                  <label class="switch">
-                    <input id="wa-in-summary" type="checkbox" data-wa-pref="in_summary" disabled>
-                    <span aria-hidden="true"></span>
-                    <em class="sr-only" data-i18n="guide.wa.includeWhatsappInMy">Include WhatsApp in my daily summary</em>
-                  </label>
-                </div>
-                <p class="form-status" role="status"></p>
+                <button class="whatsapp-panel-close" type="button" id="whatsapp-settings-close" data-i18n="set.channels.close">Close</button>
               </div>
 
               <p class="form-status channel-status" id="channel-status" role="status"></p>
@@ -2486,6 +2513,9 @@
 
     async function connectWhatsapp() {
       stopWhatsappPoll();
+      // "Set up" is the pairing door: it opens the QR panel and gets the
+      // settings panel out of the way so the two never stack.
+      $('whatsapp-settings-panel').hidden = true;
       $('whatsapp-panel').hidden = false;
       whatsappPanelMessage(t('common.starting'));
       try {
@@ -2544,10 +2574,19 @@
       state.waInfo = info;
       state.waChecked = true;
       renderWaPrefs(info);
+      renderWhatsappSettings(info);
+      // If the Contacts app is open, keep it in step too -- the allow-list
+      // and the read switches are the same state wherever they are shown.
+      if ($('crm-panel') && !$('crm-panel').hidden && $('crm-body')) {
+        $('crm-body').replaceChildren(renderWaContacts(info));
+      }
       renderSetupGuide();
       state.waQr = state.waQr || {};
       const body = $('whatsapp-panel-body');
-      $('whatsapp-panel').hidden = false;
+      // Opening the pairing panel is the whole point of renderOcWhatsapp, but
+      // if the owner is looking at WhatsApp settings we leave that panel up
+      // instead of yanking it away under them.
+      if ($('whatsapp-settings-panel').hidden) $('whatsapp-panel').hidden = false;
       body.replaceChildren();
 
       if (!info.installed) {
@@ -2583,8 +2622,17 @@
       intro.textContent = t('wa.linkIntro');
       body.append(intro);
 
+      // Two numbers, two clearly-labelled sections. "Your number" is the
+      // owner's own WhatsApp; "Your agent's number" is the second SIM the
+      // agent lives on. Keeping them apart is the whole point -- they used to
+      // sit inside one card and read as a single confusing ask.
+      body.append(renderOwnerNumberSection(info));
+
+      const accountsLabel = document.createElement('div');
+      accountsLabel.className = 'settings-subgroup';
+      accountsLabel.textContent = t('wa.accountsHeading');
+      body.append(accountsLabel);
       ['owner', 'agent'].forEach(id => body.append(renderWaAccount(id, info.accounts[id] || {}, info)));
-      body.append(renderWaContacts(info));
 
       const status = document.createElement('p');
       status.className = 'form-status'; status.id = 'wa-status';
@@ -2599,6 +2647,44 @@
       if (Object.keys(state.waQr || {}).length || info.error || settling) {
         whatsappPollTimer = setTimeout(pollOcWhatsapp, 3000);
       }
+    }
+
+    // The owner's own number, in its own section with its own heading, so it
+    // never reads as part of the agent's number below it. The agent's number
+    // only ever answers the owner, so it has to know this to work.
+    function renderOwnerNumberSection(info) {
+      const box = document.createElement('div');
+      box.className = 'wa-number-section';
+      const head = document.createElement('div');
+      head.className = 'wa-account-head';
+      const title = document.createElement('strong');
+      title.textContent = t('wa.yourNumber.title');
+      const badge = document.createElement('small');
+      badge.dir = 'ltr';
+      badge.textContent = info.owner_number ? ('+' + info.owner_number.replace(/^\+/, '')) : t('wa.yourNumber.notSet');
+      head.append(title, badge);
+      const how = document.createElement('p');
+      how.className = 'microcopy';
+      how.textContent = t('wa.yourNumber.how');
+      const row = document.createElement('div');
+      row.className = 'wa-number-row';
+      const input = document.createElement('input');
+      input.id = 'wa-owner-number'; input.type = 'tel';
+      input.placeholder = info.owner_number || '+15551234567';
+      input.dir = 'ltr';
+      // A redraw (a poll, a language switch) must not eat a half-typed number.
+      if (state.waOwnerDraft) input.value = state.waOwnerDraft;
+      input.addEventListener('input', () => { state.waOwnerDraft = input.value; });
+      const save = document.createElement('button');
+      save.type = 'button'; save.className = 'primary-button';
+      save.textContent = info.owner_number ? t('common.save') : t('wa.yourNumber.save');
+      save.addEventListener('click', () => saveOwnerNumber(input.value.trim()));
+      row.append(input, save);
+      const hint = document.createElement('p');
+      hint.className = 'microcopy';
+      hint.textContent = t('wa.ownNumberHint');
+      box.append(head, how, row, hint);
+      return box;
     }
 
     function renderWaAccount(id, account, info) {
@@ -2652,30 +2738,6 @@
         box.append(needs);
       }
 
-      // The agent's number only answers the owner, so it has to know the
-      // owner's number. Linking the owner's own WhatsApp fills it in.
-      if (id === 'agent' && !info.owner_number) {
-        const numLabel = document.createElement('label');
-        numLabel.htmlFor = 'wa-owner-number';
-        numLabel.textContent = t('wa.ownNumber');
-        const row = document.createElement('div');
-        row.className = 'wa-number-row';
-        const input = document.createElement('input');
-        input.id = 'wa-owner-number'; input.type = 'tel'; input.placeholder = '+15551234567';
-        input.dir = 'ltr';
-        // A redraw (a poll, a language switch) must not eat a half-typed number.
-        if (state.waOwnerDraft) input.value = state.waOwnerDraft;
-        input.addEventListener('input', () => { state.waOwnerDraft = input.value; });
-        const save = document.createElement('button');
-        save.type = 'button'; save.className = 'primary-button'; save.textContent = t('common.save');
-        save.addEventListener('click', () => saveOwnerNumber(input.value.trim()));
-        row.append(input, save);
-        const hint = document.createElement('p');
-        hint.className = 'microcopy';
-        hint.textContent = t('wa.ownNumberHint');
-        box.append(numLabel, row, hint);
-      }
-
       const qr = state.waQr && state.waQr[id];
       if (qr && qr.src) {
         const ready = document.createElement('p');
@@ -2719,6 +2781,49 @@
         delete state.waQr[id];
         renderOcWhatsapp(state.waInfo);
         if ($('wa-status')) $('wa-status').textContent = error.message;
+      }
+    }
+
+    // Draws the allow-list into the settings panel. Split out from the pairing
+    // flow above: it is a setting, not a step in linking a number, and lives
+    // behind the gear so "Set up" never shows it on an already-linked account.
+    function renderWhatsappSettings(info) {
+      const host = $('wa-settings-contacts');
+      if (host) host.replaceChildren(renderWaContacts(info));
+    }
+
+    // The Contacts app on the Apps tab: the same allow-list the gear shows in
+    // Channels, in its own space for people who think of it as an app.
+    async function openCrm() {
+      $('crm-panel').hidden = false;
+      const body = $('crm-body');
+      if (state.waInfo) { body.replaceChildren(renderWaContacts(state.waInfo)); return; }
+      body.replaceChildren();
+      try {
+        const info = await api('/api/agent/whatsapp', {}, 20000);
+        state.waInfo = info;
+        body.replaceChildren(renderWaContacts(info));
+      } catch (_) {
+        // Offline for the moment; the panel title still draws.
+      }
+    }
+
+    async function openWhatsappSettings() {
+      $('whatsapp-panel').hidden = true;
+      stopWhatsappPoll();
+      $('whatsapp-settings-panel').hidden = false;
+      if (state.waInfo) {
+        renderWaPrefs(state.waInfo);
+        renderWhatsappSettings(state.waInfo);
+        return;
+      }
+      try {
+        const info = await api('/api/agent/whatsapp', {}, 20000);
+        state.waInfo = info;
+        renderWaPrefs(info);
+        renderWhatsappSettings(info);
+      } catch (_) {
+        // Offline for the moment; the settings panel still shows its headings.
       }
     }
 
@@ -4542,10 +4647,16 @@
     $('copy-remote').addEventListener('click', event => copyText(state.publicUrl, event.currentTarget));
     $('copy-public-link').addEventListener('click', event => copyText(state.publicUrl, event.currentTarget));
     $('whatsapp-connect').addEventListener('click', connectWhatsapp);
+    $('whatsapp-settings-btn').addEventListener('click', openWhatsappSettings);
     $('whatsapp-panel-close').addEventListener('click', () => {
       $('whatsapp-panel').hidden = true;
       stopWhatsappPoll();
     });
+    $('whatsapp-settings-close').addEventListener('click', () => {
+      $('whatsapp-settings-panel').hidden = true;
+    });
+    $('crm-open').addEventListener('click', openCrm);
+    $('crm-close').addEventListener('click', () => { $('crm-panel').hidden = true; });
     if ('ResizeObserver' in window) {
       new ResizeObserver(() => {
         if (state.tab === 'chat') scrollChat('auto');

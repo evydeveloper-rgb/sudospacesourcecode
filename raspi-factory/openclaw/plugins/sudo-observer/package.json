@@ -1,0 +1,10 @@
+{
+  "name": "sudo-observer",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Reads the owner's other WhatsApp chats when the owner turns that on.",
+  "type": "module",
+  "openclaw": {
+    "extensions": ["./index.js"]
+  }
+}

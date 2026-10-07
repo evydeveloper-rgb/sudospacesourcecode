@@ -182,6 +182,31 @@ if whatsapp_installed:
             n = str((c or {}).get("number") or "").strip()
             if re.match(r"^\+[1-9]\d{6,14}$", n) and n not in agent_allow:
                 agent_allow.append(n)
+    # The observer needs WhatsApp to broadcast inbound hook payloads, which it
+    # only does when the channel opts in -- and only for the owner's account,
+    # the one with other chats to read. Scoped to that account so the agent's
+    # own number broadcasts nothing.
+    observer_installed = os.path.isfile("/opt/sudo-openclaw/plugins/sudo-observer/index.js")
+    read_others = False
+    if observer_installed:
+        try:
+            read_others = json.load(open("/opt/sudo/whatsapp-observer.json", encoding="utf-8")).get("read_others") is True
+        except (OSError, ValueError):
+            read_others = bool(sudo.get("whatsapp_read_others", False))
+    owner_account = {"selfChatMode": True, "dmPolicy": "allowlist", "allowFrom": allow}
+    if observer_installed:
+        owner_account["pluginHooks"] = {"messageReceived": True}
+        if read_others:
+            # Reading the owner's other chats needs their account to *accept*
+            # messages from people other than the owner -- stock WhatsApp drops
+            # unauthorised senders before any hook fires, so there would be
+            # nothing to read. With dmPolicy open, the sudo-observer plugin
+            # claims and consumes every non-owner DM before agent routing, so
+            # those people can be seen but can never give the agent orders.
+            # Flip the switch off and the next configure reverts this to
+            # allowlist, so strangers are dropped again.
+            owner_account["dmPolicy"] = "open"
+            owner_account["allowFrom"] = ["*"]
     cfg.setdefault("channels", {})["whatsapp"] = {
         "enabled": True,
         "dmPolicy": "allowlist",
@@ -189,7 +214,7 @@ if whatsapp_installed:
         "groupPolicy": "disabled",
         "defaultAccount": default_account,
         "accounts": {
-            "owner": {"selfChatMode": True, "dmPolicy": "allowlist", "allowFrom": allow},
+            "owner": owner_account,
             "agent": {"dmPolicy": "allowlist", "allowFrom": agent_allow},
         },
     }
@@ -258,6 +283,42 @@ if whatsapp_installed:
                 "",
             ]
         print("WhatsApp contacts: list enforced (sudo-contacts)")
+
+    # Reading the owner's other chats: the sudo-observer plugin. Off by
+    # default; the switch lives in Channels -> WhatsApp and its state in
+    # /opt/sudo/whatsapp-observer.json (written by the dashboard, and seeded
+    # here so the file exists before the first toggle). The plugin gates every
+    # read on that file, so nothing is written while the switch is off.
+    observer_plugin = "/opt/sudo-openclaw/plugins/sudo-observer"
+    if os.path.isfile(os.path.join(observer_plugin, "index.js")):
+        load = plugins.setdefault("load", {}).setdefault("paths", [])
+        if observer_plugin not in load:
+            load.append(observer_plugin)
+        if "sudo-observer" not in plugins["allow"]:
+            plugins["allow"].append("sudo-observer")
+        plugins["entries"]["sudo-observer"] = {"enabled": True, "config": {
+            "ownerNumber": owner_number, "ownerName": user}}
+        if not os.path.exists("/opt/sudo/whatsapp-observer.json"):
+            with open("/opt/sudo/whatsapp-observer.json", "w", encoding="utf-8") as fh:
+                json.dump({"read_others": bool(sudo.get("whatsapp_read_others", False))}, fh)
+        also = tools.setdefault("alsoAllow", [])
+        for tool in ("whatsapp_chats", "whatsapp_new_numbers"):
+            if tool not in also:
+                also.append(tool)
+        tools_md += [
+            "## WhatsApp — your owner's other chats",
+            "",
+            f"- {user} can let you read their other WhatsApp chats (Channels -> WhatsApp, "
+            "'Let my agent read my other WhatsApp chats'). It is off until they switch it on.",
+            f"- While it is on, `whatsapp_chats` shows the recent conversations with people "
+            f"other than {user}, and who may still be waiting on a reply. Use it to remind "
+            f"{user} of things and to notice who is waiting — never to reply to anyone yourself.",
+            f"- `whatsapp_new_numbers` lists people who wrote to {user} but are not on the list "
+            f"of people you may message. When there is someone new, ask {user} once whether to "
+            f"add them. You may only add them if {user} clearly says yes.",
+            "",
+        ]
+        print("WhatsApp observer: read-others available (sudo-observer)")
 else:
     print("WhatsApp (OpenClaw): not added")
 
