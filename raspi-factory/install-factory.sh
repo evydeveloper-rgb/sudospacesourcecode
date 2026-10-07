@@ -175,6 +175,11 @@ if [ -f "${BOOT}/sudo-factory.tar.gz" ]; then
         || printf '%s\n' "1.0.0" > /opt/sudo/version
     chmod 644 /opt/sudo/version 2>/dev/null || true
 fi
+# Cards prepared from a PC carry no bundle, only the version they were built from.
+if [ ! -s /opt/sudo/version ] && [ -f "${BOOT}/sudo-version" ]; then
+    tr -d ' \t\r\n' < "${BOOT}/sudo-version" > /opt/sudo/version
+    chmod 644 /opt/sudo/version 2>/dev/null || true
+fi
 chmod +x /usr/local/bin/sudo-device-id.sh \
          /usr/local/bin/sudo-device-secrets.sh \
          /usr/local/bin/sudo-cloud-init.sh \
@@ -569,7 +574,46 @@ PermitRootLogin no
 EOF
         echo "Dev SSH: key installed for ${DEV_USER}, password login disabled"
     else
-        echo "Dev SSH: no uid-1000 user found — skipped key install"
+        # On a fresh Imager card the user is created by cloud-init, which runs
+        # after this. Keep the key and install it once the user exists.
+        mkdir -p /etc/sudo
+        install -m 600 "${BOOT}/dev-authorized_keys" /etc/sudo/dev-authorized_keys
+        cat > /usr/local/bin/sudo-dev-key.sh << 'DEVKEY'
+#!/bin/bash
+for i in $(seq 1 120); do
+  DEV_USER="$(getent passwd 1000 | cut -d: -f1)"
+  DEV_HOME="$(getent passwd 1000 | cut -d: -f6)"
+  [ -n "$DEV_USER" ] && [ -d "$DEV_HOME" ] && break
+  sleep 5
+done
+[ -n "$DEV_USER" ] && [ -d "$DEV_HOME" ] || exit 1
+mkdir -p "$DEV_HOME/.ssh"
+cat /etc/sudo/dev-authorized_keys >> "$DEV_HOME/.ssh/authorized_keys"
+sort -u "$DEV_HOME/.ssh/authorized_keys" -o "$DEV_HOME/.ssh/authorized_keys"
+chmod 700 "$DEV_HOME/.ssh"; chmod 600 "$DEV_HOME/.ssh/authorized_keys"
+chown -R "$DEV_USER:$DEV_USER" "$DEV_HOME/.ssh"
+printf 'PasswordAuthentication no\nPermitRootLogin no\n' > /etc/ssh/sshd_config.d/10-sudo-dev.conf
+systemctl reload ssh 2>/dev/null || true
+rm -f /etc/sudo/dev-authorized_keys
+systemctl disable sudo-dev-key.service 2>/dev/null || true
+echo "Dev SSH: key installed for $DEV_USER" >> /boot/firmware/firstrun.log
+DEVKEY
+        chmod +x /usr/local/bin/sudo-dev-key.sh
+        cat > /etc/systemd/system/sudo-dev-key.service << 'EOF'
+[Unit]
+Description=Install the dev SSH key once the first user exists
+After=cloud-init.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/sudo-dev-key.sh
+TimeoutStartSec=700
+
+[Install]
+WantedBy=multi-user.target
+EOF
+        systemctl enable sudo-dev-key.service 2>/dev/null || true
+        echo "Dev SSH: no uid-1000 user yet — key will be installed once it exists"
     fi
     systemctl enable ssh 2>/dev/null || true
     systemctl start ssh 2>/dev/null || true

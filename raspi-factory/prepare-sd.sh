@@ -190,6 +190,9 @@ copy_factory_files() {
     mkdir -p "$boot/picoclaw/workspace"
     cp "$PICOCLAW/workspace/"*.md "$boot/picoclaw/workspace/"
     cp "$SCRIPT_DIR/openclaw/openclaw.base.json" "$boot/openclaw/"
+    # The version this card carries. Without it the device reports 0.0.0 and
+    # its first automatic update treats any release as newer.
+    cp "$SCRIPT_DIR/VERSION" "$boot/sudo-version"
     # Prebuilt arm64 OpenClaw (~54MB). Without it the device installs from npm
     # on first boot, which works but takes longer and needs the registry up.
     if [ -f "$SCRIPT_DIR/openclaw/openclaw-bundle.tar.gz" ]; then
