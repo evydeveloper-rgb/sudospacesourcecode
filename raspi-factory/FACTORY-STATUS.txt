@@ -1,15 +1,19 @@
 ═══════════════════════════════════════════════
- SUDO FACTORY — STATUS (user flow + PicoClaw)
+ SUDO FACTORY — STATUS (user flow + agent backend)
 ═══════════════════════════════════════════════
+
+Hardware: Raspberry Pi 5 (arm64).
+Agent brain: OpenClaw. PicoClaw is the on-card FALLBACK until OpenClaw installs.
 
 TARGET FLOW
 ───────────
   1. Plug Pi → hotspot RaspiSetup appears
   2. Captive portal → pick home WiFi → connect
-  3. Pi reboots → cloud registers device (background)
+  3. Pi reboots → installs OpenClaw (first boot), cloud registers device (background)
   4. User opens http://raspberrypi.local/
   5. Onboarding: your name, agent name, personality, model
-  6. Chat with real AI (PicoClaw + OpenRouter)
+  6. Chat with real AI (OpenClaw + OpenRouter)
+     — until OpenClaw finishes installing, PicoClaw answers so the user isn't stuck
   7. Billing at /billing.html (Stripe, needs Vercel deploy)
 
 ═══════════════════════════════════════════════
@@ -20,17 +24,23 @@ WiFi captive portal (real nmcli connect)
   wifi-setup/app.py + templates
   Opens the local dashboard directly after setup
 
-PicoClaw pre-installed on Pi (offline factory)
-  picoclaw/picoclaw binary v0.3.1 arm64 (~33MB on SD)
-  scripts/download-picoclaw.sh for re-download on Mac
-  systemd picoclaw-gateway.service
+OpenClaw as the agent brain (installs on first boot with WiFi)
+  sudo-pi/install-openclaw.sh → pinned 2026.6.11 into /opt/openclaw
+  Prefers prebuilt arm64 bundle on the card; falls back to npm
+  Needs Node.js >= 22.19 (installed on first boot via NodeSource)
+  systemd sudo-openclaw-install.service + sudo-openclaw-gateway.service
+  agent_backend() returns "openclaw" whenever /opt/openclaw exists
+
+PicoClaw = on-card fallback only (until OpenClaw is in place)
+  picoclaw/picoclaw binary arm64 on SD; systemd picoclaw-gateway.service
+  Answers first-boot chat so the box is never talking to nothing
 
 Agent onboarding (real, persisted)
   /onboarding.html → saves /opt/sudo/config.json
   personality + model selection
 
 Real chat UI
-  /chat.html → POST /api/agent/chat → picoclaw agent
+  /chat.html → POST /api/agent/chat → active agent (OpenClaw; PicoClaw fallback)
 
 Routing
   / → login (if needed) → onboarding or /chat.html
@@ -50,7 +60,8 @@ Cloud + OpenRouter per device
   sudo-cloud-init → register with device secret → openrouter key
   configure-picoclaw.sh → SOUL.md + picoclaw config
 
-No npm/node/npx on Pi — only python3, bash, curl, picoclaw binary
+No npm/node/npx needed AFTER install — factory ships the PicoClaw binary;
+OpenClaw installs once on first boot (bundle or npm), then runs from /opt/openclaw
 
 ═══════════════════════════════════════════════
  NOT DONE YET ⚠️
@@ -69,11 +80,11 @@ Legacy dashboard (index.html) still has mock WiFi + mock chat
   Use /chat.html for real chat; /dashboard.html for apps UI
 
 Chat multi-turn memory
-  Each message is picoclaw agent -m (single turn for now)
-  Gateway WebSocket can improve this later
+  Each message is a single-turn agent call for now
+  OpenClaw gateway session keying can improve this later
 
 Model list hardcoded (3 OpenRouter models in template)
-  Can expand in picoclaw/config.template.json
+  Can expand in the agent config template
 
 OpenRouter credits
   User needs subscription/trial via billing before chat works
@@ -83,16 +94,19 @@ Public access (manual after WiFi — needs domain + router):
   Port-forward 80+443 only on a trusted deployment
 
 ═══════════════════════════════════════════════
- PI REQUIREMENTS (nothing extra to install)
+ PI REQUIREMENTS (Raspberry Pi 5, arm64)
 ═══════════════════════════════════════════════
 
 Pre-installed by factory:
-  python3, picoclaw, curl (OS default)
+  python3, curl, picoclaw binary (OS default)
+
+Installed on first boot (with WiFi):
+  Node.js >= 22.19, then OpenClaw (bundle or npm)
 
 NOT on Pi:
-  node, npm, npx, vercel, git
+  npx, vercel, git
 
 Internet needed AFTER home WiFi:
-  cloud registration, OpenRouter API, Stripe billing
+  OpenClaw + Node install, cloud registration, OpenRouter API, Stripe billing
 
 ═══════════════════════════════════════════════
