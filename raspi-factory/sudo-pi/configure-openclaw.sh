@@ -97,6 +97,19 @@ allowlist = {m: {} for m in real.values() if m.startswith("openrouter/")}
 allowlist[image_model] = {}
 allowlist[image_fallback] = {}
 defaults["models"] = allowlist
+# Memory search embeds text on the device. Left unset, OpenClaw defaults to
+# OpenAI embeddings and would quietly ship the owner's saved memory off-box --
+# the exact opposite of what sudo promises. Ollama runs locally on the same Pi
+# as the on-device model, so semantic memory search stays private by default.
+defaults["memorySearch"] = {
+    "provider": "ollama",
+    "model": "nomic-embed-text",
+    "fallback": "none",
+    "enabled": True,
+}
+# memory-core is the memory engine that holds that index. Allowed in the base
+# config; enable it explicitly here so search is on out of the box.
+cfg.setdefault("plugins", {}).setdefault("entries", {}).setdefault("memory-core", {})["enabled"] = True
 
 cfg["gateway"]["auth"]["token"] = token
 

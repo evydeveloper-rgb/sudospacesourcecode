@@ -97,6 +97,10 @@ LOCALMODEL_STATUS = "/var/lib/sudo-localmodel-status"
 LOCALMODEL_SCRIPT = "/usr/local/bin/sudo-install-local-model.sh"
 OLLAMA_URL = "http://127.0.0.1:11434"
 LOCAL_MODEL = "gemma3:270m"
+# The embedding model memory search runs on. Local, pulled by the same installer
+# as LOCAL_MODEL, and never sent to a cloud provider — keeps "your data stays on
+# the box" true even when the user picks a cloud chat model.
+EMBED_MODEL = "nomic-embed-text"
 
 WHATSAPP_STATUS = "/var/lib/sudo-whatsapp-status.json"
 WHATSAPP_INSTALL_SCRIPT = "/usr/local/bin/sudo-install-whatsapp-bridge.sh"
@@ -804,6 +808,11 @@ def model_map(cfg):
         {"key": "compact", "label": "Tidies long conversations",
          "model": _short(real_model_for(chat_alias)), "alias": chat_alias,
          "note": "Summarises old turns so a long chat keeps fitting."},
+        # Embeddings ride the on-device model, so this entry only appears once
+        # sudo has actually pulled it -- same gate as the local greeter below.
+        {"key": "embedding", "label": "Remembers, and finds things later",
+         "model": EMBED_MODEL, "alias": "sudo-embedding",
+         "note": "Turns saved notes into meaning so memory search finds the right one — on the device, never sent away."},
     ]
     if local_ready:
         entries.append({"key": "local", "label": "On-device greeter",
