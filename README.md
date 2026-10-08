@@ -11,7 +11,7 @@ No cloud. No subscription. Fully local. Your keys, your data, your machine.
 
 <img src="https://img.shields.io/badge/hardware-Raspberry%20Pi%205-C51A4A?style=flat-square" alt="Raspberry Pi 5">
 <img src="https://img.shields.io/badge/runs%20on-OpenClaw-161311?style=flat-square" alt="OpenClaw">
-<img src="https://img.shields.io/badge/fully-local-F2603C?style=flat-square" alt="Fully local">
+<img src="https://img.shields.io/badge/local%20by%20default-F2603C?style=flat-square" alt="Local by default">
 <img src="https://img.shields.io/badge/subscription-none-2ecc71?style=flat-square" alt="No subscription">
 <img src="https://img.shields.io/badge/status-early%20access-F2A03C?style=flat-square" alt="Early access">
 
@@ -25,7 +25,7 @@ No cloud. No subscription. Fully local. Your keys, your data, your machine.
 
 > **Ownership without the CS degree.**
 
-Everyone will be able to *use* an agent. The durable value is *owning* one — your keys, your data, your machine, your model choice. `sudo` makes that as easy as the cloud incumbents.
+Everyone will be able to *use* an agent. The durable value is *owning* one — your keys, your data, your machine, your model choice. `sudo` makes that as easy as the cloud incumbents — and it's yours, whether you run a local model or plug in a cloud one.
 
 <div align="center">
   <img src="assets/how-it-works.png" alt="How sudo works: plug it in, pick your Wi-Fi, say hi, own your AI" width="100%">
@@ -35,10 +35,10 @@ Everyone will be able to *use* an agent. The durable value is *owning* one — y
 
 ## Features
 
-- 🏠 **Fully local** — files and memory live on-device. Nothing phones home.
+- 🏠 **Local by default** — the agent runs on your box, and your memory lives on-device.
 - 🔒 **Private by default** — your memory, your rules.
-- 💳 **No subscription** — buy the box, own the agent. Period.
-- 🧠 **Multi-model** — Claude, OpenAI, Chinese open-source models, local LLMs.
+- 💳 **No subscription required** — buy the box, own the agent.
+- 🧠 **Your choice of model** — run a local model offline, or connect a cloud model *only if you want*.
 - 🤖 **Multi-bot** — several agents in one chat.
 - 📊 **Local dashboards** — the private apps your agent can run.
 - 💬 **Real connectors** — WhatsApp, email, and text, out of the box.
@@ -51,7 +51,7 @@ Everyone will be able to *use* an agent. The durable value is *owning* one — y
 1. **Plug it in** — the box boots a setup hotspot. No terminal, no config files.
 2. **Pick your Wi-Fi** — a captive portal connects it once. It never asks again.
 3. **Say hi** — name yourself, name your agent, choose its personality.
-4. **Own your AI** — chat on your own hardware. Your data never leaves the box.
+4. **Own your AI** — chat on your own hardware. Your memory stays on the box; connect a cloud model only if you want to.
 
 > "This is when it stops feeling like a tool and starts feeling like a teammate."
 >
