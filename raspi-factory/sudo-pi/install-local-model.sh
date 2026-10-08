@@ -202,19 +202,6 @@ for attempt in 1 2 3 4 5; do
   sleep $((attempt * 5))
 done
 
-# Embedding model for memory search. Local, on the same Ollama daemon as the
-# chat model — pulled here so semantic memory search works out of the box.
-# Non-fatal on purpose: if it fails, OpenClaw drops back to keyword search
-# rather than losing memory entirely.
-EMBED_MODEL="${SUDO_EMBED_MODEL:-nomic-embed-text}"
-echo "pulling embedding model ${EMBED_MODEL}"
-set_status installing "Preparing memory search (${EMBED_MODEL})…" 95
-if ollama pull "$EMBED_MODEL" >/dev/null 2>&1; then
-  echo "embedding model ready: ${EMBED_MODEL}"
-else
-  echo "embedding model pull failed — memory search will fall back to keywords"
-fi
-
 if [ -z "$reply" ]; then
   # Downloaded but never answered across five tries. Keep the model (it is on
   # disk and may work once the device has settled) and record it as installed

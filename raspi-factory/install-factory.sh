@@ -173,6 +173,7 @@ cp "${BOOT}/sudo-pi/wifi.sh" /usr/local/bin/sudo-wifi.sh
 cp "${BOOT}/sudo-pi/install-whatsapp-bridge.sh" /usr/local/bin/sudo-install-whatsapp-bridge.sh
 cp "${BOOT}/sudo-pi/unlink-whatsapp.sh" /usr/local/bin/sudo-unlink-whatsapp.sh
 cp "${BOOT}/sudo-pi/sudo-heartbeat.sh" /usr/local/bin/sudo-heartbeat.sh
+cp "${BOOT}/sudo-pi/sudo-curate.sh" /usr/local/bin/sudo-curate.sh
 cp "${BOOT}/sudo-pi/spend-guard.py" /usr/local/bin/sudo-spend-guard.py
 cp "${BOOT}/sudo-pi/sudo-update.sh" /usr/local/bin/sudo-update.sh
 cp "${BOOT}/sudo-pi/reset-setup.sh" /usr/local/bin/sudo-reset-setup.sh
@@ -204,6 +205,7 @@ chmod +x /usr/local/bin/sudo-device-id.sh \
          /usr/local/bin/sudo-install-whatsapp-bridge.sh \
          /usr/local/bin/sudo-unlink-whatsapp.sh \
          /usr/local/bin/sudo-heartbeat.sh \
+         /usr/local/bin/sudo-curate.sh \
          /usr/local/bin/sudo-spend-guard.py \
          /usr/local/bin/sudo-update.sh \
          /usr/local/bin/sudo-reset-setup.sh /usr/local/bin/sudo-autoupdate.sh
@@ -328,6 +330,44 @@ EOF
 systemctl daemon-reload 2>/dev/null || true
 # Enabled by default -- see the note above. Settings can turn it back off.
 systemctl enable --now sudo-heartbeat.timer 2>/dev/null || true
+
+# ── Memory housekeeping (keep the agent's notes from silting up) ────────────
+# Runs daily. No model call: it rotates old daily notes to memory/archive/ and
+# flags MEMORY.md when it has outgrown a healthy size. The agent does the
+# judgement-heavy distillation; this just keeps the mechanical parts tidy so
+# search stays fast and the prompt stays small over months of use.
+cat > /etc/systemd/system/sudo-curate.service << 'EOF'
+[Unit]
+Description=Sudo Memory Housekeeping
+After=network-online.target sudo-dashboard.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/sudo-curate.sh
+User=root
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/opt/sudo /var/log
+StandardOutput=journal
+StandardError=journal
+EOF
+
+cat > /etc/systemd/system/sudo-curate.timer << 'EOF'
+[Unit]
+Description=Sudo Memory Housekeeping Timer
+
+[Timer]
+OnBootSec=20min
+OnUnitActiveSec=24h
+
+[Install]
+WantedBy=timers.target
+EOF
+systemctl daemon-reload 2>/dev/null || true
+systemctl enable --now sudo-curate.timer 2>/dev/null || true
 
 # Automatic updates: on unless the owner has switched them off in Settings.
 /usr/local/bin/sudo-autoupdate.sh default 2>/dev/null || true

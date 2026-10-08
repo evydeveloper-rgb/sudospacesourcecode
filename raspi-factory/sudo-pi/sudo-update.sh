@@ -358,6 +358,44 @@ elif [ -x "$BIN_DIR/configure-picoclaw.sh" ]; then
   "$BIN_DIR/configure-picoclaw.sh" >>"$LOG" 2>&1 || log "configure step reported an issue"
 fi
 
+# ── Memory housekeeping timer (added with knowledge/; enable on existing) ──
+# Fresh cards get this from install-factory.sh; devices already in the field
+# only see it through an update, so create it here when missing.
+if [ ! -f /etc/systemd/system/sudo-curate.timer ] && [ -x "$BIN_DIR/sudo-curate.sh" ]; then
+  cat > /etc/systemd/system/sudo-curate.service << 'EOF'
+[Unit]
+Description=Sudo Memory Housekeeping
+After=network-online.target sudo-dashboard.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/sudo-curate.sh
+User=root
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/opt/sudo /var/log
+StandardOutput=journal
+StandardError=journal
+EOF
+  cat > /etc/systemd/system/sudo-curate.timer << 'EOF'
+[Unit]
+Description=Sudo Memory Housekeeping Timer
+
+[Timer]
+OnBootSec=20min
+OnUnitActiveSec=24h
+
+[Install]
+WantedBy=timers.target
+EOF
+  systemctl daemon-reload 2>/dev/null || true
+  systemctl enable --now sudo-curate.timer 2>/dev/null || true
+  log "installed sudo-curate.timer"
+fi
+
 # ── Record + restart ────────────────────────────────────────────────────────
 printf '%s\n' "$LATEST" > "$VERSION_FILE"
 chmod 644 "$VERSION_FILE" 2>/dev/null || true
