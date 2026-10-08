@@ -1420,14 +1420,6 @@
 
               <div class="access-row">
                 <div>
-                  <strong data-i18n="set.access.wiFi">Wi-Fi</strong>
-                  <small id="wifi-current">Checking…</small>
-                </div>
-                <button class="mini-button" id="wifi-refresh" type="button" data-i18n="set.access.change">Change</button>
-              </div>
-
-              <div class="access-row">
-                <div>
                   <strong data-i18n="set.access.accessFromAnywhere">Access from anywhere</strong>
                   <small data-i18n="set.access.createsATemporaryPublic">Creates a temporary public Cloudflare link.</small>
                 </div>
@@ -1438,18 +1430,6 @@
                 </label>
               </div>
 
-              <div class="wifi-box" id="wifi-box" hidden>
-                <div class="wifi-list" id="wifi-list" aria-live="polite">
-                  <p class="microcopy" id="wifi-list-note">Scanning for networks…</p>
-                </div>
-                <label for="wifi-password" data-i18n="login.password">Password</label>
-                <input id="wifi-password" type="password" autocomplete="off" spellcheck="false" placeholder="network password" data-i18n-attr="placeholder:set.access.networkPassword">
-                <label for="wifi-username" id="wifi-username-label" hidden><span data-i18n="set.access.username">Username</span> <span class="optional-tag" data-i18n="set.access.thisNetworkAsksFor">this network asks for one</span></label>
-                <input id="wifi-username" autocomplete="off" spellcheck="false" placeholder="username" hidden data-i18n-attr="placeholder:set.access.username2">
-                <button class="primary-button" id="wifi-connect" type="button" data-i18n="set.access.joinNetwork">Join network</button>
-                <p class="form-status" id="wifi-status" role="status"></p>
-                <p class="microcopy" id="wifi-hint" data-i18n="set.access.pickANetworkAbove">Pick a network above, type its password, then join. If you are opening the dashboard on the home network, the page will drop for a few seconds while sudo moves — it comes back on the new address.</p>
-              </div>
 
               <button class="info-btn" type="button" data-info="remote-info" aria-expanded="false" aria-label="About access from anywhere" data-i18n-attr="aria-label:set.access.aboutAccessFromAnywhere">i</button>
               <div class="info-bubble" id="remote-info" data-i18n-html="set.access.normallyYourDashboardOnly">
@@ -1489,6 +1469,40 @@
               <p class="warning-copy" id="remote-pw-warning" hidden data-i18n-html="set.access.stronglyRecommendedLeaveThis"><strong>Strongly recommended: leave this on.</strong> With it off, the public link is a web address that opens your dashboard for anyone who has it — no login, no limit on attempts, from anywhere in the world. They could read your chats, change your settings, and use your API credit. Links get shared, logged by services you paste them into, and forwarded by accident.</p>
 
               <p class="microcopy" data-i18n-html="set.access.localDashboardHttpRaspberrypi">Local dashboard: <strong>http://raspberrypi.local</strong></p>
+
+            </div>
+          </section>
+          <section class="setting-card" id="wifi-setting">
+            <button class="setting-head" type="button" aria-expanded="false">
+              <span class="setting-icon">⌁</span>
+              <span><strong data-i18n="set.wifi.title">Wi-Fi</strong><small id="wifi-summary">Checking…</small></span>
+              <span class="chevron">›</span>
+            </button>
+            <div class="setting-body">
+              <p class="section-intro" data-i18n="set.wifi.intro">The network sudo is on, and the ones nearby. Pick another to move the device — it reconnects and this dashboard comes back on the new address.</p>
+
+              <div class="access-row">
+                <div>
+                  <strong data-i18n="set.wifi.currentNetwork">Current network</strong>
+                  <small id="wifi-current">Checking…</small>
+                </div>
+                <span class="status-pill good" id="wifi-state-pill" data-i18n="set.access.connected">connected</span>
+              </div>
+
+              <div class="settings-subgroup" id="wifi-available-label" data-i18n="set.wifi.availableNetworks">available networks</div>
+
+              <div class="wifi-box" id="wifi-box">
+                <div class="wifi-list" id="wifi-list" aria-live="polite">
+                  <p class="microcopy" id="wifi-list-note">Scanning for networks…</p>
+                </div>
+                <label for="wifi-password" data-i18n="login.password">Password</label>
+                <input id="wifi-password" type="password" autocomplete="off" spellcheck="false" placeholder="network password" data-i18n-attr="placeholder:set.access.networkPassword">
+                <label for="wifi-username" id="wifi-username-label" hidden><span data-i18n="set.access.username">Username</span> <span class="optional-tag" data-i18n="set.access.thisNetworkAsksFor">this network asks for one</span></label>
+                <input id="wifi-username" autocomplete="off" spellcheck="false" placeholder="username" hidden data-i18n-attr="placeholder:set.access.username2">
+                <button class="primary-button" id="wifi-connect" type="button" data-i18n="set.access.joinNetwork">Join network</button>
+                <p class="form-status" id="wifi-status" role="status"></p>
+                <p class="microcopy" id="wifi-hint" data-i18n="set.access.pickANetworkAbove">Pick a network above, type its password, then join. If you are opening the dashboard on the home network, the page will drop for a few seconds while sudo moves — it comes back on the new address.</p>
+              </div>
 
               <label><span data-i18n="set.access.wiFiRegion">Wi‑Fi region</span>
                 <select id="wifi-country">
@@ -1545,8 +1559,9 @@
                 </select>
               </label>
               <p class="microcopy" data-i18n="set.access.autoDetectedAtSetup">Auto-detected at setup. Controls which Wi‑Fi channels the device is allowed to use — only change this if you've moved it to a different country.</p>
-            </div>
+</div>
           </section>
+
           <section class="setting-card" id="ssh-setting">
             <button class="setting-head" type="button" aria-expanded="false">
               <span class="setting-icon">⌘</span>
@@ -2850,6 +2865,8 @@
       $('detail-bar').hidden = false;
       document.querySelector('#view-settings .view-heading').hidden = true;
       window.scrollTo({ top: 0 });
+      // Wi-Fi scans the moment its page opens — no extra tap to see networks.
+      if (id === 'wifi-setting') openWifi();
     }
 
     function closeSettingPage(silent) {
@@ -4456,6 +4473,12 @@
         ? `${current.ssid || t('wifi.unknown')}${current.ip ? ' · ' + current.ip : ''}`
         : (current.state === 'unavailable' ? t('wifi.unavailable') : t('wifi.notConnected'));
       $('wifi-current').textContent = label;
+      const pill = $('wifi-state-pill');
+      if (pill) {
+        pill.hidden = current.state !== 'connected';
+      }
+      const summary = $('wifi-summary');
+      if (summary) summary.textContent = label;
       const list = $('wifi-list');
       const nets = data.networks || [];
       list.replaceChildren();
@@ -4498,7 +4521,6 @@
     }
 
     async function openWifi() {
-      $('wifi-box').hidden = false;
       $('wifi-status').textContent = '';
       const note = $('wifi-list-note');
       if (note) note.textContent = t('wifi.scanning');
@@ -5401,7 +5423,6 @@
     $('save-composio').addEventListener('click', saveComposio);
     $('save-github').addEventListener('click', saveGithub);
     $('github-toggle').addEventListener('change', toggleGithub);
-    $('wifi-refresh').addEventListener('click', openWifi);
     $('wifi-connect').addEventListener('click', connectWifi);
     $('save-auto-key').addEventListener('click', saveAutoKey);
     $('save-hostname').addEventListener('click', saveHostname);
