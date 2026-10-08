@@ -106,6 +106,9 @@ defaults["memorySearch"] = {
     "model": "nomic-embed-text",
     "fallback": "none",
     "enabled": True,
+    # knowledge/ (people, projects, routines) lives outside the default memory
+    # roots, so point the indexer at it explicitly or it would sit unsearched.
+    "extraPaths": ["knowledge"],
 }
 # memory-core is the memory engine that holds that index. Allowed in the base
 # config; enable it explicitly here so search is on out of the box.

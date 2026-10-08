@@ -397,6 +397,20 @@ for fname in AGENT_FILES:
             pathlib.Path(path).write_text(content, encoding="utf-8")
             print(f"  Workspace: {fname} (agent's, created)")
 
+# knowledge/ — the longer-lived things (people, projects, routines). Created
+# once from templates like the agent's other files, then the agent's to grow:
+# an existing file with real content is never overwritten.
+knowledge_dir = os.path.join(workspace, "knowledge")
+os.makedirs(knowledge_dir, exist_ok=True)
+for fname in ("people.md", "projects.md", "routines.md"):
+    kpath = os.path.join(knowledge_dir, fname)
+    if os.path.exists(kpath):
+        continue
+    src = os.path.join(workspace_src, "knowledge", fname)
+    if os.path.isfile(src):
+        pathlib.Path(kpath).write_text(render(pathlib.Path(src).read_text(encoding="utf-8")), encoding="utf-8")
+        print(f"  Workspace: knowledge/{fname} (created)")
+
 if openclaw_brain and fresh and not applied.get("bootstrap_written"):
     content = template("BOOTSTRAP.md")
     if content is not None:

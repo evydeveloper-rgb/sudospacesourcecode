@@ -190,6 +190,7 @@ copy_factory_files() {
     # Agent workspace templates (SOUL/IDENTITY/USER/AGENTS/HEARTBEAT)
     mkdir -p "$boot/picoclaw/workspace"
     cp "$PICOCLAW/workspace/"*.md "$boot/picoclaw/workspace/"
+    [ -d "$PICOCLAW/workspace/knowledge" ] && cp -r "$PICOCLAW/workspace/knowledge" "$boot/picoclaw/workspace/"
     cp "$SCRIPT_DIR/openclaw/openclaw.base.json" "$boot/openclaw/"
     cp -r "$SCRIPT_DIR/openclaw/plugins" "$boot/openclaw/"
     # The version this card carries. Without it the device reports 0.0.0 and

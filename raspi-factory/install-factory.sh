@@ -45,6 +45,8 @@ fi
 if [ -d "${BOOT}/picoclaw/workspace" ]; then
     mkdir -p /opt/picoclaw/workspace
     cp "${BOOT}/picoclaw/workspace/"*.md /opt/picoclaw/workspace/
+    # knowledge/ (people, projects, routines) sits in a subfolder.
+    [ -d "${BOOT}/picoclaw/workspace/knowledge" ] && cp -r "${BOOT}/picoclaw/workspace/knowledge" /opt/picoclaw/workspace/
 fi
 
 # ── OpenClaw (the brain once installed; picoclaw stays as the fallback) ─────

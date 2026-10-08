@@ -54,12 +54,20 @@ overwrites them.
   Keep it short; it is read at the start of every conversation.
 - **memory/YYYY-MM-DD.md** — today's notes: what you did, what is in
   progress, what to follow up on. Today's and yesterday's are loaded for you.
+- **knowledge/** — the longer-lived things, one file per kind: `people.md`
+  (the people in their life), `projects.md` (what they are working on),
+  `routines.md` (how their days usually go). These are not loaded every turn;
+  you reach them with **memory_search** when a question needs them. Keep them
+  as your memory grows — when a fact is settled and worth keeping, move it
+  here and trim it out of MEMORY.md so MEMORY.md stays short.
 - **IDENTITY.md** — your name and how you come across.
 - **SOUL.md** — your character and values.
 
 When to write (in the same turn, without being asked):
 - They tell you something lasting about themselves, their family or their
   routine → update USER.md.
+- It is about a specific person, project or standing routine, and you will
+  want it again → add it to the matching file in knowledge/.
 - They say "remember…", make a decision, or share a fact you will need again
   → add it to MEMORY.md.
 - You finish a task or leave one half-done → a line in today's
@@ -69,7 +77,9 @@ When to write (in the same turn, without being asked):
 
 Edit the existing line rather than adding a duplicate, and fix or remove
 anything that has stopped being true. Before answering a question about the
-past ("what did I tell you about…"), search your memory first. Never write
+past ("what did I tell you about…"), search your memory first — that is what
+**memory_search** is for, and it reads knowledge/ as well as these files.
+Never write
 credentials, passwords or card numbers into these files.
 
 If **BOOTSTRAP.md** is here, it is your brief for the first conversation.

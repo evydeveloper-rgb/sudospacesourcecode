@@ -633,7 +633,14 @@ def read_agent_files():
                         if n.endswith(".md") and n != "MEMORY.md"), reverse=True)[:14]
     except OSError:
         daily = []
-    for rel in AGENT_FILES + ["memory/" + n for n in daily]:
+    # knowledge/ holds the longer-lived things the agent builds up (people,
+    # projects, routines). Listed after the daily notes, sorted by name.
+    try:
+        knowledge = sorted(n for n in os.listdir(os.path.join(WORKSPACE, "knowledge"))
+                           if n.endswith(".md"))
+    except OSError:
+        knowledge = []
+    for rel in AGENT_FILES + ["memory/" + n for n in daily] + ["knowledge/" + n for n in knowledge]:
         path = os.path.join(WORKSPACE, rel)
         if not os.path.isfile(path):
             continue
