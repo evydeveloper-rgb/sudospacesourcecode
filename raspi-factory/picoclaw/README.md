@@ -1,3 +1,9 @@
+> **Note for sudo (this repo):** This is the upstream PicoClaw README, kept for
+> attribution (MIT, Sipeed). In sudo, PicoClaw is **only the on-card fallback** until
+> OpenClaw installs on first boot — OpenClaw is the agent brain. The hardware sudo ships
+> on is a **Raspberry Pi 5**, not the "$10 board" described below; that figure is
+> PicoClaw's own upstream positioning for the lightweight engine.
+
 <div align="center">
 <img src="assets/logo.webp" alt="PicoClaw" width="512">
 
