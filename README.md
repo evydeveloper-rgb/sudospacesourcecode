@@ -5,7 +5,7 @@
 <div align="center">
 
 **A fully-owned AI teammate that lives on a Raspberry Pi 5.**
-No cloud. No subscription. Fully local. Your keys, your data, your machine.
+Local by default. No subscription. Your keys, your data, your machine.
 
 [Website](https://sudospace.tech) · [Instagram](https://instagram.com/sudospace.tech) · [Early access](https://sudospace.tech)
 
