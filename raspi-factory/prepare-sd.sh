@@ -40,6 +40,11 @@ Usage: $0 [--repair | --reset | --retest] [BOOT_VOLUME_PATH]
   --forget-keys With --devreset, ALSO clear saved API keys, so the device
                 comes up with no key at all. Without it keys are kept.
 
+  --import FILE Move an existing OpenClaw agent into this Sudo on first boot.
+                FILE comes from scripts/make-openclaw-import.py. It holds the
+                agent's keys and WhatsApp login; the device deletes it from
+                the card once the agent has moved in.
+
   --dev         ALSO enable SSH on this card (in-house units only).
                 Combine with any mode: $0 --repair --dev
                 Put your public key at dev/authorized_keys first and it is
@@ -371,6 +376,7 @@ while [ $# -gt 0 ]; do
         --devreset) MODE="devreset"; shift ;;
         --dev)    DEV=1; shift ;;
         --forget-keys) FORGET_KEYS=1; shift ;;
+        --import) IMPORT_PKG="$2"; shift 2 ;;
         *) BOOT="$1"; shift ;;
     esac
 done
@@ -390,4 +396,15 @@ fi
 [ "$MODE" = "devreset" ] && [ ! -f "$DEVRESET" ] && { echo "ERROR: Missing dev-reset.sh"; exit 1; }
 [ "$MODE" = "install" ] && [ ! -f "$FIRSTRUN" ] && { echo "ERROR: Missing firstrun.sh"; exit 1; }
 
+if [ -n "${IMPORT_PKG:-}" ]; then
+    [ -f "$IMPORT_PKG" ] || { echo "ERROR: --import file not found: $IMPORT_PKG"; exit 1; }
+    [ "$MODE" = "install" ] || { echo "ERROR: --import only works with a fresh install"; exit 1; }
+fi
+
 prepare_boot "$BOOT"
+
+if [ -n "${IMPORT_PKG:-}" ]; then
+    mkdir -p "$BOOT/import"
+    cp "$IMPORT_PKG" "$BOOT/import/openclaw-import.tar.gz"
+    echo "Import package staged: an existing OpenClaw agent moves in on first boot"
+fi

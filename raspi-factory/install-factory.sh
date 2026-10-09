@@ -89,6 +89,32 @@ WantedBy=multi-user.target
 EOF
 systemctl enable sudo-openclaw-install.service 2>/dev/null || true
 
+# Moving an existing OpenClaw agent in (prepare-sd.sh --import). The package
+# waits on the boot partition until OpenClaw is installed, then the importer
+# moves the agent in and deletes it from the card. Retries until done.
+cp "${BOOT}/sudo-pi/import-openclaw.sh" /usr/local/bin/sudo-import-openclaw.sh
+chmod +x /usr/local/bin/sudo-import-openclaw.sh
+if [ -f "${BOOT}/import/openclaw-import.tar.gz" ]; then
+cat > /etc/systemd/system/sudo-openclaw-import.service << 'EOF'
+[Unit]
+Description=Move an existing OpenClaw agent into this Sudo
+After=sudo-openclaw-install.service network-online.target
+Wants=network-online.target
+ConditionPathExists=!/var/lib/sudo-openclaw-imported
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/sudo-import-openclaw.sh
+Environment=HOME=/root
+Restart=on-failure
+RestartSec=60
+
+[Install]
+WantedBy=multi-user.target
+EOF
+systemctl enable sudo-openclaw-import.service 2>/dev/null || true
+fi
+
 cat > /etc/systemd/system/sudo-openclaw-gateway.service << 'EOF'
 [Unit]
 Description=OpenClaw Gateway (Sudo)
