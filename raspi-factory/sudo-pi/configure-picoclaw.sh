@@ -357,11 +357,33 @@ try:
 except (OSError, ValueError):
     applied = {}
 
+SUDO_BEGIN, SUDO_END = "<!-- sudo:begin -->", "<!-- sudo:end -->"
+
+
+def write_sudo_part(path, content):
+    """Replace only Sudo's part of a file, between the sudo markers. Text after
+    the end marker belongs to the owner and the agent (an imported agent's own
+    AGENTS.md lands there) and survives every settings save and update. A file
+    with no markers is Sudo's own copy from before they existed: replaced."""
+    block = f"{SUDO_BEGIN}\n{content.rstrip()}\n{SUDO_END}\n"
+    try:
+        existing = pathlib.Path(path).read_text(encoding="utf-8")
+    except OSError:
+        existing = ""
+    if SUDO_BEGIN in existing and SUDO_END in existing:
+        before, rest = existing.split(SUDO_BEGIN, 1)
+        after = rest.split(SUDO_END, 1)[1].lstrip("\n")
+        new = before + block + ("\n" + after if after.strip() else "")
+    else:
+        new = block
+    pathlib.Path(path).write_text(new, encoding="utf-8")
+
+
 for fname in SUDO_FILES:
     content = template(fname)
     if content is not None:
-        pathlib.Path(os.path.join(workspace, fname)).write_text(content, encoding="utf-8")
-        print(f"  Workspace: {fname} (Sudo's, refreshed)")
+        write_sudo_part(os.path.join(workspace, fname), content)
+        print(f"  Workspace: {fname} (Sudo's part refreshed)")
 
 # A device from before this split has template copies the agent never got to
 # keep. Take them over once, with a backup, then never again.

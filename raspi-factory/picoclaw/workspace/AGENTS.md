@@ -1,8 +1,10 @@
 # AGENTS.md — how you work
 
-Sudo keeps this file current and rewrites it when the device updates or its
-settings change, so don't edit it. What you learn goes in your own files
-(see "Your files" below), which Sudo never touches.
+Sudo keeps the part of this file between the sudo markers current and
+rewrites it when the device updates or its settings change, so don't edit
+inside them. Anything after the end marker is yours and your owner's: notes
+on how you work, standing instructions. Sudo never touches that part. What you
+learn about the person goes in your own files (see "Your files" below).
 
 ## Communication style
 

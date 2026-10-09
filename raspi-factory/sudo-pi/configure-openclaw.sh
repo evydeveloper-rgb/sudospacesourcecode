@@ -474,9 +474,25 @@ tools_md += [
     "",
 ]
 
+# Only Sudo's part, between the markers: notes the owner or the agent keep
+# after the end marker (an imported agent's own TOOLS.md lands there) stay.
 tools_path = "/opt/sudo/agent-workspace/TOOLS.md"
-if tools_md:
-    open(tools_path, "w", encoding="utf-8").write("# TOOLS\n\n" + "\n".join(tools_md))
+SUDO_BEGIN, SUDO_END = "<!-- sudo:begin -->", "<!-- sudo:end -->"
+try:
+    existing = open(tools_path, encoding="utf-8").read()
+except OSError:
+    existing = ""
+before, after = "", ""
+if SUDO_BEGIN in existing and SUDO_END in existing:
+    before, rest = existing.split(SUDO_BEGIN, 1)
+    after = rest.split(SUDO_END, 1)[1].lstrip("\n")
+inner = ("# TOOLS\n\n" + "\n".join(tools_md).rstrip() + "\n") if tools_md else ""
+# Empty markers stay while the owner has text here, so it is still found as
+# theirs once Sudo has something to say again.
+block = f"{SUDO_BEGIN}\n{inner}{SUDO_END}\n" if (inner or after.strip()) else ""
+new = before + block + ("\n" + after if after.strip() else "")
+if new.strip():
+    open(tools_path, "w", encoding="utf-8").write(new)
 elif os.path.exists(tools_path):
     os.remove(tools_path)
 
