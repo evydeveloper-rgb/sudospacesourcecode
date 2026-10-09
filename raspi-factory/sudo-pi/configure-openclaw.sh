@@ -64,11 +64,68 @@ if [ ! -f "$OC_CONFIG" ] || [ "$(cat "$KEY_HASH_FILE" 2>/dev/null)" != "$key_has
 fi
 unset key
 
+build_config() {
 python3 << 'PY'
 import json, os
 
 sudo = json.load(open("/opt/sudo/config.json", encoding="utf-8"))
-cfg = json.load(open("/opt/sudo-openclaw/openclaw.base.json", encoding="utf-8"))
+base = json.load(open("/opt/sudo-openclaw/openclaw.base.json", encoding="utf-8"))
+
+# Merge, don't rebuild. This used to start from the base file on every run,
+# so every settings save and every update silently wiped whatever the owner
+# or the agent had added to openclaw.json themselves: a Telegram channel, a
+# plugin, a model, an MCP server. Now the device's current file is the
+# starting point and Sudo overwrites only what it owns: the base file's
+# values, and the sections set below from Settings. Everything else stays.
+# If the merged result ever fails OpenClaw's validation, the shell part of
+# this script falls back to the base-only build (SUDO_OC_CLEAN=1).
+import copy
+OUT_PATH = "/opt/sudo/openclaw/openclaw.json"
+# Plugins and tools Sudo switches on and off itself. They are dropped from the
+# carried-over lists and re-added below only when they apply.
+SUDO_PLUGINS = {"whatsapp", "admin-http-rpc", "sudo-contacts"}
+SUDO_ALSO_ALLOW = {"message", "whatsapp_contacts"}
+SUDO_LOAD_PATHS = {"/opt/sudo-openclaw/plugins/sudo-contacts"}
+
+
+def overlay(dst, src):
+    """src wins on scalars and lists; nested dicts merge."""
+    for k, v in src.items():
+        if isinstance(v, dict) and isinstance(dst.get(k), dict):
+            overlay(dst[k], v)
+        else:
+            dst[k] = copy.deepcopy(v)
+    return dst
+
+
+try:
+    current = {} if os.environ.get("SUDO_OC_CLEAN") else json.load(open(OUT_PATH, encoding="utf-8"))
+    if not isinstance(current, dict):
+        current = {}
+except (OSError, ValueError):
+    current = {}
+cfg = overlay(copy.deepcopy(current), base)
+
+# Lists the base file would otherwise replace wholesale: keep the owner's own
+# entries, drop Sudo's conditional ones (re-added below if they still apply).
+plugins_now = current.get("plugins") or {}
+cfg_plugins = cfg.setdefault("plugins", {})
+cfg_plugins["allow"] = list(dict.fromkeys(
+    list(base.get("plugins", {}).get("allow", []))
+    + [x for x in plugins_now.get("allow", []) if x not in SUDO_PLUGINS]))
+for pid in SUDO_PLUGINS:
+    cfg_plugins.get("entries", {}).pop(pid, None)
+load_paths = [x for x in (plugins_now.get("load") or {}).get("paths", []) if x not in SUDO_LOAD_PATHS]
+if load_paths:
+    cfg_plugins.setdefault("load", {})["paths"] = load_paths
+else:
+    cfg_plugins.pop("load", None)
+also_allow = [x for x in (current.get("tools") or {}).get("alsoAllow", []) if x not in SUDO_ALSO_ALLOW]
+cfg.setdefault("tools", {}).pop("alsoAllow", None)
+if also_allow:
+    cfg["tools"]["alsoAllow"] = also_allow
+# WhatsApp is Sudo's to set (below), and only while its plugin is installed.
+cfg.get("channels", {}).pop("whatsapp", None)
 token = open("/etc/sudo/openclaw_gateway_token", encoding="utf-8").read().strip()
 
 # Model aliases are shared with picoclaw's template so the Settings picker and
@@ -96,6 +153,9 @@ defaults["imageModel"] = {"primary": image_model, "fallbacks": [image_fallback]}
 allowlist = {m: {} for m in real.values() if m.startswith("openrouter/")}
 allowlist[image_model] = {}
 allowlist[image_fallback] = {}
+# The owner's own models stay in the allowlist too (merge, not rebuild).
+for m, v in ((current.get("agents") or {}).get("defaults") or {}).get("models", {}).items():
+    allowlist.setdefault(m, v)
 defaults["models"] = allowlist
 # Memory search embeddings run in the cloud through OpenRouter (same key as
 # chat). Chosen for speed and quality now; the local/ollama path can return
@@ -160,12 +220,12 @@ if composio_key:
     # connect.composio.dev: Composio 502s about half of authenticated
     # requests and OpenClaw gives up on the first failure. The relay retries
     # the safe ones and adds the key itself, so the key is not in this file.
-    cfg["mcp"] = {"servers": {"composio": {
+    cfg.setdefault("mcp", {}).setdefault("servers", {})["composio"] = {
         "url": "http://127.0.0.1:18791/mcp",
         "transport": "streamable-http",
         "timeout": 60,
         "connectTimeout": 15,
-    }}}
+    }
     print("Connectors (Composio): on, via the local relay")
     # Composio's endpoint fails on and off (502s from its side); a turn that
     # starts during one has no composio__ tools, and the agent then told the
@@ -178,6 +238,10 @@ if composio_key:
                  "trouble. Say the app connections are temporarily unavailable and to try again in "
                  "a few minutes. Never say connectors aren't set up.", ""]
 else:
+    servers = (cfg.get("mcp") or {}).get("servers") or {}
+    servers.pop("composio", None)
+    if not servers:
+        cfg.pop("mcp", None)
     print("Connectors (Composio): no key")
 
 # WhatsApp, once the owner has added it (install-openclaw-whatsapp.sh). Two
@@ -466,8 +530,19 @@ os.chmod(tmp, 0o600)
 os.replace(tmp, out)
 print(f"Wrote {out} (model {primary})")
 PY
+}
 
-"$OC_BIN" config validate || echo "WARNING: OpenClaw rejected the generated config"
+build_config
+# The merge keeps whatever was already in openclaw.json. If that ever makes
+# the file invalid, fall back to Sudo's own settings alone rather than leave
+# the agent with a config the gateway refuses.
+if ! "$OC_BIN" config validate; then
+  echo "WARNING: merged config rejected; rebuilding from Sudo's base settings only"
+  export SUDO_OC_CLEAN=1
+  build_config
+  unset SUDO_OC_CLEAN
+  "$OC_BIN" config validate || echo "WARNING: OpenClaw rejected the generated config"
+fi
 
 # The Composio relay. Managed here rather than by install-factory.sh so that a
 # device which only ever updates over Wi-Fi (no installer run, and the OTA
