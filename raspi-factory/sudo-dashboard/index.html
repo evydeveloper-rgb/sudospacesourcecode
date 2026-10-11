@@ -646,12 +646,55 @@
             <div class="mini-icon">⌂</div><span class="ready-tag" data-i18n="apps.ready">ready</span>
             <h2 data-i18n="apps.home">Home</h2><p data-i18n="house.tile">Every device on your Wi-Fi, and who's home.</p>
           </button>
+          <button type="button" class="mini-app st-tile" id="st-open">
+            <div class="mini-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z M12 7v5l3 2"/></svg></div><span class="ready-tag" data-i18n="apps.ready">ready</span>
+            <h2 data-i18n="st.app">Screen time</h2><p data-i18n="st.tile">How long each device spends on which apps, and controls for kids.</p>
+          </button>
           <button type="button" class="mini-app create" id="create-app">
             <div class="mini-icon">+</div>
             <h2 data-i18n="apps.createYourOwn">Create your own</h2><p data-i18n="apps.describeWhatYouWant">Describe what you want and sudo builds it with you.</p>
           </button>
         </div>
 
+      </section>
+
+      <section class="view" id="view-screentime" aria-labelledby="st-title">
+        <header class="st-hero">
+          <div class="st-hero-inner">
+            <nav class="house-topline">
+              <a class="st-brand" href="/" data-i18n-attr="aria-label:nav.sudoHome">sudo<span aria-hidden="true"></span><em data-i18n="st.app">Screen time</em></a>
+              <a class="st-dash" href="/" data-i18n="crm.backToDashboard">Dashboard</a>
+            </nav>
+            <div class="st-hero-main">
+              <div>
+                <h1 id="st-title" data-i18n="st.app">Screen time</h1>
+                <p class="st-summary" id="st-summary" data-i18n="st.lede">How long the devices in your home spend on apps, counted on this device.</p>
+              </div>
+              <figure class="st-clock" aria-labelledby="st-clock-cap">
+                <svg id="st-clock" viewBox="0 0 160 160" aria-hidden="true"></svg>
+                <figcaption id="st-clock-cap"></figcaption>
+              </figure>
+            </div>
+          </div>
+        </header>
+        <div class="crm-site-body">
+          <div class="st-bar">
+            <div class="st-pills" id="st-devices" role="tablist"></div>
+            <div class="st-period" role="group" data-i18n-attr="aria-label:st.period">
+              <button type="button" data-st-days="7" class="on" data-i18n="st.days7">7 days</button>
+              <button type="button" data-st-days="30" data-i18n="st.days30">30 days</button>
+            </div>
+          </div>
+          <div class="st-wrap" id="st-body"></div>
+          <div class="house-prompts st-prompts">
+            <p class="microcopy" data-i18n="kids.askTitle">Or just ask your agent:</p>
+            <button class="prompt-chip" type="button" data-prompt-key="kids.p.pause" data-i18n="kids.p.pause">“Pause the kids' iPad for 30 minutes”</button>
+            <button class="prompt-chip" type="button" data-prompt-key="kids.p.youtube" data-i18n="kids.p.youtube">“Turn off YouTube on the kids' iPad until homework's done”</button>
+            <button class="prompt-chip" type="button" data-prompt-key="kids.p.bedtime" data-i18n="kids.p.bedtime">“Set a bedtime of 8:30 pm on the kids' iPad”</button>
+            <button class="prompt-chip" type="button" data-prompt-key="kids.p.mostUsed" data-i18n="kids.p.mostUsed">“What did the kids use most this week?”</button>
+            <button class="prompt-chip" type="button" data-prompt-key="kids.p.myTime" data-i18n="kids.p.myTime">“How much time did I spend on Instagram this week?”</button>
+          </div>
+        </div>
       </section>
 
       <section class="view" id="view-house" aria-labelledby="house-title">
@@ -702,17 +745,12 @@
               <input class="house-search" id="house-search" type="search" autocomplete="off" data-i18n-attr="placeholder:house.search,aria-label:house.search" placeholder="Search devices">
               <div class="house-groups" id="house-devices"></div>
             </section>
-            <section class="house-card house-kids" aria-labelledby="house-kids-title">
-              <h2 id="house-kids-title" data-i18n="kids.title">Kids and screen time</h2>
-              <div id="house-kids"></div>
-              <div class="house-prompts">
-                <p class="microcopy" data-i18n="kids.askTitle">Or just ask your agent:</p>
-                <button class="prompt-chip" type="button" data-prompt-key="kids.p.pause" data-i18n="kids.p.pause">“Pause the kids' iPad for 30 minutes”</button>
-                <button class="prompt-chip" type="button" data-prompt-key="kids.p.youtube" data-i18n="kids.p.youtube">“Turn off YouTube on the kids' iPad until homework's done”</button>
-                <button class="prompt-chip" type="button" data-prompt-key="kids.p.bedtime" data-i18n="kids.p.bedtime">“Set a bedtime of 8:30 pm on the kids' iPad”</button>
-                <button class="prompt-chip" type="button" data-prompt-key="kids.p.mostUsed" data-i18n="kids.p.mostUsed">“What did the kids use most this week?”</button>
-                <button class="prompt-chip" type="button" data-prompt-key="kids.p.myTime" data-i18n="kids.p.myTime">“How much time did I spend on Instagram this week?”</button>
+            <section class="house-card house-st-link" aria-labelledby="house-st-title">
+              <div>
+                <h2 id="house-st-title" data-i18n="st.app">Screen time</h2>
+                <p class="microcopy" data-i18n="st.homeLink">Parental controls and screen time for the devices in your home have their own app.</p>
               </div>
+              <button class="btn-secondary" type="button" id="house-st-open" data-i18n="st.open">Open Screen time</button>
             </section>
             <section class="house-plain" aria-labelledby="house-activity-title">
               <h2 id="house-activity-title" data-i18n="house.activity">Recent activity</h2>
@@ -1877,7 +1915,7 @@
       // dashboard's URL, so it drops the dashboard chrome (rail, top bar,
       // bottom nav) and stands alone -- the same way the apps in the sites
       // directory do, without a second port.
-      document.body.classList.toggle('site-mode', tab === 'contacts' || tab === 'house');
+      document.body.classList.toggle('site-mode', tab === 'contacts' || tab === 'house' || tab === 'screentime');
       // The nav is noise until they've actually set the thing up.
       document.querySelector('.bottom-nav').hidden = tab === 'welcome';
       document.querySelector('.side-rail').hidden = tab === 'welcome';
@@ -1907,6 +1945,7 @@
       else if (tab === 'setup') path = '/setup.html';
       else if (tab === 'contacts') path = '/contacts.html';
       else if (tab === 'house') path = '/house.html';
+      else if (tab === 'screentime') path = '/screentime.html';
       const entry = { tab, settingPage: null };
       if (silent) history.replaceState(entry, '', path);
       else history.pushState(entry, '', path);
@@ -3414,6 +3453,12 @@
       return e;
     }
 
+    function houseDeviceName(x) {
+      if (x.label) return x.label;
+      if (x.person) return t(x.kind === 'phone' ? 'st.personPhone' : 'st.personDevice', { name: x.person });
+      return x.kind === 'phone' ? t('house.unnamedPhone') : t('house.unknown');
+    }
+
     function houseIcon(kind) {
       const ns = 'http://www.w3.org/2000/svg';
       const svg = document.createElementNS(ns, 'svg');
@@ -3447,7 +3492,7 @@
         return;
       }
       renderHouse();
-      loadKids();
+      if (!kidsState.data) loadKids(true);
       if (state.tab === 'house') {
         house.timer = setTimeout(() => loadHouse(true), house.data.scanning ? 4000 : 30000);
       }
@@ -3547,7 +3592,7 @@
         const list = hEl('ul', 'house-devices');
         // Phones on private addresses with no name are many and alike; fold
         // them into one row unless someone is looking for something.
-        const anon = items.filter(x => !x.label && !x.person && x.private_mac && !x.viewer);
+        const anon = items.filter(x => !x.label && !x.person && x.private_mac && !x.viewer);  // owned phones show by owner
         const fold = !q && anon.length > 2 && !anon.some(x => x.mac === house.editing);
         (fold ? items.filter(x => !anon.includes(x)) : items).forEach(x => list.append(houseRow(x, people)));
         section.append(list);
@@ -3577,8 +3622,7 @@
       icon.append(houseIcon(x.kind));
       const body = hEl('div', 'house-device-body');
       const top = hEl('div', 'house-device-top');
-      const unnamed = x.kind === 'phone' ? t('house.unnamedPhone') : t('house.unknown');
-      top.append(hEl('strong', '', x.label || unnamed));
+      top.append(hEl('strong', '', houseDeviceName(x)));
       if (x.role === 'self') top.append(hEl('span', 'house-tag', t('house.thisSudo')));
       if (x.viewer) top.append(hEl('span', 'house-tag viewer', t('house.youreUsing')));
       if (x.person) top.append(hEl('span', 'house-tag person', t('house.whose', { name: x.person })));
@@ -3683,23 +3727,13 @@
     // Kids and screen time (home_filter.py over AdGuard Home).
     const kidsState = { data: null, time: {} };
 
-    async function loadKids() {
+    async function loadKids(quiet) {
       try {
         kidsState.data = await api('/api/home/filter', {}, 25000);
       } catch (_) {
         kidsState.data = null;
       }
-      renderKids();
-      ((kidsState.data && kidsState.data.devices) || []).forEach(k => loadScreenTime(k.mac));
-    }
-
-    async function loadScreenTime(mac) {
-      try {
-        kidsState.time[mac] = await api('/api/home/screentime?mac=' + encodeURIComponent(mac) + '&days=7', {}, 60000);
-      } catch (_) {
-        kidsState.time[mac] = null;
-      }
-      renderKids();
+      if (!quiet) renderScreenTime();
     }
 
     function kidsDevice(mac) {
@@ -3712,44 +3746,13 @@
       return hrs ? t('kids.hm', { h: hrs, m: min }) : t('kids.m', { m: min });
     }
 
-    function renderKids() {
-      const box = $('house-kids');
-      if (!box) return;
-      box.replaceChildren();
-      const k = kidsState.data;
-      if (!k) {
-        box.append(hEl('p', 'microcopy', t('kids.unavailable')));
-        return;
-      }
-      const st = k.status || {};
-      if (st.state !== 'ready') {
-        box.append(hEl('p', 'house-kids-intro', t('kids.intro')));
-        if (st.state === 'installing') {
-          box.append(hEl('p', 'house-status', st.message || t('kids.installing')));
-          setTimeout(loadKids, 4000);
-          return;
-        }
-        if (st.state === 'error') box.append(hEl('p', 'house-error', st.message));
-        const go = hEl('button', 'btn-primary house-blue-btn', t('kids.setUp'));
-        go.type = 'button';
-        go.addEventListener('click', setupKids);
-        box.append(go, hEl('p', 'microcopy', t('kids.setUpNote')));
-        return;
-      }
-      if (!k.devices.length) {
-        box.append(hEl('p', 'house-kids-intro', t('kids.readyNoDevices')));
-      }
-      k.devices.forEach(p => box.append(kidsCard(p, k)));
-      box.append(kidsHowTo(k.dns_ip));
-    }
-
     function kidsCard(p, k) {
       const dev = kidsDevice(p.mac);
       const card = hEl('article', 'house-kid' + (p.paused || p.in_bedtime ? ' offline' : ''));
       const head = hEl('div', 'house-kid-head');
       const icon = hEl('span', 'house-icon'); icon.append(houseIcon(dev.kind));
       const who = hEl('div');
-      who.append(hEl('strong', '', dev.label || t('house.unknown')));
+      who.append(hEl('strong', '', houseDeviceName(dev)));
       const line = p.paused ? t('kids.pausedNow') : p.in_bedtime ? t('kids.bedtimeNow')
         : p.using_filter ? t('kids.usingFilter') : t('kids.notPointed');
       who.append(hEl('small', p.using_filter ? '' : 'warn', line));
@@ -3805,7 +3808,6 @@
           card.append(times);
         }
       }
-      card.append(screenTimeBlock(p.mac));
       return card;
     }
 
@@ -3821,34 +3823,6 @@
       sw.append(input, knob, sr);
       row.append(text, sw);
       return row;
-    }
-
-    function screenTimeBlock(mac) {
-      const wrap = hEl('div', 'house-time');
-      wrap.append(hEl('p', 'house-kid-label', t('kids.timeTitle')));
-      const data = kidsState.time[mac];
-      if (!data) {
-        wrap.append(hEl('p', 'microcopy', t('kids.timeLoading')));
-        return wrap;
-      }
-      if (!data.services.length) {
-        wrap.append(hEl('p', 'microcopy', t('kids.timeEmpty')));
-        return wrap;
-      }
-      const max = Math.max(...data.services.map(s => s.week), 1);
-      const list = hEl('ul', 'house-bars');
-      data.services.slice(0, 6).forEach(s => {
-        const li = hEl('li');
-        const top = hEl('div', 'house-bar-top');
-        top.append(hEl('span', '', s.name), hEl('span', 'house-bar-val', t('kids.weekToday', { week: fmtMinutes(s.week), today: fmtMinutes(s.today) })));
-        const bar = hEl('div', 'house-bar');
-        const fill = hEl('span'); fill.style.width = Math.max(4, Math.round(s.week / max * 100)) + '%';
-        bar.append(fill);
-        li.append(top, bar);
-        list.append(li);
-      });
-      wrap.append(list, hEl('p', 'microcopy', t('kids.timeNote')));
-      return wrap;
     }
 
     function kidsHowTo(ip) {
@@ -3868,7 +3842,7 @@
       } catch (error) {
         showToast(error.message);
       }
-      renderKids();
+      renderScreenTime();
       setTimeout(loadKids, 3000);
     }
 
@@ -3878,11 +3852,312 @@
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ mac, ...changes }),
         }, 30000);
-        renderKids();
-        if (changes.profile) loadScreenTime(mac);
+        if (changes.profile && changes.profile !== 'none') st.selected = mac;
+        if (changes.profile === 'none' && st.selected === mac) st.selected = 'all';
+        renderScreenTime();
+        if (changes.profile) loadTrends();
       } catch (error) {
         showToast(error.message);
       }
+    }
+
+
+    // ── The Screen time app (/screentime.html) ──────────────────────────────
+    // Trends from screen_time.py, controls from home_filter.py. The 24-hour
+    // ring in the header is the page's one bold element: it shows *when*
+    // screens are used, which is what a bedtime is decided from.
+    const st = { selected: 'all', days: 7, trends: null, adding: false };
+    const ST_CATS = ['video', 'social', 'games', 'messaging', 'shopping', 'ai', 'other'];
+
+    async function openScreenTime() {
+      setTab('screentime');
+      if (!house.data) {
+        try { house.data = await api('/api/home', {}, 20000); } catch (_) { /* names fall back to addresses */ }
+      }
+      await loadKids(true);
+      renderScreenTime();
+      loadTrends();
+    }
+
+    async function loadTrends() {
+      try {
+        st.trends = await api('/api/home/trends?mac=' + encodeURIComponent(st.selected) + '&days=' + st.days, {}, 60000);
+      } catch (_) {
+        st.trends = null;
+      }
+      renderScreenTime();
+    }
+
+    function stName(mac) {
+      return houseDeviceName(kidsDevice(mac));
+    }
+
+    function renderScreenTime() {
+      const body = $('st-body');
+      if (!body || state.tab !== 'screentime') return;
+      const k = kidsState.data;
+      body.replaceChildren();
+      renderStPills(k);
+      renderStSummary(k);
+      renderStClock();
+      if (!k || (k.status || {}).state !== 'ready') {
+        body.append(stSetupCard(k));
+        return;
+      }
+      if (!k.devices.length) {
+        body.append(stAddCard(k, true));
+        return;
+      }
+      body.append(stChartCard(), stTopCard());
+      const sel = k.devices.find(p => p.mac === st.selected);
+      if (sel) {
+        const card = hEl('section', 'house-card');
+        card.append(hEl('h2', '', sel.profile === 'kids' ? t('st.controls') : t('st.thisDevice')));
+        card.append(kidsCard(sel, k));
+        if (sel.profile === 'track') {
+          const make = hEl('button', 'btn-secondary', t('st.makeKids'));
+          make.type = 'button';
+          make.addEventListener('click', () => saveKids(sel.mac, { profile: 'kids' }));
+          card.append(make);
+        }
+        const stop = hEl('button', 'st-link', t('st.stopWatching'));
+        stop.type = 'button';
+        stop.addEventListener('click', () => saveKids(sel.mac, { profile: 'none' }));
+        card.append(stop);
+        body.append(card);
+      }
+      if (st.adding) body.append(stAddCard(k, false));
+      body.append(kidsHowTo(k.dns_ip));
+    }
+
+    function renderStPills(k) {
+      const box = $('st-devices');
+      box.replaceChildren();
+      const devices = (k && k.devices) || [];
+      if ((k || {}).status && k.status.state === 'ready') {
+        const pill = (key, label, sub) => {
+          const b = hEl('button', 'st-pill' + (st.selected === key ? ' on' : ''));
+          b.type = 'button';
+          b.setAttribute('aria-pressed', st.selected === key ? 'true' : 'false');
+          b.append(hEl('span', '', label));
+          if (sub) b.append(hEl('small', '', sub));
+          b.addEventListener('click', () => { st.selected = key; st.trends = null; renderScreenTime(); loadTrends(); });
+          box.append(b);
+        };
+        if (devices.length > 1) pill('all', t('st.everyone'));
+        devices.forEach(p => pill(p.mac, stName(p.mac), p.profile === 'kids' ? t('kids.profileKids') : ''));
+        if (devices.length === 1 && st.selected === 'all') st.selected = devices[0].mac;
+        const add = hEl('button', 'st-pill add', t('st.addDevice'));
+        add.type = 'button';
+        add.addEventListener('click', () => { st.adding = !st.adding; renderScreenTime(); });
+        box.append(add);
+      }
+      document.querySelectorAll('[data-st-days]').forEach(b => b.classList.toggle('on', Number(b.dataset.stDays) === st.days));
+    }
+
+    function renderStSummary(k) {
+      const el = $('st-summary');
+      const tr = st.trends;
+      if (!tr || !tr.has_history) {
+        if (k && k.devices && k.devices.length) { el.removeAttribute('data-i18n'); el.textContent = t('st.noDataYet'); }
+        return;
+      }
+      el.removeAttribute('data-i18n');
+      if (st.selected === 'all') {
+        el.textContent = t('st.sumAll', { time: fmtMinutes(tr.today) });
+      } else {
+        const top = tr.top[0];
+        el.textContent = top && tr.today
+          ? t('st.sumDeviceTop', { name: stName(st.selected), time: fmtMinutes(tr.today), app: top.name })
+          : t('st.sumDevice', { name: stName(st.selected), time: fmtMinutes(tr.today) });
+      }
+    }
+
+    // The 24-hour ring: one segment per hour, stronger where more minutes fell.
+    function renderStClock() {
+      const svg = $('st-clock');
+      const cap = $('st-clock-cap');
+      if (!svg) return;
+      svg.replaceChildren();
+      const ns = 'http://www.w3.org/2000/svg';
+      const hours = (st.trends && st.trends.hours) || new Array(24).fill(0);
+      const max = Math.max(...hours, 1);
+      const cx = 80, cy = 80, r1 = 50, r2 = 72;
+      for (let i = 0; i < 24; i++) {
+        const a0 = (i / 24) * 2 * Math.PI - Math.PI / 2 + 0.02, a1 = ((i + 1) / 24) * 2 * Math.PI - Math.PI / 2 - 0.02;
+        const p = (r, a) => [cx + r * Math.cos(a), cy + r * Math.sin(a)];
+        const [x1, y1] = p(r2, a0), [x2, y2] = p(r2, a1), [x3, y3] = p(r1, a1), [x4, y4] = p(r1, a0);
+        const seg = document.createElementNS(ns, 'path');
+        seg.setAttribute('d', `M${x1} ${y1} A${r2} ${r2} 0 0 1 ${x2} ${y2} L${x3} ${y3} A${r1} ${r1} 0 0 0 ${x4} ${y4} Z`);
+        seg.setAttribute('class', 'st-seg');
+        seg.style.opacity = hours[i] ? (0.18 + 0.82 * hours[i] / max).toFixed(2) : '';
+        if (hours[i]) seg.classList.add('used');
+        svg.append(seg);
+      }
+      const tickLang = document.documentElement.lang || undefined;
+      [0, 6, 12, 18].map(hr => [hr, new Date(2000, 0, 1, hr).toLocaleTimeString(tickLang, { hour: 'numeric' })]).forEach(([hr, label]) => {
+        const a = (hr / 24) * 2 * Math.PI - Math.PI / 2;
+        const tx = document.createElementNS(ns, 'text');
+        tx.setAttribute('x', cx + 38 * Math.cos(a)); tx.setAttribute('y', cy + 38 * Math.sin(a) + 3);
+        tx.setAttribute('class', 'st-tick'); tx.textContent = label;
+        svg.append(tx);
+      });
+      const sun = document.createElementNS(ns, 'text');
+      sun.setAttribute('x', cx); sun.setAttribute('y', cy + 4); sun.setAttribute('class', 'st-center');
+      const peak = hours.indexOf(Math.max(...hours));
+      if (Math.max(...hours) > 0) {
+        const label = new Date(2000, 0, 1, peak).toLocaleTimeString(document.documentElement.lang || undefined, { hour: 'numeric' });
+        sun.textContent = label;
+        cap.textContent = t('st.busiest', { hour: label });
+      } else {
+        sun.textContent = '24h';
+        cap.textContent = t('st.clockEmpty');
+      }
+      svg.append(sun);
+    }
+
+    function stChartCard() {
+      const card = hEl('section', 'house-card st-chart-card');
+      const head = hEl('div', 'house-card-head');
+      head.append(hEl('h2', '', st.days === 30 ? t('st.last30') : t('st.last7')));
+      const tr = st.trends;
+      if (tr && tr.period_total) head.append(hEl('span', 'house-count', t('st.periodTotal', { time: fmtMinutes(tr.period_total) })));
+      card.append(head);
+      if (!tr) { card.append(hEl('p', 'microcopy', t('kids.timeLoading'))); return card; }
+      if (!tr.has_history) { card.append(hEl('p', 'microcopy', t('st.chartEmpty'))); return card; }
+      const ns = 'http://www.w3.org/2000/svg';
+      const W = 640, H = 200, padB = 22, padT = 10;
+      const svg = document.createElementNS(ns, 'svg');
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      svg.setAttribute('class', 'st-chart');
+      svg.setAttribute('role', 'img');
+      svg.setAttribute('aria-label', t('st.chartLabel'));
+      const max = Math.max(...tr.series.map(s => s.total), 1);
+      const n = tr.series.length, slot = W / n, bw = Math.min(42, slot * 0.62);
+      const lang = document.documentElement.lang || undefined;
+      tr.series.forEach((s, i) => {
+        const x = i * slot + (slot - bw) / 2;
+        const full = (H - padB - padT) * s.total / max;
+        const catSum = ST_CATS.reduce((acc, c) => acc + (s.categories[c] || 0), 0) || 1;
+        let y = H - padB;
+        const g = document.createElementNS(ns, 'g');
+        const title = document.createElementNS(ns, 'title');
+        const date = new Date(s.day + 'T12:00:00');
+        title.textContent = date.toLocaleDateString(lang, { weekday: 'short', month: 'short', day: 'numeric' }) + ': ' + fmtMinutes(s.total);
+        g.append(title);
+        ST_CATS.forEach(c => {
+          const v = s.categories[c] || 0;
+          if (!v || !s.total) return;
+          const hgt = full * v / catSum;
+          y -= hgt;
+          const rect = document.createElementNS(ns, 'rect');
+          rect.setAttribute('x', x); rect.setAttribute('y', y); rect.setAttribute('width', bw); rect.setAttribute('height', Math.max(hgt, 1));
+          rect.setAttribute('class', 'st-cat-' + c);
+          g.append(rect);
+        });
+        if (!s.total) {
+          const empty = document.createElementNS(ns, 'rect');
+          empty.setAttribute('x', x); empty.setAttribute('y', H - padB - 2); empty.setAttribute('width', bw); empty.setAttribute('height', 2);
+          empty.setAttribute('class', 'st-empty');
+          g.append(empty);
+        }
+        svg.append(g);
+        if (n <= 7 || i % 5 === 0 || i === n - 1) {
+          const lab = document.createElementNS(ns, 'text');
+          lab.setAttribute('x', x + bw / 2); lab.setAttribute('y', H - 6); lab.setAttribute('class', 'st-axis');
+          lab.textContent = n <= 7 ? date.toLocaleDateString(lang, { weekday: 'short' }) : String(date.getDate());
+          svg.append(lab);
+        }
+      });
+      card.append(svg);
+      const used = ST_CATS.filter(c => tr.series.some(s => s.categories[c]));
+      const legend = hEl('ul', 'st-legend');
+      used.forEach(c => {
+        const li = hEl('li');
+        li.append(hEl('span', 'st-swatch st-cat-' + c), document.createTextNode(t('st.cat.' + c)));
+        legend.append(li);
+      });
+      card.append(legend);
+      return card;
+    }
+
+    function stTopCard() {
+      const card = hEl('section', 'house-card');
+      card.append(hEl('h2', '', t('st.topApps')));
+      const tr = st.trends;
+      if (!tr || !tr.top.length) {
+        card.append(hEl('p', 'microcopy', tr ? t('st.topEmpty') : t('kids.timeLoading')));
+        return card;
+      }
+      const max = Math.max(...tr.top.map(a => a.minutes), 1);
+      const list = hEl('ul', 'st-top');
+      tr.top.slice(0, 8).forEach(a => {
+        const li = hEl('li');
+        const row = hEl('div', 'st-top-row');
+        const name = hEl('span', 'st-top-name');
+        name.append(hEl('span', 'st-swatch st-cat-' + a.category), document.createTextNode(a.name));
+        const val = hEl('span', 'st-top-val', fmtMinutes(a.minutes));
+        row.append(name, val);
+        let trend;
+        if (!a.before) trend = hEl('span', 'st-trend new', t('st.new'));
+        else {
+          const pct = Math.round((a.minutes - a.before) / a.before * 100);
+          trend = hEl('span', 'st-trend ' + (pct > 0 ? 'up' : pct < 0 ? 'down' : ''),
+            pct === 0 ? t('st.same') : (pct > 0 ? '▲ ' : '▼ ') + Math.abs(pct) + '%');
+          trend.title = t('st.vsBefore');
+        }
+        row.append(trend);
+        const bar = hEl('div', 'st-top-bar');
+        const fill = hEl('span', 'st-cat-' + a.category); fill.style.width = Math.max(3, Math.round(a.minutes / max * 100)) + '%';
+        bar.append(fill);
+        li.append(row, bar);
+        list.append(li);
+      });
+      card.append(list, hEl('p', 'microcopy', t('kids.timeNote')));
+      return card;
+    }
+
+    function stAddCard(k, first) {
+      const card = hEl('section', 'house-card');
+      card.append(hEl('h2', '', first ? t('st.firstTitle') : t('st.addDevice')));
+      card.append(hEl('p', 'house-kids-intro', t('st.addIntro')));
+      const watched = new Set((k.devices || []).map(p => p.mac));
+      const choices = ((house.data && house.data.devices) || [])
+        .filter(d => !watched.has(d.mac) && d.role !== 'self' && d.role !== 'router');
+      const sel = hEl('select', 'st-select');
+      choices.forEach(d => {
+        const o = hEl('option', '', houseDeviceName(d) + ' — ' + d.ip + (d.viewer ? ' (' + t('house.youreUsing') + ')' : ''));
+        o.value = d.mac;
+        if (d.viewer) o.selected = true;
+        sel.append(o);
+      });
+      const row = hEl('div', 'st-add-row');
+      const kidsBtn = hEl('button', 'btn-primary st-btn', t('st.addAsKids'));
+      const trackBtn = hEl('button', 'btn-secondary', t('st.addAsTrack'));
+      kidsBtn.type = trackBtn.type = 'button';
+      kidsBtn.addEventListener('click', () => { st.adding = false; saveKids(sel.value, { profile: 'kids' }); });
+      trackBtn.addEventListener('click', () => { st.adding = false; saveKids(sel.value, { profile: 'track' }); });
+      row.append(kidsBtn, trackBtn);
+      card.append(sel, row);
+      return card;
+    }
+
+    function stSetupCard(k) {
+      const card = hEl('section', 'house-card');
+      card.append(hEl('h2', '', t('st.setupTitle')));
+      card.append(hEl('p', 'house-kids-intro', t('kids.intro')));
+      const status = (k && k.status) || {};
+      if (status.state === 'installing') {
+        card.append(hEl('p', 'house-status', status.message || t('kids.installing')));
+        setTimeout(() => loadKids(), 4000);
+        return card;
+      }
+      if (status.state === 'error') card.append(hEl('p', 'house-error', status.message));
+      const go = hEl('button', 'btn-primary st-btn', t('kids.setUp'));
+      go.type = 'button';
+      go.addEventListener('click', setupKids);
+      card.append(go, hEl('p', 'microcopy', t('kids.setUpNote')));
+      return card;
     }
 
     async function saveHouseDevice(mac, changes) {
@@ -5921,7 +6196,8 @@
       else if (path.includes('connectors')) setTab('connectors');
       else if (path.includes('channels')) setTab('channels');
       else if (path.includes('contacts')) openCrm();
-      else if (path.includes('house')) openHouse();      else if (path === '/' || path.includes('dashboard')) setTab('apps');
+      else if (path.includes('house')) openHouse();
+      else if (path.includes('screentime')) openScreenTime();      else if (path === '/' || path.includes('dashboard')) setTab('apps');
       else setTab('chat');
 
       let status;
@@ -6087,6 +6363,14 @@
     $('crm-open').addEventListener('click', openCrm);
     $('house-open').addEventListener('click', openHouse);
     $('house-scan').addEventListener('click', scanHouse);
+    $('st-open').addEventListener('click', openScreenTime);
+    $('house-st-open').addEventListener('click', openScreenTime);
+    document.querySelectorAll('[data-st-days]').forEach(b => b.addEventListener('click', () => {
+      st.days = Number(b.dataset.stDays); st.trends = null; renderScreenTime(); loadTrends();
+    }));
+    document.querySelectorAll('#view-screentime .prompt-chip').forEach(chip => chip.addEventListener('click', () => {
+      draftInChat(chip.dataset.promptKey ? t(chip.dataset.promptKey) : chip.textContent);
+    }));
     document.querySelectorAll('#view-house .prompt-chip').forEach(chip => chip.addEventListener('click', () => {
       draftInChat(chip.dataset.promptKey ? t(chip.dataset.promptKey) : chip.textContent);
     }));

@@ -602,6 +602,129 @@ body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
   .house-invite { flex-direction: column; align-items: flex-start; }
 }
 
+/* The Screen time app (/screentime.html). Its own palette: teal, calm and
+   unhurried, with a distinct hue per kind of app in the charts. The 24-hour
+   ring in the header is the one bold element. */
+#view-screentime {
+  --st-teal: #12877b;
+  --st-teal-deep: #0b5a52;
+  --st-teal-tint: #d3eeea;
+  --st-teal-soft: #ecf7f5;
+  --st-wash: #d6efea;
+  --st-ink: #0b3a35;
+  --st-video: #12877b;
+  --st-social: #e07a4b;
+  --st-games: #6b62c8;
+  --st-messaging: #3e89c9;
+  --st-shopping: #c9a227;
+  --st-ai: #b45fa6;
+  --st-other: #a3aeac;
+}
+:root[data-theme="terminal"] #view-screentime,
+:root[data-theme="midnight"] #view-screentime {
+  --st-teal: #4fc7b8;
+  --st-teal-deep: #b3ece4;
+  --st-teal-tint: #12332f;
+  --st-teal-soft: #0f2724;
+  --st-wash: #11302c;
+  --st-ink: #e2f6f3;
+  --st-video: #4fc7b8;
+  --st-other: #5d6b69;
+}
+.mini-app.st-tile {
+  display: block; width: 100%; text-align: start; font: inherit; color: inherit; cursor: pointer;
+  background: linear-gradient(135deg, #d6efea, #ecf7f5);
+}
+.mini-app.st-tile:hover { border-color: #12877b; }
+.mini-app.st-tile .mini-icon svg { width: 22px; height: 22px; fill: none; stroke: #0b5a52; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.st-hero {
+  background: linear-gradient(180deg, var(--st-wash) 0%, var(--st-wash) 55%, var(--background) 100%);
+  padding: max(18px, var(--safe-top)) 22px 18px;
+}
+.st-hero-inner { max-width: 880px; margin: 0 auto; }
+.st-brand {
+  display: flex; align-items: baseline; gap: 7px; color: var(--st-ink); text-decoration: none;
+  font-family: var(--font-mono); font-size: 1.15rem; font-weight: 800; letter-spacing: -.06em;
+}
+.st-brand span { display: inline-block; width: .3em; height: .58em; background: var(--st-teal); margin-inline-start: .08em; }
+.st-brand em { font-family: var(--font-sans); font-style: normal; font-size: .82rem; font-weight: 650; letter-spacing: 0; color: var(--st-teal-deep); }
+.st-dash {
+  padding: 8px 15px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface);
+  color: var(--ink); text-decoration: none; font-size: .8rem; font-weight: 650;
+}
+.st-dash:hover { border-color: var(--st-teal); }
+.st-hero-main { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-top: 26px; }
+.st-hero-main h1 { margin: 0; color: var(--st-ink); font-size: clamp(2rem, 6.5vw, 3rem); line-height: 1.02; font-weight: 750; letter-spacing: -.045em; }
+.st-summary { margin: 12px 0 0; max-width: 32ch; color: var(--st-teal-deep); font-size: clamp(1.05rem, 3vw, 1.3rem); font-weight: 600; line-height: 1.35; }
+.st-clock { flex: none; margin: 0; display: grid; justify-items: center; gap: 4px; }
+.st-clock svg { width: 150px; height: 150px; }
+.st-clock figcaption { color: var(--st-teal-deep); font-size: .72rem; font-weight: 650; }
+.st-seg { fill: var(--st-teal-tint); }
+.st-seg.used { fill: var(--st-teal); }
+.st-tick { fill: var(--ink-3); font: 600 7.5px var(--font-sans); text-anchor: middle; }
+.st-center { fill: var(--st-ink); font: 750 13px var(--font-sans); text-anchor: middle; }
+.st-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.st-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+.st-pill {
+  display: inline-flex; align-items: baseline; gap: 6px; padding: 8px 14px; border: 1px solid var(--line);
+  border-radius: 999px; background: var(--surface); color: var(--ink-2); font: inherit; font-size: .82rem; font-weight: 650; cursor: pointer;
+}
+.st-pill small { color: var(--ink-3); font-size: .68rem; font-weight: 600; }
+.st-pill.on { border-color: var(--st-teal); background: var(--st-teal-tint); color: var(--st-teal-deep); }
+.st-pill.add { border-style: dashed; color: var(--st-teal-deep); }
+.st-period { display: inline-flex; padding: 3px; border-radius: 999px; background: var(--surface-container); }
+.st-period button { padding: 6px 12px; border: 0; border-radius: 999px; background: transparent; color: var(--ink-2); font: inherit; font-size: .76rem; font-weight: 650; cursor: pointer; }
+.st-period button.on { background: var(--surface); color: var(--st-ink); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+.st-wrap { display: grid; gap: 14px; }
+#view-screentime .house-card h2 { margin: 0 0 12px; font-size: 1rem; letter-spacing: -.02em; }
+.st-chart { width: 100%; height: auto; display: block; margin-top: 6px; }
+.st-axis { fill: var(--ink-3); font: 600 11px var(--font-sans); text-anchor: middle; }
+.st-empty { fill: var(--line); }
+.st-cat-video { fill: var(--st-video); background: var(--st-video); }
+.st-cat-social { fill: var(--st-social); background: var(--st-social); }
+.st-cat-games { fill: var(--st-games); background: var(--st-games); }
+.st-cat-messaging { fill: var(--st-messaging); background: var(--st-messaging); }
+.st-cat-shopping { fill: var(--st-shopping); background: var(--st-shopping); }
+.st-cat-ai { fill: var(--st-ai); background: var(--st-ai); }
+.st-cat-other { fill: var(--st-other); background: var(--st-other); }
+.st-legend { list-style: none; display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 10px 0 0; padding: 0; font-size: .74rem; color: var(--ink-2); }
+.st-legend li { display: inline-flex; align-items: center; gap: 6px; }
+.st-swatch { display: inline-block; width: 9px; height: 9px; border-radius: 3px; flex: none; }
+.st-top { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.st-top-row { display: grid; grid-template-columns: minmax(0, 1fr) auto 64px; align-items: baseline; gap: 10px; font-size: .84rem; }
+.st-top-name { display: inline-flex; align-items: center; gap: 8px; font-weight: 650; overflow-wrap: anywhere; }
+.st-top-val { color: var(--ink-2); font-size: .8rem; white-space: nowrap; }
+.st-trend { justify-self: end; color: var(--ink-3); font-size: .72rem; font-weight: 700; white-space: nowrap; }
+.st-trend.up { color: var(--st-social); }
+.st-trend.down { color: var(--st-teal); }
+.st-trend.new { color: var(--st-teal-deep); }
+.st-top-bar { height: 6px; margin-top: 5px; border-radius: 999px; background: var(--surface-container); overflow: hidden; }
+.st-top-bar span { display: block; height: 100%; border-radius: 999px; }
+.st-select {
+  width: 100%; margin: 4px 0 10px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 12px;
+  background: var(--surface); font: inherit; color: var(--ink);
+}
+.st-add-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.st-btn { background: var(--st-teal); color: #fff; box-shadow: none; }
+.st-link { margin-top: 12px; padding: 0; border: 0; background: none; color: var(--ink-3); font: inherit; font-size: .76rem; text-decoration: underline; cursor: pointer; }
+#view-screentime .house-blue-btn { background: var(--st-teal); }
+#view-screentime .house-chip.on { border-color: var(--st-teal); background: var(--st-teal-tint); color: var(--st-teal-deep); }
+#view-screentime .switch input:checked + span { background: var(--st-teal); }
+#view-screentime .house-howto { background: var(--st-teal-soft); }
+#view-screentime .house-howto summary, #view-screentime .house-kid-head small { color: var(--st-teal-deep); }
+#view-screentime .house-icon { background: var(--st-teal-tint); color: var(--st-teal-deep); }
+#view-screentime .house-tag { background: var(--st-teal-tint); color: var(--st-teal-deep); }
+#view-screentime .house-kid { border-top: 0; padding-top: 0; }
+.st-prompts { margin-top: 18px; }
+.house-st-link { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.house-st-link h2 { margin-bottom: 4px; }
+.house-st-link .microcopy { margin: 0; }
+@media (max-width: 520px) {
+  .st-hero-main { gap: 12px; }
+  .st-clock svg { width: 104px; height: 104px; }
+  .house-st-link { flex-direction: column; align-items: flex-start; }
+}
+
 /* The Contacts app -- a real app, so it is a button like "Create your own". */
 .mini-app.crm {
   display: block; width: 100%; text-align: start; font: inherit; color: inherit; cursor: pointer;

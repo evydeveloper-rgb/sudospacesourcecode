@@ -485,12 +485,22 @@ try:
 except Exception as exc:          # noqa: BLE001
     home_scan = None
     print(f"Home app unavailable: {exc}")
-# Kids profiles and screen time (home_filter.py, on top of AdGuard Home).
+# Kids profiles and screen time (home_filter.py, on top of AdGuard Home), and
+# the Screen time app's history and trends (screen_time.py).
 try:
     import home_filter
+    import screen_time
 except Exception as exc:          # noqa: BLE001
-    home_filter = None
+    home_filter = screen_time = None
     print(f"Home filter unavailable: {exc}")
+
+
+def home_after_scan(devices):
+    """Every Home scan: keep kids' rules current, and screen-time history."""
+    if home_filter is None:
+        return
+    home_filter.sync(devices)
+    screen_time.refresh_all(devices)
 
 
 def notify_owner(text):
@@ -2543,6 +2553,28 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                 home_scan.scan_now()
                 self.send_json({"ok": True})
                 return True
+            # The Screen time app: trends for one watched device, or all of them.
+            if path == "/api/home/trends" and self.command == "GET":
+                if home_filter is None:
+                    self.send_json({"error": "Screen time is not available on this device"}, code=503)
+                    return True
+                q = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+                want = (q.get("mac") or ["all"])[0].lower()
+                days = 30 if (q.get("days") or ["7"])[0] == "30" else 7
+                devices = home_scan.devices_raw()
+                watched = list(home_filter.profiles())
+                macs = watched if want == "all" else [m for m in watched if m == want]
+                for m in macs:
+                    try:
+                        screen_time.refresh(m, (devices.get(m) or {}).get("ip"))
+                    except Exception as exc:      # noqa: BLE001
+                        print(f"screen time refresh failed: {exc}")
+                out = screen_time.summary(macs, days) if macs else {"series": [], "top": [], "hours": [0] * 24,
+                                                                       "today": 0, "period_total": 0, "days": days,
+                                                                       "has_history": False}
+                out["mac"] = want
+                self.send_json(out)
+                return True
             # Kids profiles and screen time.
             if path.startswith("/api/home/filter") or path == "/api/home/screentime":
                 if home_filter is None:
@@ -3549,6 +3581,7 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             "/login.html",
             "/contacts.html",
             "/house.html",
+            "/screentime.html",
         ):
             path = "/index.html"
 
@@ -3655,8 +3688,7 @@ if __name__ == "__main__":
     finish_first_update()
 
     if home_scan is not None:
-        home_scan.start(notify=notify_owner,
-                        after_scan=home_filter.sync if home_filter is not None else None)
+        home_scan.start(notify=notify_owner, after_scan=home_after_scan)
 
     os.chdir(ROOT)
 
