@@ -544,6 +544,47 @@ body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
 .house-fold > summary:focus-visible { outline: 2px solid var(--house-blue); outline-offset: 2px; border-radius: 10px; }
 .house-fold .house-devices { padding-inline-start: 50px; }
 .house-plain { padding: 0 2px; }
+#view-house .switch input:checked + span { background: var(--house-blue); }
+#view-house .switch input:focus-visible + span { outline-color: var(--house-blue); }
+.house-kids-intro { margin: 0 0 12px; max-width: 62ch; color: var(--ink-2); font-size: .84rem; line-height: 1.5; }
+.house-error { color: var(--error); font-size: .8rem; }
+.house-blue-btn { background: var(--house-blue); color: #fff; box-shadow: none; }
+.house-kid { padding: 14px 0 6px; border-top: 1px solid var(--line); }
+.house-kid:first-child { border-top: 0; padding-top: 4px; }
+.house-kid-head { display: grid; grid-template-columns: 38px minmax(0, 1fr) auto; align-items: center; gap: 12px; }
+.house-kid-head strong { display: block; font-size: .9rem; }
+.house-kid-head small { color: var(--house-blue-deep); font-size: .74rem; }
+.house-kid-head small.warn { color: var(--ink-3); }
+.house-kid.offline .house-icon { background: var(--surface-container); color: var(--ink-3); }
+.house-kid-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 4px; }
+.house-kid-label { margin: 14px 0 6px; color: var(--ink-3); font-size: .74rem; font-weight: 700; }
+.house-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.house-chip {
+  padding: 7px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface);
+  color: var(--ink-2); font: inherit; font-size: .78rem; cursor: pointer;
+}
+.house-chip.on { border-color: var(--house-blue); background: var(--house-blue-tint); color: var(--house-blue-deep); font-weight: 650; }
+.house-times { display: flex; gap: 12px; margin-top: 6px; }
+.house-times label { display: grid; gap: 4px; font-size: .74rem; color: var(--ink-3); }
+.house-times input {
+  padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface);
+  font: inherit; color: var(--ink);
+}
+.house-bars { list-style: none; margin: 0; padding: 0; display: grid; gap: 9px; }
+.house-bar-top { display: flex; justify-content: space-between; gap: 10px; font-size: .8rem; }
+.house-bar-val { color: var(--ink-3); font-size: .74rem; white-space: nowrap; }
+.house-bar { height: 7px; margin-top: 4px; border-radius: 999px; background: var(--surface-container); overflow: hidden; }
+.house-bar span { display: block; height: 100%; border-radius: 999px; background: var(--house-blue); }
+.house-howto { margin-top: 14px; padding: 12px 14px; border-radius: var(--radius); background: var(--house-blue-soft); font-size: .8rem; }
+.house-howto summary { cursor: pointer; font-weight: 700; color: var(--house-blue-deep); }
+.house-howto p, .house-howto li { color: var(--ink-2); line-height: 1.5; }
+.house-howto ul { margin: 6px 0; padding-inline-start: 18px; }
+.house-prompts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+.house-prompts .microcopy { flex-basis: 100%; margin: 0; }
+.house-editor select {
+  padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface);
+  font: inherit; color: var(--ink);
+}
 .house-event {
   display: grid; grid-template-columns: 10px 1fr auto; align-items: center; gap: 10px;
   padding: 9px 0; border-top: 1px solid var(--line); font-size: .82rem;

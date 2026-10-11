@@ -485,6 +485,12 @@ try:
 except Exception as exc:          # noqa: BLE001
     home_scan = None
     print(f"Home app unavailable: {exc}")
+# Kids profiles and screen time (home_filter.py, on top of AdGuard Home).
+try:
+    import home_filter
+except Exception as exc:          # noqa: BLE001
+    home_filter = None
+    print(f"Home filter unavailable: {exc}")
 
 
 def notify_owner(text):
@@ -2537,6 +2543,40 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                 home_scan.scan_now()
                 self.send_json({"ok": True})
                 return True
+            # Kids profiles and screen time.
+            if path.startswith("/api/home/filter") or path == "/api/home/screentime":
+                if home_filter is None:
+                    self.send_json({"error": "Parental controls are not available on this device"}, code=503)
+                    return True
+                devices = home_scan.devices_raw()
+                if path == "/api/home/filter" and self.command == "GET":
+                    self.send_json(home_filter.snapshot(devices, home_scan.own_ip()))
+                    return True
+                if path == "/api/home/filter/setup" and self.command == "POST":
+                    result = home_filter.install(run_privileged)
+                    if result.returncode != 0:
+                        self.send_json({"error": "Could not start the setup"}, code=500)
+                        return True
+                    self.send_json(home_filter.snapshot(devices, home_scan.own_ip()))
+                    return True
+                if path == "/api/home/filter/device" and self.command == "POST":
+                    mac = str(body.get("mac") or "").lower()
+                    if mac not in devices:
+                        self.send_json({"error": "No such device"}, code=404)
+                        return True
+                    try:
+                        home_filter.set_profile(mac, body, devices)
+                    except Exception as exc:      # noqa: BLE001
+                        self.send_json({"error": f"The filter did not accept that: {exc}"}, code=502)
+                        return True
+                    self.send_json(home_filter.snapshot(devices, home_scan.own_ip()))
+                    return True
+                if path == "/api/home/screentime" and self.command == "GET":
+                    q = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+                    mac = (q.get("mac") or [""])[0].lower()
+                    days = max(1, min(7, int((q.get("days") or ["7"])[0] or 7)))
+                    self.send_json(home_filter.screen_time((devices.get(mac) or {}).get("ip", ""), days))
+                    return True
 
         if path == "/api/agent/crm" and self.command == "GET":
             self.send_json(crm_people())
@@ -3615,7 +3655,8 @@ if __name__ == "__main__":
     finish_first_update()
 
     if home_scan is not None:
-        home_scan.start(notify=notify_owner)
+        home_scan.start(notify=notify_owner,
+                        after_scan=home_filter.sync if home_filter is not None else None)
 
     os.chdir(ROOT)
 

@@ -702,6 +702,18 @@
               <input class="house-search" id="house-search" type="search" autocomplete="off" data-i18n-attr="placeholder:house.search,aria-label:house.search" placeholder="Search devices">
               <div class="house-groups" id="house-devices"></div>
             </section>
+            <section class="house-card house-kids" aria-labelledby="house-kids-title">
+              <h2 id="house-kids-title" data-i18n="kids.title">Kids and screen time</h2>
+              <div id="house-kids"></div>
+              <div class="house-prompts">
+                <p class="microcopy" data-i18n="kids.askTitle">Or just ask your agent:</p>
+                <button class="prompt-chip" type="button" data-prompt-key="kids.p.pause" data-i18n="kids.p.pause">“Pause the kids' iPad for 30 minutes”</button>
+                <button class="prompt-chip" type="button" data-prompt-key="kids.p.youtube" data-i18n="kids.p.youtube">“Turn off YouTube on the kids' iPad until homework's done”</button>
+                <button class="prompt-chip" type="button" data-prompt-key="kids.p.bedtime" data-i18n="kids.p.bedtime">“Set a bedtime of 8:30 pm on the kids' iPad”</button>
+                <button class="prompt-chip" type="button" data-prompt-key="kids.p.mostUsed" data-i18n="kids.p.mostUsed">“What did the kids use most this week?”</button>
+                <button class="prompt-chip" type="button" data-prompt-key="kids.p.myTime" data-i18n="kids.p.myTime">“How much time did I spend on Instagram this week?”</button>
+              </div>
+            </section>
             <section class="house-plain" aria-labelledby="house-activity-title">
               <h2 id="house-activity-title" data-i18n="house.activity">Recent activity</h2>
               <ul class="house-events" id="house-events"></ul>
@@ -3435,6 +3447,7 @@
         return;
       }
       renderHouse();
+      loadKids();
       if (state.tab === 'house') {
         house.timer = setTimeout(() => loadHouse(true), house.data.scanning ? 4000 : 30000);
       }
@@ -3623,14 +3636,25 @@
       people.forEach(p => { const o = hEl('option'); o.value = p; dl.append(o); });
       personLabel.append(person, dl);
       const hint = hEl('p', 'microcopy', t('house.personHint'));
+      const profLabel = hEl('label', '', t('kids.profileLabel'));
+      const prof = hEl('select');
+      const currentProfile = ((kidsState.data && kidsState.data.devices) || []).find(k => k.mac === x.mac);
+      [['', t('kids.profileNone')], ['kids', t('kids.profileKids')], ['track', t('kids.profileTrack')]].forEach(([v, l]) => {
+        const o = hEl('option', '', l); o.value = v; prof.append(o);
+      });
+      prof.value = currentProfile ? currentProfile.profile : '';
+      profLabel.append(prof);
       const row = hEl('div', 'house-editor-actions');
       const save = hEl('button', 'btn-primary', t('common.save')); save.type = 'submit';
       const hide = hEl('button', 'btn-secondary', t('house.hide')); hide.type = 'button';
       row.append(save, hide);
-      form.append(facts, nameLabel, personLabel, hint, row);
+      form.append(facts, nameLabel, personLabel, hint, profLabel, row);
       form.addEventListener('submit', event => {
         event.preventDefault();
+        const wantProfile = prof.value;
+        const had = currentProfile ? currentProfile.profile : '';
         saveHouseDevice(x.mac, { name: name.value.trim(), person: person.value.trim() });
+        if (wantProfile !== had) saveKids(x.mac, { profile: wantProfile || 'none' });
       });
       hide.addEventListener('click', () => saveHouseDevice(x.mac, { hidden: true }));
       setTimeout(() => name.focus(), 0);
@@ -3653,6 +3677,212 @@
         li.append(hEl('span', 'house-event-mark'), hEl('span', 'house-event-text', text), hEl('time', '', fmtWhen(e.at)));
         list.append(li);
       });
+    }
+
+
+    // Kids and screen time (home_filter.py over AdGuard Home).
+    const kidsState = { data: null, time: {} };
+
+    async function loadKids() {
+      try {
+        kidsState.data = await api('/api/home/filter', {}, 25000);
+      } catch (_) {
+        kidsState.data = null;
+      }
+      renderKids();
+      ((kidsState.data && kidsState.data.devices) || []).forEach(k => loadScreenTime(k.mac));
+    }
+
+    async function loadScreenTime(mac) {
+      try {
+        kidsState.time[mac] = await api('/api/home/screentime?mac=' + encodeURIComponent(mac) + '&days=7', {}, 60000);
+      } catch (_) {
+        kidsState.time[mac] = null;
+      }
+      renderKids();
+    }
+
+    function kidsDevice(mac) {
+      return ((house.data && house.data.devices) || []).find(x => x.mac === mac) || { label: mac, kind: 'other' };
+    }
+
+    function fmtMinutes(m) {
+      if (!m) return t('kids.none');
+      const hrs = Math.floor(m / 60), min = m % 60;
+      return hrs ? t('kids.hm', { h: hrs, m: min }) : t('kids.m', { m: min });
+    }
+
+    function renderKids() {
+      const box = $('house-kids');
+      if (!box) return;
+      box.replaceChildren();
+      const k = kidsState.data;
+      if (!k) {
+        box.append(hEl('p', 'microcopy', t('kids.unavailable')));
+        return;
+      }
+      const st = k.status || {};
+      if (st.state !== 'ready') {
+        box.append(hEl('p', 'house-kids-intro', t('kids.intro')));
+        if (st.state === 'installing') {
+          box.append(hEl('p', 'house-status', st.message || t('kids.installing')));
+          setTimeout(loadKids, 4000);
+          return;
+        }
+        if (st.state === 'error') box.append(hEl('p', 'house-error', st.message));
+        const go = hEl('button', 'btn-primary house-blue-btn', t('kids.setUp'));
+        go.type = 'button';
+        go.addEventListener('click', setupKids);
+        box.append(go, hEl('p', 'microcopy', t('kids.setUpNote')));
+        return;
+      }
+      if (!k.devices.length) {
+        box.append(hEl('p', 'house-kids-intro', t('kids.readyNoDevices')));
+      }
+      k.devices.forEach(p => box.append(kidsCard(p, k)));
+      box.append(kidsHowTo(k.dns_ip));
+    }
+
+    function kidsCard(p, k) {
+      const dev = kidsDevice(p.mac);
+      const card = hEl('article', 'house-kid' + (p.paused || p.in_bedtime ? ' offline' : ''));
+      const head = hEl('div', 'house-kid-head');
+      const icon = hEl('span', 'house-icon'); icon.append(houseIcon(dev.kind));
+      const who = hEl('div');
+      who.append(hEl('strong', '', dev.label || t('house.unknown')));
+      const line = p.paused ? t('kids.pausedNow') : p.in_bedtime ? t('kids.bedtimeNow')
+        : p.using_filter ? t('kids.usingFilter') : t('kids.notPointed');
+      who.append(hEl('small', p.using_filter ? '' : 'warn', line));
+      head.append(icon, who, hEl('span', 'house-tag', p.profile === 'kids' ? t('kids.profileKids') : t('kids.profileTrack')));
+      card.append(head);
+
+      if (p.profile === 'kids') {
+        // Pause / resume.
+        const pause = hEl('div', 'house-kid-actions');
+        if (p.paused) {
+          const resume = hEl('button', 'btn-primary house-blue-btn', t('kids.resume'));
+          resume.type = 'button';
+          resume.addEventListener('click', () => saveKids(p.mac, { pause_minutes: 0 }));
+          pause.append(resume);
+        } else {
+          [[30, t('kids.pause30')], [60, t('kids.pause60')], [-1, t('kids.pauseUntil')]].forEach(([mins, label]) => {
+            const b = hEl('button', 'btn-secondary', label); b.type = 'button';
+            b.addEventListener('click', () => saveKids(p.mac, { pause_minutes: mins }));
+            pause.append(b);
+          });
+        }
+        card.append(pause);
+        // Adult sites.
+        card.append(kidsSwitch(t('kids.adult'), t('kids.adultHint'), p.adult, on => saveKids(p.mac, { adult: on })));
+        // Apps.
+        card.append(hEl('p', 'house-kid-label', t('kids.appsTitle')));
+        const chips = hEl('div', 'house-chips');
+        k.apps.forEach(a => {
+          const on = p.apps.includes(a.id);
+          const c = hEl('button', 'house-chip' + (on ? ' on' : ''), a.name);
+          c.type = 'button';
+          c.setAttribute('aria-pressed', on ? 'true' : 'false');
+          c.addEventListener('click', () => {
+            const apps = on ? p.apps.filter(x => x !== a.id) : [...p.apps, a.id];
+            saveKids(p.mac, { apps });
+          });
+          chips.append(c);
+        });
+        card.append(chips, hEl('p', 'microcopy', t('kids.alwaysBlocked')));
+        // Bedtime.
+        const bed = p.bedtime || {};
+        const bedRow = kidsSwitch(t('kids.bedtime'), t('kids.bedtimeHint'), !!bed.on, on => saveKids(p.mac, { bedtime: { on } }));
+        card.append(bedRow);
+        if (bed.on) {
+          const times = hEl('div', 'house-times');
+          const from = hEl('input'); from.type = 'time'; from.value = bed.start || '20:00';
+          const to = hEl('input'); to.type = 'time'; to.value = bed.end || '07:00';
+          const l1 = hEl('label', '', t('kids.from')); l1.append(from);
+          const l2 = hEl('label', '', t('kids.to')); l2.append(to);
+          const save = () => saveKids(p.mac, { bedtime: { start: from.value, end: to.value } });
+          from.addEventListener('change', save); to.addEventListener('change', save);
+          times.append(l1, l2);
+          card.append(times);
+        }
+      }
+      card.append(screenTimeBlock(p.mac));
+      return card;
+    }
+
+    function kidsSwitch(label, hint, on, change) {
+      const row = hEl('div', 'access-row');
+      const text = hEl('div');
+      text.append(hEl('strong', '', label), hEl('small', '', hint));
+      const sw = hEl('label', 'switch');
+      const input = hEl('input'); input.type = 'checkbox'; input.checked = on;
+      input.addEventListener('change', () => change(input.checked));
+      const knob = hEl('span'); knob.setAttribute('aria-hidden', 'true');
+      const sr = hEl('em', 'sr-only', label);
+      sw.append(input, knob, sr);
+      row.append(text, sw);
+      return row;
+    }
+
+    function screenTimeBlock(mac) {
+      const wrap = hEl('div', 'house-time');
+      wrap.append(hEl('p', 'house-kid-label', t('kids.timeTitle')));
+      const data = kidsState.time[mac];
+      if (!data) {
+        wrap.append(hEl('p', 'microcopy', t('kids.timeLoading')));
+        return wrap;
+      }
+      if (!data.services.length) {
+        wrap.append(hEl('p', 'microcopy', t('kids.timeEmpty')));
+        return wrap;
+      }
+      const max = Math.max(...data.services.map(s => s.week), 1);
+      const list = hEl('ul', 'house-bars');
+      data.services.slice(0, 6).forEach(s => {
+        const li = hEl('li');
+        const top = hEl('div', 'house-bar-top');
+        top.append(hEl('span', '', s.name), hEl('span', 'house-bar-val', t('kids.weekToday', { week: fmtMinutes(s.week), today: fmtMinutes(s.today) })));
+        const bar = hEl('div', 'house-bar');
+        const fill = hEl('span'); fill.style.width = Math.max(4, Math.round(s.week / max * 100)) + '%';
+        bar.append(fill);
+        li.append(top, bar);
+        list.append(li);
+      });
+      wrap.append(list, hEl('p', 'microcopy', t('kids.timeNote')));
+      return wrap;
+    }
+
+    function kidsHowTo(ip) {
+      const d = hEl('details', 'house-howto');
+      const s = hEl('summary', '', t('kids.howTitle'));
+      d.append(s);
+      d.append(hEl('p', '', t('kids.howIntro', { ip })));
+      const ol = hEl('ul');
+      ['kids.howIphone', 'kids.howAndroid', 'kids.howRouter'].forEach(key => ol.append(hEl('li', '', t(key, { ip }))));
+      d.append(ol, hEl('p', 'microcopy', t('kids.howNote')));
+      return d;
+    }
+
+    async function setupKids() {
+      try {
+        kidsState.data = await api('/api/home/filter/setup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }, 30000);
+      } catch (error) {
+        showToast(error.message);
+      }
+      renderKids();
+      setTimeout(loadKids, 3000);
+    }
+
+    async function saveKids(mac, changes) {
+      try {
+        kidsState.data = await api('/api/home/filter/device', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mac, ...changes }),
+        }, 30000);
+        renderKids();
+        if (changes.profile) loadScreenTime(mac);
+      } catch (error) {
+        showToast(error.message);
+      }
     }
 
     async function saveHouseDevice(mac, changes) {
@@ -5857,6 +6087,9 @@
     $('crm-open').addEventListener('click', openCrm);
     $('house-open').addEventListener('click', openHouse);
     $('house-scan').addEventListener('click', scanHouse);
+    document.querySelectorAll('#view-house .prompt-chip').forEach(chip => chip.addEventListener('click', () => {
+      draftInChat(chip.dataset.promptKey ? t(chip.dataset.promptKey) : chip.textContent);
+    }));
     $('house-search').addEventListener('input', event => { house.search = event.target.value; renderHouse(); });
     document.querySelectorAll('[data-house-setting]').forEach(input => {
       input.addEventListener('change', () => saveHouseSetting(input.dataset.houseSetting, input.checked));

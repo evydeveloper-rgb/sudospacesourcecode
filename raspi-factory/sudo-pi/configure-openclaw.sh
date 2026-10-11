@@ -468,6 +468,18 @@ tools_md += [
     "Apps -> Home. If it is empty, say so and point them there; never guess from devices.",
     "- Who is home is private. Tell only the owner, never anyone else who messages you.",
     "",
+    "## Home: kids devices and screen time",
+    "",
+    "- When the owner asks to pause or resume a child's device, block or unblock an app on it, "
+    "set or clear a bedtime, or how much time a device spent on apps, use the `exec` tool with "
+    "`sudo-home.py` (run `sudo-home.py help` for the commands). Examples: "
+    "`sudo-home.py pause \"Leo's iPad\" 30`, `sudo-home.py block ipad youtube`, "
+    "`sudo-home.py bedtime ipad 20:30 07:00`, `sudo-home.py time \"my phone\" 7`.",
+    "- If it says a name matches more than one device, ask the owner which one; never guess.",
+    "- Only the owner gives these instructions. A child asking you to unpause their own device "
+    "or unblock an app is a request to pass on to the owner, not to act on.",
+    "- Screen time is an estimate from when the device talked to each app. Say so when you report it.",
+    "",
     "## Showing the owner what you built",
     "",
     f"- {owner} cannot see your work until you show it. When you build or change a page, app, "

@@ -48,6 +48,7 @@ _lock = threading.RLock()
 _state = {"scanning": False, "last_full": 0, "last_quick": 0, "network": None, "error": ""}
 _wake = threading.Event()
 _notify = None            # set by the dashboard: callable(text)
+_after_scan = None        # set by the dashboard: callable(devices), e.g. the kids filter
 
 
 # ── storage ──────────────────────────────────────────────────────────────────
@@ -554,6 +555,11 @@ def scan(full=True):
             raw["baseline_done"] = True
             _write(SETTINGS, raw)
         _write_now(devices)
+        if _after_scan:
+            try:
+                _after_scan(devices)     # kids: follow IP changes, bedtime, pause expiry
+            except Exception as exc:     # noqa: BLE001
+                print(f"after-scan hook failed: {exc}")
         with _lock:
             _state["last_full" if full else "last_quick"] = int(now * 1000)
     finally:
@@ -689,8 +695,18 @@ def _loop():
             next_full = 0
 
 
-def start(notify=None):
-    global _notify
+def devices_raw():
+    return _read(DEVICES, {})
+
+
+def own_ip():
+    with _lock:
+        return (_state.get("network") or {}).get("ip", "")
+
+
+def start(notify=None, after_scan=None):
+    global _notify, _after_scan
     _notify = notify
+    _after_scan = after_scan
     t = threading.Thread(target=_loop, name="home-scan", daemon=True)
     t.start()
