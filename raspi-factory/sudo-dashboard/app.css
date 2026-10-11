@@ -579,7 +579,9 @@ body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
    header instead -- the same shape as the apps in the sites directory, but
    without a second port to run.
    ========================================================================== */
-body.site-mode { padding: 0; background: var(--background); }
+/* The dashboard locks body scrolling (its own panel scrolls instead); an app
+   page has no such panel, so the page itself scrolls again. */
+body.site-mode { padding: 0; background: var(--background); height: auto; min-height: 100%; overflow-y: auto; }
 body.site-mode .side-rail,
 body.site-mode .topbar,
 body.site-mode .bottom-nav,
