@@ -433,6 +433,13 @@ if [ ! -x /opt/openclaw/node_modules/.bin/openclaw ] && [ -f /var/lib/wifi-setup
   systemctl start --no-block sudo-openclaw-install.service >>"$LOG" 2>&1 || true
 fi
 
+# An agent moved in from another device can bring a Tailscale exit node with
+# LAN access off, which cuts the dashboard off from its own Wi-Fi. Keep the
+# exit node, let the local network through.
+if command -v tailscale >/dev/null 2>&1 && systemctl is-active --quiet tailscaled; then
+  tailscale set --exit-node-allow-lan-access=true >>"$LOG" 2>&1 || true
+fi
+
 rm -rf "$STAGE"
 write_status "done" "Updated to ${LATEST}." "$LATEST" "$LATEST"
 log "updated $CURRENT -> $LATEST"

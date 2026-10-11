@@ -240,6 +240,14 @@ if [ "$(read_p2 tailscale)" = "True" ] && [ -f "$WORK/tailscale/tailscaled.state
     install -d -m 700 /var/lib/tailscale
     install -m 600 "$WORK/tailscale/tailscaled.state" /var/lib/tailscale/tailscaled.state
     systemctl enable --now tailscaled && echo "Tailscale: same identity as the old device"
+    # The old device may have sent everything through an exit node with LAN
+    # access off. Kept as is, replies to the home network leave through the
+    # tunnel and the dashboard can't be reached from the Wi-Fi it is on. Keep
+    # the exit node, but always let the local network through.
+    for _ in 1 2 3 4 5 6; do
+      tailscale set --exit-node-allow-lan-access=true 2>/dev/null && { echo "Tailscale: local network allowed"; break; }
+      sleep 5
+    done
   fi
 fi
 
