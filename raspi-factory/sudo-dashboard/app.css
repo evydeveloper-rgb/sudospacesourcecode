@@ -383,56 +383,109 @@ body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
   position: absolute; top: 18px; inset-inline-end: 18px; padding: 6px 9px; border-radius: 999px;
   background: var(--ok-tint); color: var(--ok-ink); font-size: .64rem; font-weight: 750; letter-spacing: .03em;
 }
-/* The Home app (/house.html) -- devices on the Wi-Fi and who is home. */
+/* The Home app (/house.html) -- devices on the Wi-Fi and who is home.
+   Its own palette, light blue (DESIGN.md: apps pick colours for their
+   subject; Sudo's coral/purple meanings are for the dashboard). Blue means
+   online / home, grey means away / offline. The header's live sentence is
+   the one bold thing. */
+#view-house {
+  --house-blue: #3e89c9;
+  --house-blue-deep: #1d5a8f;
+  --house-blue-tint: #dbeaf6;
+  --house-blue-soft: #eef5fb;
+  --house-band: #4f97d4;
+}
+:root[data-theme="terminal"] #view-house,
+:root[data-theme="midnight"] #view-house {
+  --house-blue: #6aaee6;
+  --house-blue-deep: #b9dbf6;
+  --house-blue-tint: #18324a;
+  --house-blue-soft: #132536;
+  --house-band: #23527c;
+}
+:root[data-theme="minimal"] #view-house { --house-band: #5a9fd6; }
 .mini-app.house-tile { display: block; width: 100%; text-align: start; font: inherit; color: inherit; cursor: pointer; }
-.mini-app.house-tile:hover { border-color: var(--sky); }
-/* Same page shape as Contacts, in Home's own colour. */
-.crm-site-header.house-site-header { background: var(--sky); }
+.mini-app.house-tile:hover { border-color: #3e89c9; }
+.crm-site-header.house-site-header { background: var(--house-band); }
+.house-site-header .house-summary {
+  margin-top: 10px; max-width: 34ch; color: #fff; opacity: 1;
+  font-size: clamp(1.05rem, 3.4vw, 1.3rem); font-weight: 650; line-height: 1.35; letter-spacing: -.01em;
+}
 .house-actions { align-items: center; justify-content: space-between; }
-.house-actions .house-status { margin: 0; }
-.house-wrap { display: grid; gap: 14px; }
+.house-actions .house-status { margin: 0; color: var(--ink-3); font-size: .76rem; }
+.house-wrap { display: grid; gap: 26px; }
+.house-wrap h2 { margin: 0 0 12px; font-size: 1rem; letter-spacing: -.02em; }
+
+.house-invite {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 14px 16px; border: 1px dashed var(--line-2); border-radius: var(--radius);
+}
+.house-invite p { margin: 0; max-width: 60ch; color: var(--ink-2); font-size: .82rem; line-height: 1.5; }
+.house-invite .btn-secondary { flex: none; }
+.house-people { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 10px; }
+.house-people li {
+  display: flex; align-items: center; gap: 10px; padding: 8px 14px 8px 8px;
+  border: 1px solid var(--line); border-radius: 999px; background: var(--surface);
+}
+.house-avatar {
+  width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%;
+  background: var(--surface-container); color: var(--ink-2); font-weight: 750;
+}
+.house-people li.is-home { border-color: var(--house-blue-tint); background: var(--house-blue-tint); }
+.house-people li.is-home .house-avatar { background: var(--house-blue); color: #fff; }
+.house-people strong { display: block; font-size: .88rem; }
+.house-people small { color: var(--ink-3); font-size: .72rem; }
+.house-people li.is-home small { color: var(--house-blue-deep); }
+
 .house-card {
   padding: 18px; border: 1px solid var(--line); border-radius: var(--radius-lg);
   background: var(--surface); box-shadow: var(--shadow);
 }
-.house-card h2 { margin: 0 0 12px; font-size: 1rem; letter-spacing: -.02em; }
 .house-card-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
-.house-count { color: var(--faint); font: 600 .72rem/1 var(--font-mono); }
+.house-count { color: var(--ink-3); font-size: .76rem; }
 .house-search {
-  width: 100%; margin: 0 0 8px; padding: 11px 13px; border: 1px solid var(--line);
-  border-radius: 12px; background: var(--surface-soft); font: inherit; color: var(--ink);
+  width: 100%; margin: 0 0 4px; padding: 11px 13px; border: 1px solid var(--line);
+  border-radius: 12px; background: var(--surface-low); font: inherit; color: var(--ink);
 }
-.house-status { min-height: 1em; margin: 0 0 6px; color: var(--faint); font-size: .74rem; }
-.house-devices, .house-events, .house-people { list-style: none; margin: 0; padding: 0; }
+.house-group { margin-top: 16px; }
+.house-group h3 { margin: 0 0 2px; color: var(--ink-3); font-size: .74rem; font-weight: 700; }
+.house-devices, .house-events { list-style: none; margin: 0; padding: 0; }
 .house-device {
-  display: grid; grid-template-columns: 36px 1fr auto; align-items: center; gap: 10px;
-  padding: 11px 0; border-top: 1px solid var(--line);
+  display: grid; grid-template-columns: 38px minmax(0, 1fr) auto auto; align-items: center; gap: 12px;
+  padding: 10px 0; border-top: 1px solid var(--line);
 }
-.house-device:first-child { border-top: 0; }
+.house-group .house-device:first-child { border-top: 0; }
 .house-icon {
-  width: 36px; height: 36px; display: grid; place-items: center; border-radius: 11px;
-  background: var(--surface-soft); color: var(--ink-3); font-size: 1rem;
+  width: 38px; height: 38px; display: grid; place-items: center; border-radius: 12px;
+  background: var(--surface-low); color: var(--ink-3);
 }
-.house-device.online .house-icon { background: var(--sky-tint); color: var(--ink); }
-.house-device-body { min-width: 0; }
+.house-icon svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.house-device.online .house-icon { background: var(--house-blue-tint); color: var(--house-blue-deep); }
 .house-device-top { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
 .house-device-top strong { font-size: .88rem; overflow-wrap: anywhere; }
-.house-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-4); flex: none; }
-.house-device.online .house-dot { background: #2f9e5b; }
-.house-device-sub { display: block; margin-top: 3px; color: var(--faint); font-size: .74rem; overflow-wrap: anywhere; }
+.house-device-sub { display: block; margin-top: 2px; color: var(--ink-3); font-size: .74rem; overflow-wrap: anywhere; }
+.house-state { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-3); font-size: .74rem; white-space: nowrap; }
+.house-device.online .house-state { color: var(--ink-2); font-weight: 650; }
+.house-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--house-blue); }
 .house-tag {
-  padding: 3px 7px; border-radius: 999px; background: var(--surface-container);
-  color: var(--ink-2); font-size: .64rem; font-weight: 700;
+  padding: 3px 8px; border-radius: 999px; background: var(--surface-container);
+  color: var(--ink-2); font-size: .66rem; font-weight: 700;
 }
-.house-tag.person { background: var(--ok-tint); color: var(--ok-ink); }
+.house-tag.person { background: var(--house-blue-tint); color: var(--house-blue-deep); }
 .house-edit {
-  padding: 6px 11px; border: 1px solid var(--line); border-radius: 999px; background: transparent;
+  padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; background: transparent;
   color: var(--ink-2); font: inherit; font-size: .74rem; cursor: pointer;
 }
+.house-edit:hover, .house-edit[aria-expanded="true"] { border-color: var(--house-blue); color: var(--ink); }
 .house-editor {
-  grid-column: 1 / -1; display: grid; gap: 10px; margin-top: 4px; padding: 14px;
-  border-radius: var(--radius); background: var(--surface-soft);
+  grid-column: 1 / -1; display: grid; gap: 12px; margin: 4px 0 6px; padding: 14px;
+  border-radius: var(--radius); background: var(--house-blue-soft);
 }
+.house-editor .btn-primary { background: var(--house-blue); color: #fff; box-shadow: none; }
+.house-facts { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; margin: 0; font-size: .76rem; }
+.house-facts dt { color: var(--ink-3); }
+.house-facts dd { margin: 0; color: var(--ink); overflow-wrap: anywhere; }
+.house-facts dd.mono { font-family: var(--font-mono); font-size: .72rem; }
 .house-editor label { display: grid; gap: 5px; font-size: .76rem; font-weight: 650; color: var(--ink-2); }
 .house-editor input {
   padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface);
@@ -440,32 +493,37 @@ body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
 }
 .house-editor .microcopy { margin: 0; }
 .house-editor-actions { display: flex; gap: 8px; }
-.house-editor-actions .primary-button { width: auto; min-height: 42px; margin: 0; padding: 0 18px; }
-.house-people li {
-  display: grid; grid-template-columns: 38px 1fr auto; align-items: center; gap: 10px; padding: 9px 0;
+
+.house-fold { border-top: 1px solid var(--line); }
+.house-fold > summary {
+  display: grid; grid-template-columns: 38px minmax(0, 1fr) auto; align-items: center; gap: 12px;
+  padding: 10px 0; cursor: pointer; list-style: none;
 }
-.house-avatar {
-  width: 38px; height: 38px; display: grid; place-items: center; border-radius: 50%;
-  background: var(--surface-container); font-weight: 750;
+.house-fold > summary::-webkit-details-marker { display: none; }
+.house-fold > summary::after {
+  content: ""; width: 8px; height: 8px; margin-inline-end: 6px;
+  border-inline-end: 2px solid var(--ink-3); border-bottom: 2px solid var(--ink-3); transform: rotate(45deg);
 }
-.house-people li.is-home .house-avatar { background: var(--ok-tint); color: var(--ok-ink); }
-.house-people strong { display: block; font-size: .9rem; }
-.house-people small { color: var(--faint); font-size: .74rem; }
-.house-pill {
-  padding: 5px 10px; border-radius: 999px; background: var(--surface-container);
-  font-size: .68rem; font-weight: 750; color: var(--ink-2);
-}
-.house-people li.is-home .house-pill { background: #dff3e6; color: #1d6b3d; }
-.house-card .primary-button.house-presence-on { width: auto; min-height: 42px; margin-top: 12px; padding: 0 20px; }
+.house-fold[open] > summary::after { transform: rotate(-135deg); }
+.house-fold > summary:focus-visible { outline: 2px solid var(--house-blue); outline-offset: 2px; border-radius: 10px; }
+.house-fold .house-devices { padding-inline-start: 50px; }
+.house-plain { padding: 0 2px; }
 .house-event {
-  display: flex; justify-content: space-between; gap: 12px; padding: 9px 0;
-  border-top: 1px solid var(--line); font-size: .82rem;
+  display: grid; grid-template-columns: 10px 1fr auto; align-items: center; gap: 10px;
+  padding: 9px 0; border-top: 1px solid var(--line); font-size: .82rem;
 }
 .house-event:first-child { border-top: 0; }
-.house-event time { flex: none; color: var(--faint); font-size: .72rem; }
-.house-event.new_device span::before { content: "＋ "; color: var(--accent); font-weight: 700; }
-.house-event.arrived span::before { content: "→ "; color: #2f9e5b; font-weight: 700; }
-.house-event.left span::before { content: "← "; color: var(--ink-3); font-weight: 700; }
+.house-event-mark { width: 8px; height: 8px; border-radius: 50%; background: var(--ink-4); }
+.house-event.new_device .house-event-mark { background: transparent; box-shadow: inset 0 0 0 2px var(--house-blue); }
+.house-event.arrived .house-event-mark { background: var(--house-blue); }
+.house-event time { color: var(--ink-3); font-size: .72rem; white-space: nowrap; }
+
+@media (max-width: 520px) {
+  .house-device { grid-template-columns: 38px minmax(0, 1fr) auto; }
+  .house-state { grid-column: 2; grid-row: 2; margin-top: -4px; }
+  .house-edit { grid-column: 3; grid-row: 1 / span 2; }
+  .house-invite { flex-direction: column; align-items: flex-start; }
+}
 
 /* The Contacts app -- a real app, so it is a button like "Create your own". */
 .mini-app.crm {

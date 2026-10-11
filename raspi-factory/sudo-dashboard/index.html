@@ -667,7 +667,7 @@
           </div>
           <div class="crm-site-title">
             <h1 id="house-title" data-i18n="house.title">Your home</h1>
-            <p data-i18n="house.lede">Everything on your Wi-Fi, found by listening on your network. It all stays on this device.</p>
+            <p class="house-summary" id="house-summary" data-i18n="house.lede">Everything on your Wi-Fi, found by listening on your network. It all stays on this device.</p>
           </div>
         </header>
         <div class="crm-site-body">
@@ -676,7 +676,7 @@
             <button class="btn-secondary" type="button" id="house-scan" data-i18n="house.scan">Scan now</button>
           </div>
           <div class="house-wrap">
-            <section class="house-card" aria-labelledby="house-people-title">
+            <section class="house-people-block" aria-labelledby="house-people-title">
               <h2 id="house-people-title" data-i18n="house.whosHome">Who's home</h2>
               <div id="house-people"></div>
             </section>
@@ -686,13 +686,13 @@
                 <span class="house-count" id="house-count"></span>
               </div>
               <input class="house-search" id="house-search" type="search" autocomplete="off" data-i18n-attr="placeholder:house.search,aria-label:house.search" placeholder="Search devices">
-              <ul class="house-devices" id="house-devices"></ul>
+              <div class="house-groups" id="house-devices"></div>
             </section>
-            <section class="house-card" aria-labelledby="house-activity-title">
+            <section class="house-plain" aria-labelledby="house-activity-title">
               <h2 id="house-activity-title" data-i18n="house.activity">Recent activity</h2>
               <ul class="house-events" id="house-events"></ul>
             </section>
-            <section class="house-card" aria-labelledby="house-settings-title">
+            <section class="house-plain" aria-labelledby="house-settings-title">
               <h2 id="house-settings-title" data-i18n="house.settings">Settings</h2>
               <div class="access-row">
                 <div><strong data-i18n="house.presence">Track who's home</strong><small data-i18n="house.presenceHint">Uses the phones you mark below. Only you see it, and nothing leaves this device.</small></div>
@@ -3355,14 +3355,56 @@
     // The Home app (/house.html): every device on the Wi-Fi and who is home.
     // The scanning happens on the device (home_scan.py); this page reads it.
     const house = { data: null, editing: null, search: '', timer: null };
-    const HOUSE_KIND_ICON = { phone: '▯', tablet: '▭', computer: '⌨', tv: '▣', speaker: '◉', plug: '⏻',
-      printer: '⎙', console: '◆', camera: '◎', pi: '◈', router: '⌂', other: '·' };
+
+    // Line icons on the dashboard's 24px grid (DESIGN.md: no glyph stand-ins).
+    const HOUSE_ICONS = {
+      phone: 'M8 2h8a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z M11 18h2',
+      tablet: 'M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z M11 17h2',
+      computer: 'M5 5h14v10H5Z M2 19h20',
+      tv: 'M3 6h18v11H3Z M8 21h8 M12 17v4',
+      speaker: 'M7 2h10a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z M12 17a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z M12 6.5h.01',
+      plug: 'M9 2v5 M15 2v5 M6 7h12v4a6 6 0 0 1-12 0Z M12 17v5',
+      printer: 'M6 9V3h12v6 M6 18H4v-7h16v7h-2 M7 14h10v7H7Z',
+      console: 'M7 8h10a5 5 0 0 1 0 10h-1l-2-2h-4l-2 2H7A5 5 0 0 1 7 8Z M8 11v4 M6 13h4 M16 12h.01 M18 14h.01',
+      camera: 'M3 8h4l2-3h6l2 3h4v12H3Z M12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z',
+      pi: 'M6 6h12v12H6Z M10 10h4v4h-4Z M9 2v4 M15 2v4 M9 18v4 M15 18v4 M2 9h4 M2 15h4 M18 9h4 M18 15h4',
+      router: 'M3 14h18v6H3Z M7 17h.01 M11 17h.01 M8.5 10.5a5 5 0 0 1 7 0 M5.5 7.5a9 9 0 0 1 13 0',
+      other: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z M9.6 9.3a2.5 2.5 0 1 1 3.4 2.6c-.6.3-1 .8-1 1.5v.4 M12 17h.01',
+    };
+    // Groups the way people think about their home, not by protocol.
+    const HOUSE_GROUPS = [
+      ['people', ['phone', 'tablet']],
+      ['screens', ['tv', 'speaker', 'console']],
+      ['smart', ['plug', 'camera']],
+      ['computers', ['computer', 'printer']],
+      ['network', ['router', 'pi']],
+      ['other', ['other']],
+    ];
 
     function hEl(tag, cls, text) {
       const e = document.createElement(tag);
       if (cls) e.className = cls;
       if (text !== undefined && text !== null) e.textContent = text;
       return e;
+    }
+
+    function houseIcon(kind) {
+      const ns = 'http://www.w3.org/2000/svg';
+      const svg = document.createElementNS(ns, 'svg');
+      svg.setAttribute('viewBox', '0 0 24 24');
+      svg.setAttribute('aria-hidden', 'true');
+      const p = document.createElementNS(ns, 'path');
+      p.setAttribute('d', HOUSE_ICONS[kind] || HOUSE_ICONS.other);
+      svg.append(p);
+      return svg;
+    }
+
+    function houseNames(names) {
+      try {
+        return new Intl.ListFormat(document.documentElement.lang || 'en', { type: 'conjunction' }).format(names);
+      } catch (_) {
+        return names.join(', ');
+      }
     }
 
     async function openHouse() {
@@ -3391,25 +3433,46 @@
         input.checked = !!d.settings[input.dataset.houseSetting];
         input.disabled = input.dataset.houseSetting === 'alert_presence' && !d.settings.presence;
       });
+      const scanBtn = $('house-scan');
+      scanBtn.disabled = !!d.scanning;
+      scanBtn.textContent = d.scanning ? t('house.scanning') : t('house.scan');
       const status = $('house-status');
       if (d.error) status.textContent = d.error;
       else if (d.scanning && !d.devices.length) status.textContent = t('house.scanningFirst');
-      else if (d.scanning) status.textContent = t('house.scanning');
       else status.textContent = d.last_scan ? t('house.lastScan', { when: fmtWhen(d.last_scan) }) : '';
+      renderHouseSummary(d);
       renderHousePeople(d);
       renderHouseDevices(d);
       renderHouseEvents(d);
+    }
+
+    // The header's one live line: who is home, and how much is online.
+    function renderHouseSummary(d) {
+      const el = $('house-summary');
+      if (!d.devices.length) return;
+      const online = d.devices.filter(x => x.online).length;
+      const devices = online === 1 ? t('house.sumDevice') : t('house.sumDevices', { n: online });
+      let people = '';
+      if (d.settings.presence && d.people.length) {
+        const home = d.people.filter(p => p.home).map(p => p.name);
+        people = !home.length ? t('house.sumNobody')
+          : t(home.length === 1 ? 'house.sumOne' : 'house.sumMany', { names: houseNames(home) });
+      }
+      el.removeAttribute('data-i18n');
+      el.textContent = people ? people + ' ' + devices : t('house.sumWifi', { n: online });
     }
 
     function renderHousePeople(d) {
       const box = $('house-people');
       box.replaceChildren();
       if (!d.settings.presence) {
-        box.append(hEl('p', 'microcopy', t('house.presenceOff')));
-        const on = hEl('button', 'primary-button house-presence-on', t('house.turnOn'));
+        const row = hEl('div', 'house-invite');
+        row.append(hEl('p', '', t('house.presenceOff')));
+        const on = hEl('button', 'btn-secondary', t('house.turnOn'));
         on.type = 'button';
         on.addEventListener('click', () => saveHouseSetting('presence', true));
-        box.append(on);
+        row.append(on);
+        box.append(row);
         return;
       }
       if (!d.people.length) {
@@ -3422,60 +3485,104 @@
         li.append(hEl('span', 'house-avatar', (p.name || '?').slice(0, 1).toUpperCase()));
         const who = hEl('div');
         who.append(hEl('strong', '', p.name));
-        const since = p.home ? (p.since ? t('house.homeSince', { when: fmtWhen(p.since) }) : t('house.home'))
+        const line = p.home ? (p.since ? t('house.homeSince', { when: fmtWhen(p.since) }) : t('house.home'))
           : (p.last_seen ? t('house.awaySince', { when: fmtWhen(p.last_seen) }) : t('house.away'));
-        who.append(hEl('small', '', since));
-        li.append(who, hEl('span', 'house-pill', p.home ? t('house.home') : t('house.away')));
+        who.append(hEl('small', '', line));
+        li.append(who);
         list.append(li);
       });
       box.append(list);
     }
 
     function renderHouseDevices(d) {
-      const list = $('house-devices');
+      const box = $('house-devices');
       const q = house.search.trim().toLowerCase();
-      const shown = d.devices.filter(x => !q || [x.label, x.name, x.vendor, x.ip, x.person, t('house.kind.' + x.kind)]
+      const shown = d.devices.filter(x => !q || [x.label, x.name, x.vendor, x.ip, x.person, x.model, t('house.kind.' + x.kind)]
         .some(v => String(v || '').toLowerCase().includes(q)));
       const online = d.devices.filter(x => x.online).length;
       $('house-count').textContent = t('house.count', { online, total: d.devices.length });
-      list.replaceChildren();
+      box.replaceChildren();
       if (!shown.length) {
-        list.append(hEl('li', 'microcopy', d.devices.length ? t('house.noMatch') : t('house.noneYet')));
+        box.append(hEl('p', 'microcopy', d.devices.length ? t('house.noMatch') : t('house.noneYet')));
         return;
       }
       const people = [...new Set(d.devices.map(x => x.person).filter(Boolean))];
-      shown.forEach(x => {
-        const li = hEl('li', 'house-device' + (x.online ? ' online' : ''));
-        const icon = hEl('span', 'house-icon', HOUSE_KIND_ICON[x.kind] || '·');
-        icon.setAttribute('aria-hidden', 'true');
-        const body = hEl('div', 'house-device-body');
-        const top = hEl('div', 'house-device-top');
-        const unnamed = x.kind === 'phone' ? t('house.unnamedPhone') : t('house.unknown');
-        top.append(hEl('span', 'house-dot'), hEl('strong', '', x.label || unnamed));
-        if (x.role === 'self') top.append(hEl('span', 'house-tag', t('house.thisSudo')));
-        if (x.role === 'router') top.append(hEl('span', 'house-tag', t('house.router')));
-        if (x.person) top.append(hEl('span', 'house-tag person', t('house.whose', { name: x.person })));
-        const maker = x.vendor || (x.private_mac ? t('house.privateMac') : '');
-        const kindLabel = t('house.kind.' + x.kind);
-        const bits = [kindLabel, maker !== kindLabel && maker !== x.label ? maker : '', x.ip,
-          x.online ? t('house.onlineNow') : (x.last_seen ? t('house.seen', { when: fmtWhen(x.last_seen) }) : '')]
-          .filter(Boolean);
-        body.append(top, hEl('small', 'house-device-sub', bits.join(' · ')));
-        li.append(icon, body);
-        if (x.role !== 'self') {
-          const editBtn = hEl('button', 'house-edit', t('house.edit'));
-          editBtn.type = 'button';
-          editBtn.setAttribute('aria-expanded', house.editing === x.mac ? 'true' : 'false');
-          editBtn.addEventListener('click', () => { house.editing = house.editing === x.mac ? null : x.mac; renderHouse(); });
-          li.append(editBtn);
+      HOUSE_GROUPS.forEach(([group, kinds]) => {
+        const items = shown.filter(x => kinds.includes(x.kind));
+        if (!items.length) return;
+        const section = hEl('section', 'house-group');
+        section.append(hEl('h3', '', t('house.group.' + group)));
+        const list = hEl('ul', 'house-devices');
+        // Phones on private addresses with no name are many and alike; fold
+        // them into one row unless someone is looking for something.
+        const anon = items.filter(x => !x.label && !x.person && x.private_mac);
+        const fold = !q && anon.length > 2 && !anon.some(x => x.mac === house.editing);
+        (fold ? items.filter(x => !anon.includes(x)) : items).forEach(x => list.append(houseRow(x, people)));
+        section.append(list);
+        if (fold) {
+          const more = hEl('details', 'house-fold');
+          if (house.openFold) more.open = true;
+          more.addEventListener('toggle', () => { house.openFold = more.open; });
+          const sum = hEl('summary');
+          const icon = hEl('span', 'house-icon');
+          icon.append(houseIcon('phone'));
+          const text = hEl('div', 'house-device-body');
+          text.append(hEl('strong', '', t('house.unnamedPhones', { n: anon.length })),
+                      hEl('small', 'house-device-sub', t('house.unnamedPhonesHint')));
+          sum.append(icon, text);
+          const inner = hEl('ul', 'house-devices');
+          anon.forEach(x => inner.append(houseRow(x, people)));
+          more.append(sum, inner);
+          section.append(more);
         }
-        if (house.editing === x.mac) li.append(houseEditor(x, people));
-        list.append(li);
+        box.append(section);
       });
+    }
+
+    function houseRow(x, people) {
+      const li = hEl('li', 'house-device' + (x.online ? ' online' : ''));
+      const icon = hEl('span', 'house-icon');
+      icon.append(houseIcon(x.kind));
+      const body = hEl('div', 'house-device-body');
+      const top = hEl('div', 'house-device-top');
+      const unnamed = x.kind === 'phone' ? t('house.unnamedPhone') : t('house.unknown');
+      top.append(hEl('strong', '', x.label || unnamed));
+      if (x.role === 'self') top.append(hEl('span', 'house-tag', t('house.thisSudo')));
+      if (x.person) top.append(hEl('span', 'house-tag person', t('house.whose', { name: x.person })));
+      const maker = x.vendor || (x.private_mac ? t('house.privateMac') : '');
+      const second = maker && maker !== x.label ? maker : t('house.kind.' + x.kind);
+      body.append(top, hEl('small', 'house-device-sub', second));
+      const status = hEl('span', 'house-state');
+      if (x.online) {
+        status.append(hEl('span', 'house-dot'), document.createTextNode(t('house.online')));
+      } else {
+        status.textContent = x.last_seen ? fmtWhen(x.last_seen) : '';
+      }
+      li.append(icon, body, status);
+      if (x.role !== 'self') {
+        const editBtn = hEl('button', 'house-edit', t('house.edit'));
+        editBtn.type = 'button';
+        editBtn.setAttribute('aria-expanded', house.editing === x.mac ? 'true' : 'false');
+        editBtn.addEventListener('click', () => { house.editing = house.editing === x.mac ? null : x.mac; renderHouse(); });
+        li.append(editBtn);
+      } else {
+        li.append(hEl('span'));
+      }
+      if (house.editing === x.mac) li.append(houseEditor(x, people));
+      return li;
     }
 
     function houseEditor(x, people) {
       const form = hEl('form', 'house-editor');
+      const facts = hEl('dl', 'house-facts');
+      [[t('house.address'), x.ip, true], [t('house.maker'), x.vendor || (x.private_mac ? t('house.privateMac') : ''), false],
+       [t('house.model'), x.model, true], [t('house.kindLabel'), t('house.kind.' + x.kind), false]]
+        .filter(([, v]) => v).forEach(([k, v, mono]) => {
+          facts.append(hEl('dt', '', k));
+          const dd = hEl('dd', mono ? 'mono' : '', v);
+          if (mono) dd.dir = 'ltr';
+          facts.append(dd);
+        });
       const nameLabel = hEl('label', '', t('house.nameLabel'));
       const name = hEl('input');
       name.value = x.name || ''; name.placeholder = x.label || t('house.unknown'); name.maxLength = 48;
@@ -3490,10 +3597,10 @@
       personLabel.append(person, dl);
       const hint = hEl('p', 'microcopy', t('house.personHint'));
       const row = hEl('div', 'house-editor-actions');
-      const save = hEl('button', 'primary-button', t('common.save')); save.type = 'submit';
+      const save = hEl('button', 'btn-primary', t('common.save')); save.type = 'submit';
       const hide = hEl('button', 'btn-secondary', t('house.hide')); hide.type = 'button';
       row.append(save, hide);
-      form.append(nameLabel, personLabel, hint, row);
+      form.append(facts, nameLabel, personLabel, hint, row);
       form.addEventListener('submit', event => {
         event.preventDefault();
         saveHouseDevice(x.mac, { name: name.value.trim(), person: person.value.trim() });
@@ -3506,7 +3613,7 @@
     function renderHouseEvents(d) {
       const list = $('house-events');
       list.replaceChildren();
-      const events = (d.events || []).slice(0, 25);
+      const events = (d.events || []).slice(0, 20);
       if (!events.length) {
         list.append(hEl('li', 'microcopy', t('house.noActivity')));
         return;
@@ -3516,7 +3623,7 @@
           : e.kind === 'arrived' ? t('house.eventArrived', { name: e.person })
           : e.kind === 'left' ? t('house.eventLeft', { name: e.person }) : e.kind;
         const li = hEl('li', 'house-event ' + e.kind);
-        li.append(hEl('span', '', text), hEl('time', '', fmtWhen(e.at)));
+        li.append(hEl('span', 'house-event-mark'), hEl('span', 'house-event-text', text), hEl('time', '', fmtWhen(e.at)));
         list.append(li);
       });
     }
@@ -3529,6 +3636,7 @@
         }, 20000);
         house.editing = null;
         renderHouse();
+        showToast(t('common.saved'));
       } catch (error) {
         $('house-status').textContent = error.message;
       }
@@ -3548,12 +3656,16 @@
     }
 
     async function scanHouse() {
+      const btn = $('house-scan');
+      btn.disabled = true;
+      btn.textContent = t('house.scanning');
       try {
         await api('/api/home/scan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }, 15000);
-        $('house-status').textContent = t('house.scanning');
         setTimeout(() => loadHouse(true), 2500);
       } catch (error) {
         $('house-status').textContent = error.message;
+        btn.disabled = false;
+        btn.textContent = t('house.scan');
       }
     }
 

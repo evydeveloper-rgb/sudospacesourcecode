@@ -1,5 +1,7 @@
 # Design
 
+For how Sudo should look and read, see [../DESIGN.md](../DESIGN.md).
+
 `sudo-mobile-app.dc.html` — Claude Design mockup of the mobile dashboard,
 received 2026-08-06.
 
