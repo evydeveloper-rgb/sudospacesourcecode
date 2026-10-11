@@ -21,8 +21,20 @@ node_ok() {
 }
 if ! node_ok; then
   echo "Installing Node.js ${NODE_MAJOR}"
-  curl -fsSL "https://deb.nodesource.com/setup_${NODE_MAJOR}.x" | bash -
-  DEBIAN_FRONTEND=noninteractive apt-get install -y nodejs
+  # On the desktop image PackageKit refreshes apt for minutes after boot and
+  # holds its lock. NodeSource's setup then failed its own apt update, apt
+  # installed Debian's Node 20 instead, and the device stayed on PicoClaw for
+  # good. Pause PackageKit and retry rather than giving up on the first try.
+  for attempt in 1 2 3 4 5 6 7 8 9 10; do
+    systemctl stop packagekit.service 2>/dev/null || true
+    if curl -fsSL "https://deb.nodesource.com/setup_${NODE_MAJOR}.x" | bash - \
+       && DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=300 install -y nodejs \
+       && node_ok; then
+      break
+    fi
+    echo "Node.js ${NODE_MAJOR} not in place yet (attempt $attempt of 10) -- retrying in 30s"
+    sleep 30
+  done
 fi
 node_ok || { echo "Node.js >= 22.19 required, have $(node -v 2>/dev/null)"; exit 1; }
 

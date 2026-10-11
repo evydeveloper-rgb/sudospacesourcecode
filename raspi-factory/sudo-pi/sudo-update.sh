@@ -424,6 +424,15 @@ systemctl try-restart picoclaw-gateway.service >>"$LOG" 2>&1 || true
 # unless the owner already switched them off.
 [ -x "$BIN_DIR/sudo-autoupdate.sh" ] && "$BIN_DIR/sudo-autoupdate.sh" default >>"$LOG" 2>&1 || true
 
+# A first-boot OpenClaw install that failed (apt busy, network down) used to
+# leave the device on PicoClaw until someone rebooted it. The installer now
+# retries, so give it another go in the background, with the updated script.
+if [ ! -x /opt/openclaw/node_modules/.bin/openclaw ] && [ -f /var/lib/wifi-setup-configured ] \
+   && systemctl cat sudo-openclaw-install.service >/dev/null 2>&1; then
+  log "OpenClaw is not installed -- retrying the install in the background"
+  systemctl start --no-block sudo-openclaw-install.service >>"$LOG" 2>&1 || true
+fi
+
 rm -rf "$STAGE"
 write_status "done" "Updated to ${LATEST}." "$LATEST" "$LATEST"
 log "updated $CURRENT -> $LATEST"
