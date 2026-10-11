@@ -657,17 +657,31 @@
       <section class="view" id="view-house" aria-labelledby="house-title">
         <!-- Site mode, like Contacts: Home draws its own header and the
              dashboard's rail and tabs step aside. -->
-        <header class="crm-site-header house-site-header">
-          <div class="crm-band">
-            <a class="crm-brand" href="/" data-i18n-attr="aria-label:nav.sudoHome">sudo<span aria-hidden="true"></span><em data-i18n="apps.home">Home</em></a>
-            <nav class="crm-crumb">
-              <a href="/" data-i18n="crm.backToDashboard">Dashboard</a>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+        <!-- Light and open rather than a coloured box: a soft wash that fades
+             into the page, and one drawing whose windows light up for the
+             people at home (or, with that off, for how busy the Wi-Fi is). -->
+        <header class="house-hero">
+          <div class="house-hero-inner">
+            <nav class="house-topline">
+              <a class="house-brand" href="/" data-i18n-attr="aria-label:nav.sudoHome">sudo<span aria-hidden="true"></span><em data-i18n="apps.home">Home</em></a>
+              <a class="house-dash" href="/" data-i18n="crm.backToDashboard">Dashboard</a>
             </nav>
-          </div>
-          <div class="crm-site-title">
-            <h1 id="house-title" data-i18n="house.title">Your home</h1>
-            <p class="house-summary" id="house-summary" data-i18n="house.lede">Everything on your Wi-Fi, found by listening on your network. It all stays on this device.</p>
+            <div class="house-hero-main">
+              <div class="house-hero-text">
+                <h1 id="house-title" data-i18n="house.title">Your home</h1>
+                <p class="house-summary" id="house-summary" data-i18n="house.lede">Everything on your Wi-Fi, found by listening on your network. It all stays on this device.</p>
+              </div>
+              <svg class="house-art" viewBox="0 0 160 128" aria-hidden="true">
+                <path class="house-art-line" d="M14 62 80 12l66 50"/>
+                <path class="house-art-line" d="M28 52v66h104V52"/>
+                <path class="house-art-line" d="M70 118V88h20v30"/>
+                <path class="house-art-line" d="M116 30V16h-12v5"/>
+                <rect class="house-win" x="42" y="62" width="18" height="16" rx="3"/>
+                <rect class="house-win" x="100" y="62" width="18" height="16" rx="3"/>
+                <rect class="house-win" x="42" y="90" width="18" height="16" rx="3"/>
+                <rect class="house-win" x="100" y="90" width="18" height="16" rx="3"/>
+              </svg>
+            </div>
           </div>
         </header>
         <div class="crm-site-body">
@@ -3460,6 +3474,11 @@
       }
       el.removeAttribute('data-i18n');
       el.textContent = people ? people + ' ' + devices : t('house.sumWifi', { n: online });
+      // The drawing: a lit window per person at home, or with "Who's home"
+      // off, roughly one per five devices online (at most four).
+      const homeCount = d.settings.presence ? d.people.filter(p => p.home).length : 0;
+      const lit = d.settings.presence && d.people.length ? Math.min(4, homeCount) : Math.min(4, Math.ceil(online / 5));
+      document.querySelectorAll('.house-win').forEach((w, i) => w.classList.toggle('lit', i < lit));
     }
 
     function renderHousePeople(d) {
@@ -3515,7 +3534,7 @@
         const list = hEl('ul', 'house-devices');
         // Phones on private addresses with no name are many and alike; fold
         // them into one row unless someone is looking for something.
-        const anon = items.filter(x => !x.label && !x.person && x.private_mac);
+        const anon = items.filter(x => !x.label && !x.person && x.private_mac && !x.viewer);
         const fold = !q && anon.length > 2 && !anon.some(x => x.mac === house.editing);
         (fold ? items.filter(x => !anon.includes(x)) : items).forEach(x => list.append(houseRow(x, people)));
         section.append(list);
@@ -3548,6 +3567,7 @@
       const unnamed = x.kind === 'phone' ? t('house.unnamedPhone') : t('house.unknown');
       top.append(hEl('strong', '', x.label || unnamed));
       if (x.role === 'self') top.append(hEl('span', 'house-tag', t('house.thisSudo')));
+      if (x.viewer) top.append(hEl('span', 'house-tag viewer', t('house.youreUsing')));
       if (x.person) top.append(hEl('span', 'house-tag person', t('house.whose', { name: x.person })));
       const maker = x.vendor || (x.private_mac ? t('house.privateMac') : '');
       const second = maker && maker !== x.label ? maker : t('house.kind.' + x.kind);

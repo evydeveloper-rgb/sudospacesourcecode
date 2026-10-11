@@ -612,7 +612,9 @@ def _write_now(devices):
 
 # ── what the dashboard calls ─────────────────────────────────────────────────
 
-def snapshot():
+def snapshot(viewer=""):
+    """viewer: the address of the device asking, when it is on the home
+    network -- so the page can say "you're using this"."""
     devices = _read(DEVICES, {})
     now_ms = int(time.time() * 1000)
     s = settings()
@@ -629,6 +631,7 @@ def snapshot():
             "online": now_ms - d.get("last_seen", 0) < AWAY_AFTER * 1000,
             "last_seen": d.get("last_seen", 0), "first_seen": d.get("first_seen", 0),
             "model": d.get("model") or d.get("ssdp_model") or "",
+            "viewer": bool(viewer) and d.get("ip") == viewer,
         })
     out.sort(key=lambda d: (not d["online"], d["role"] != "self", d["kind"], (d["label"] or "~").lower()))
     people = []

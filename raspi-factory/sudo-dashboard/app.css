@@ -393,7 +393,8 @@ body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
   --house-blue-deep: #1d5a8f;
   --house-blue-tint: #dbeaf6;
   --house-blue-soft: #eef5fb;
-  --house-band: #4f97d4;
+  --house-wash: #dcebf8;
+  --house-ink: #10304d;
 }
 :root[data-theme="terminal"] #view-house,
 :root[data-theme="midnight"] #view-house {
@@ -401,15 +402,46 @@ body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
   --house-blue-deep: #b9dbf6;
   --house-blue-tint: #18324a;
   --house-blue-soft: #132536;
-  --house-band: #23527c;
+  --house-wash: #142a40;
+  --house-ink: #e6f1fb;
 }
-:root[data-theme="minimal"] #view-house { --house-band: #5a9fd6; }
 .mini-app.house-tile { display: block; width: 100%; text-align: start; font: inherit; color: inherit; cursor: pointer; }
 .mini-app.house-tile:hover { border-color: #3e89c9; }
-.crm-site-header.house-site-header { background: var(--house-band); }
-.house-site-header .house-summary {
-  margin-top: 10px; max-width: 34ch; color: #fff; opacity: 1;
-  font-size: clamp(1.05rem, 3.4vw, 1.3rem); font-weight: 650; line-height: 1.35; letter-spacing: -.01em;
+.house-hero {
+  background: linear-gradient(180deg, var(--house-wash) 0%, var(--house-wash) 55%, var(--background) 100%);
+  padding: max(18px, var(--safe-top)) 22px 18px;
+}
+.house-hero-inner { max-width: 880px; margin: 0 auto; }
+.house-topline { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.house-brand {
+  display: flex; align-items: baseline; gap: 7px; color: var(--house-ink); text-decoration: none;
+  font-family: var(--font-mono); font-size: 1.15rem; font-weight: 800; letter-spacing: -.06em;
+}
+.house-brand span { display: inline-block; width: .3em; height: .58em; background: var(--house-blue); margin-inline-start: .08em; }
+.house-brand em { font-family: var(--font-sans); font-style: normal; font-size: .82rem; font-weight: 650; letter-spacing: 0; color: var(--house-blue-deep); }
+.house-dash {
+  padding: 8px 15px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface);
+  color: var(--ink); text-decoration: none; font-size: .8rem; font-weight: 650;
+}
+.house-dash:hover { border-color: var(--house-blue); }
+.house-dash:focus-visible, .house-brand:focus-visible { outline: 2px solid var(--house-blue); outline-offset: 3px; border-radius: 999px; }
+.house-hero-main { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-top: 30px; }
+.house-hero-text h1 {
+  margin: 0; color: var(--house-ink);
+  font-size: clamp(2rem, 6.5vw, 3rem); line-height: 1.02; font-weight: 750; letter-spacing: -.045em;
+}
+.house-summary {
+  margin: 12px 0 0; max-width: 32ch; color: var(--house-blue-deep);
+  font-size: clamp(1.05rem, 3vw, 1.3rem); font-weight: 600; line-height: 1.35; letter-spacing: -.01em;
+}
+.house-art { flex: none; width: 150px; height: auto; margin-bottom: -6px; }
+.house-art-line { fill: none; stroke: var(--house-blue); stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round; }
+.house-win { fill: var(--surface); stroke: var(--house-blue); stroke-width: 2.4; transition: fill .5s ease; }
+.house-win.lit { fill: var(--house-blue); }
+@media (prefers-reduced-motion: reduce) { .house-win { transition: none; } }
+@media (max-width: 520px) {
+  .house-hero-main { margin-top: 22px; gap: 14px; }
+  .house-art { width: 92px; }
 }
 .house-actions { align-items: center; justify-content: space-between; }
 .house-actions .house-status { margin: 0; color: var(--ink-3); font-size: .76rem; }

@@ -2510,8 +2510,11 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             if home_scan is None:
                 self.send_json({"error": "The Home app is not available on this device"}, code=503)
                 return True
+            # The address of whoever is looking, only when they are on the home
+            # network: through the remote tunnel it is the tunnel's, not theirs.
+            viewer = "" if self.via_tunnel() else self.client_address[0]
             if path == "/api/home" and self.command == "GET":
-                self.send_json(home_scan.snapshot())
+                self.send_json(home_scan.snapshot(viewer))
                 return True
             try:
                 body = self.read_body_json() if self.command == "POST" else {}
@@ -2523,12 +2526,12 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                 if not home_scan.update_device(str(body.get("mac") or "").lower(), body):
                     self.send_json({"error": "No such device"}, code=404)
                     return True
-                self.send_json(home_scan.snapshot())
+                self.send_json(home_scan.snapshot(viewer))
                 return True
             if path == "/api/home/settings" and self.command == "POST":
                 home_scan.save_settings(body)
                 home_scan.scan_now()
-                self.send_json(home_scan.snapshot())
+                self.send_json(home_scan.snapshot(viewer))
                 return True
             if path == "/api/home/scan" and self.command == "POST":
                 home_scan.scan_now()
