@@ -19,7 +19,7 @@ cp "${BOOT}/wifi-setup/assets/fonts/"*.woff2 /opt/wifi-setup/assets/fonts/
 # ── Sudo Dashboard (served after WiFi is configured) ─────────────────────────
 mkdir -p /opt/sudo-dashboard
 cp "${BOOT}/sudo-dashboard/index.html" /opt/sudo-dashboard/
-cp "${BOOT}/sudo-dashboard/server.py" /opt/sudo-dashboard/
+cp "${BOOT}/sudo-dashboard/"*.py /opt/sudo-dashboard/
 cp "${BOOT}/sudo-dashboard/app.css" /opt/sudo-dashboard/
 cp "${BOOT}/sudo-dashboard/i18n.js" /opt/sudo-dashboard/
 cp "${BOOT}/sudo-dashboard/manifest.json" /opt/sudo-dashboard/
@@ -195,6 +195,8 @@ chmod +x /usr/local/bin/sudo-migrate-config.py
 cp "${BOOT}/sudo-pi/setup-ssh.sh" /usr/local/bin/sudo-setup-ssh.sh
 cp "${BOOT}/sudo-pi/install-local-model.sh" /usr/local/bin/sudo-install-local-model.sh
 cp "${BOOT}/sudo-pi/set-hostname.sh" /usr/local/bin/sudo-set-hostname.sh
+cp "${BOOT}/sudo-pi/notify-owner.sh" /usr/local/bin/sudo-notify-owner.sh
+chmod +x /usr/local/bin/sudo-notify-owner.sh
 cp "${BOOT}/sudo-pi/wifi.sh" /usr/local/bin/sudo-wifi.sh
 cp "${BOOT}/sudo-pi/install-whatsapp-bridge.sh" /usr/local/bin/sudo-install-whatsapp-bridge.sh
 cp "${BOOT}/sudo-pi/unlink-whatsapp.sh" /usr/local/bin/sudo-unlink-whatsapp.sh

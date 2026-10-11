@@ -459,6 +459,15 @@ else:
 # so the agent can tell the owner how to turn it on rather than guess.
 owner = sudo.get("user_name") or "your owner"
 tools_md += [
+    "## Home: devices on the Wi-Fi and who's home",
+    "",
+    f"- Sudo's Home app watches the devices on {owner}'s home network. For a question about it "
+    "(\"is Mom home?\", \"what's on my Wi-Fi?\", \"any new devices?\"), read "
+    "`/opt/sudo/home/now.json` with the `exec` tool (`cat /opt/sudo/home/now.json`).",
+    "- `people` lists who is home, only if the owner turned on \"Track who's home\" in "
+    "Apps -> Home. If it is empty, say so and point them there; never guess from devices.",
+    "- Who is home is private. Tell only the owner, never anyone else who messages you.",
+    "",
     "## Showing the owner what you built",
     "",
     f"- {owner} cannot see your work until you show it. When you build or change a page, app, "

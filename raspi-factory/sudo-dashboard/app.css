@@ -383,6 +383,90 @@ body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
   position: absolute; top: 18px; inset-inline-end: 18px; padding: 6px 9px; border-radius: 999px;
   background: var(--ok-tint); color: var(--ok-ink); font-size: .64rem; font-weight: 750; letter-spacing: .03em;
 }
+/* The Home app (/house.html) -- devices on the Wi-Fi and who is home. */
+.mini-app.house-tile { display: block; width: 100%; text-align: start; font: inherit; color: inherit; cursor: pointer; }
+.mini-app.house-tile:hover { border-color: var(--sky); }
+/* Same page shape as Contacts, in Home's own colour. */
+.crm-site-header.house-site-header { background: var(--sky); }
+.house-actions { align-items: center; justify-content: space-between; }
+.house-actions .house-status { margin: 0; }
+.house-wrap { display: grid; gap: 14px; }
+.house-card {
+  padding: 18px; border: 1px solid var(--line); border-radius: var(--radius-lg);
+  background: var(--surface); box-shadow: var(--shadow);
+}
+.house-card h2 { margin: 0 0 12px; font-size: 1rem; letter-spacing: -.02em; }
+.house-card-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.house-count { color: var(--faint); font: 600 .72rem/1 var(--font-mono); }
+.house-search {
+  width: 100%; margin: 0 0 8px; padding: 11px 13px; border: 1px solid var(--line);
+  border-radius: 12px; background: var(--surface-soft); font: inherit; color: var(--ink);
+}
+.house-status { min-height: 1em; margin: 0 0 6px; color: var(--faint); font-size: .74rem; }
+.house-devices, .house-events, .house-people { list-style: none; margin: 0; padding: 0; }
+.house-device {
+  display: grid; grid-template-columns: 36px 1fr auto; align-items: center; gap: 10px;
+  padding: 11px 0; border-top: 1px solid var(--line);
+}
+.house-device:first-child { border-top: 0; }
+.house-icon {
+  width: 36px; height: 36px; display: grid; place-items: center; border-radius: 11px;
+  background: var(--surface-soft); color: var(--ink-3); font-size: 1rem;
+}
+.house-device.online .house-icon { background: var(--sky-tint); color: var(--ink); }
+.house-device-body { min-width: 0; }
+.house-device-top { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.house-device-top strong { font-size: .88rem; overflow-wrap: anywhere; }
+.house-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-4); flex: none; }
+.house-device.online .house-dot { background: #2f9e5b; }
+.house-device-sub { display: block; margin-top: 3px; color: var(--faint); font-size: .74rem; overflow-wrap: anywhere; }
+.house-tag {
+  padding: 3px 7px; border-radius: 999px; background: var(--surface-container);
+  color: var(--ink-2); font-size: .64rem; font-weight: 700;
+}
+.house-tag.person { background: var(--ok-tint); color: var(--ok-ink); }
+.house-edit {
+  padding: 6px 11px; border: 1px solid var(--line); border-radius: 999px; background: transparent;
+  color: var(--ink-2); font: inherit; font-size: .74rem; cursor: pointer;
+}
+.house-editor {
+  grid-column: 1 / -1; display: grid; gap: 10px; margin-top: 4px; padding: 14px;
+  border-radius: var(--radius); background: var(--surface-soft);
+}
+.house-editor label { display: grid; gap: 5px; font-size: .76rem; font-weight: 650; color: var(--ink-2); }
+.house-editor input {
+  padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface);
+  font: inherit; color: var(--ink);
+}
+.house-editor .microcopy { margin: 0; }
+.house-editor-actions { display: flex; gap: 8px; }
+.house-editor-actions .primary-button { width: auto; min-height: 42px; margin: 0; padding: 0 18px; }
+.house-people li {
+  display: grid; grid-template-columns: 38px 1fr auto; align-items: center; gap: 10px; padding: 9px 0;
+}
+.house-avatar {
+  width: 38px; height: 38px; display: grid; place-items: center; border-radius: 50%;
+  background: var(--surface-container); font-weight: 750;
+}
+.house-people li.is-home .house-avatar { background: var(--ok-tint); color: var(--ok-ink); }
+.house-people strong { display: block; font-size: .9rem; }
+.house-people small { color: var(--faint); font-size: .74rem; }
+.house-pill {
+  padding: 5px 10px; border-radius: 999px; background: var(--surface-container);
+  font-size: .68rem; font-weight: 750; color: var(--ink-2);
+}
+.house-people li.is-home .house-pill { background: #dff3e6; color: #1d6b3d; }
+.house-card .primary-button.house-presence-on { width: auto; min-height: 42px; margin-top: 12px; padding: 0 20px; }
+.house-event {
+  display: flex; justify-content: space-between; gap: 12px; padding: 9px 0;
+  border-top: 1px solid var(--line); font-size: .82rem;
+}
+.house-event:first-child { border-top: 0; }
+.house-event time { flex: none; color: var(--faint); font-size: .72rem; }
+.house-event.new_device span::before { content: "＋ "; color: var(--accent); font-weight: 700; }
+.house-event.arrived span::before { content: "→ "; color: #2f9e5b; font-weight: 700; }
+.house-event.left span::before { content: "← "; color: var(--ink-3); font-weight: 700; }
+
 /* The Contacts app -- a real app, so it is a button like "Create your own". */
 .mini-app.crm {
   display: block; width: 100%; text-align: start; font: inherit; color: inherit; cursor: pointer;

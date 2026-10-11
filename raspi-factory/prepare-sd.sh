@@ -184,7 +184,7 @@ copy_factory_files() {
     cp "$WIFI_SETUP/assets/fonts/"*.woff2 "$boot/wifi-setup/assets/fonts/"
 
     cp "$SUDO_DASH/index.html" "$boot/sudo-dashboard/"
-    cp "$SUDO_DASH/server.py" "$boot/sudo-dashboard/"
+    cp "$SUDO_DASH/"*.py "$boot/sudo-dashboard/"
     cp "$SUDO_DASH/app.css" "$boot/sudo-dashboard/"
     cp "$SUDO_DASH/i18n.js" "$boot/sudo-dashboard/"
     cp "$SUDO_DASH/manifest.json" "$boot/sudo-dashboard/"

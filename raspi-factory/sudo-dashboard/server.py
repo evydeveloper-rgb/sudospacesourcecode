@@ -476,6 +476,25 @@ def gen_password(length=16):
 SSH_SETUP_SCRIPT = "/usr/local/bin/sudo-setup-ssh.sh"
 HOSTNAME_SCRIPT = "/usr/local/bin/sudo-set-hostname.sh"
 WIFI_SCRIPT = "/usr/local/bin/sudo-wifi.sh"
+NOTIFY_SCRIPT = "/usr/local/bin/sudo-notify-owner.sh"
+
+# The Home app: devices on the home network and who is home (home_scan.py,
+# beside this file). Optional, so a missing module never stops the dashboard.
+try:
+    import home_scan
+except Exception as exc:          # noqa: BLE001
+    home_scan = None
+    print(f"Home app unavailable: {exc}")
+
+
+def notify_owner(text):
+    """A short WhatsApp notice to the owner, sent outside this sandbox."""
+    if not os.path.isfile(NOTIFY_SCRIPT):
+        return
+    try:
+        run_privileged(f"sudo-notify-{int(time.time() * 1000)}", NOTIFY_SCRIPT, text, wait=False, timeout=20)
+    except Exception as exc:      # noqa: BLE001
+        print(f"notify failed: {exc}")
 # RFC 1123, lowercased. Also the shape of a usable mDNS name.
 HOSTNAME_RE = re.compile(r"^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$")
 SSH_PENDING_KEY = "/etc/sudo/ssh_key_pending"
@@ -2486,6 +2505,36 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             self.send_json({"backend": agent_backend(), **openclaw_whatsapp_state()})
             return True
 
+        # Home app.
+        if path.startswith("/api/home"):
+            if home_scan is None:
+                self.send_json({"error": "The Home app is not available on this device"}, code=503)
+                return True
+            if path == "/api/home" and self.command == "GET":
+                self.send_json(home_scan.snapshot())
+                return True
+            try:
+                body = self.read_body_json() if self.command == "POST" else {}
+            except (ValueError, json.JSONDecodeError):
+                body = {}
+            if not isinstance(body, dict):
+                body = {}
+            if path == "/api/home/device" and self.command == "POST":
+                if not home_scan.update_device(str(body.get("mac") or "").lower(), body):
+                    self.send_json({"error": "No such device"}, code=404)
+                    return True
+                self.send_json(home_scan.snapshot())
+                return True
+            if path == "/api/home/settings" and self.command == "POST":
+                home_scan.save_settings(body)
+                home_scan.scan_now()
+                self.send_json(home_scan.snapshot())
+                return True
+            if path == "/api/home/scan" and self.command == "POST":
+                home_scan.scan_now()
+                self.send_json({"ok": True})
+                return True
+
         if path == "/api/agent/crm" and self.command == "GET":
             self.send_json(crm_people())
             return True
@@ -3456,6 +3505,7 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             "/onboarding.html",
             "/login.html",
             "/contacts.html",
+            "/house.html",
         ):
             path = "/index.html"
 
@@ -3560,6 +3610,9 @@ if __name__ == "__main__":
         subprocess.run(["/usr/local/bin/sudo-device-secrets.sh"], check=False)
 
     finish_first_update()
+
+    if home_scan is not None:
+        home_scan.start(notify=notify_owner)
 
     os.chdir(ROOT)
 
