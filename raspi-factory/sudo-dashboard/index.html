@@ -56,6 +56,10 @@
             <span class="rail-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7H6a5 5 0 0 0 0 10h3M15 7h3a5 5 0 0 1 0 10h-3M8 12h8"/></svg></span>
             <span data-i18n="nav.connectors">Connectors</span>
           </button>
+          <button type="button" data-tab="hub">
+            <span class="rail-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></svg></span>
+            <span data-i18n="top.knowledgeHub">Knowledge hub</span>
+          </button>
         </nav>
       </div>
       <div class="rail-foot">
@@ -82,7 +86,7 @@
       </div>
       <div class="topbar-right">
         <div class="device-state" id="device-state-wrap"><i aria-hidden="true"></i><span id="device-state">online</span></div>
-        <button type="button" class="hub-button" id="hub-button" data-tab="setup" aria-label="Knowledge hub" title="Knowledge hub" hidden data-i18n-attr="aria-label:top.knowledgeHub,title:top.knowledgeHub">
+        <button type="button" class="hub-button" id="hub-button" data-tab="hub" aria-label="Knowledge hub" title="Knowledge hub" data-i18n-attr="aria-label:top.knowledgeHub,title:top.knowledgeHub">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></svg>
         </button>
       </div>
@@ -245,6 +249,125 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
           </button>
         </form>
+      </section>
+
+      <!-- The Knowledge hub: what sudo is, ideas, answers. Always reachable
+           (book icon, rail); the setup steps are one row inside it. -->
+      <section class="view" id="view-hub" aria-labelledby="hub-title">
+        <div class="view-heading">
+          <div>
+            <h1 id="hub-title" data-i18n="top.knowledgeHub">Knowledge hub</h1>
+            <p class="lede" data-i18n="hub.lede">How your sudo works, ideas for what to do with it, and answers to common questions.</p>
+          </div>
+        </div>
+        <div class="hub">
+          <button type="button" class="hub-setup" id="hub-setup">
+            <span class="hub-setup-ring" aria-hidden="true">
+              <svg viewBox="0 0 44 44"><circle class="ring-track" cx="22" cy="22" r="18"/><circle class="ring-fill" id="hub-setup-fill" cx="22" cy="22" r="18" pathLength="100" stroke-dasharray="0 100"/></svg>
+              <span id="hub-setup-num">0/3</span>
+            </span>
+            <span class="hub-setup-copy">
+              <strong data-i18n="hub.setupTitle">Setup steps</strong>
+              <small id="hub-setup-text"></small>
+            </span>
+            <svg class="hub-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+          </button>
+
+          <section class="hub-section" aria-labelledby="hub-what">
+            <h2 id="hub-what" data-i18n="hub.whatTitle">What sudo is</h2>
+            <div class="hub-facts">
+            <article class="hub-fact">
+              <span class="hub-fact-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg></span>
+              <h3 data-i18n="hub.localTitle"></h3>
+              <p data-i18n="hub.localBody"></p>
+            </article>
+            <article class="hub-fact">
+              <span class="hub-fact-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 18a4.5 4.5 0 0 1-.5-9A6 6 0 0 1 18 8.5a4.5 4.5 0 0 1-.5 9.5Z"/></svg></span>
+              <h3 data-i18n="hub.brainTitle"></h3>
+              <p data-i18n="hub.brainBody"></p>
+            </article>
+            <article class="hub-fact">
+              <span class="hub-fact-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M9 12h7M9 16h5"/></svg></span>
+              <h3 data-i18n="hub.learnsTitle"></h3>
+              <p data-i18n="hub.learnsBody"></p>
+            </article>
+            <article class="hub-fact">
+              <span class="hub-fact-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 20 16 8M14 4v3M19 9h-3M17.5 5.5 16 7"/></svg></span>
+              <h3 data-i18n="hub.yoursTitle"></h3>
+              <p data-i18n="hub.yoursBody"></p>
+            </article>
+            </div>
+          </section>
+
+          <section class="hub-section" aria-labelledby="hub-ideas">
+            <h2 id="hub-ideas" data-i18n="hub.ideasTitle">Ideas to try</h2>
+            <p class="hub-note" data-i18n="hub.ideasHint">Tap one to start it in chat. Change the words to make it yours.</p>
+            <div class="hub-ideas">
+            <div class="hub-ideas-group">
+              <h3 data-i18n="hub.ideas.everyday"></h3>
+              <div class="hub-chips">
+                <button class="prompt-chip" type="button" data-prompt="Every morning at 8, send me what is on my calendar today" data-prompt-key="hub.idea.morning" data-i18n="hub.idea.morning">Every morning at 8, send me what is on my calendar today</button>
+                <button class="prompt-chip" type="button" data-prompt="Every Sunday evening, send me a short summary of my week" data-prompt-key="hub.idea.week" data-i18n="hub.idea.week">Every Sunday evening, send me a short summary of my week</button>
+                <button class="prompt-chip" type="button" data-prompt="Help me plan meals for this week and make a shopping list" data-prompt-key="hub.idea.meals" data-i18n="hub.idea.meals">Help me plan meals for this week and make a shopping list</button>
+              </div>
+            </div>
+            <div class="hub-ideas-group">
+              <h3 data-i18n="hub.ideas.family"></h3>
+              <div class="hub-chips">
+                <button class="prompt-chip" type="button" data-prompt="Remind my sister on WhatsApp about Saturday" data-prompt-key="hub.idea.remind" data-i18n="hub.idea.remind">Remind my sister on WhatsApp about Saturday</button>
+                <button class="prompt-chip" type="button" data-prompt="Who is home right now?" data-prompt-key="hub.idea.whosHome" data-i18n="hub.idea.whosHome">Who is home right now?</button>
+                <button class="prompt-chip" type="button" data-prompt="How much time did the kids spend on YouTube this week?" data-prompt-key="hub.idea.kidsTime" data-i18n="hub.idea.kidsTime">How much time did the kids spend on YouTube this week?</button>
+              </div>
+            </div>
+            <div class="hub-ideas-group">
+              <h3 data-i18n="hub.ideas.build"></h3>
+              <div class="hub-chips">
+                <button class="prompt-chip" type="button" data-prompt="Build me an app to track my plants and when to water them" data-prompt-key="hub.idea.plants" data-i18n="hub.idea.plants">Build me an app to track my plants and when to water them</button>
+                <button class="prompt-chip" type="button" data-prompt="Make a simple website for my small business" data-prompt-key="hub.idea.site" data-i18n="hub.idea.site">Make a simple website for my small business</button>
+                <button class="prompt-chip" type="button" data-prompt="Change the Contacts app so it shows birthdays" data-prompt-key="hub.idea.changeApp" data-i18n="hub.idea.changeApp">Change the Contacts app so it shows birthdays</button>
+              </div>
+            </div>
+            <div class="hub-ideas-group">
+              <h3 data-i18n="hub.ideas.learn"></h3>
+              <div class="hub-chips">
+                <button class="prompt-chip" type="button" data-prompt="What can you do, and what can you not do?" data-prompt-key="hub.idea.canDo" data-i18n="hub.idea.canDo">What can you do, and what can you not do?</button>
+                <button class="prompt-chip" type="button" data-prompt="What do you know about me so far?" data-prompt-key="hub.idea.knowMe" data-i18n="hub.idea.knowMe">What do you know about me so far?</button>
+                <button class="prompt-chip" type="button" data-prompt="Teach me one new thing every day on WhatsApp" data-prompt-key="hub.idea.daily" data-i18n="hub.idea.daily">Teach me one new thing every day on WhatsApp</button>
+              </div>
+            </div>
+            </div>
+          </section>
+
+          <section class="hub-section" aria-labelledby="hub-faq">
+            <h2 id="hub-faq" data-i18n="hub.faqTitle">Good to know</h2>
+            <div class="hub-faqs">
+            <details class="hub-faq">
+              <summary data-i18n="hub.faq.dataQ"></summary>
+              <p data-i18n="hub.faq.dataA"></p>
+            </details>
+            <details class="hub-faq">
+              <summary data-i18n="hub.faq.awayQ"></summary>
+              <p data-i18n="hub.faq.awayA"></p>
+            </details>
+            <details class="hub-faq">
+              <summary data-i18n="hub.faq.updatesQ"></summary>
+              <p data-i18n="hub.faq.updatesA"></p>
+            </details>
+            <details class="hub-faq">
+              <summary data-i18n="hub.faq.costQ"></summary>
+              <p data-i18n="hub.faq.costA"></p>
+            </details>
+            <details class="hub-faq">
+              <summary data-i18n="hub.faq.safeQ"></summary>
+              <p data-i18n="hub.faq.safeA"></p>
+            </details>
+            <details class="hub-faq">
+              <summary data-i18n="hub.faq.changeQ"></summary>
+              <p data-i18n="hub.faq.changeA"></p>
+            </details>
+            </div>
+          </section>
+        </div>
       </section>
 
       <section class="view" id="view-setup" aria-labelledby="setup-title">
@@ -626,27 +749,27 @@
           </div>
         </div>
         <div class="app-grid">
-          <button type="button" class="mini-app crm" id="crm-open">
+          <button type="button" class="mini-app crm" id="crm-open" data-app="contacts">
             <div class="mini-icon">◎</div><span class="ready-tag" data-i18n="apps.ready">ready</span>
             <h2 data-i18n="apps.crm">Contacts</h2><p data-i18n="apps.whoYouTalkToOn">Who you talk to on WhatsApp — and who your agent may message.</p>
           </button>
-          <article class="mini-app mint">
+          <article class="mini-app mint" data-app="finance">
             <div class="mini-icon">↗</div><span class="soon" data-i18n="apps.comingSoon">coming soon</span>
             <h2 data-i18n="apps.financialTracker">Financial tracker</h2><p data-i18n="apps.incomeSpendingAndWhat">Income, spending, and what’s left at a glance.</p>
           </article>
-          <article class="mini-app pink">
+          <article class="mini-app pink" data-app="health">
             <div class="mini-icon">♡</div><span class="soon" data-i18n="apps.comingSoon">coming soon</span>
             <h2 data-i18n="apps.healthTracker">Health tracker</h2><p data-i18n="apps.sleepMovementAndHow">Sleep, movement, and how you’re really feeling.</p>
           </article>
-          <article class="mini-app yellow">
+          <article class="mini-app yellow" data-app="journal">
             <div class="mini-icon">≡</div><span class="soon" data-i18n="apps.comingSoon">coming soon</span>
             <h2 data-i18n="apps.journal">Journal</h2><p data-i18n="apps.aQuietPlaceTo">A quiet place to think out loud with sudo.</p>
           </article>
-          <button type="button" class="mini-app lilac house-tile" id="house-open">
+          <button type="button" class="mini-app lilac house-tile" id="house-open" data-app="home">
             <div class="mini-icon">⌂</div><span class="ready-tag" data-i18n="apps.ready">ready</span>
             <h2 data-i18n="apps.home">Home</h2><p data-i18n="house.tile">Every device on your Wi-Fi, and who's home.</p>
           </button>
-          <button type="button" class="mini-app st-tile" id="st-open">
+          <button type="button" class="mini-app st-tile" id="st-open" data-app="screentime">
             <div class="mini-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z M12 7v5l3 2"/></svg></div><span class="ready-tag" data-i18n="apps.ready">ready</span>
             <h2 data-i18n="st.app">Screen time</h2><p data-i18n="st.tile">How long each device spends on which apps, and controls for kids.</p>
           </button>
@@ -655,6 +778,14 @@
             <h2 data-i18n="apps.createYourOwn">Create your own</h2><p data-i18n="apps.describeWhatYouWant">Describe what you want and sudo builds it with you.</p>
           </button>
         </div>
+
+        <section class="apps-archive" id="apps-archive" hidden>
+          <details>
+            <summary><span data-i18n="apps.archiveTitle">Archive</span> <em id="apps-archive-count"></em></summary>
+            <p class="microcopy" data-i18n="apps.archiveHint">Archived apps are only tucked away: their data stays, and anything they run, like kids' controls, keeps running. Bring one back any time.</p>
+            <div class="apps-archive-list" id="apps-archive-list"></div>
+          </details>
+        </section>
 
       </section>
 
@@ -1939,6 +2070,7 @@
       if (tab === 'connectors') path = '/connectors.html';
       else if (tab === 'channels') path = '/channels.html';
       else if (tab === 'setup') path = '/setup.html';
+      else if (tab === 'hub') path = '/hub.html';
       else if (tab === 'contacts') path = '/contacts.html';
       else if (tab === 'house') path = '/house.html';
       else if (tab === 'screentime') path = '/screentime.html';
@@ -5542,6 +5674,7 @@
 
     function setupProgress() {
       const s = state.status || {};
+      renderAppArchive();
       const accounts = (state.waInfo && state.waInfo.accounts) || {};
       return {
         cloud: (s.answering_with && s.answering_with.where === 'cloud')
@@ -5572,10 +5705,13 @@
       const next = SETUP_STEPS.find(step => !done[step.key]);
       $('setup-next').textContent = next ? t('setup.next', { step: t(next.next) }) : t('setup.allThree');
       $('setup-alldone').hidden = !allDone;
-      // Done with setup: the guide stays reachable as the Knowledge hub
-      // behind the book icon in the top bar.
-      $('hub-button').hidden = !(s.profile_done && state.waChecked && allDone);
-      $('setup-title').textContent = allDone ? t('top.knowledgeHub') : t('nav.finishSetup');
+      // The Knowledge hub is always there; its setup row mirrors this page.
+      if ($('hub-setup-num')) {
+        $('hub-setup-num').textContent = `${count}/${SETUP_STEPS.length}`;
+        $('hub-setup-fill').setAttribute('stroke-dasharray', `${(count / SETUP_STEPS.length) * 100} 100`);
+        $('hub-setup-text').textContent = allDone ? t('hub.setupDone') : t('setup.next', { step: t(next.next) });
+      }
+      $('setup-title').textContent = allDone ? t('hub.setupTitle') : t('nav.finishSetup');
       $('setup-lede').textContent = allDone ? t('setup.ledeHub') : t('setup.lede');
       SETUP_STEPS.forEach((step, i) => {
         const isDone = done[step.key];
@@ -5610,6 +5746,80 @@
     }
 
     // Sample prompts are drafted, never sent: the person reads and sends.
+    // Apps can be archived: the tile leaves the grid for the Archive list
+    // below it, and comes back with Restore. Saved on the device, so every
+    // phone sees the same apps. Archiving only hides the tile.
+    const ARCHIVE_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="5" rx="1.5"/><path d="M5 9v10h14V9M10 13h4"/></svg>';
+
+    function initAppArchive() {
+      document.querySelectorAll('.app-grid > .mini-app[data-app]').forEach(tile => {
+        const cell = hEl('div', 'app-cell');
+        cell.dataset.app = tile.dataset.app;
+        tile.replaceWith(cell);
+        cell.append(tile);
+        const btn = hEl('button', 'app-archive-btn');
+        btn.type = 'button';
+        btn.innerHTML = ARCHIVE_ICON;
+        btn.setAttribute('data-i18n-attr', 'aria-label:apps.archive,title:apps.archive');
+        btn.setAttribute('aria-label', t('apps.archive'));
+        btn.title = t('apps.archive');
+        btn.addEventListener('click', () => setAppArchived(tile.dataset.app, true));
+        cell.append(btn);
+      });
+    }
+
+    function archivedApps() {
+      return (state.appsArchived || (state.status && state.status.apps_archived) || []).slice();
+    }
+
+    function renderAppArchive() {
+      const archived = archivedApps();
+      const list = $('apps-archive-list');
+      if (!list) return;
+      list.replaceChildren();
+      document.querySelectorAll('.app-grid > .app-cell').forEach(cell => {
+        const off = archived.includes(cell.dataset.app);
+        cell.hidden = off;
+        if (!off) return;
+        const tile = cell.querySelector('.mini-app');
+        const row = hEl('div', 'apps-archive-row');
+        const icon = tile.querySelector('.mini-icon').cloneNode(true);
+        const name = hEl('strong', '', tile.querySelector('h2').textContent);
+        const restore = hEl('button', 'soft-button', t('apps.restore'));
+        restore.type = 'button';
+        restore.addEventListener('click', () => setAppArchived(cell.dataset.app, false));
+        row.append(icon, name, restore);
+        list.append(row);
+      });
+      $('apps-archive').hidden = !archived.length;
+      $('apps-archive-count').textContent = archived.length ? String(archived.length) : '';
+    }
+
+    async function setAppArchived(id, archived) {
+      const before = archivedApps();
+      const next = archived ? [...new Set([...before, id])] : before.filter(x => x !== id);
+      state.appsArchived = next;
+      renderAppArchive();
+      const tile = document.querySelector(`.app-cell[data-app="${id}"] h2`);
+      const name = tile ? tile.textContent : id;
+      if (archived) {
+        const d = document.querySelector('#apps-archive details');
+        if (d) d.open = false;
+      }
+      try {
+        const data = await api('/api/apps/archive', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ app: id, archived }),
+        });
+        state.appsArchived = data.apps_archived || next;
+        showToast(t(archived ? 'apps.archivedToast' : 'apps.restoredToast', { name }));
+      } catch (error) {
+        state.appsArchived = before;
+        showToast(t('apps.archiveFailed'));
+      }
+      renderAppArchive();
+    }
+
     function draftInChat(text) {
       setTab('chat');
       const input = $('chat-input');
@@ -6071,6 +6281,7 @@
       if (state.updateInfo) renderUpdate(state.updateInfo);
       // The apps draw their text from data, so they redraw in the new language.
       if (state.tab === 'contacts' && crm.data) renderCrm();
+      renderAppArchive();
       if (state.tab === 'house' && house.data) renderHouse();
       if (state.tab === 'screentime') renderScreenTime();
       if (BILLING_ENABLED && state.billing) renderBilling(state.billing);
@@ -6212,7 +6423,9 @@
       else if (path.includes('channels')) setTab('channels');
       else if (path.includes('contacts')) openCrm();
       else if (path.includes('house')) openHouse();
-      else if (path.includes('screentime')) openScreenTime();      else if (path === '/' || path.includes('dashboard')) setTab('apps');
+      else if (path.includes('screentime')) openScreenTime();
+      else if (path.includes('hub')) setTab('hub');
+      else if (path === '/' || path.includes('dashboard')) setTab('apps');
       else setTab('chat');
 
       let status;
@@ -6262,6 +6475,8 @@
     });
     $('composer-add').addEventListener('click', startFreshChat);
     $('create-app').addEventListener('click', () => draftInChat(t('apps.buildPrompt')));
+    initAppArchive();
+    $('hub-setup').addEventListener('click', () => setTab('setup'));
     initSetupGuide();
     $('composer-model').addEventListener('click', () => {
       setTab('settings');

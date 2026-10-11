@@ -73,6 +73,8 @@ ALLOWED_THEMES = {"default", "minimal", "terminal", "midnight"}
 # from its own language. agent_language is what the agent replies in;
 # "auto" (or unset) means match the language the person writes in.
 UI_LANGUAGES = {"en", "es", "zh", "ar"}
+# Tiles on the Apps page that can be moved to the archive.
+APP_IDS = ("contacts", "finance", "health", "journal", "home", "screentime")
 AGENT_LANGUAGES = {"auto", "en", "es", "zh", "ar"}
 DEFAULT_THEME = "default"
 
@@ -979,6 +981,7 @@ def setup_status(include_sensitive=False):
         "whatsapp_connected": whatsapp_state()["state"] == "connected",
         "prefer_local": bool(cfg.get("prefer_local")),
         "ui_language": cfg.get("ui_language") if cfg.get("ui_language") in UI_LANGUAGES else None,
+        "apps_archived": [a for a in cfg.get("apps_archived") or [] if a in APP_IDS],
         "agent_language": (
             cfg.get("agent_language") if cfg.get("agent_language") in AGENT_LANGUAGES else "auto"
         ),
@@ -3092,6 +3095,26 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                             "content": data.get("content", "")})
             return True
 
+        # Move an app to the Apps page's archive, or bring it back.
+        if path == "/api/apps/archive" and self.command == "POST":
+            try:
+                body = self.read_body_json()
+            except (ValueError, json.JSONDecodeError):
+                self.send_json({"error": "Invalid JSON"}, code=400)
+                return True
+            app = body.get("app")
+            if app not in APP_IDS:
+                self.send_json({"error": "Unknown app"}, code=400)
+                return True
+            cfg = read_json_file(CONFIG)
+            archived = [a for a in cfg.get("apps_archived") or [] if a in APP_IDS and a != app]
+            if body.get("archived"):
+                archived.append(app)
+            cfg["apps_archived"] = archived
+            write_json_file(CONFIG, cfg)
+            self.send_json({"ok": True, "apps_archived": archived})
+            return True
+
         # Dashboard language and the agent's reply language. One handler, two
         # paths, either field: they are saved independently, and only a change
         # to the agent's language needs the agent's config rewritten.
@@ -3582,6 +3605,7 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             "/contacts.html",
             "/house.html",
             "/screentime.html",
+            "/hub.html",
         ):
             path = "/index.html"
 

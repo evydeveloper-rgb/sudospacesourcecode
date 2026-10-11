@@ -95,7 +95,7 @@ states. Pick colours and meanings that fit the subject.
 
 | App | Palette | Meaning |
 | --- | --- | --- |
-| Contacts | coral band | (set by Contacts) |
+| Contacts | warm rose | rose = can reply / waiting on you |
 | Home | light blue | blue = online / home, grey = away / offline |
 | Next apps | your call | choose for the subject; ask if unsure |
 
