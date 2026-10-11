@@ -778,33 +778,33 @@
       <section class="view" id="view-contacts" aria-labelledby="contacts-title">
         <!-- Site mode: the Contacts app draws its own header, the way the apps
              in the sites directory do. Hidden while inside the dashboard. -->
-        <header class="crm-site-header" id="crm-site-header">
-          <div class="crm-band">
-            <a class="crm-brand" href="/" data-i18n-attr="aria-label:nav.sudoHome">sudo<span aria-hidden="true"></span><em data-i18n="apps.crm">Contacts</em></a>
-            <nav class="crm-crumb">
-              <a href="/" id="crm-crumb-dash" data-i18n="crm.backToDashboard">Dashboard</a>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+        <header class="ct-hero">
+          <div class="ct-hero-inner">
+            <nav class="house-topline">
+              <a class="ct-brand" href="/" data-i18n-attr="aria-label:nav.sudoHome">sudo<span aria-hidden="true"></span><em data-i18n="apps.crm">Contacts</em></a>
+              <a class="ct-dash" href="/" id="crm-crumb-dash" data-i18n="crm.backToDashboard">Dashboard</a>
             </nav>
-          </div>
-          <div class="crm-site-title">
-            <h1 id="contacts-title" data-i18n="apps.crm">Contacts</h1>
-            <p data-i18n="crm.lede">The people in your orbit — who your agent may message, who it may answer, and who is waiting on you.</p>
+            <div class="ct-hero-main">
+              <div>
+                <h1 id="contacts-title" data-i18n="apps.crm">Contacts</h1>
+                <p class="ct-summary" id="ct-summary" data-i18n="ct.lede">The people your agent may message, the ones it may answer, and who is waiting on you.</p>
+              </div>
+              <div class="ct-cluster" id="ct-cluster" aria-hidden="true"></div>
+            </div>
           </div>
         </header>
-
         <div class="crm-site-body">
-        <div class="crm-actions-bar">
+        <div class="ct-toolbar">
+          <label class="crm-search ct-search">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+            <input type="search" id="crm-search" data-i18n-attr="placeholder:crm.search,aria-label:crm.search">
+          </label>
           <button class="btn-secondary" type="button" id="crm-import-btn" data-i18n="crm.import">Import</button>
-          <button class="btn-primary" type="button" id="crm-new-btn" data-i18n="crm.new">New contact</button>
+          <button class="btn-primary ct-primary" type="button" id="crm-new-btn" data-i18n="crm.new">New contact</button>
         </div>
-
-        <nav class="crm-tabs" role="tablist">
+        <nav class="ct-tabs" role="tablist">
           <button class="crm-tab active" type="button" role="tab" data-crm-tab="people" aria-selected="true"><span data-i18n="crm.tabPeople">People</span> <em id="crm-count-people"></em></button>
           <button class="crm-tab" type="button" role="tab" data-crm-tab="new" aria-selected="false"><span data-i18n="crm.tabNew">New numbers</span> <em id="crm-count-new"></em></button>
-          <label class="switch crm-read-toggle">
-            <input type="checkbox" id="crm-read-others"><span aria-hidden="true"></span>
-            <em class="switch-text" data-i18n="crm.readOthers">Read my other chats</em>
-          </label>
         </nav>
 
         <div class="crm-card" id="crm-add-card" hidden>
@@ -816,33 +816,29 @@
           <div class="crm-add-grid">
             <input type="text" id="crm-name" class="crm-input" data-i18n-attr="placeholder:wa.contacts.namePlaceholder,aria-label:wa.contacts.nameLabel" placeholder="Name, e.g. Rosa (sister)">
             <input type="tel" id="crm-number" class="crm-input" data-i18n-attr="placeholder:wa.contacts.numberPlaceholder,aria-label:wa.contacts.numberLabel" placeholder="+1 555 123 4567">
-            <label class="switch">
-              <input type="checkbox" id="crm-new-reply"><span aria-hidden="true"></span>
-              <em class="switch-text" data-i18n="wa.contacts.canReplyNew">Sudo can reply to them</em>
-            </label>
+            <label class="ct-check"><input type="checkbox" id="crm-new-reply"><span data-i18n="wa.contacts.canReplyNew">Sudo can reply to them</span></label>
             <button class="btn-primary" type="button" id="crm-add-confirm" data-i18n="wa.contacts.add">Add</button>
           </div>
           <p class="crm-error" id="crm-add-error" hidden></p>
         </div>
 
-        <label class="crm-search">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-          <input type="search" id="crm-search" data-i18n-attr="placeholder:crm.search">
-        </label>
-
-        <div class="crm-list" id="crm-list" role="list"></div>
+        <div class="crm-list ct-list" id="crm-list" role="list"></div>
         <div class="crm-empty" id="crm-empty" hidden></div>
 
-        <div class="crm-foot">
-          <label class="switch">
-            <input type="checkbox" id="crm-agent-can-add"><span aria-hidden="true"></span>
-            <em class="switch-text" data-i18n="wa.contacts.agentCanAdd">Let my agent add people when I ask in chat</em>
-          </label>
-          <small class="microcopy" data-i18n="wa.contacts.agentCanAddHint">Say "add my sister Rosa, +1…" and it adds her here. It never adds someone because a website or email asked.</small>
-        </div>
+        <section class="ct-settings" aria-labelledby="ct-settings-title">
+          <h2 id="ct-settings-title" data-i18n="house.settings">Settings</h2>
+          <div class="access-row">
+            <div><strong data-i18n="wa.contacts.agentCanAdd">Let my agent add people when I ask in chat</strong><small data-i18n="wa.contacts.agentCanAddHint">Say "add my sister Rosa, +1…" and it adds her here. It never adds someone because a website or email asked.</small></div>
+            <label class="switch"><input type="checkbox" id="crm-agent-can-add"><span aria-hidden="true"></span><em class="sr-only" data-i18n="wa.contacts.agentCanAdd">Let my agent add people when I ask in chat</em></label>
+          </div>
+          <div class="access-row">
+            <div><strong data-i18n="crm.readOthers">Read my other chats</strong><small data-i18n="ct.readHint">Lets your agent see who else writes to you on your own WhatsApp, so it can suggest adding them. It never replies to them.</small></div>
+            <label class="switch"><input type="checkbox" id="crm-read-others"><span aria-hidden="true"></span><em class="sr-only" data-i18n="crm.readOthers">Read my other chats</em></label>
+          </div>
+        </section>
 
         <details class="crm-guide" id="crm-guide">
-          <summary data-i18n="crm.build.title">Build your contacts — bring them in from LinkedIn and Instagram</summary>
+          <summary data-i18n="ct.guideTitle">Bring in your contacts from LinkedIn or Instagram</summary>
           <p class="microcopy" data-i18n="crm.build.intro">Add the people you already know. Your agent can then message the ones you allow, remind you who to follow up with, and never lose a thread. Two ways to bring a list in — pick either, or both.</p>
 
           <h4 data-i18n="crm.build.linkedinTitle">From LinkedIn</h4>
@@ -4238,6 +4234,7 @@
       const readOn = !!d.read_others;
 
       const el = (id) => $(id);
+      renderCtHeader(d);
       if (el('crm-count-people')) el('crm-count-people').textContent = people.length;
       if (el('crm-count-new')) el('crm-count-new').textContent = newNums.length;
       if (el('crm-read-others')) el('crm-read-others').checked = readOn;
@@ -4253,6 +4250,9 @@
         btn.setAttribute('aria-selected', on ? 'true' : 'false');
       });
       if (crm.tab === 'new' && !readOn) crm.tab = 'people';
+      // One tab is no choice: the bar only shows when both are there.
+      const tabs = document.querySelector('#view-contacts .ct-tabs');
+      if (tabs) tabs.hidden = !readOn;
 
       const list = el('crm-list');
       const empty = el('crm-empty');
@@ -4278,55 +4278,45 @@
       shown.forEach(p => list.append(renderCrmRow(p, crm.tab === 'new')));
     }
 
+    // A row: initial, name and number, the last message, then the controls.
+    // "Can reply" is a labelled switch built the standard way (the earlier
+    // one put its text inside the switch's own styling, so the label drew as
+    // a second switch on top of the first).
+    function ctHue(text) {
+      let n = 0;
+      for (const ch of String(text || '?')) n = (n * 31 + ch.charCodeAt(0)) % 5;
+      return n;
+    }
+
     function renderCrmRow(p, isNew) {
-      const row = document.createElement('article');
-      row.className = 'crm-row' + (p.waiting_on_owner ? ' waiting' : '');
+      const row = hEl('article', 'ct-row' + (p.waiting_on_owner ? ' waiting' : ''));
       row.setAttribute('role', 'listitem');
-
-      const avatar = document.createElement('div');
-      avatar.className = 'crm-avatar';
-      avatar.textContent = ((p.name || p.number || '?').trim()[0] || '?').toUpperCase();
-
-      const who = document.createElement('div');
-      who.className = 'crm-who';
-      const nm = document.createElement('strong');
-      nm.textContent = p.name || p.number;
-      const sub = document.createElement('span');
-      sub.className = 'crm-num';
-      if (p.name) sub.textContent = p.number;
-      else sub.textContent = isNew ? t('crm.unknownPerson') : '';
-      who.append(nm);
-      if (sub.textContent) who.append(sub);
+      const label = p.name || p.number;
+      const avatar = hEl('span', 'ct-avatar ct-h' + ctHue(label), ((label || '?').trim()[0] || '?').toUpperCase());
+      avatar.setAttribute('aria-hidden', 'true');
+      const who = hEl('div', 'ct-who');
+      const top = hEl('div', 'ct-name-row');
+      top.append(hEl('strong', '', label));
+      if (p.waiting_on_owner) top.append(hEl('span', 'ct-pill waiting', t('crm.waiting')));
+      if (!isNew && p.allow_reply) top.append(hEl('span', 'ct-pill', t('ct.canReplyTag')));
+      who.append(top);
+      const meta = hEl('div', 'ct-meta');
+      if (p.name && p.number) {
+        const num = hEl('span', 'ct-num', p.number);
+        num.dir = 'ltr';
+        meta.append(num);
+      } else if (isNew) {
+        meta.append(hEl('span', '', t('crm.unknownPerson')));
+      }
+      if (p.last_message && p.last_message.at) meta.append(hEl('span', 'ct-when', fmtWhen(p.last_message.at)));
+      if (meta.childNodes.length) who.append(meta);
       if (p.last_message && p.last_message.body) {
-        const last = document.createElement('span');
-        last.className = 'crm-last';
-        last.textContent = (p.last_message.from === 'them' ? '' : '↩ ') + p.last_message.body;
-        who.append(last);
+        who.append(hEl('p', 'ct-last', (p.last_message.from === 'them' ? '' : t('ct.you') + ' ') + p.last_message.body));
       }
-
-      const meta = document.createElement('div');
-      meta.className = 'crm-meta';
-      if (p.waiting_on_owner) {
-        const w = document.createElement('span');
-        w.className = 'crm-pill waiting';
-        w.textContent = t('crm.waiting');
-        meta.append(w);
-      }
-      if (p.last_message && p.last_message.at) {
-        const when = document.createElement('span');
-        when.className = 'crm-when';
-        when.textContent = fmtWhen(p.last_message.at);
-        meta.append(when);
-      }
-
-      const actions = document.createElement('div');
-      actions.className = 'crm-actions';
-
+      const actions = hEl('div', 'ct-actions');
       if (isNew) {
-        const add = document.createElement('button');
+        const add = hEl('button', 'btn-primary ct-primary btn-sm', t('crm.addToList'));
         add.type = 'button';
-        add.className = 'btn-primary btn-sm';
-        add.textContent = t('crm.addToList');
         add.addEventListener('click', () => {
           $('crm-name').value = p.name || '';
           $('crm-number').value = p.number || '';
@@ -4336,33 +4326,54 @@
         });
         actions.append(add);
       } else {
-        const reply = document.createElement('label');
-        reply.className = 'switch crm-reply';
-        const cb = document.createElement('input');
+        const reply = hEl('label', 'ct-reply');
+        reply.append(hEl('span', 'ct-reply-text', t('wa.contacts.canReply')));
+        const sw = hEl('span', 'switch');
+        const cb = hEl('input');
         cb.type = 'checkbox';
         cb.checked = !!p.allow_reply;
-        cb.setAttribute('aria-label', t('wa.contacts.canReplyLabel', { name: p.name || p.number }));
+        cb.setAttribute('aria-label', t('wa.contacts.canReplyLabel', { name: label }));
         cb.addEventListener('change', () => saveCrmReply(p.number, cb.checked, cb));
-        const track = document.createElement('span');
-        track.className = 'switch-track';
-        track.setAttribute('aria-hidden', 'true');
-        const txt = document.createElement('span');
-        txt.className = 'switch-text';
-        txt.textContent = t('wa.contacts.canReply');
-        reply.append(cb, track, txt);
-        actions.append(reply);
-
-        const rm = document.createElement('button');
+        const knob = hEl('span'); knob.setAttribute('aria-hidden', 'true');
+        sw.append(cb, knob);
+        reply.append(sw);
+        const rm = hEl('button', 'ct-remove', t('wa.contacts.remove'));
         rm.type = 'button';
-        rm.className = 'crm-remove';
-        rm.textContent = t('wa.contacts.remove');
-        rm.setAttribute('aria-label', t('wa.contacts.removeLabel', { name: p.name || p.number }));
-        rm.addEventListener('click', () => saveCrmRemove(p.number));
-        actions.append(rm);
+        rm.setAttribute('aria-label', t('wa.contacts.removeLabel', { name: label }));
+        rm.addEventListener('click', () => {
+          if (rm.dataset.confirm) { saveCrmRemove(p.number); return; }
+          rm.dataset.confirm = '1';
+          rm.textContent = t('ct.removeConfirm');
+          rm.classList.add('confirm');
+          setTimeout(() => { delete rm.dataset.confirm; rm.textContent = t('wa.contacts.remove'); rm.classList.remove('confirm'); }, 4000);
+        });
+        actions.append(reply, rm);
       }
-
-      row.append(avatar, who, meta, actions);
+      row.append(avatar, who, actions);
       return row;
+    }
+
+    // The header's live line and the cluster of people.
+    function renderCtHeader(d) {
+      const people = d.contacts || [];
+      const waiting = people.filter(p => p.waiting_on_owner).length;
+      const el = $('ct-summary');
+      if (el && people.length) {
+        el.removeAttribute('data-i18n');
+        el.textContent = waiting
+          ? t(waiting === 1 ? 'ct.sumWaitingOne' : 'ct.sumWaiting', { n: waiting })
+          : t(people.length === 1 ? 'ct.sumPeopleOne' : 'ct.sumPeople', { n: people.length });
+      }
+      const cluster = $('ct-cluster');
+      if (!cluster) return;
+      cluster.replaceChildren();
+      const shown = people.slice(0, 5);
+      shown.forEach(p => {
+        const label = p.name || p.number || '?';
+        cluster.append(hEl('span', 'ct-avatar big ct-h' + ctHue(label), (label.trim()[0] || '?').toUpperCase()));
+      });
+      if (people.length > shown.length) cluster.append(hEl('span', 'ct-avatar big more', '+' + (people.length - shown.length)));
+      if (!people.length) cluster.append(hEl('span', 'ct-avatar big empty', '+'));
     }
 
     async function crmPost(payload) {
@@ -6058,6 +6069,10 @@
       if (state.remotePw) renderRemotePasswordInfo(state.remotePw);
       if (state.wifiData) renderWifi(state.wifiData);
       if (state.updateInfo) renderUpdate(state.updateInfo);
+      // The apps draw their text from data, so they redraw in the new language.
+      if (state.tab === 'contacts' && crm.data) renderCrm();
+      if (state.tab === 'house' && house.data) renderHouse();
+      if (state.tab === 'screentime') renderScreenTime();
       if (BILLING_ENABLED && state.billing) renderBilling(state.billing);
       if (state.renamed && $('hostname-done').classList.contains('show')) {
         I18N.setHtml($('hostname-done'), I18N.tHtml('host.renamed', state.renamed));
