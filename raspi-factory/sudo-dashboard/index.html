@@ -3571,7 +3571,14 @@
       if (x.person) top.append(hEl('span', 'house-tag person', t('house.whose', { name: x.person })));
       const maker = x.vendor || (x.private_mac ? t('house.privateMac') : '');
       const second = maker && maker !== x.label ? maker : t('house.kind.' + x.kind);
-      body.append(top, hEl('small', 'house-device-sub', second));
+      const sub = hEl('small', 'house-device-sub');
+      sub.append(hEl('span', '', second));
+      if (x.ip) {
+        const ip = hEl('span', 'house-ip', x.ip);
+        ip.dir = 'ltr';
+        sub.append(ip);
+      }
+      body.append(top, sub);
       const status = hEl('span', 'house-state');
       if (x.online) {
         status.append(hEl('span', 'house-dot'), document.createTextNode(t('house.online')));

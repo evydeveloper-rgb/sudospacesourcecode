@@ -495,7 +495,11 @@ body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
 .house-device.online .house-icon { background: var(--house-blue-tint); color: var(--house-blue-deep); }
 .house-device-top { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
 .house-device-top strong { font-size: .88rem; overflow-wrap: anywhere; }
-.house-device-sub { display: block; margin-top: 2px; color: var(--ink-3); font-size: .74rem; overflow-wrap: anywhere; }
+.house-device-sub {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px;
+  margin-top: 2px; color: var(--ink-3); font-size: .74rem; overflow-wrap: anywhere;
+}
+.house-ip { font-family: var(--font-mono); font-size: .7rem; color: var(--ink-3); }
 .house-state { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-3); font-size: .74rem; white-space: nowrap; }
 .house-device.online .house-state { color: var(--ink-2); font-weight: 650; }
 .house-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--house-blue); }
