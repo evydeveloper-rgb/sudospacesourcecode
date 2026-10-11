@@ -83,9 +83,9 @@ import copy
 OUT_PATH = "/opt/sudo/openclaw/openclaw.json"
 # Plugins and tools Sudo switches on and off itself. They are dropped from the
 # carried-over lists and re-added below only when they apply.
-SUDO_PLUGINS = {"whatsapp", "admin-http-rpc", "sudo-contacts"}
-SUDO_ALSO_ALLOW = {"message", "whatsapp_contacts"}
-SUDO_LOAD_PATHS = {"/opt/sudo-openclaw/plugins/sudo-contacts"}
+SUDO_PLUGINS = {"whatsapp", "admin-http-rpc", "sudo-contacts", "sudo-observer"}
+SUDO_ALSO_ALLOW = {"message", "whatsapp_contacts", "whatsapp_chats", "whatsapp_new_numbers", "image"}
+SUDO_LOAD_PATHS = {"/opt/sudo-openclaw/plugins/sudo-contacts", "/opt/sudo-openclaw/plugins/sudo-observer"}
 
 
 def overlay(dst, src):
