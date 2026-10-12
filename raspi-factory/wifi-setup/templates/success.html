@@ -44,6 +44,7 @@
   font-weight: 700; font-size: 1rem; cursor: pointer; box-shadow: 0 10px 24px rgba(254,105,68,.25);
 }
 .done:disabled { opacity: .6; }
+.wait { text-decoration: underline; text-decoration-color: var(--coral); text-decoration-thickness: 2px; text-underline-offset: 3px; color: var(--ink-2); font-weight: 600; }
 .after { margin: 12px 0 0; color: var(--ink-3); font-size: .8rem; text-align: center; line-height: 1.45; }
 .state {
   display: none; margin: 0 0 20px; padding: 14px 16px; border-radius: 16px;
@@ -84,8 +85,8 @@
     <li><span class="step-icon"><b>3</b><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M7 6.5h.01M10 6.5h.01"/></svg></span>Open it</li>
   </ol>
 
-  <button type="button" class="done" id="done">Done, connect sudo</button>
-  <p class="after" id="after">sudo then joins {{SSID}} and this page closes. Give it about a minute before you open the address.</p>
+  <button type="button" class="done" id="done">Done, connect to {{SSID}}</button>
+  <p class="after" id="after">sudo then joins {{SSID}} and this page closes. <span class="wait">Give it about a minute before you open the address. sudo needs a moment to connect.</span></p>
   <button type="button" class="retry" id="retry">Try a different network</button>
 </main>
 
@@ -138,7 +139,7 @@
     doneBtn.disabled = true;
     var ssid = document.getElementById('ssid').textContent;
     say('Connecting to ' + ssid + '. You can switch your phone back to it now.');
-    after.textContent = 'In about a minute, open your address.';
+    after.innerHTML = '<span class="wait">Give it about a minute before you open the address. sudo needs a moment to connect.</span>';
     var xhr = new XMLHttpRequest();
     xhr.open('POST', '/go', true);
     xhr.timeout = 5000;

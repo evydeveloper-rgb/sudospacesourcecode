@@ -64,8 +64,8 @@ h = h.replace(
 # Where to find it afterwards.
 h = h.replace('</main>',
     '<p class="font-body-md text-on-surface-variant text-center text-sm pb-xl">'
-    'After this, sudo restarts and joins your network. '
-    "You'll find it at "
+    "Nothing changes yet: next you save sudo's address, then tell it to connect. "
+    'It will be at '
     '<span class="font-label-mono text-on-surface">{{DASHBOARD_URL}}</span>'
     '</p></main>', 1)
 
