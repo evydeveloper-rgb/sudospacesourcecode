@@ -1504,10 +1504,13 @@ body.site-mode .crm-site-body { max-width: 880px; margin: 0 auto; padding: 20px 
 /* First-run: two questions, nothing else on screen */
 .welcome-view.active {
   min-height: calc(100dvh - 62px - var(--safe-top));
-  display: flex; align-items: center; justify-content: center;
+  /* Centred with auto margins, not align-items: a step taller than the
+     window (the personality one) would otherwise lose its top above the
+     scroll area. */
+  display: flex; align-items: flex-start; justify-content: center;
   padding: 26px 20px calc(30px + var(--safe-bottom));
 }
-.welcome-inner { width: min(100%, 440px); }
+.welcome-inner { width: min(100%, 440px); margin-block: auto; }
 .welcome-view.wide .welcome-inner { width: min(100%, 640px); }
 body.welcome-mode .install-hint { display: none !important; }
 .welcome-inner h1 {
