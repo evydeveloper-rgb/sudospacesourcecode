@@ -56,6 +56,10 @@
             <span class="rail-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7H6a5 5 0 0 0 0 10h3M15 7h3a5 5 0 0 1 0 10h-3M8 12h8"/></svg></span>
             <span data-i18n="nav.connectors">Connectors</span>
           </button>
+          <button type="button" data-tab="community">
+            <span class="rail-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></span>
+            <span data-i18n="nav.community">Community</span>
+          </button>
         </nav>
       </div>
       <div class="rail-foot">
@@ -251,6 +255,72 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
           </button>
         </form>
+      </section>
+
+      <!-- Community: the one online part of the dashboard. Posts and a map of
+           where sudos are, from Sudo's community service. Nothing here is
+           visible until this sudo has joined. -->
+      <section class="view" id="view-community" aria-labelledby="community-title">
+        <div class="view-heading">
+          <div>
+            <h1 id="community-title" data-i18n="com.title">Community</h1>
+            <p class="lede" id="com-lede" data-i18n="com.lede">What people around the world are building with their sudo.</p>
+          </div>
+        </div>
+        <div class="com" id="com">
+          <p class="com-loading" id="com-loading" data-i18n="common.checking">Checking…</p>
+
+          <div class="com-offline" id="com-offline" hidden>
+            <p data-i18n="com.offline">Connect to the internet to see the community. Everything else on your sudo keeps working.</p>
+            <button class="soft-button" type="button" id="com-retry" data-i18n="com.retry">Try again</button>
+          </div>
+
+          <!-- Not joined: nothing to see until you make an account. -->
+          <div class="com-gate" id="com-gate" hidden>
+            <div class="com-gate-art" aria-hidden="true"><svg viewBox="0 0 360 150"><path class="com-land" id="com-gate-land"/></svg></div>
+            <h2 data-i18n="com.gateTitle">Make an account to see the community</h2>
+            <p data-i18n="com.gateBody">Posts from people building with their sudo, and a map of where sudos live. Your sudo is your login, so there is no password.</p>
+            <button class="primary-button" type="button" id="com-start" data-i18n="com.join">Join the community</button>
+          </div>
+
+          <form class="com-join" id="com-join" hidden novalidate>
+            <h2 data-i18n="com.joinTitle">Join the community</h2>
+            <label for="com-username" data-i18n="com.username">Public username</label>
+            <div class="com-handle"><span aria-hidden="true">@</span><input id="com-username" autocomplete="off" spellcheck="false" maxlength="20" autocapitalize="none" data-i18n-attr="placeholder:com.usernamePlaceholder" placeholder="yourname"></div>
+            <p class="com-check" id="com-check" data-i18n="com.usernameRule">3 to 20 letters, numbers or _</p>
+            <label for="com-agent" data-i18n="com.agent">Your agent's name</label>
+            <input id="com-agent" maxlength="32" autocomplete="off">
+            <label for="com-city" data-i18n="com.city">Where is your sudo based?</label>
+            <input id="com-city" maxlength="80" autocomplete="off" data-i18n-attr="placeholder:com.cityPlaceholder" placeholder="City, e.g. Tampa, Florida">
+            <p class="microcopy" data-i18n="com.public">Your username, your agent's name and the city you type are public. Nothing else from your sudo is shared.</p>
+            <button class="primary-button" type="submit" id="com-join-go" data-i18n="com.joinGo">Join</button>
+            <button class="ghost-button" type="button" id="com-join-back" data-i18n="welcome.back">← Back</button>
+            <p class="form-status" id="com-join-status" role="status"></p>
+          </form>
+
+          <!-- Joined: the feed and the map. -->
+          <div class="com-in" id="com-in" hidden>
+            <div class="com-me" id="com-me"></div>
+            <div class="com-tabs" role="tablist">
+              <button type="button" role="tab" class="com-tab active" data-com-tab="feed" aria-selected="true" data-i18n="com.feed">Posts</button>
+              <button type="button" role="tab" class="com-tab" data-com-tab="map" aria-selected="false" data-i18n="com.map">Map</button>
+            </div>
+            <div class="com-pane" id="com-feed-pane">
+              <form class="com-composer" id="com-composer">
+                <textarea id="com-post" rows="3" maxlength="2000" data-i18n-attr="placeholder:com.postPlaceholder,aria-label:com.postPlaceholder" placeholder="Share what you're building with your sudo…"></textarea>
+                <div class="com-composer-row"><small id="com-post-count"></small><button class="primary-button" type="submit" id="com-post-go" data-i18n="com.post">Post</button></div>
+                <p class="form-status" id="com-post-status" role="status"></p>
+              </form>
+              <div class="com-posts" id="com-posts" role="feed"></div>
+            </div>
+            <div class="com-pane" id="com-map-pane" hidden>
+              <p class="com-total" id="com-total"></p>
+              <div class="com-map"><svg viewBox="0 0 360 150" id="com-map-svg" role="img" data-i18n-attr="aria-label:com.map"><path class="com-land" id="com-map-land"/><g id="com-dots"></g></svg></div>
+              <ul class="com-places" id="com-places"></ul>
+            </div>
+            <button class="com-leave" type="button" id="com-leave" data-i18n="com.leave">Leave the community</button>
+          </div>
+        </div>
       </section>
 
       <!-- The Knowledge hub: what sudo is, ideas, answers. Always reachable
@@ -1971,6 +2041,9 @@
       <button type="button" data-tab="connectors">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7H6a5 5 0 0 0 0 10h3M15 7h3a5 5 0 0 1 0 10h-3M8 12h8"/></svg><span data-i18n="bnav.connect">connect</span>
       </button>
+      <button type="button" data-tab="community">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg><span data-i18n="bnav.community">community</span>
+      </button>
       <button type="button" data-tab="settings">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 6H10M6 6H3M21 12h-7M10 12H3M21 18h-3M14 18H3"/><circle cx="8" cy="6" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="16" cy="18" r="2"/></svg><span data-i18n="bnav.settings">settings</span>
       </button>
@@ -2060,6 +2133,7 @@
       else if (tab === 'channels') path = '/channels.html';
       else if (tab === 'setup') path = '/setup.html';
       else if (tab === 'hub') path = '/hub.html';
+      else if (tab === 'community') path = '/community.html';
       else if (tab === 'contacts') path = '/contacts.html';
       else if (tab === 'house') path = '/house.html';
       else if (tab === 'screentime') path = '/screentime.html';
@@ -5966,6 +6040,246 @@
       renderAppArchive();
     }
 
+    // --- Community -------------------------------------------------------
+    // The dashboard's one online part. Everything goes through the Pi
+    // (/api/community/*), which holds this sudo's key; nothing is shown
+    // until the sudo has joined.
+    const com = { state: null, tab: 'feed', world: null, checkTimer: null, checking: '' };
+
+    async function loadWorld() {
+      if (com.world !== null) return com.world;
+      try {
+        const text = await (await fetch('/world.svg')).text();
+        const m = text.match(/ d="([^"]+)"/);
+        com.world = m ? m[1] : '';
+      } catch (_) { com.world = ''; }
+      return com.world;
+    }
+
+    function comShow(which) {
+      ['com-loading', 'com-offline', 'com-gate', 'com-join', 'com-in'].forEach(id => { $(id).hidden = id !== which; });
+    }
+
+    async function openCommunity() {
+      setTab('community');
+      comShow('com-loading');
+      loadWorld().then(d => { $('com-gate-land').setAttribute('d', d); $('com-map-land').setAttribute('d', d); });
+      try {
+        const data = await api('/api/community/status', {}, 20000);
+        com.state = data;
+        if (!data.joined) { comShow('com-gate'); return; }
+        renderComMe(data.account);
+        comShow('com-in');
+        comTab(com.tab);
+      } catch (error) {
+        comShow('com-offline');
+      }
+    }
+
+    function comAvatar(name) {
+      let n = 0;
+      for (const ch of String(name || '?')) n = (n * 31 + ch.charCodeAt(0)) % 5;
+      const a = hEl('span', 'com-avatar com-h' + n, (String(name || '?')[0] || '?').toUpperCase());
+      a.setAttribute('aria-hidden', 'true');
+      return a;
+    }
+
+    function renderComMe(account) {
+      const box = $('com-me');
+      box.replaceChildren();
+      const who = hEl('div', 'com-me-who');
+      who.append(hEl('strong', '', '@' + account.username),
+                 hEl('small', '', t('com.meLine', { agent: account.agent_name, city: account.city })));
+      box.append(comAvatar(account.username), who);
+    }
+
+    function comTab(tab) {
+      com.tab = tab;
+      document.querySelectorAll('.com-tab').forEach(b => {
+        const on = b.dataset.comTab === tab;
+        b.classList.toggle('active', on);
+        b.setAttribute('aria-selected', on ? 'true' : 'false');
+      });
+      $('com-feed-pane').hidden = tab !== 'feed';
+      $('com-map-pane').hidden = tab !== 'map';
+      if (tab === 'feed') loadComFeed(); else loadComMap();
+    }
+
+    async function loadComFeed() {
+      const list = $('com-posts');
+      try {
+        const data = await api('/api/community/feed', {}, 20000);
+        list.replaceChildren();
+        if (!data.posts || !data.posts.length) {
+          list.append(hEl('p', 'com-empty', t('com.noPosts')));
+          return;
+        }
+        data.posts.forEach(p => list.append(renderComPost(p)));
+      } catch (error) {
+        list.replaceChildren(hEl('p', 'com-empty', error.message));
+      }
+    }
+
+    function renderComPost(p) {
+      const card = hEl('article', 'com-post');
+      const head = hEl('div', 'com-post-head');
+      const who = hEl('div', 'com-post-who');
+      who.append(hEl('strong', '', '@' + (p.username || '?')),
+                 hEl('small', '', t('com.meLine', { agent: p.agent_name || '', city: p.city || '' })));
+      head.append(comAvatar(p.username), who, hEl('time', 'com-when', fmtWhen(Date.parse(p.created_at))));
+      const body = hEl('p', 'com-body', p.body);
+      const act = hEl('button', 'com-act', t(p.mine ? 'com.delete' : 'com.report'));
+      act.type = 'button';
+      act.addEventListener('click', async () => {
+        if (!act.dataset.confirm) {
+          act.dataset.confirm = '1';
+          act.textContent = t(p.mine ? 'com.deleteConfirm' : 'com.reportConfirm');
+          act.classList.add('confirm');
+          setTimeout(() => { delete act.dataset.confirm; act.classList.remove('confirm');
+                             act.textContent = t(p.mine ? 'com.delete' : 'com.report'); }, 4000);
+          return;
+        }
+        try {
+          await api(p.mine ? '/api/community/posts/delete' : '/api/community/report', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: p.id }),
+          });
+          if (p.mine) card.remove(); else { act.textContent = t('com.reported'); act.disabled = true; }
+        } catch (error) { showToast(error.message); }
+      });
+      card.append(head, body, act);
+      return card;
+    }
+
+    async function postToCommunity(event) {
+      event.preventDefault();
+      const box = $('com-post'), status = $('com-post-status'), go = $('com-post-go');
+      const text = box.value.trim();
+      if (!text) return;
+      go.disabled = true;
+      status.textContent = '';
+      try {
+        await api('/api/community/posts', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ body: text }),
+        });
+        box.value = '';
+        renderComCount();
+        loadComFeed();
+      } catch (error) {
+        status.textContent = error.message;
+      } finally {
+        go.disabled = false;
+      }
+    }
+
+    function renderComCount() {
+      const n = $('com-post').value.length;
+      $('com-post-count').textContent = n > 1600 ? `${n}/2000` : '';
+    }
+
+    async function loadComMap() {
+      try {
+        const data = await api('/api/community/map', {}, 20000);
+        const dots = $('com-dots');
+        dots.replaceChildren();
+        const ns = 'http://www.w3.org/2000/svg';
+        const places = (data.places || []).sort((a, b) => b.members.length - a.members.length);
+        places.forEach(pl => {
+          const mine = pl.members.some(m => m.me);
+          const c = document.createElementNS(ns, 'circle');
+          c.setAttribute('cx', String(pl.lng + 180));
+          c.setAttribute('cy', String(90 - pl.lat));
+          c.setAttribute('r', String(2.2 + Math.min(3, pl.members.length - 1) * 0.8));
+          c.setAttribute('class', 'com-dot' + (mine ? ' mine' : ''));
+          const title = document.createElementNS(ns, 'title');
+          title.textContent = `${pl.city} · ${tn('com.sudos', pl.members.length)}`;
+          c.append(title);
+          dots.append(c);
+        });
+        $('com-total').textContent = tn('com.total', data.total || 0);
+        const list = $('com-places');
+        list.replaceChildren();
+        places.forEach(pl => {
+          const li = hEl('li', 'com-place');
+          const head = hEl('div', 'com-place-head');
+          head.append(hEl('strong', '', pl.city), hEl('small', '', tn('com.sudos', pl.members.length)));
+          const who = hEl('p', 'com-place-who', pl.members.map(m => `@${m.username} · ${m.agent_name}`).join('   '));
+          li.append(head, who);
+          list.append(li);
+        });
+      } catch (error) {
+        $('com-places').replaceChildren(hEl('li', 'com-empty', error.message));
+      }
+    }
+
+    // Username: answers as you type, "available" or "taken".
+    function checkComUsername() {
+      const field = $('com-username');
+      const u = field.value.trim().toLowerCase();
+      if (field.value !== field.value.toLowerCase()) field.value = field.value.toLowerCase();
+      const line = $('com-check');
+      line.className = 'com-check';
+      clearTimeout(com.checkTimer);
+      if (!u) { line.textContent = t('com.usernameRule'); return; }
+      if (!/^[a-z0-9_]{3,20}$/.test(u)) {
+        line.textContent = t('com.usernameRule');
+        line.classList.add('bad');
+        return;
+      }
+      line.textContent = t('common.checking');
+      com.checkTimer = setTimeout(async () => {
+        com.checking = u;
+        try {
+          const data = await api('/api/community/available?u=' + encodeURIComponent(u), {}, 15000);
+          if (com.checking !== u) return;
+          line.textContent = data.available ? t('com.available', { u }) : t('com.taken', { u });
+          line.classList.add(data.available ? 'ok' : 'bad');
+        } catch (_) {
+          line.textContent = t('com.offlineShort');
+        }
+      }, 350);
+    }
+
+    async function joinCommunity(event) {
+      event.preventDefault();
+      const status = $('com-join-status'), go = $('com-join-go');
+      const body = {
+        username: $('com-username').value.trim().toLowerCase(),
+        agent_name: $('com-agent').value.trim(),
+        city: $('com-city').value.trim(),
+      };
+      if (!/^[a-z0-9_]{3,20}$/.test(body.username)) { status.textContent = t('com.usernameRule'); return; }
+      if (!body.agent_name || !body.city) { status.textContent = t('com.needAll'); return; }
+      go.disabled = true;
+      status.textContent = t('com.joining');
+      try {
+        await api('/api/community/join', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+        }, 30000);
+        status.textContent = '';
+        openCommunity();
+      } catch (error) {
+        status.textContent = error.message;
+        if (/taken/i.test(error.message)) checkComUsername();
+      } finally {
+        go.disabled = false;
+      }
+    }
+
+    async function leaveCommunity() {
+      const b = $('com-leave');
+      if (!b.dataset.confirm) {
+        b.dataset.confirm = '1';
+        b.textContent = t('com.leaveConfirm');
+        b.classList.add('confirm');
+        setTimeout(() => { delete b.dataset.confirm; b.classList.remove('confirm'); b.textContent = t('com.leave'); }, 5000);
+        return;
+      }
+      try {
+        await api('/api/community/leave', { method: 'POST' });
+        openCommunity();
+      } catch (error) { showToast(error.message); }
+    }
+
     function draftInChat(text) {
       setTab('chat');
       const input = $('chat-input');
@@ -6579,6 +6893,7 @@
       else if (path.includes('house')) openHouse();
       else if (path.includes('screentime')) openScreenTime();
       else if (path.includes('hub')) setTab('hub');
+      else if (path.includes('community')) openCommunity();
       else if (path === '/' || path.includes('dashboard')) setTab('apps');
       else setTab('chat');
 
@@ -6616,7 +6931,8 @@
       }
     }
 
-    document.querySelectorAll('.bottom-nav button, .rail-nav button, .rail-gear, .brand-home, .hub-button').forEach(button => button.addEventListener('click', () => setTab(button.dataset.tab)));
+    document.querySelectorAll('.bottom-nav button, .rail-nav button, .rail-gear, .brand-home, .hub-button').forEach(button => button.addEventListener('click', () =>
+      button.dataset.tab === 'community' ? openCommunity() : setTab(button.dataset.tab)));
     document.querySelectorAll('.setting-head').forEach(button => button.addEventListener('click', () => {
       openSettingPage(button.closest('.setting-card').id);
     }));
@@ -6629,6 +6945,20 @@
     });
     $('composer-add').addEventListener('click', startFreshChat);
     $('create-app').addEventListener('click', () => draftInChat(t('apps.buildPrompt')));
+    $('com-start').addEventListener('click', () => {
+      $('com-agent').value = (state.status && state.status.agent_name) || '';
+      comShow('com-join');
+      setTimeout(() => $('com-username').focus(), 50);
+    });
+    $('com-join-back').addEventListener('click', () => comShow('com-gate'));
+    $('com-username').addEventListener('input', checkComUsername);
+    $('com-join').addEventListener('submit', joinCommunity);
+    $('com-composer').addEventListener('submit', postToCommunity);
+    $('com-post').addEventListener('input', renderComCount);
+    $('com-retry').addEventListener('click', openCommunity);
+    $('com-leave').addEventListener('click', leaveCommunity);
+    document.querySelectorAll('.com-tab').forEach(b => b.addEventListener('click', () => comTab(b.dataset.comTab)));
+
     initAppArchive();
     $('hub-setup').addEventListener('click', () => setTab('setup'));
     initSetupGuide();

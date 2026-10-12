@@ -33,6 +33,8 @@ systemctl disable sudo-dashboard.service sudo-cloud-init.service \
 rm -f /var/lib/wifi-setup-configured /var/lib/wifi-setup-pending
 rm -f /var/lib/sudo-cloud-registered /var/lib/sudo-remote-enabled
 rm -f /etc/sudo/public_url
+# A new owner must not inherit the community account.
+rm -f /etc/sudo/community.json
 rm -f /etc/sudo/autoupdate
 
 rfkill unblock wifi 2>/dev/null || true

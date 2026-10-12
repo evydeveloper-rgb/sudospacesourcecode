@@ -772,6 +772,41 @@ def soul_with_style(text, style):
     return re.sub(r"\n{3,}", "\n\n", text)
 
 
+# ── Community ────────────────────────────────────────────────────────────────
+# The one online part of the dashboard: posts and a map shared by everyone's
+# sudo, kept on Sudo's community service. This sudo signs in with a random
+# key it makes when it joins and keeps here; the service stores only a hash
+# of it. The browser never sees the key -- every call goes through here.
+COMMUNITY_URL = "https://gluklijoptuvampxmtbl.supabase.co/functions/v1/community"
+COMMUNITY_FILE = "/etc/sudo/community.json"
+
+
+def community_identity():
+    data = read_json_file(COMMUNITY_FILE) or {}
+    return data if data.get("key") else None
+
+
+def community_call(route, method="GET", body=None, key=None, query=None):
+    """(status, json) from the community service. Raises OSError when offline."""
+    url = COMMUNITY_URL + route
+    if query:
+        url += "?" + urllib.parse.urlencode(query)
+    data = json.dumps(body).encode("utf-8") if body is not None else None
+    req = urllib.request.Request(url, data=data, method=method)
+    req.add_header("Content-Type", "application/json")
+    req.add_header("User-Agent", "sudo-dashboard")
+    if key:
+        req.add_header("X-Sudo-Device-Key", key)
+    try:
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            return resp.status, json.loads(resp.read().decode("utf-8") or "{}")
+    except urllib.error.HTTPError as err:
+        try:
+            return err.code, json.loads(err.read().decode("utf-8") or "{}")
+        except ValueError:
+            return err.code, {"error": "The community service had a problem"}
+
+
 def agent_file_writable(name):
     """True when the owner may write this workspace file from the dashboard:
     the agent's own files and its notes, never anything outside them."""
@@ -839,7 +874,7 @@ DEVICE_DENY_PATHS = {
     "/etc/sudo/dashboard_password.hash", "/etc/sudo/ssh_password",
     "/etc/sudo/openclaw_gateway_token", "/etc/sudo/api.url",
     "/opt/sudo/config.json", "/opt/sudo/openclaw/openclaw.json",
-    "/opt/sudo/agent.env",
+    "/opt/sudo/agent.env", "/etc/sudo/community.json",
 }
 DEVICE_DENY_DIRS = {"/opt/sudo/openclaw/credentials", "/opt/sudo/openclaw/npm",
                     "/opt/sudo/whatsapp-auth"}
@@ -3147,6 +3182,72 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             self.send_json({"workspace": WORKSPACE, "files": read_agent_files()})
             return True
 
+        # Community: joined or not, join, feed, post, map, report, leave.
+        if path.startswith("/api/community/"):
+            route = path[len("/api/community"):]
+            ident = community_identity()
+            try:
+                if route == "/status" and self.command == "GET":
+                    if not ident:
+                        self.send_json({"joined": False})
+                        return True
+                    code, data = community_call("/me", key=ident["key"])
+                    if code == 401:      # the account is gone (left, or removed)
+                        try:
+                            os.remove(COMMUNITY_FILE)
+                        except OSError:
+                            pass
+                        self.send_json({"joined": False})
+                        return True
+                    self.send_json({"joined": True, **data}, code=200 if code == 200 else 502)
+                    return True
+                if route == "/available" and self.command == "GET":
+                    u = (urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query).get("u") or [""])[0]
+                    code, data = community_call("/available", query={"u": u})
+                    self.send_json(data, code=code)
+                    return True
+                if route == "/join" and self.command == "POST":
+                    if ident:
+                        self.send_json({"error": "This sudo already has an account"}, code=409)
+                        return True
+                    body = self.read_body_json()
+                    key = secrets.token_urlsafe(32)
+                    code, data = community_call("/join", "POST", {
+                        "username": body.get("username"), "agent_name": body.get("agent_name"),
+                        "city": body.get("city")}, key=key)
+                    if code == 200:
+                        write_json_file(COMMUNITY_FILE, {"key": key,
+                                                         "username": (data.get("account") or {}).get("username")})
+                        os.chmod(COMMUNITY_FILE, 0o600)
+                    self.send_json(data, code=code)
+                    return True
+                if not ident:
+                    self.send_json({"error": "Join the community first"}, code=401)
+                    return True
+                passthrough = {
+                    ("/feed", "GET"): "/feed", ("/map", "GET"): "/map",
+                    ("/posts", "POST"): "/posts", ("/posts/delete", "POST"): "/posts/delete",
+                    ("/report", "POST"): "/report", ("/leave", "POST"): "/leave",
+                }
+                target = passthrough.get((route, self.command))
+                if not target:
+                    return False
+                body = self.read_body_json() if self.command == "POST" else None
+                code, data = community_call(target, self.command, body, key=ident["key"])
+                if target == "/leave" and code == 200:
+                    try:
+                        os.remove(COMMUNITY_FILE)
+                    except OSError:
+                        pass
+                self.send_json(data, code=code)
+                return True
+            except (ValueError, json.JSONDecodeError):
+                self.send_json({"error": "Invalid JSON"}, code=400)
+                return True
+            except OSError:
+                self.send_json({"error": "offline"}, code=503)
+                return True
+
         # Skipping the welcome's last step.
         if path == "/api/agent/welcome-done" and self.command == "POST":
             cfg = read_json_file(CONFIG)
@@ -3852,6 +3953,7 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             "/house.html",
             "/screentime.html",
             "/hub.html",
+            "/community.html",
         ):
             path = "/index.html"
 

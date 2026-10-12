@@ -188,7 +188,7 @@ copy_factory_files() {
     cp "$SUDO_DASH/app.css" "$boot/sudo-dashboard/"
     cp "$SUDO_DASH/i18n.js" "$boot/sudo-dashboard/"
     cp "$SUDO_DASH/manifest.json" "$boot/sudo-dashboard/"
-    cp "$SUDO_DASH/sudo-wordmark.svg" "$boot/sudo-dashboard/"
+    cp "$SUDO_DASH/"*.svg "$boot/sudo-dashboard/"
 
     cp "$PICOCLAW/picoclaw" "$boot/picoclaw/"
     cp "$PICOCLAW/config.template.json" "$boot/picoclaw/"
