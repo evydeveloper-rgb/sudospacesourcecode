@@ -216,7 +216,8 @@ copy_factory_files() {
     cp "$WHATSAPP_BRIDGE/bridge.js" "$boot/whatsapp-bridge/"
     # Do NOT copy cloudflare.conf — Quick Tunnel needs no API token / domain
     rm -f "$boot/sudo-pi/cloudflare.conf" 2>/dev/null || true
-    cp "$SUDO_API/api.url.default" "$boot/sudo-api/"
+    # Only for the optional Sudo-credits build; the public repo has no sudo-api/.
+    [ -f "$SUDO_API/api.url.default" ] && cp "$SUDO_API/api.url.default" "$boot/sudo-api/"
 
     cp "$INSTALL" "$boot/install-factory.sh"
     chmod +x "$boot/install-factory.sh"
