@@ -58,7 +58,11 @@ else:
 # No key yet (a brand-new device, before Finish setup): the agent's files are
 # still written -- the welcome's personality step edits SOUL.md -- but the
 # PicoClaw config and the gateway wait for a key.
-no_key = not or_key
+# A provider's own key (DeepSeek, OpenAI...) runs the agent under OpenClaw;
+# PicoClaw itself only speaks OpenRouter, so its config still needs that.
+direct_key = os.path.exists("/opt/openclaw/node_modules/.bin/openclaw") and any(
+    provider_keys.get(p) for p in ("anthropic", "openai", "gemini", "deepseek"))
+no_key = not or_key and not direct_key
 if no_key:
     print("No openrouter_key yet — agent files only, no PicoClaw config")
     pathlib.Path("/run/sudo-configure-nokey").touch()
@@ -192,7 +196,7 @@ if not github_on:
 pathlib.Path(os.path.dirname(out_config)).mkdir(parents=True, exist_ok=True)
 pathlib.Path(workspace).mkdir(parents=True, exist_ok=True)
 
-if not no_key:
+if or_key:
     with open(out_config, "w", encoding="utf-8") as f:
         json.dump(cfg, f, indent=2)
     os.chmod(out_config, 0o600)

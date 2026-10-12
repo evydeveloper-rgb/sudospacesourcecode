@@ -1250,7 +1250,7 @@
         </div>
 
         <div class="settings-list">
-          <div class="settings-group" data-i18n="settings.agent">agent</div>
+          <div class="settings-group" data-i18n="settings.yourAgent">Your agent</div>
           <section class="setting-card" id="profile-setting">
             <button class="setting-head" type="button" aria-expanded="true">
               <span class="setting-icon">✦</span>
@@ -1273,6 +1273,33 @@
               </fieldset>
               <button class="primary-button" id="save-profile" type="button" data-i18n="set.profile.saveSettings">Save settings</button>
               <p class="form-status" id="profile-status" role="status"></p>
+            </div>
+          </section>
+          <section class="setting-card" id="providers-setting">
+            <button class="setting-head" type="button">
+              <span class="setting-icon">⚿</span>
+              <span><strong data-i18n="key.title">AI key</strong><small id="providers-summary">No key yet</small></span>
+              <span class="chevron">&rsaquo;</span>
+            </button>
+            <div class="setting-body">
+              <p class="section-intro" data-i18n="key.intro">Your agent thinks with an AI model you pay for directly. Paste a key and sudo works out whose it is.</p>
+              <label for="auto-key" class="sr-only" data-i18n="key.title">AI key</label>
+              <div class="key-box">
+                <input id="auto-key" type="password" autocomplete="off" spellcheck="false" data-i18n-attr="placeholder:key.placeholder" placeholder="Paste a key">
+                <span class="key-detect" id="key-detect" hidden></span>
+              </div>
+              <button class="primary-button" id="save-auto-key" type="button" data-i18n="key.save">Save key</button>
+              <p class="form-status" id="auto-key-status" role="status"></p>
+
+              <div class="key-list" id="key-list" hidden></div>
+              <p class="key-empty" id="key-empty" data-i18n="key.none">No key yet. Your agent needs one to think.</p>
+
+              <button class="info-link" type="button" aria-expanded="false" aria-controls="providers-info" data-i18n="key.which">Which key should I get? ⓘ</button>
+              <div class="info-bubble" id="providers-info" data-i18n-html="key.whichBody">
+                <strong>OpenRouter</strong> is the one to get if you get one: a single key for nearly every model, and it also powers reading images and searching your agent's memory.<br><br>
+                A key straight from <strong>DeepSeek, OpenAI, Anthropic or Google</strong> runs your agent on that company's model, usually cheaper if you already pay them.<br><br>
+                Keys stay on this device and only ever go to the company they belong to.
+              </div>
             </div>
           </section>
           <section class="setting-card" id="routing-setting">
@@ -1360,16 +1387,33 @@
               </div>
             </div>
           </section>
-          <section class="setting-card" id="files-setting">
+          <section class="setting-card" id="language-setting">
             <button class="setting-head" type="button" aria-expanded="false">
-              <span class="setting-icon">◫</span>
-              <span><strong data-i18n="set.files.whatSudoKnows">What sudo knows</strong><small id="files-summary">Identity, notes and memory</small></span>
+              <span class="setting-icon" aria-hidden="true">文</span>
+              <span><strong data-i18n="lang.title">Language</strong><small id="language-summary">English · replies match you</small></span>
               <span class="chevron">›</span>
             </button>
             <div class="setting-body">
-              <p class="section-intro" data-i18n="set.files.thesePlainTextFiles">These plain-text files are your agent's personality and everything it has remembered about you. Nothing is hidden — read any of it.</p>
-              <div id="files-list"></div>
-              <p class="microcopy" data-i18n-html="set.files.storedOnThisDevice">Stored on this device at <code>/opt/sudo/agent-workspace</code>. To edit them, turn on terminal access below.</p>
+              <div class="settings-subgroup" id="ui-language-label" data-i18n="lang.dashHead">dashboard language</div>
+              <p class="section-intro" data-i18n="lang.dashIntro">The words on these screens. Changes right away, on every phone and computer that opens this dashboard.</p>
+              <div class="option-grid lang-grid" id="ui-language-options" role="group" aria-labelledby="ui-language-label">
+                <button type="button" data-value="en" lang="en"><strong>English</strong></button>
+                <button type="button" data-value="es" lang="es"><strong>Español</strong></button>
+                <button type="button" data-value="zh" lang="zh-CN"><strong>中文</strong></button>
+                <button type="button" data-value="ar" lang="ar" dir="rtl"><strong>العربية</strong></button>
+              </div>
+              <p class="form-status" id="ui-language-status" role="status"></p>
+
+              <div class="settings-subgroup" id="agent-language-label" data-i18n="lang.agentHead">agent’s reply language</div>
+              <p class="section-intro" data-i18n="lang.agentIntro">The language {agent} answers you in. This only changes the agent’s replies, not this dashboard. You can always ask it for another language right in the chat.</p>
+              <div class="option-grid lang-grid" id="agent-language-options" role="group" aria-labelledby="agent-language-label">
+                <button type="button" data-value="auto" class="lang-auto"><strong data-i18n="lang.agentAuto">Match how I write to it</strong><small data-i18n="lang.agentAutoNote">Replies in whatever language you use</small></button>
+                <button type="button" data-value="en" lang="en"><strong>English</strong></button>
+                <button type="button" data-value="es" lang="es"><strong>Español</strong></button>
+                <button type="button" data-value="zh" lang="zh-CN"><strong>中文</strong></button>
+                <button type="button" data-value="ar" lang="ar" dir="rtl"><strong>العربية</strong></button>
+              </div>
+              <p class="form-status" id="agent-language-status" role="status"></p>
             </div>
           </section>
           <section class="setting-card" id="theme-setting">
@@ -1401,96 +1445,7 @@
               <p class="form-status" id="theme-status" role="status"></p>
             </div>
           </section>
-          <section class="setting-card" id="language-setting">
-            <button class="setting-head" type="button" aria-expanded="false">
-              <span class="setting-icon" aria-hidden="true">文</span>
-              <span><strong data-i18n="lang.title">Language</strong><small id="language-summary">English · replies match you</small></span>
-              <span class="chevron">›</span>
-            </button>
-            <div class="setting-body">
-              <div class="settings-subgroup" id="ui-language-label" data-i18n="lang.dashHead">dashboard language</div>
-              <p class="section-intro" data-i18n="lang.dashIntro">The words on these screens. Changes right away, on every phone and computer that opens this dashboard.</p>
-              <div class="option-grid lang-grid" id="ui-language-options" role="group" aria-labelledby="ui-language-label">
-                <button type="button" data-value="en" lang="en"><strong>English</strong></button>
-                <button type="button" data-value="es" lang="es"><strong>Español</strong></button>
-                <button type="button" data-value="zh" lang="zh-CN"><strong>中文</strong></button>
-                <button type="button" data-value="ar" lang="ar" dir="rtl"><strong>العربية</strong></button>
-              </div>
-              <p class="form-status" id="ui-language-status" role="status"></p>
-
-              <div class="settings-subgroup" id="agent-language-label" data-i18n="lang.agentHead">agent’s reply language</div>
-              <p class="section-intro" data-i18n="lang.agentIntro">The language {agent} answers you in. This only changes the agent’s replies, not this dashboard. You can always ask it for another language right in the chat.</p>
-              <div class="option-grid lang-grid" id="agent-language-options" role="group" aria-labelledby="agent-language-label">
-                <button type="button" data-value="auto" class="lang-auto"><strong data-i18n="lang.agentAuto">Match how I write to it</strong><small data-i18n="lang.agentAutoNote">Replies in whatever language you use</small></button>
-                <button type="button" data-value="en" lang="en"><strong>English</strong></button>
-                <button type="button" data-value="es" lang="es"><strong>Español</strong></button>
-                <button type="button" data-value="zh" lang="zh-CN"><strong>中文</strong></button>
-                <button type="button" data-value="ar" lang="ar" dir="rtl"><strong>العربية</strong></button>
-              </div>
-              <p class="form-status" id="agent-language-status" role="status"></p>
-            </div>
-          </section>
-          <div class="settings-group" data-i18n="settings.apiManagement">api management</div>
-          <section class="setting-card" id="providers-setting">
-            <button class="setting-head" type="button">
-              <span class="setting-icon">⚿</span>
-              <span><strong data-i18n="set.providers.apiKeysBillingSource">API keys &amp; billing source</strong><small id="providers-summary">None saved</small></span>
-              <span class="chevron">&rsaquo;</span>
-            </button>
-            <div class="setting-body">
-
-              <div class="label-row">
-                <span class="label-text" data-i18n="set.providers.whereYourAiUsage">Where your AI usage is billed</span>
-                <button class="info-btn" type="button" data-info="key-info" aria-expanded="false" aria-label="About API keys" data-i18n-attr="aria-label:set.providers.aboutApiKeys">i</button>
-              </div>
-              <div class="info-bubble" id="key-info" data-i18n-html="set.providers.yourAgentThinksBy">
-                Your agent thinks by calling AI models, and someone has to pay for each call.<br><br>
-                <strong>Your own key</strong> — you sign up at <code>openrouter.ai</code>, paste your key here, and pay them directly. The key lives on this device and never reaches us. No accounts to create with us, no subscription.
-              </div>
-
-              <div class="choice-row" id="key-source-options">
-                <button type="button" data-value="sudo" hidden><strong data-i18n="set.providers.sudoCredits">Sudo credits</strong><small data-i18n="set.providers.weHandleBilling">We handle billing</small></button>
-                <button type="button" data-value="own"><strong data-i18n="set.providers.myOwnKey">My own key</strong><small data-i18n="set.providers.youBillDirect">You bill direct</small></button>
-              </div>
-
-              <div id="own-key-wrap" hidden>
-                <div class="label-row">
-                  <label for="own-key" data-i18n="set.providers.openrouterApiKey">OpenRouter API key</label>
-                </div>
-                <input id="own-key" type="password" placeholder="sk-or-v1-…" autocomplete="off" spellcheck="false">
-                <p class="key-state" id="key-state">no key saved</p>
-                <p class="microcopy" data-i18n="set.providers.savedOnThisDevice">Saved on this device and sent only to the provider it belongs to. It never reaches us. Anyone who can get into the device can read it, so treat it like the password to your account there.</p>
-              </div>
-
-              <button class="primary-button" id="save-keys" type="button" data-i18n="set.providers.save">Save</button>
-              <p class="form-status" id="keys-status" role="status"></p>
-
-              <div id="byo-keys-wrap" hidden>
-              <div class="settings-subgroup" data-i18n="set.providers.bringYourOwnKeys">bring your own keys</div>
-
-              <p class="section-intro" data-i18n="set.providers.pasteAKeyAnd">Paste a key and sudo works out who it belongs to. Everything stays on this device.</p>
-
-              <label for="auto-key" data-i18n="set.providers.pasteAnyApiKey">Paste any API key</label>
-              <input id="auto-key" type="password" autocomplete="off" spellcheck="false" placeholder="sk-… or AIza…">
-              <p class="microcopy" id="auto-key-hint" data-i18n="set.providers.openrouterOpenaiAnthropicGemini">OpenRouter, OpenAI, Anthropic, Gemini, Venice or DeepSeek — no need to say which.</p>
-              <button class="primary-button" id="save-auto-key" type="button" data-i18n="set.connectors.saveKey">Save key</button>
-              <p class="form-status" id="auto-key-status" role="status"></p>
-
-              <div class="settings-subgroup" data-i18n="set.providers.orChooseTheProvider">or choose the provider yourself</div>
-              <div id="provider-list"></div>
-              <p class="form-status" id="providers-status" role="status"></p>
-
-              <button class="info-link" type="button" aria-expanded="false" aria-controls="providers-info" data-i18n="set.providers.whichOneShouldI">Which one should I add ⓘ</button>
-              <div class="info-bubble" id="providers-info" data-i18n-html="set.providers.youDonTNeed">
-                <strong>You don't need any of these.</strong> Sudo credits cover everything out of the box.<br><br>
-                <strong>OpenRouter</strong> is the one to add if you only add one — a single key reaching most models from every provider.<br><br>
-                A direct key (OpenAI, Anthropic, Gemini) is usually cheaper per message for that provider's own models, and worth it if you already pay them.<br><br>
-                Keys never leave the device except to the provider they belong to. Delete one by clearing the box and saving.
-              </div>
-              </div>
-            </div>
-          </section>
-          <div class="settings-group" data-i18n="settings.security">security</div>
+          <div class="settings-group" data-i18n="settings.safety">Safety</div>
           <section class="setting-card" id="abilities-setting">
             <button class="setting-head" type="button" aria-expanded="false">
               <span class="setting-icon">⚡</span>
@@ -1630,6 +1585,7 @@
               <p class="form-status" id="spend-status" role="status"></p>
             </div>
           </section>
+          <div class="settings-group" data-i18n="settings.device">Device</div>
           <section class="setting-card" id="update-setting">
             <button class="setting-head" type="button" aria-expanded="false">
               <span class="setting-icon">⟳</span>
@@ -1659,7 +1615,6 @@
               </p>
             </div>
           </section>
-          <div class="settings-group" data-i18n="settings.deviceDeveloper">device &amp; developer</div>
           <section class="setting-card" id="access-setting">
             <button class="setting-head" type="button" aria-expanded="false">
               <span class="setting-icon">⌁</span>
@@ -1824,7 +1779,6 @@
               <p class="microcopy" data-i18n="set.access.autoDetectedAtSetup">Auto-detected at setup. Controls which Wi‑Fi channels the device is allowed to use — only change this if you've moved it to a different country.</p>
 </div>
           </section>
-
           <section class="setting-card" id="ssh-setting">
             <button class="setting-head" type="button" aria-expanded="false">
               <span class="setting-icon">⌘</span>
@@ -1941,7 +1895,7 @@
               </div>
             </div>
           </section>
-          <div class="settings-group" data-i18n="settings.billingCredits">billing &amp; credits</div>
+          <div class="settings-group" data-i18n="settings.billingCredits">Billing & credits</div>
           <section class="setting-card" id="billing-setting">
             <button class="setting-head" type="button" aria-expanded="false">
               <span class="setting-icon">▭</span>
@@ -1958,8 +1912,7 @@
               <p class="form-status error-text" id="billing-error" role="alert"></p>
             </div>
           </section>
-
-          <div class="settings-group" data-i18n="settings.reset">reset</div>
+          <div class="settings-group" data-i18n="settings.reset">Reset</div>
           <section class="setting-card" id="reset-setting">
             <button class="setting-head" type="button" aria-expanded="false">
               <span class="setting-icon">↺</span>
@@ -1979,9 +1932,24 @@
               <p class="form-status" id="reset-status" role="status"></p>
             </div>
           </section>
+          <!-- Shown in the Home tab now (the agent workspace); kept for its summary code. -->
+          <section class="setting-card" id="files-setting" hidden>
+            <button class="setting-head" type="button" aria-expanded="false">
+              <span class="setting-icon">◫</span>
+              <span><strong data-i18n="set.files.whatSudoKnows">What sudo knows</strong><small id="files-summary">Identity, notes and memory</small></span>
+              <span class="chevron">›</span>
+            </button>
+            <div class="setting-body">
+              <p class="section-intro" data-i18n="set.files.thesePlainTextFiles">These plain-text files are your agent's personality and everything it has remembered about you. Nothing is hidden — read any of it.</p>
+              <div id="files-list"></div>
+              <p class="microcopy" data-i18n-html="set.files.storedOnThisDevice">Stored on this device at <code>/opt/sudo/agent-workspace</code>. To edit them, turn on terminal access below.</p>
+            </div>
+          </section>
+
+          
 
 
-          <div class="version-note" data-i18n="settings.sudoV04Running">sudo · v0.4 · running on your Raspberry Pi</div>
+          <div class="version-note" id="version-note" data-i18n="settings.runningOnPi">sudo · running on your Raspberry Pi</div>
         </div>
       </section>
     </main>
@@ -2639,50 +2607,6 @@
         }
       } catch (_) {
         // Keep the written greeting. A greeting is not worth an error message.
-      }
-    }
-
-    function selectKeySource(value) {
-      state.keySource = value;
-      document.querySelectorAll('#key-source-options button').forEach(button => {
-        const selected = button.dataset.value === value;
-        button.classList.toggle('selected', selected);
-        button.setAttribute('aria-pressed', String(selected));
-      });
-      // Nothing to paste a key into while Sudo is doing the billing. The whole
-      // bring-your-own surface belongs to the right-hand choice, not just the
-      // OpenRouter box.
-      const own = value === 'own';
-      $('own-key-wrap').hidden = !own;
-      $('byo-keys-wrap').hidden = !own;
-    }
-
-    async function saveKeys() {
-      const button = $('save-keys');
-      const status = $('keys-status');
-      const entered = $('own-key').value.trim();
-      if (state.keySource === 'own' && !entered && !state.status?.has_own_key) {
-        status.textContent = t('keys.pasteFirst');
-        return;
-      }
-      button.disabled = true;
-      status.textContent = t('common.saving');
-      try {
-        const body = { openrouter_key_source: state.keySource };
-        if (entered) body.user_openrouter_key = entered;
-        const data = await api('/api/agent/keys', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        });
-        $('own-key').value = '';
-        renderStatus(data);
-        status.textContent = t('keys.savedRestarting');
-        setTimeout(() => { status.textContent = ''; }, 4000);
-      } catch (error) {
-        status.textContent = error.message;
-      } finally {
-        button.disabled = false;
       }
     }
 
@@ -5133,6 +5057,9 @@
       }
       const current = info.current || '1.0.0';
       $('update-current').textContent = current;
+      // The footer says which version this is (it once read a fixed "v0.4").
+      $('version-note').removeAttribute('data-i18n');
+      $('version-note').textContent = t('settings.versionNote', { v: current });
       $('update-summary').textContent = t('update.version', { v: current });
       const phase = info.state || 'idle';
       const pill = $('update-pill');
@@ -5317,72 +5244,72 @@
 
     // --- provider keys ---------------------------------------------------
     const PROVIDERS = [
-      { id: 'openrouter', name: 'OpenRouter', hint: 'prov.hint.openrouter' },
-      { id: 'openai', name: 'OpenAI', hint: 'prov.hint.openai' },
-      { id: 'anthropic', name: 'Anthropic', hint: 'prov.hint.anthropic' },
-      { id: 'gemini', name: 'Google Gemini', hint: 'prov.hint.gemini' },
-      { id: 'venice', name: 'Venice AI', hint: 'prov.hint.venice' },
-      { id: 'deepseek', name: 'DeepSeek', hint: 'prov.hint.deepseek' },
+      { id: 'openrouter', name: 'OpenRouter' },
+      { id: 'deepseek', name: 'DeepSeek' },
+      { id: 'openai', name: 'OpenAI' },
+      { id: 'anthropic', name: 'Anthropic' },
+      { id: 'gemini', name: 'Google Gemini' },
     ];
 
+    // Same rules as detect_provider() in server.py, so the box can say whose
+    // key it is while it is being pasted. A bare sk- is DeepSeek when exactly
+    // 32 hex characters follow, else OpenAI's older format.
+    function detectKeyProvider(value) {
+      const k = (value || '').trim();
+      const l = k.toLowerCase();
+      if (!k) return null;
+      if (l.startsWith('sk-or-')) return 'openrouter';
+      if (l.startsWith('sk-ant-')) return 'anthropic';
+      if (l.startsWith('aiza')) return 'gemini';
+      if (/^sk-(proj|svcacct|admin)-/.test(l)) return 'openai';
+      if (l.startsWith('sk-')) return /^sk-[0-9a-f]{32}$/.test(k) ? 'deepseek' : 'openai';
+      return null;
+    }
+
+    function renderKeyDetect() {
+      const chip = $('key-detect');
+      const value = $('auto-key').value;
+      const found = detectKeyProvider(value);
+      chip.hidden = !value.trim();
+      chip.classList.toggle('unknown', !found);
+      chip.textContent = found
+        ? t('key.detected', { name: PROVIDERS.find(p => p.id === found).name })
+        : t('key.unknown');
+    }
+
+    // The saved keys: whose, its last four characters, which one the agent is
+    // thinking with, and a remove that asks once.
     function renderProviders(hints) {
       state.providerHints = hints;
-      const wrap = $('provider-list');
-      // A redraw (a language switch, another save) keeps whatever is typed.
-      const typed = {};
-      PROVIDERS.forEach(provider => {
-        const field = $('key-' + provider.id);
-        if (field && field.value) typed[provider.id] = field.value;
+      const brain = state.status && state.status.agent_brain;
+      const list = $('key-list');
+      list.replaceChildren();
+      PROVIDERS.filter(p => hints && hints[p.id]).forEach(p => {
+        const row = hEl('div', 'key-row');
+        const who = hEl('div', 'key-who');
+        who.append(hEl('strong', '', p.name));
+        const dots = hEl('span', 'key-dots', '•••• ' + hints[p.id]);
+        dots.dir = 'ltr';
+        who.append(dots);
+        row.append(hEl('span', 'key-logo', p.name[0]), who);
+        if (brain && brain.provider === p.id) row.append(hEl('span', 'key-pill', t('key.inUse')));
+        const rm = hEl('button', 'key-remove', t('key.remove'));
+        rm.type = 'button';
+        rm.addEventListener('click', () => {
+          if (rm.dataset.confirm) { removeProviderKey(p); return; }
+          rm.dataset.confirm = '1';
+          rm.textContent = t('key.removeConfirm');
+          rm.classList.add('confirm');
+          setTimeout(() => { delete rm.dataset.confirm; rm.textContent = t('key.remove'); rm.classList.remove('confirm'); }, 4000);
+        });
+        row.append(rm);
+        list.append(row);
       });
-      wrap.replaceChildren();
-      PROVIDERS.forEach(provider => {
-        const saved = hints && hints[provider.id];
-        const row = document.createElement('div');
-        row.className = 'provider-row';
-        const label = document.createElement('label');
-        label.htmlFor = 'key-' + provider.id;
-        label.textContent = provider.name;
-        if (saved) {
-          const tag = document.createElement('em');
-          tag.className = 'saved-tag';
-          tag.textContent = t('prov.savedTag', { hint: saved });
-          label.append(' ', tag);
-        }
-        const input = document.createElement('input');
-        input.id = 'key-' + provider.id;
-        input.type = 'password';
-        input.autocomplete = 'off';
-        input.spellcheck = false;
-        input.placeholder = saved ? t('prov.replacePlaceholder') : t('set.connectors.pasteYourKey');
-        if (typed[provider.id]) input.value = typed[provider.id];
-        const small = document.createElement('small');
-        small.textContent = t(provider.hint);
-        if (saved) {
-          // An empty box means "untouched", so it can never delete a stored key.
-          // That is what keeps a blank field from wiping one by accident, and it
-          // is also why removing needs to be its own deliberate action.
-          const remove = document.createElement('button');
-          remove.type = 'button';
-          remove.className = 'link-danger';
-          remove.textContent = t('prov.remove');
-          remove.addEventListener('click', () => removeProviderKey(provider));
-          small.append(' · ', remove);
-        }
-        row.append(label, input, small);
-        wrap.appendChild(row);
-      });
-      const save = document.createElement('button');
-      save.className = 'primary-button';
-      save.textContent = t('prov.saveKeys');
-      save.addEventListener('click', saveProviderKeys);
-      wrap.appendChild(save);
-
-      // One card now covers both halves, so the summary has to say which one
-      // is actually in force rather than only counting keys.
-      const count = PROVIDERS.filter(x => hints && hints[x.id]).length;
-      $('providers-summary').textContent = count
-        ? tn('prov.keysSaved', count)
-        : t('prov.usingCredits');
+      list.hidden = !list.children.length;
+      $('key-empty').hidden = !!list.children.length;
+      $('providers-summary').textContent = brain
+        ? t('key.summaryInUse', { name: brain.name })
+        : t('key.summaryNone');
     }
 
     // One box, provider worked out from the key's prefix. The per-provider
@@ -5551,11 +5478,12 @@
           body: JSON.stringify({ auto_key: value }),
         });
         field.value = '';
-        const names = { openrouter: 'OpenRouter', openai: 'OpenAI', anthropic: 'Anthropic',
-                        gemini: 'Google Gemini', venice: 'Venice AI', deepseek: 'DeepSeek' };
-        status.textContent = t('prov.savedAs', { name: names[data.detected] || data.detected });
+        renderKeyDetect();
+        const p = PROVIDERS.find(x => x.id === data.detected);
+        status.textContent = t('key.savedAs', { name: p ? p.name : data.detected });
         state.status = data;
         renderProviders(data.provider_key_hints);
+        if (data.answering_with) $('answering-with').textContent = data.answering_with.label;
         setTimeout(() => { status.textContent = ''; }, 3000);
       } catch (error) {
         status.textContent = error.message;
@@ -5591,7 +5519,7 @@
 
 
     async function removeProviderKey(provider) {
-      const status = $('providers-status');
+      const status = $('auto-key-status');
       status.textContent = t('prov.removing', { name: provider.name });
       try {
         const data = await api('/api/agent/provider-keys', {
@@ -5602,33 +5530,8 @@
         state.status = data;
         renderProviders(data.provider_key_hints);
         if (data.answering_with) $('answering-with').textContent = data.answering_with.label;
-        status.textContent = t('prov.removed', { name: provider.name });
+        status.textContent = t('key.removed', { name: provider.name });
         setTimeout(() => { status.textContent = ''; }, 2500);
-      } catch (error) {
-        status.textContent = error.message;
-      }
-    }
-
-    async function saveProviderKeys() {
-      const status = $('providers-status');
-      status.textContent = t('common.saving');
-      // Only send boxes the user actually typed in — an untouched box must not
-      // wipe a key that is already stored.
-      const keys = {};
-      PROVIDERS.forEach(provider => {
-        const field = $('key-' + provider.id);
-        if (field && field.value !== '') keys[provider.id] = field.value.trim();
-      });
-      try {
-        const data = await api('/api/agent/provider-keys', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ keys }),
-        });
-        PROVIDERS.forEach(provider => { const f = $('key-' + provider.id); if (f) f.value = ''; });
-        renderProviders(data.provider_key_hints);
-        status.textContent = t('common.saved');
-        setTimeout(() => { status.textContent = ''; }, 2000);
       } catch (error) {
         status.textContent = error.message;
       }
@@ -6140,8 +6043,11 @@
     // Show/hide the whole Sudo-credits / billing surface to match BILLING_ENABLED.
     // With it off (the shipping default) the box is zero-cloud, BYO-key only.
     function applyBillingVisibility() {
-      const group = $('billing-setting')?.closest('.settings-group');
-      if (group) group.hidden = !BILLING_ENABLED;
+      // The group label is the card's sibling, not its parent: hide both.
+      const card = $('billing-setting');
+      if (card) card.hidden = !BILLING_ENABLED;
+      const label = document.querySelector('.settings-group[data-i18n="settings.billingCredits"]');
+      if (label) label.hidden = !BILLING_ENABLED;
       const sudoChoice = document.querySelector('#key-source-options button[data-value="sudo"]');
       if (sudoChoice) sudoChoice.hidden = !BILLING_ENABLED;
     }
@@ -6272,12 +6178,6 @@
       ].filter(Boolean).join(' · ');
     }
 
-    function renderKeyState(status) {
-      $('key-state').textContent = status.own_key_hint
-        ? t('keys.endsIn', { hint: status.own_key_hint })
-        : t('keys.none');
-    }
-
     function renderProfileSummary(status) {
       const personality = status.personality || 'friendly';
       const label = PERSONALITY_LABELS[personality] ? t(PERSONALITY_LABELS[personality]) : personality;
@@ -6331,8 +6231,7 @@
       $('heartbeat-toggle').checked = !!status.heartbeat_enabled;
       renderSpend(status);
       renderAbilitiesSummary(status);
-      selectKeySource(BILLING_ENABLED ? (status.openrouter_key_source || 'own') : 'own');
-      renderKeyState(status);
+      renderProviders(status.provider_key_hints);
       renderProfileSummary(status);
       renderLanguageCard();
       selectPersonality(status.personality || 'friendly');
@@ -6482,7 +6381,6 @@
         renderSetupGuide();
         renderSpend(s, true);
         renderAbilitiesSummary(s);
-        renderKeyState(s);
         renderProfileSummary(s);
         renderGithub(s, true);
       }
@@ -6721,9 +6619,8 @@
         button.setAttribute('aria-expanded', String(opening));
       });
     });
-    document.querySelectorAll('#key-source-options button').forEach(button =>
-      button.addEventListener('click', () => selectKeySource(button.dataset.value)));
-    $('save-keys').addEventListener('click', saveKeys);
+    $('auto-key').addEventListener('input', renderKeyDetect);
+    $('auto-key').addEventListener('keydown', event => { if (event.key === 'Enter') saveAutoKey(); });
     $('exec-toggle').addEventListener('change', () => saveAbilities('exec-toggle'));
     $('subagent-toggle').addEventListener('change', () => saveAbilities('subagent-toggle'));
     $('skills-toggle').addEventListener('change', () => saveAbilities('skills-toggle'));

@@ -381,34 +381,55 @@ PROVIDERS = ("openrouter", "openai", "anthropic", "gemini", "venice", "deepseek"
 ROUTING_MODES = ("auto", "fixed")
 
 
-# How a pasted key is recognised. Prefixes are the providers' own, and are
-# checked longest-first so sk-ant-/sk-proj- cannot be swallowed by a bare sk-.
-KEY_PATTERNS = (
-    ("openrouter", ("sk-or-v1-", "sk-or-")),
-    ("anthropic", ("sk-ant-",)),
-    ("gemini", ("aizasy", "aiza")),
-    ("deepseek", ("sk-ds-",)),
-    ("venice", ("vn_", "sk-venice-")),
-    ("openai", ("sk-proj-", "sk-svcacct-", "sk-")),
-)
-
-
 def detect_provider(key):
     """Which provider a pasted key belongs to, or None if unrecognised.
 
-    One box beats six: nobody memorises which prefix belongs to whom, and
-    picking the wrong row silently sends the key nowhere useful.
+    One box beats six: nobody memorises which prefix belongs to whom. A bare
+    "sk-" is both DeepSeek's and OpenAI's older format; DeepSeek's is exactly
+    32 lowercase hex characters after it, which tells them apart. The same
+    rules run in the page (detectKeyProvider) so it can say whose key it is
+    while it is being pasted.
     """
     candidate = (key or "").strip()
     if not candidate:
         return None
     lowered = candidate.lower()
-    best, best_len = None, 0
-    for provider, prefixes in KEY_PATTERNS:
-        for prefix in prefixes:
-            if lowered.startswith(prefix) and len(prefix) > best_len:
-                best, best_len = provider, len(prefix)
-    return best
+    if lowered.startswith("sk-or-"):
+        return "openrouter"
+    if lowered.startswith("sk-ant-"):
+        return "anthropic"
+    if lowered.startswith("aiza"):
+        return "gemini"
+    if lowered.startswith(("sk-proj-", "sk-svcacct-", "sk-admin-")):
+        return "openai"
+    if lowered.startswith("sk-"):
+        return "deepseek" if re.fullmatch(r"[0-9a-f]{32}", candidate[3:]) else "openai"
+    return None
+
+
+# The model the agent runs on when a provider's own key is the only one
+# saved. OpenRouter wins when it is there (every model, images, memory
+# search); otherwise the first of these with a key. Model ids are from
+# OpenClaw's own catalog; configure-openclaw.sh keeps the same table.
+DIRECT_BRAINS = (
+    ("anthropic", "Anthropic", "Claude Sonnet 4.6"),
+    ("openai", "OpenAI", "GPT-5.4 mini"),
+    ("gemini", "Google Gemini", "Gemini 3.5 Flash"),
+    ("deepseek", "DeepSeek", "DeepSeek Chat"),
+)
+
+
+def agent_brain(cfg):
+    """{provider, name, model} for the key the agent thinks with, or None."""
+    if effective_openrouter_key(cfg):
+        return {"provider": "openrouter", "name": "OpenRouter", "model": ""}
+    if agent_backend(cfg) != "openclaw":
+        return None
+    keys = cfg.get("provider_keys") or {}
+    for provider, name, model in DIRECT_BRAINS:
+        if keys.get(provider):
+            return {"provider": provider, "name": name, "model": model}
+    return None
 
 
 def effective_openrouter_key(cfg):
@@ -434,11 +455,15 @@ def provider_key_hints(cfg):
     ever leaving the device in a response.
     """
     stored = cfg.get("provider_keys") or {}
-    return {
+    hints = {
         name: str(value)[-4:]
         for name, value in stored.items()
         if name in PROVIDERS and value
     }
+    # The older OpenRouter-only box kept its key elsewhere; it is still a key.
+    if "openrouter" not in hints and cfg.get("openrouter_key_source") == "own" and cfg.get("user_openrouter_key"):
+        hints["openrouter"] = str(cfg["user_openrouter_key"])[-4:]
+    return hints
 
 
 def read_wifi_country():
@@ -1008,6 +1033,10 @@ def answering_with(cfg):
     if cfg.get("prefer_local") and local_ready:
         return {"where": "local", "model": LOCAL_MODEL, "via": "on this device, by choice",
                 "label": f"{LOCAL_MODEL} · on this device"}
+    brain = agent_brain(cfg)
+    if brain and brain["provider"] != "openrouter":
+        return {"where": "cloud", "model": brain["model"], "via": f"your {brain['name']} key",
+                "label": f"{brain['model']} · your {brain['name']} key"}
     if effective_openrouter_key(cfg):
         alias = resolve_model(cfg.get("model"))
         label = MODEL_LABELS.get(alias, alias)
@@ -1036,11 +1065,12 @@ def setup_status(include_sensitive=False):
     url = public_url()
     data = {
         "wifi_done": os.path.isfile(WIFI_MARKER),
+        "agent_brain": agent_brain(cfg),
         "profile_done": bool(cfg.get("profile_done")),
         "welcome_pending": cfg.get("welcome_pending") or "",
         "cloud_registered": os.path.isfile("/var/lib/sudo-cloud-registered"),
         "agent_ready": os.path.isfile(OPENCLAW_CONFIG if agent_backend(cfg) == "openclaw" else PICOCLAW_CONFIG)
-                       and bool(effective_openrouter_key(cfg)),
+                       and bool(agent_brain(cfg)),
         "agent_name": cfg.get("agent_name", "sudo"),
         "user_name": cfg.get("user_name"),
         "personality": cfg.get("personality", "friendly"),
@@ -3204,7 +3234,7 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                 self.send_json({"error": f"task too long (max {MAX_CHAT_LEN})"}, code=400)
                 return True
             cfg = read_json_file(CONFIG)
-            if cfg.get("agent_backend") != "picoclaw" and not effective_openrouter_key(cfg):
+            if cfg.get("agent_backend") != "picoclaw" and not agent_brain(cfg):
                 self.send_json({"error": "Add an API key in Settings first."}, code=400)
                 return True
             run = start_bg_run(task)
@@ -3526,8 +3556,8 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                 provider = detect_provider(pasted)
                 if pasted and not provider:
                     self.send_json({
-                        "error": "That does not look like a key we recognise. "
-                                 "Pick the provider below and paste it there."
+                        "error": "That doesn't look like a key from OpenRouter, DeepSeek, "
+                                 "OpenAI, Anthropic or Google Gemini."
                     }, code=400)
                     return True
                 if provider:
@@ -3551,6 +3581,10 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                         stored[name] = value
                     else:
                         stored.pop(name, None)
+                        if name == "openrouter":
+                            # The older OpenRouter box's copy goes with it.
+                            cfg.pop("user_openrouter_key", None)
+                            cfg["openrouter_key_source"] = "sudo"
                 cfg["provider_keys"] = stored
 
             if "composio_api_key" in body:
@@ -3677,12 +3711,12 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                     append_chat_log(message, payload["reply"])
                 self.send_json(payload)
 
-            if cfg.get("prefer_local") or not effective_openrouter_key(cfg):
+            if cfg.get("prefer_local") or not agent_brain(cfg):
                 reply = local_model_chat(message, history, cfg)
                 if reply:
                     reply_json({"reply": reply, "source": "local"})
                     return True
-                if effective_openrouter_key(cfg):
+                if agent_brain(cfg):
                     reply = agent_chat(message, session_key)
                     reply_json({"reply": reply, "source": "cloud",
                                 "note": "on-device model unavailable"})

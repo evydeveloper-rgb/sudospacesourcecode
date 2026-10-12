@@ -197,6 +197,40 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .hub-button:hover, .hub-button.active { background: var(--primary); color: var(--on-primary); border-color: var(--primary); }
 .hub-button svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
 .hub-button[hidden], .brand-home[hidden] { display: none; }
+
+/* Settings > AI key: one box that says whose key it is, then the saved keys. */
+.key-box { position: relative; margin: 4px 0 10px; }
+.key-box input { width: 100%; padding-inline-end: 150px; }
+.key-detect {
+  position: absolute; top: 50%; inset-inline-end: 8px; transform: translateY(-50%);
+  max-width: 140px; padding: 4px 10px; border-radius: 999px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  background: var(--ok-tint); color: var(--ok-ink); font-size: .72rem; font-weight: 700;
+}
+.key-detect.unknown { background: var(--surface-container); color: var(--ink-3); }
+.key-detect[hidden] { display: none; }
+.key-list { display: grid; gap: 8px; margin: 18px 0 10px; }
+.key-list[hidden] { display: none; }
+.key-row {
+  display: flex; align-items: center; gap: 12px; padding: 10px 12px;
+  border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface);
+}
+.key-logo {
+  width: 32px; height: 32px; flex: none; display: grid; place-items: center; border-radius: 10px;
+  background: var(--violet-tint); color: var(--primary); font-weight: 800;
+}
+.key-who { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.key-who strong { font-size: .86rem; }
+.key-dots { color: var(--ink-3); font: 600 .74rem var(--font-mono); }
+.key-pill { padding: 3px 9px; border-radius: 999px; background: var(--ok-tint); color: var(--ok-ink); font-size: .7rem; font-weight: 700; }
+.key-remove {
+  padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; background: transparent;
+  color: var(--ink-3); font: inherit; font-size: .74rem; cursor: pointer;
+}
+.key-remove:hover { color: var(--ink); border-color: var(--ink-3); }
+.key-remove.confirm { border-color: var(--error); color: var(--error); }
+.key-empty { margin: 16px 0 8px; color: var(--ink-3); font-size: .8rem; }
+.key-empty[hidden] { display: none; }
+.settings-group[hidden], .setting-card[hidden] { display: none; }
 /* "online" is the normal state, so it is not shown; only a problem is. */
 .device-state:not(.issue) { display: none; }
 
@@ -302,9 +336,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 
 /* Settings section dividers ("your agent" / "device" / "account") */
 .settings-group {
-  margin: 0 0 9px; margin-inline-start: 4px; color: var(--ink-3);
-  font: 700 .62rem/1 var(--font-mono);
-  letter-spacing: .06em; text-transform: uppercase;
+  margin: 0 0 9px; margin-inline-start: 4px; color: var(--ink-2);
+  font: 700 .82rem/1.2 var(--font-sans); letter-spacing: -.01em;
 }
 .settings-group:not(:first-of-type) { margin-top: 22px; }
 .lede { color: var(--muted); margin: 10px 0 0; line-height: 1.5; }

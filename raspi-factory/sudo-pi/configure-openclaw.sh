@@ -32,19 +32,31 @@ export OPENCLAW_STATE_DIR="$STATE_DIR" OPENCLAW_CONFIG_PATH="$OC_CONFIG" HOME=/r
 # The key goes into OpenClaw's own auth store, piped on stdin. Not argv (other
 # processes can read that) and not the gateway's environment: every shell
 # command the agent runs inherits that environment, so `env` would print it.
-key=$(python3 - << 'PY'
+# Which key the agent thinks with: OpenRouter when there is one, else the
+# first provider's own key (agent_brain() in server.py, same order).
+key_line=$(python3 - << 'PY'
 import json
 sudo = json.load(open("/opt/sudo/config.json", encoding="utf-8"))
-# Must match configure-picoclaw.sh and effective_openrouter_key() in server.py.
 pk = sudo.get("provider_keys") or {}
 if pk.get("openrouter"):
-    print(pk["openrouter"])
+    print("openrouter " + pk["openrouter"])
 elif sudo.get("openrouter_key_source", "sudo") == "own" and sudo.get("user_openrouter_key"):
-    print(sudo["user_openrouter_key"])
+    print("openrouter " + sudo["user_openrouter_key"])
+elif sudo.get("openrouter_key"):
+    print("openrouter " + sudo["openrouter_key"])
 else:
-    print(sudo.get("openrouter_key") or "")
+    for p in ("anthropic", "openai", "gemini", "deepseek"):
+        if pk.get(p):
+            print(p + " " + pk[p])
+            break
 PY
 )
+brain="${key_line%% *}"
+key="${key_line#* }"
+[ -n "$key_line" ] || { brain=""; key=""; }
+oc_provider="$brain"
+[ "$brain" = "gemini" ] && oc_provider="google"
+[ "$brain" = "openrouter" ] || KEY_HASH_FILE="$STATE_DIR/.${oc_provider}-key.sha256"
 # OpenClaw refuses to load a plugin whose files are not owned by root. Release
 # bundles built on a Windows machine carried that machine's user id, and the
 # updater kept it, so Sudo's own plugins were silently blocked. Every run puts
@@ -59,12 +71,12 @@ if [ ! -f "$OC_CONFIG" ] || [ "$(cat "$KEY_HASH_FILE" 2>/dev/null)" != "$key_has
   # paste-api-key needs a config to update; seed one from the base if missing.
   [ -f "$OC_CONFIG" ] || cp /opt/sudo-openclaw/openclaw.base.json "$OC_CONFIG"
   if printf '%s\n' "$key" | "$OC_BIN" models auth paste-api-key \
-       --provider openrouter --profile-id openrouter:default >/dev/null 2>&1; then
+       --provider "$oc_provider" --profile-id "$oc_provider:default" >/dev/null 2>&1; then
     printf '%s' "$key_hash" > "$KEY_HASH_FILE"
     chmod 600 "$KEY_HASH_FILE"
-    echo "OpenRouter key stored in OpenClaw's auth store"
+    echo "$brain key stored in OpenClaw's auth store"
   else
-    echo "Could not store the OpenRouter key in OpenClaw"
+    echo "Could not store the $brain key in OpenClaw"
   fi
 fi
 unset key
@@ -162,6 +174,46 @@ allowlist[image_fallback] = {}
 for m, v in ((current.get("agents") or {}).get("defaults") or {}).get("models", {}).items():
     allowlist.setdefault(m, v)
 defaults["models"] = allowlist
+
+# No OpenRouter key, but a provider's own key: the agent runs on that
+# provider's model (ids from OpenClaw's catalog; DIRECT_BRAINS in server.py).
+# Anthropic, OpenAI and Google come as OpenClaw plugins that must be allowed;
+# DeepSeek has none and is defined here as an OpenAI-compatible provider.
+DIRECT = {
+    "anthropic": ("anthropic/claude-sonnet-4-6", "anthropic"),
+    "openai": ("openai/gpt-5.4-mini", "openai"),
+    "gemini": ("google/gemini-3.5-flash", "google"),
+    "deepseek": ("deepseek/deepseek-chat", None),
+}
+SUDO_PROVIDER_PLUGINS = {"anthropic", "openai", "google"}
+pk_all = sudo.get("provider_keys") or {}
+has_or = bool(pk_all.get("openrouter") or sudo.get("openrouter_key")
+              or (sudo.get("openrouter_key_source", "sudo") == "own" and sudo.get("user_openrouter_key")))
+direct = None if has_or else next((p for p in ("anthropic", "openai", "gemini", "deepseek") if pk_all.get(p)), None)
+pl_cfg = cfg.setdefault("plugins", {})
+pl_cfg["allow"] = [x for x in pl_cfg.get("allow", []) if x not in SUDO_PROVIDER_PLUGINS]
+for pid in SUDO_PROVIDER_PLUGINS:
+    pl_cfg.get("entries", {}).pop(pid, None)
+providers_cfg = cfg.setdefault("models", {}).setdefault("providers", {})
+providers_cfg.pop("deepseek", None)
+if direct:
+    model_id, plugin = DIRECT[direct]
+    defaults["model"] = {"primary": model_id}
+    defaults["models"] = {model_id: {}}
+    if plugin:
+        pl_cfg["allow"].append(plugin)
+        pl_cfg.setdefault("entries", {})[plugin] = {"enabled": True}
+        defaults["imageModel"] = {"primary": model_id}   # these read images too
+    else:
+        providers_cfg["deepseek"] = {
+            "baseUrl": "https://api.deepseek.com/v1", "api": "openai-completions",
+            "models": [{"id": "deepseek-chat", "name": "DeepSeek Chat"}]}
+        defaults.pop("imageModel", None)                 # DeepSeek reads text only
+    print(f"Brain: {model_id} (your own {direct} key)")
+if not providers_cfg:
+    cfg["models"].pop("providers", None)
+if not cfg["models"]:
+    cfg.pop("models", None)
 # Memory search embeddings run in the cloud through OpenRouter (same key as
 # chat). Chosen for speed and quality now; the local/ollama path can return
 # later as a privacy toggle. If no key is saved, fall back to keyword-only
@@ -570,7 +622,7 @@ with open(tmp, "w", encoding="utf-8") as f:
     json.dump(cfg, f, indent=2)
 os.chmod(tmp, 0o600)
 os.replace(tmp, out)
-print(f"Wrote {out} (model {primary})")
+print(f"Wrote {out} (model {cfg['agents']['defaults']['model']['primary']})")
 PY
 }
 
