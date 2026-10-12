@@ -198,6 +198,17 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .hub-button svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
 .hub-button[hidden], .brand-home[hidden] { display: none; }
 
+/* Home app: Remove sits apart from Save and Hide, and asks once. */
+.house-remove {
+  margin-inline-start: auto; padding: 8px 14px; border: 1px solid var(--line); border-radius: 999px;
+  background: transparent; color: var(--ink-3); font: inherit; font-size: .8rem; cursor: pointer;
+}
+.house-remove:hover { color: var(--ink); border-color: var(--ink-3); }
+.house-remove.confirm { border-color: var(--error); color: var(--error); }
+.house-hidden { margin-top: 18px; }
+.house-hidden .house-device { align-items: center; }
+.house-hidden .btn-secondary { margin-inline-start: auto; }
+
 /* Settings > AI key: one box that says whose key it is, then the saved keys. */
 .key-box { position: relative; margin: 4px 0 10px; }
 .key-box input { width: 100%; padding-inline-end: 150px; }

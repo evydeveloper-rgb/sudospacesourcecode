@@ -33,6 +33,11 @@ import xml.etree.ElementTree as ET
 HOME_DIR = "/opt/sudo/home"
 DEVICES = os.path.join(HOME_DIR, "devices.json")
 SETTINGS = os.path.join(HOME_DIR, "settings.json")
+# Devices the owner removed: {mac: when}. One that is still on the Wi-Fi
+# comes back on a later scan, but quietly -- no "new device" alert for a
+# device they just told us they know about.
+REMOVED = os.path.join(HOME_DIR, "removed.json")
+REMOVED_QUIET_DAYS = 30
 EVENTS = os.path.join(HOME_DIR, "events.json")
 NOW = os.path.join(HOME_DIR, "now.json")          # short summary the agent reads
 MANUF = os.path.join(HOME_DIR, "manuf.txt")
@@ -496,6 +501,7 @@ def scan(full=True):
         time.sleep(3)
         table = neighbours(dev)
         baseline = bool(devices) or _read(SETTINGS, {}).get("baseline_done")
+        removed = _read(REMOVED, {})
         new_macs = []
         for mac, (ip, st) in table.items():
             d = devices.get(mac)
@@ -503,7 +509,7 @@ def scan(full=True):
                 if not full:
                     continue
                 d = devices[mac] = {"mac": mac, "first_seen": int(now * 1000)}
-                if baseline:
+                if baseline and now * 1000 - removed.get(mac, 0) > REMOVED_QUIET_DAYS * 86400_000:
                     new_macs.append(mac)
             d["ip"] = ip
             if st in LIVE_STATES:
@@ -541,6 +547,10 @@ def scan(full=True):
             # The owner may have renamed a device or marked someone's phone
             # while this scan ran; their choices on disk win over our copy.
             disk = _read(DEVICES, {})
+            # Removed while this scan ran: stays removed until a later scan.
+            gone = _read(REMOVED, {})
+            for mac in [m for m in devices if m not in disk and gone.get(m, 0) > now * 1000 - 600_000]:
+                devices.pop(mac, None)
             for mac, d in devices.items():
                 for key in ("name", "person", "hidden"):
                     if key in disk.get(mac, {}):
@@ -626,8 +636,11 @@ def snapshot(viewer=""):
     s = settings()
     status = _read(os.path.join(HOME_DIR, "presence.json"), {})
     out = []
+    hidden = []
     for d in devices.values():
         if d.get("hidden"):
+            hidden.append({"mac": d["mac"], "label": display_name(d) or d.get("vendor") or "",
+                           "kind": d.get("kind", "other"), "ip": d.get("ip", "")})
             continue
         out.append({
             "mac": d["mac"], "ip": d.get("ip", ""), "name": d.get("name", ""),
@@ -649,6 +662,7 @@ def snapshot(viewer=""):
     with _lock:
         st = dict(_state)
     return {"settings": {k: s[k] for k in DEFAULT_SETTINGS}, "devices": out, "people": people,
+        "hidden": hidden,
             "events": list(reversed(_read(EVENTS, [])[-60:])), "scanning": st["scanning"],
             "last_scan": st["last_full"], "network": st["network"], "error": st["error"]}
 
@@ -671,6 +685,22 @@ def update_device(mac, changes):
         _write(DEVICES, devices)
         _write_now(devices)
         return True
+
+
+def remove_device(mac):
+    """Forget a device: off the list, out of who's home. If it is still on
+    the Wi-Fi it reappears on a later scan, without an alert."""
+    with _lock:
+        devices = _read(DEVICES, {})
+        if mac not in devices:
+            return False
+        devices.pop(mac)
+        _write(DEVICES, devices)
+        removed = _read(REMOVED, {})
+        removed[mac] = int(time.time() * 1000)
+        _write(REMOVED, removed)
+        _write_now(devices)
+    return True
 
 
 def scan_now():

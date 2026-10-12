@@ -2675,6 +2675,24 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                 body = {}
             if not isinstance(body, dict):
                 body = {}
+            if path == "/api/home/device" and self.command == "POST" and body.get("remove"):
+                mac = str(body.get("mac") or "").lower()
+                if not home_scan.remove_device(mac):
+                    self.send_json({"error": "No such device"}, code=404)
+                    return True
+                # Its kids profile and its screen-time history go with it.
+                if home_filter is not None:
+                    try:
+                        if mac in home_filter.profiles():
+                            home_filter.set_profile(mac, {"profile": "none"}, home_scan.devices_raw())
+                    except Exception as exc:      # noqa: BLE001
+                        print(f"kids profile cleanup failed: {exc}")
+                    try:
+                        os.remove(os.path.join("/opt/sudo/home/screentime", re.sub(r"[^0-9a-f]", "", mac) + ".json"))
+                    except OSError:
+                        pass
+                self.send_json(home_scan.snapshot(viewer))
+                return True
             if path == "/api/home/device" and self.command == "POST":
                 if not home_scan.update_device(str(body.get("mac") or "").lower(), body):
                     self.send_json({"error": "No such device"}, code=404)

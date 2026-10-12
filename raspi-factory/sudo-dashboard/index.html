@@ -3864,6 +3864,35 @@
         }
         box.append(section);
       });
+      renderHouseHidden(d, box);
+    }
+
+    // Hidden devices, at the bottom, each with a way back.
+    function renderHouseHidden(d, box) {
+      const hidden = d.hidden || [];
+      if (!hidden.length) return;
+      const more = hEl('details', 'house-fold house-hidden');
+      const sum = hEl('summary');
+      const text = hEl('div', 'house-device-body');
+      text.append(hEl('strong', '', t('house.hiddenTitle', { n: hidden.length })),
+                  hEl('small', 'house-device-sub', t('house.hiddenHint')));
+      sum.append(text);
+      const inner = hEl('ul', 'house-devices');
+      hidden.forEach(x => {
+        const li = hEl('li', 'house-device');
+        const body = hEl('div', 'house-device-body');
+        body.append(hEl('strong', '', x.label || t('house.unknown')));
+        if (x.ip) { const ip = hEl('small', 'house-device-sub mono', x.ip); ip.dir = 'ltr'; body.append(ip); }
+        const icon = hEl('span', 'house-icon');
+        icon.append(houseIcon(x.kind));
+        const back = hEl('button', 'btn-secondary', t('house.unhide'));
+        back.type = 'button';
+        back.addEventListener('click', () => saveHouseDevice(x.mac, { hidden: false }));
+        li.append(icon, body, back);
+        inner.append(li);
+      });
+      more.append(sum, inner);
+      box.append(more);
     }
 
     function houseRow(x, people) {
@@ -3941,7 +3970,8 @@
       const row = hEl('div', 'house-editor-actions');
       const save = hEl('button', 'btn-primary', t('common.save')); save.type = 'submit';
       const hide = hEl('button', 'btn-secondary', t('house.hide')); hide.type = 'button';
-      row.append(save, hide);
+      const remove = hEl('button', 'house-remove', t('house.remove')); remove.type = 'button';
+      row.append(save, hide, remove);
       form.append(facts, nameLabel, personLabel, hint, profLabel, row);
       form.addEventListener('submit', event => {
         event.preventDefault();
@@ -3951,6 +3981,14 @@
         if (wantProfile !== had) saveKids(x.mac, { profile: wantProfile || 'none' });
       });
       hide.addEventListener('click', () => saveHouseDevice(x.mac, { hidden: true }));
+      // Remove asks once: the second tap within a few seconds does it.
+      remove.addEventListener('click', () => {
+        if (remove.dataset.confirm) { saveHouseDevice(x.mac, { remove: true }, t('house.removed')); return; }
+        remove.dataset.confirm = '1';
+        remove.textContent = t('house.removeConfirm');
+        remove.classList.add('confirm');
+        setTimeout(() => { delete remove.dataset.confirm; remove.textContent = t('house.remove'); remove.classList.remove('confirm'); }, 4000);
+      });
       setTimeout(() => name.focus(), 0);
       return form;
     }
@@ -4410,7 +4448,7 @@
       return card;
     }
 
-    async function saveHouseDevice(mac, changes) {
+    async function saveHouseDevice(mac, changes, doneText) {
       try {
         house.data = await api('/api/home/device', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -4418,7 +4456,7 @@
         }, 20000);
         house.editing = null;
         renderHouse();
-        showToast(t('common.saved'));
+        showToast(doneText || t('common.saved'));
       } catch (error) {
         $('house-status').textContent = error.message;
       }
