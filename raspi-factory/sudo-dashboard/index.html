@@ -110,50 +110,40 @@
               <option value="ar" lang="ar">العربية</option>
             </select>
           </label>
-          <div class="welcome-steps" aria-hidden="true">
-            <span id="wdot0"></span><span id="wdot1"></span><span id="wdot2"></span>
-          </div>
+          <div class="welcome-steps" id="welcome-dots" aria-hidden="true"></div>
 
           <!-- step 1 — put it on the home screen -->
           <div class="welcome-step" id="welcome-step0">
             <h1 id="welcome-title" data-i18n="welcome.letSMakeThis">let’s make this yours.</h1>
-            <p class="lede" data-i18n="welcome.firstKeepMeSomewhere">First, keep me somewhere easy to reach. There’s no app to install — this page becomes the app.</p>
-
-            <div class="how-box">
-              <div class="how-head" id="how-title">On your phone</div>
-              <ol id="how-steps"></ol>
-              <p class="microcopy" id="how-note"></p>
-            </div>
-
+            <p class="lede" data-i18n="wel.homeLede">Put me on your home screen. No app store needed.</p>
+            <ol class="wel-how" id="how-steps"></ol>
             <button class="primary-button" id="welcome-next" type="button" data-i18n="welcome.doneNext">Done — next</button>
             <button class="ghost-button" id="welcome-skip" type="button" data-i18n="welcome.skipForNow">Skip for now</button>
           </div>
 
-          <!-- step 2 — how it should look -->
+          <!-- step 2 — carry on at a computer (phones only, optional) -->
           <div class="welcome-step" id="welcome-step1" hidden>
-            <h1 data-i18n="welcome.pickHowIShould">pick how I should look.</h1>
-            <p class="lede" data-i18n="welcome.pickALookTo">Pick a look to start with — tap one to try it. Later on you and I can shape this into something properly yours: your own colours, your own layout, whatever you actually use it for.</p>
-
-            <div class="theme-grid" id="welcome-theme-options">
-              <button type="button" class="theme-opt" data-value="default">
-                <span class="theme-swatch"><i style="background:#f9f9f9"></i><i style="background:#340075"></i><i style="background:#fe6944"></i></span>
-                <strong data-i18n="welcome.default">Default</strong><small data-i18n="welcome.lightPurpleAndCoral">Light, purple and coral.</small>
-              </button>
-              <button type="button" class="theme-opt" data-value="minimal">
-                <span class="theme-swatch"><i style="background:#fafafa"></i><i style="background:#27272a"></i><i style="background:#f2603c"></i></span>
-                <strong data-i18n="welcome.minimal">Minimal</strong><small data-i18n="welcome.nearMonochromeQuiet">Near-monochrome. Quiet.</small>
-              </button>
-              <button type="button" class="theme-opt" data-value="terminal">
-                <span class="theme-swatch"><i style="background:#0f0f11"></i><i style="background:#17171a"></i><i style="background:#fe6944"></i></span>
-                <strong data-i18n="welcome.terminal">Terminal</strong><small data-i18n="welcome.darkCoralAccents">Dark, coral accents.</small>
-              </button>
-              <button type="button" class="theme-opt" data-value="midnight">
-                <span class="theme-swatch"><i style="background:#0d0b14"></i><i style="background:#161222"></i><i style="background:#b994ff"></i></span>
-                <strong data-i18n="welcome.midnight">Midnight</strong><small data-i18n="welcome.darkVioletAccents">Dark, violet accents.</small>
-              </button>
+            <h1 data-i18n="wel.deskTitle">continue on a computer?</h1>
+            <p class="lede" data-i18n="wel.deskLede">The rest is easier on a bigger screen. Optional.</p>
+            <div class="wel-desk-art" aria-hidden="true">
+              <svg viewBox="0 0 220 96">
+                <rect class="a-dev" x="14" y="18" width="38" height="66" rx="8"/><rect class="a-scr" x="19" y="26" width="28" height="46" rx="3"/>
+                <path class="a-wifi" d="M95 44a22 22 0 0 1 30 0M101 52a12 12 0 0 1 18 0"/><circle class="a-dot" cx="110" cy="60" r="3"/>
+                <path class="a-line" d="M60 52h22M138 52h18"/>
+                <rect class="a-dev" x="160" y="26" width="52" height="38" rx="5"/><rect class="a-scr" x="165" y="31" width="42" height="28" rx="2"/><path class="a-dev" d="M152 70h68l-5 7h-58z"/>
+              </svg>
             </div>
-
-            <button class="primary-button" id="welcome-look-next" type="button" data-i18n="welcome.next">Next</button>
+            <ol class="wel-desk-steps">
+              <li><b>1</b><div><span data-i18n-html="wel.desk1">On a computer on the <strong>same Wi‑Fi</strong> as this phone</span> <em class="wel-ssid" id="wel-ssid" hidden></em></div></li>
+              <li><b>2</b><span data-i18n="wel.desk2">open this address:</span></li>
+            </ol>
+            <div class="wel-addr"><code id="wel-addr-name"></code><button type="button" class="soft-button" data-copy-from="wel-addr-name" data-i18n="common.copy">Copy</button></div>
+            <div class="wel-addr-alt" id="wel-addr-ip-row" hidden>
+              <small data-i18n="wel.deskIpHint">If it does not open on your computer, use this one:</small>
+              <div class="wel-addr"><code id="wel-addr-ip"></code><button type="button" class="soft-button" data-copy-from="wel-addr-ip" data-i18n="common.copy">Copy</button></div>
+            </div>
+            <p class="microcopy" data-i18n="wel.deskResume">You pick up right where you left off.</p>
+            <button class="primary-button" id="welcome-phone" type="button" data-i18n="wel.deskStay">Continue on this phone</button>
             <button class="ghost-button" id="welcome-back" type="button" data-i18n="welcome.back">← Back</button>
           </div>
 
@@ -171,6 +161,22 @@
             <button class="primary-button" id="welcome-finish" type="button" data-i18n="welcome.sayHello">Say hello</button>
             <button class="ghost-button" id="welcome-back-2" type="button" data-i18n="welcome.back">← Back</button>
             <p class="form-status" id="welcome-status" role="status"></p>
+          </div>
+
+          <!-- step 4 — personality, written straight into SOUL.md -->
+          <div class="welcome-step welcome-wide" id="welcome-step3" hidden>
+            <h1 data-i18n="wel.persTitle">pick my personality.</h1>
+            <p class="lede" data-i18n="wel.persLede">Choose any that fit. Each one changes my soul file below, and you can edit it yourself too.</p>
+            <div class="pers-chips" id="pers-chips" role="group" data-i18n-attr="aria-label:wel.persTitle"></div>
+            <label class="soul-label" for="soul-editor"><span class="soul-name">SOUL.md</span><span data-i18n="wel.persFile">who your agent is</span></label>
+            <textarea id="soul-editor" class="soul-editor" spellcheck="false" rows="14"></textarea>
+            <div class="pers-files-note">
+              <span class="pers-files-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg></span>
+              <p data-i18n-html="wel.persHome">My other files, like what I know about you (USER.md) and my memory, are under the <strong>house icon</strong>. Open any of them there to read or change it.</p>
+            </div>
+            <button class="primary-button" id="welcome-pers-save" type="button" data-i18n="wel.persSave">Save and start chatting</button>
+            <button class="ghost-button" id="welcome-pers-skip" type="button" data-i18n="welcome.skipForNow">Skip for now</button>
+            <p class="form-status" id="pers-status" role="status"></p>
           </div>
         </div>
       </section>
@@ -1183,9 +1189,19 @@
             <div class="home-preview" id="home-preview" hidden>
               <div class="home-preview-head">
                 <strong id="home-preview-name"></strong>
-                <button type="button" class="soft-button" id="home-preview-close" data-i18n="common.close">Close</button>
+                <span class="home-preview-actions">
+                  <button type="button" class="soft-button" id="home-preview-edit" data-i18n="home.edit" hidden>Edit</button>
+                  <button type="button" class="soft-button" id="home-preview-close" data-i18n="common.close">Close</button>
+                </span>
               </div>
               <pre id="home-preview-body"></pre>
+              <div class="home-editor" id="home-editor" hidden>
+                <textarea id="home-editor-text" spellcheck="false" rows="16"></textarea>
+                <div class="home-editor-actions">
+                  <button type="button" class="primary-button" id="home-preview-save" data-i18n="home.save">Save</button>
+                  <button type="button" class="ghost-button" id="home-preview-cancel" data-i18n="home.cancel">Cancel</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -2048,6 +2064,9 @@
       // Setup shows progress; the running app shows connection state.
       $('step-chip').hidden = tab !== 'welcome';
       $('device-state-wrap').hidden = tab === 'welcome';
+      // Setup is one path: no shortcuts out of it in the top bar.
+      document.querySelector('.topbar .brand-home').hidden = tab === 'welcome';
+      $('hub-button').hidden = tab === 'welcome';
       if (tab !== 'settings' && state.settingPage) closeSettingPage();
       // The WhatsApp setup panel polls while it is open; leaving the tab stops it.
       if (tab !== 'channels') stopWhatsappPoll();
@@ -2305,40 +2324,176 @@
       return 'how.desktop';
     }
 
-    const WELCOME_STEPS = 3;
+    const WELCOME_STEPS = 4;
+
+    // Phones go through all four steps. A computer skips the home-screen and
+    // "continue on a computer" steps: it is already where they lead.
+    function isPhoneFlow() {
+      return platformHowTo() !== 'how.desktop';
+    }
+    function welcomeSeq() {
+      return isPhoneFlow() ? [0, 1, 2, 3] : [2, 3];
+    }
+
+    function renderWelcomeDots() {
+      const seq = welcomeSeq();
+      const pos = Math.max(0, seq.indexOf(state.welcomeStep));
+      $('welcome-dots').replaceChildren(...seq.map((_, i) => hEl('span', i === pos ? 'on' : '')));
+      $('step-now').textContent = t('welcome.stepOf', { n: pos + 1, total: seq.length });
+    }
 
     function renderWelcomeStep(step) {
       state.welcomeStep = step;
-      for (let i = 0; i < WELCOME_STEPS; i += 1) {
-        $('welcome-step' + i).hidden = step !== i;
-        $('wdot' + i).className = step === i ? 'on' : '';
-      }
-      $('step-now').textContent = t('welcome.stepOf', { n: step + 1, total: WELCOME_STEPS });
+      for (let i = 0; i < WELCOME_STEPS; i += 1) $('welcome-step' + i).hidden = step !== i;
+      $('welcome-back-2').hidden = !isPhoneFlow();
+      renderWelcomeDots();
+      if (step === 1) loadWelcomeAddress();
       if (step === 2) setTimeout(() => $('welcome-user').focus(), 60);
+      if (step === 3) loadSoul();
     }
+
+    // Add to home screen: three pictured steps per platform, a few words each.
+    const HOW_ICONS = {
+      share: '<svg viewBox="0 0 24 24"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M6 11H5v10h14V11h-1"/></svg>',
+      add: '<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8v8M8 12h8"/></svg>',
+      done: '<svg viewBox="0 0 24 24"><path d="M5 12.5 10 17 19 7"/></svg>',
+      menu: '<svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>',
+      install: '<svg viewBox="0 0 24 24"><rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M12 8v6M9 11l3 3 3-3"/></svg>',
+      bar: '<svg viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 9h19M15 13.5l2 2 3-3.5"/></svg>',
+    };
+    const HOW_FLOW = {
+      'how.ios': ['share', 'add', 'done'],
+      'how.android': ['menu', 'install', 'done'],
+      'how.tablet': ['menu', 'install', 'done'],
+      'how.desktop': ['bar', 'install', 'done'],
+    };
 
     function renderHowTo() {
       const how = platformHowTo();
-      $('how-title').textContent = t(how + '.title');
-      $('how-steps').replaceChildren(...[1, 2, 3].map(n => {
-        const li = document.createElement('li');
-        li.textContent = t(`${how}.s${n}`);
+      const icons = HOW_FLOW[how];
+      $('how-steps').replaceChildren(...[1, 2, 3].map((n, i) => {
+        const li = hEl('li', 'wel-how-step');
+        const art = hEl('span', 'wel-how-icon');
+        art.innerHTML = HOW_ICONS[icons[i]];
+        art.prepend(hEl('b', '', String(n)));
+        li.append(art, hEl('span', 'wel-how-text', t(`wel.${how.slice(4)}.${n}`)));
         return li;
       }));
-      const note = t(how + '.note');
-      $('how-note').textContent = note;
-      $('how-note').hidden = !note;
     }
 
     function initWelcome() {
       renderHowTo();
-      renderWelcomeStep(0);
+      renderWelcomeStep(welcomeSeq()[0]);
     }
 
     function leaveHomeScreenStep() {
       // Onboarding covered this, so the standalone banner shouldn't repeat it.
       try { localStorage.setItem('sudo-install-hint', 'dismissed'); } catch (_) {}
       renderWelcomeStep(1);
+    }
+
+    // The address to open on a computer: the .local name, and the number
+    // address for computers that cannot look .local names up.
+    async function loadWelcomeAddress() {
+      const name = location.hostname.endsWith('.local') ? location.origin : '';
+      $('wel-addr-name').textContent = name || location.origin;
+      try {
+        const a = await api('/api/device/address');
+        const primary = name || a.local_url || location.origin;
+        $('wel-addr-name').textContent = primary;
+        const ip = a.ip_url && a.ip_url !== primary ? a.ip_url : '';
+        $('wel-addr-ip').textContent = ip;
+        $('wel-addr-ip-row').hidden = !ip;
+        $('wel-ssid').textContent = a.ssid || '';
+        $('wel-ssid').hidden = !a.ssid;
+      } catch (_) { /* the name shown is still right */ }
+    }
+
+    // Personality: traits write a Sudo-managed block at the top of SOUL.md
+    // (the same block Settings > Personality writes); the rest of the file is
+    // the agent's, editable here as plain text.
+    const PERS_TRAITS = ['friendly', 'short', 'professional', 'playful', 'encouraging', 'direct', 'patient'];
+
+    function setSoulBlock(text, name, body) {
+      const start = `<!-- sudo:${name} -->`, end = `<!-- /sudo:${name} -->`;
+      const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      text = text.replace(new RegExp('\\n*' + esc(start) + '[\\s\\S]*?' + esc(end) + '\\n*'), '\n\n');
+      if (!body) return text;
+      const i = text.indexOf('\n');
+      const title = i < 0 ? text : text.slice(0, i);
+      const rest = i < 0 ? '' : text.slice(i + 1);
+      return `${title}\n\n${start}\n${body}\n${end}\n\n` + rest.replace(/^\n+/, '');
+    }
+
+    function renderPersChips() {
+      const wrap = $('pers-chips');
+      state.persTraits = state.persTraits || new Set();
+      wrap.replaceChildren(...PERS_TRAITS.map(id => {
+        const b = hEl('button', 'pers-chip' + (state.persTraits.has(id) ? ' on' : ''));
+        b.type = 'button';
+        b.setAttribute('aria-pressed', state.persTraits.has(id) ? 'true' : 'false');
+        b.append(hEl('strong', '', t(`pers.${id}`)), hEl('small', '', t(`pers.${id}Hint`)));
+        b.addEventListener('click', () => {
+          if (state.persTraits.has(id)) state.persTraits.delete(id); else state.persTraits.add(id);
+          const lines = PERS_TRAITS.filter(x => state.persTraits.has(x)).map(x => '- ' + t(`pers.${x}Line`));
+          const ed = $('soul-editor');
+          ed.value = setSoulBlock(ed.value, 'personality', lines.join('\n'));
+          ed.scrollTop = 0;
+          ed.classList.remove('flash'); void ed.offsetWidth; ed.classList.add('flash');
+          renderPersChips();
+        });
+        return b;
+      }));
+    }
+
+    async function loadSoul() {
+      const ed = $('soul-editor'), save = $('welcome-pers-save'), status = $('pers-status');
+      renderPersChips();
+      if (state.soulLoaded) return;
+      ed.disabled = true; save.disabled = true;
+      status.textContent = t('wel.persLoading');
+      // configure writes SOUL.md just after the names are saved; give it time.
+      for (let i = 0; i < 20; i += 1) {
+        try {
+          const d = await api('/api/agent/files');
+          const f = (d.files || []).find(x => x.name === 'SOUL.md');
+          if (f) {
+            ed.value = f.content;
+            state.soulLoaded = true;
+            ed.disabled = false; save.disabled = false;
+            status.textContent = '';
+            return;
+          }
+        } catch (_) { /* retry */ }
+        await new Promise(r => setTimeout(r, 2000));
+      }
+      status.textContent = t('wel.persNoFile');
+    }
+
+    async function savePersonality() {
+      const save = $('welcome-pers-save'), status = $('pers-status');
+      save.disabled = true;
+      status.textContent = t('common.saving');
+      try {
+        await api('/api/agent/files', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: 'SOUL.md', content: $('soul-editor').value }),
+        });
+        status.textContent = '';
+        enterChatAfterWelcome();
+      } catch (error) {
+        status.textContent = error.message;
+        save.disabled = false;
+      }
+    }
+
+    // The end of the welcome: the first hello, then the dashboard.
+    function enterChatAfterWelcome() {
+      $('messages').replaceChildren();
+      state.greeted = false;
+      ensureGreeting(true);
+      if (state.status) renderStatus(state.status);
+      setTab('chat');
     }
 
     async function finishWelcome() {
@@ -2373,13 +2528,9 @@
         state.status = data;
         status.textContent = '';
         button.disabled = false;
-        $('messages').replaceChildren();
-        // Before renderStatus, which greets too: whichever runs first owns the
-        // line, and only this one knows setup just finished.
-        state.greeted = false;
-        ensureGreeting(true);
-        renderStatus(data);
-        setTab('chat');
+        // Names are in; the personality step comes before the chat. The
+        // greeting waits for it (enterChatAfterWelcome).
+        renderWelcomeStep(3);
       } catch (error) {
         status.textContent = error.message;
         button.disabled = false;
@@ -2881,7 +3032,7 @@
         const data = await api('/api/device/read?path=' + encodeURIComponent(entry.path));
         if (data.binary) return showHomePreview(entry.name, t('home.binaryFile'));
         if (data.too_large) return showHomePreview(entry.name, t('home.tooLarge'));
-        showHomePreview(entry.name, data.content || '');
+        showHomePreview(entry.name, data.content || '', data.agent_file || '');
       } catch (error) {
         showHomePreview(entry.name, error.message);
       }
@@ -2902,10 +3053,52 @@
       wrap.append(up, label);
     }
 
-    function showHomePreview(name, text) {
+    // agentFile: the path inside the agent's workspace when the owner may
+    // edit this file (its own SOUL.md, USER.md, notes...), else empty.
+    function showHomePreview(name, text, agentFile) {
       $('home-preview-name').textContent = name;
       $('home-preview-body').textContent = text;
       $('home-preview').hidden = false;
+      state.homeEdit = agentFile ? { name: agentFile, text } : null;
+      $('home-preview-edit').hidden = !agentFile;
+      stopHomeEdit();
+    }
+
+    function startHomeEdit() {
+      if (!state.homeEdit) return;
+      $('home-editor-text').value = state.homeEdit.text;
+      $('home-editor').hidden = false;
+      $('home-preview-body').hidden = true;
+      $('home-preview-edit').hidden = true;
+      $('home-editor-text').focus();
+    }
+
+    function stopHomeEdit() {
+      $('home-editor').hidden = true;
+      $('home-preview-body').hidden = false;
+      $('home-preview-edit').hidden = !state.homeEdit;
+    }
+
+    async function saveHomeEdit() {
+      const edit = state.homeEdit;
+      if (!edit) return;
+      const content = $('home-editor-text').value;
+      const btn = $('home-preview-save');
+      btn.disabled = true;
+      try {
+        await api('/api/agent/files', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: edit.name, content }),
+        });
+        edit.text = content;
+        $('home-preview-body').textContent = content;
+        stopHomeEdit();
+        showToast(t('home.saved'));
+      } catch (error) {
+        showToast(error.message);
+      } finally {
+        btn.disabled = false;
+      }
     }
 
     function fmtBytes(n) {
@@ -6283,6 +6476,7 @@
       // The apps draw their text from data, so they redraw in the new language.
       if (state.tab === 'contacts' && crm.data) renderCrm();
       renderAppArchive();
+      if (state.tab === 'welcome') { renderHowTo(); if (state.welcomeStep === 3) renderPersChips(); }
       if (state.tab === 'house' && house.data) renderHouse();
       if (state.tab === 'screentime') renderScreenTime();
       if (BILLING_ENABLED && state.billing) renderBilling(state.billing);
@@ -6292,7 +6486,7 @@
       if (!$('whatsapp-panel').hidden && state.waInfo && state.waInfo.accounts) renderOcWhatsapp(state.waInfo);
       if (state.tab === 'welcome') {
         renderHowTo();
-        $('step-now').textContent = t('welcome.stepOf', { n: state.welcomeStep + 1, total: WELCOME_STEPS });
+        renderWelcomeDots();
       }
       if (state.settingPage) {
         $('detail-title').textContent = $(state.settingPage).querySelector('.setting-head strong').textContent;
@@ -6529,13 +6723,17 @@
     $('welcome-next').addEventListener('click', leaveHomeScreenStep);
     $('welcome-skip').addEventListener('click', leaveHomeScreenStep);
     $('welcome-back').addEventListener('click', () => renderWelcomeStep(0));
-    $('welcome-look-next').addEventListener('click', () => renderWelcomeStep(2));
+    $('welcome-phone').addEventListener('click', () => renderWelcomeStep(2));
     $('welcome-back-2').addEventListener('click', () => renderWelcomeStep(1));
     $('welcome-finish').addEventListener('click', finishWelcome);
-    // During setup the profile has not been saved yet, so a tap only previews
-    // the theme — finishWelcome() is what writes it.
-    document.querySelectorAll('#welcome-theme-options .theme-opt').forEach(b =>
-      b.addEventListener('click', () => applyTheme(b.dataset.value)));
+    $('welcome-pers-save').addEventListener('click', savePersonality);
+    $('welcome-pers-skip').addEventListener('click', enterChatAfterWelcome);
+    document.querySelectorAll('[data-copy-from]').forEach(b => b.addEventListener('click', () =>
+      copyText($(b.dataset.copyFrom).textContent.trim(), b)));
+    $('home-preview-close').addEventListener('click', () => { $('home-preview').hidden = true; });
+    $('home-preview-edit').addEventListener('click', startHomeEdit);
+    $('home-preview-cancel').addEventListener('click', stopHomeEdit);
+    $('home-preview-save').addEventListener('click', saveHomeEdit);
     $('welcome-agent').addEventListener('keydown', event => {
       if (event.key === 'Enter') finishWelcome();
     });

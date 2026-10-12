@@ -660,6 +660,18 @@ def wifi_current() -> dict:
     return {"state": state, "device": device, "ssid": ssid, "ip": ip}
 
 
+def agent_file_writable(name):
+    """True when the owner may write this workspace file from the dashboard:
+    the agent's own files and its notes, never anything outside them."""
+    if not isinstance(name, str) or not name or ".." in name or name.startswith("/"):
+        return False
+    if name in AGENT_FILES:
+        return True
+    if re.fullmatch(r"(memory|knowledge)/[A-Za-z0-9._ -]+\.md", name):
+        return os.path.isfile(os.path.join(WORKSPACE, name))
+    return False
+
+
 def read_agent_files():
     """The agent's own identity/memory files, for the owner to read."""
     out = []
@@ -2995,6 +3007,36 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             self.send_json({"workspace": WORKSPACE, "files": read_agent_files()})
             return True
 
+        # The owner edits one of the agent's files (welcome personality step,
+        # the Home tab). Written whole and swapped in, so a reader never sees
+        # half a file.
+        if path == "/api/agent/files" and self.command == "POST":
+            try:
+                body = self.read_body_json()
+            except (ValueError, json.JSONDecodeError):
+                self.send_json({"error": "Invalid JSON"}, code=400)
+                return True
+            name = (body.get("name") or "").strip()
+            content = body.get("content")
+            if not isinstance(content, str) or len(content.encode("utf-8")) > 256_000:
+                self.send_json({"error": "That file is too large"}, code=400)
+                return True
+            if not agent_file_writable(name):
+                self.send_json({"error": "That file can't be changed here"}, code=403)
+                return True
+            target = os.path.join(WORKSPACE, name)
+            os.makedirs(os.path.dirname(target), exist_ok=True)
+            tmp = target + ".sudo-tmp"
+            with open(tmp, "w", encoding="utf-8") as f:
+                f.write(content)
+            if os.path.exists(target):
+                st = os.stat(target)
+                os.chmod(tmp, st.st_mode & 0o777)
+                os.chown(tmp, st.st_uid, st.st_gid)
+            os.replace(tmp, target)
+            self.send_json({"ok": True, "name": name, "bytes": len(content.encode("utf-8"))})
+            return True
+
         # Home tab: what the agent is running on, and what is on the device.
         if path == "/api/agent/models" and self.command == "GET":
             self.send_json(model_map(read_json_file(CONFIG)))
@@ -3091,8 +3133,21 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             if data.get("too_large"):
                 self.send_json({"too_large": True, "name": os.path.basename(target)})
                 return True
-            self.send_json({"path": os.path.realpath(target), "name": os.path.basename(target),
-                            "content": data.get("content", "")})
+            real = os.path.realpath(target)
+            rel = os.path.relpath(real, os.path.realpath(WORKSPACE))
+            self.send_json({"path": real, "name": os.path.basename(target),
+                            "content": data.get("content", ""),
+                            # The agent's own files can be edited from the Home tab.
+                            "agent_file": rel if agent_file_writable(rel) else ""})
+            return True
+
+        # Where to open the dashboard from another device on the same Wi-Fi.
+        if path == "/api/device/address" and self.command == "GET":
+            cur = wifi_current()
+            host = socket.gethostname().split(".")[0]
+            self.send_json({"local_url": f"http://{host}.local",
+                            "ip_url": f"http://{cur['ip']}" if cur.get("ip") else "",
+                            "ssid": cur.get("ssid", "")})
             return True
 
         # Move an app to the Apps page's archive, or bring it back.

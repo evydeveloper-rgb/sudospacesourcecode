@@ -462,14 +462,19 @@ soul_path = os.path.join(workspace, "SOUL.md")
 if os.path.isfile(soul_path):
     soul = pathlib.Path(soul_path).read_text(encoding="utf-8")
     language = AGENT_LANGUAGES.get(sudo.get("agent_language") or "auto")
-    soul = set_block(soul, "personality", PERSONALITY_INTROS.get(personality, ""))
+    # Only when the setting changed: the welcome's personality step and the
+    # owner can write this block themselves, and every settings save used to
+    # put the preset back over it.
+    if applied.get("personality") != personality:
+        soul = set_block(soul, "personality", PERSONALITY_INTROS.get(personality, ""))
     soul = set_block(soul, "language", (
         f"**You always speak {language}.** Every reply you write is in {language}, even when the "
         "person writes to you in English or another language. Switch only if they ask you to. "
         "Names, code and links stay as they are.") if language else "")
     pathlib.Path(soul_path).write_text(soul, encoding="utf-8")
 
-applied.update({"agent_owned": True, "agent_name": agent_name, "user_name": user_name})
+applied.update({"agent_owned": True, "agent_name": agent_name, "user_name": user_name,
+                "personality": personality})
 with open(STATE_PATH, "w", encoding="utf-8") as f:
     json.dump(applied, f)
 

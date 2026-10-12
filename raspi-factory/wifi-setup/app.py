@@ -15,6 +15,7 @@ import socketserver
 import urllib.parse
 import shutil
 import subprocess
+import html
 import json
 import os
 import threading
@@ -496,76 +497,121 @@ def restore_hotspot():
     return True
 
 
-# How long the device waits, after handing over the success page, before it
-# drops its own AP to join the home network. Originally 3s -- just enough for
-# the page and its stylesheet to load -- which meant the address on it could
-# only be glimpsed before the page died. It is now a real reading window: the
-# owner is told to screenshot or copy the address, and needs a moment to do it.
-JOIN_GRACE_SECONDS = 30
+# The device holds its own AP until the owner taps "Done" on the success page
+# (POST /go): a fixed timer either cut them off mid-copy or made them wait. Two
+# fallbacks so a closed page cannot strand it on the hotspot: the phone has
+# left the hotspot for a minute, or fifteen minutes have passed.
+GO = threading.Event()
+PENDING = {}
+WAITER = {"running": False}
+WAIT_MAX_SECONDS = 15 * 60
+LEFT_SECONDS = 60
+
+
+def hotspot_clients():
+    """How many devices are on the hotspot, or None when it cannot be told."""
+    try:
+        out = subprocess.run(["iw", "dev", "wlan0", "station", "dump"],
+                             capture_output=True, text=True, timeout=5)
+    except Exception:
+        return None
+    if out.returncode != 0:
+        return None
+    return out.stdout.count("Station ")
+
+
+def wait_for_go():
+    start, empty_since = time.time(), None
+    while not GO.wait(2):
+        if time.time() - start > WAIT_MAX_SECONDS:
+            return "timeout"
+        n = hotspot_clients()
+        if n == 0:
+            empty_since = empty_since or time.time()
+            if time.time() - empty_since > LEFT_SECONDS:
+                return "left"
+        else:
+            empty_since = None
+    return "done"
 
 
 def switch_to_wifi(ssid, password, country, username=""):
-    """Join the home network after the browser has its page.
+    """Join the home network once the owner says they have the address.
 
-    Runs on a thread so the response is already on the wire. The delay is a
-    deliberate reading window, not a page-load wait: once the join starts the
-    AP drops, the phone disconnects, and this page is gone for good -- so the
-    address on it has to be readable before that happens.
+    The credentials wait in PENDING; a second submit before "Done" (another
+    network, a fixed typo) replaces them rather than starting a second join.
     """
+    PENDING.update(ssid=ssid, password=password, country=country, username=username)
+    GO.clear()
+    if WAITER["running"]:
+        return
+
     def run():
-        time.sleep(JOIN_GRACE_SECONDS)
-        if not connect_wifi(ssid, password, country, username):
-            # connect_wifi has already restored the AP. No marker is written,
-            # so the portal stays up and the owner can try again.
-            log.warning("could not join %s — hotspot restored for retry", ssid)
-            set_join(state="failed", ssid=ssid,
-                     error="sudo could not join that network. A mistyped "
-                           "password is the usual reason.")
-            mirror_log()
-            return
-
-        # Read the address before anything else: this is the number the owner
-        # needs, and everything below can fail without making it wrong.
-        ip = lan_ip()
-        finalize_setup(ssid)
-        save_wifi_country(country)
-        # First moment there is a network, so this is where mDNS gets fixed.
+        WAITER["running"] = True
         try:
-            ensure_mdns()
-        except Exception as exc:
-            log.warning("ensure_mdns failed: %s", exc)
-        # Cloud registration is opt-in: only fire it when this build has Sudo
-        # credits enabled. Default builds are zero-cloud — the owner supplies
-        # their own API key, so there is nothing to register.
-        try:
-            import os as _os
-            billing_on = (
-                _os.path.exists("/etc/sudo/billing-enabled")
-                and open("/etc/sudo/billing-enabled").read().strip() == "billing=1"
-            )
-            if billing_on:
-                subprocess.Popen(
-                    ["/usr/bin/python3", "/opt/sudo-pi/trigger-cloud-init.py"],
-                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                )
-        except Exception as exc:
-            log.warning("cloud-init trigger failed: %s", exc)
-
-        log.info("joined %s at %s", ssid, ip or "(no address read)")
-        set_join(state="ok", ssid=ssid, ip=ip,
-                 url=("http://%s" % ip) if ip else "")
-        mirror_log()
-
-        # Straight to the reboot, and onto the home network. Raising the AP
-        # again to hand over the numeric address cost far more than it bought:
-        # it took the device *off* the network it had just joined, for ten
-        # minutes -- which is exactly when the owner types the address in, so
-        # the lookup failed because nothing was there. The success page was
-        # already delivered before the AP dropped and carries the address with
-        # a copy button; that was always the way this was meant to work.
-        schedule_reboot(3)
+            reason = wait_for_go()
+            log.info("joining after: %s", reason)
+            if reason == "done":
+                time.sleep(2)   # let the reply to "Done" reach the phone first
+            join(**PENDING)
+        finally:
+            WAITER["running"] = False
 
     threading.Thread(target=run, daemon=True).start()
+
+
+def join(ssid, password, country, username=""):
+    """Drop the hotspot and join the home network, then reboot onto it."""
+    if not connect_wifi(ssid, password, country, username):
+        # connect_wifi has already restored the AP. No marker is written,
+        # so the portal stays up and the owner can try again.
+        log.warning("could not join %s — hotspot restored for retry", ssid)
+        set_join(state="failed", ssid=ssid,
+                 error="sudo could not join that network. A mistyped "
+                       "password is the usual reason.")
+        mirror_log()
+        return
+
+    # Read the address before anything else: this is the number the owner
+    # needs, and everything below can fail without making it wrong.
+    ip = lan_ip()
+    finalize_setup(ssid)
+    save_wifi_country(country)
+    # First moment there is a network, so this is where mDNS gets fixed.
+    try:
+        ensure_mdns()
+    except Exception as exc:
+        log.warning("ensure_mdns failed: %s", exc)
+    # Cloud registration is opt-in: only fire it when this build has Sudo
+    # credits enabled. Default builds are zero-cloud — the owner supplies
+    # their own API key, so there is nothing to register.
+    try:
+        import os as _os
+        billing_on = (
+            _os.path.exists("/etc/sudo/billing-enabled")
+            and open("/etc/sudo/billing-enabled").read().strip() == "billing=1"
+        )
+        if billing_on:
+            subprocess.Popen(
+                ["/usr/bin/python3", "/opt/sudo-pi/trigger-cloud-init.py"],
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            )
+    except Exception as exc:
+        log.warning("cloud-init trigger failed: %s", exc)
+
+    log.info("joined %s at %s", ssid, ip or "(no address read)")
+    set_join(state="ok", ssid=ssid, ip=ip,
+             url=("http://%s" % ip) if ip else "")
+    mirror_log()
+
+    # Straight to the reboot, and onto the home network. Raising the AP
+    # again to hand over the numeric address cost far more than it bought:
+    # it took the device *off* the network it had just joined, for ten
+    # minutes -- which is exactly when the owner types the address in, so
+    # the lookup failed because nothing was there. The success page was
+    # already delivered before the AP dropped and carries the address with
+    # a copy button; that was always the way this was meant to work.
+    schedule_reboot(3)
 
 
 def schedule_reboot(delay=6):
@@ -651,7 +697,7 @@ class SetupHandler(http.server.BaseHTTPRequestHandler):
         dashboard = dashboard_url()
         self.send_html(render_template(
             "success.html",
-            SSID=ssid,
+            SSID=html.escape(ssid),
             AP_NAME=AP_NAME,
             DASHBOARD_URL=dashboard,
         ))
@@ -764,6 +810,11 @@ class SetupHandler(http.server.BaseHTTPRequestHandler):
         try:
             parsed = urllib.parse.urlparse(self.path)
             base = f"http://{get_ap_ip()}/"
+
+            if parsed.path == "/go":
+                GO.set()
+                self.send_bytes(b'{"ok":true}', content_type="application/json")
+                return
 
             if parsed.path != "/connect":
                 self.redirect(base)

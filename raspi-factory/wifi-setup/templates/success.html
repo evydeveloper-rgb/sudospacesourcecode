@@ -2,207 +2,176 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>sudo — Restarting</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>sudo — Save your address</title>
 <style>
 {{BRAND_CSS}}
-.card { text-align: center; }
-.next {
-  margin-top: 18px;
-  text-align: left;
-  background: #f3f3f3;
-  border: 2px solid #1a1c1c;
-  border-radius: 14px;
-  padding: 14px 16px;
-  font-size: 14px;
-  line-height: 1.5;
-  color: #1a1c1c;
+/* The page the owner holds while sudo moves onto their Wi-Fi. One job: save
+   the address. sudo waits for "Done" before it drops its own network, so
+   there is no countdown to race. */
+.addr-card {
+  margin: 0 0 22px; padding: 18px; border: 1px solid var(--line); border-radius: 20px;
+  background: var(--surface); box-shadow: var(--shadow-hi);
 }
-.next code {
-  display: block;
-  margin-top: 8px;
-  padding: 10px 12px;
-  background: #fff;
-  border-radius: 8px;
-  border: 1px solid #e2e2e2;
-  font-size: 16px;
-  word-break: break-all;
-}
-.hint { font-size: 12px; color: #4a4452; margin-top: 12px; line-height: 1.4; }
-/* The one instruction that decides whether setup finishes. It used to be grey
-   12px text at the bottom of a page that had already been destroyed by the
-   phone leaving -- so nobody knew to come back, and the address the device had
-   waiting for them was never read. */
-.notice {
-  margin: 16px 0 0; padding: 14px 16px; text-align: left;
-  border: 2px solid #340075; border-radius: 14px;
-  background: #f4efff; color: #1a1c1c;
-  font-size: 14px; line-height: 1.55;
-}
-.notice.found { border-color: #1a7f4b; background: #eefaf2; }
-.addr { display: flex; align-items: stretch; gap: 8px; margin-top: 8px; }
-.addr code {
-  flex: 1; min-width: 0; margin-top: 0;
-  display: flex; align-items: center;
-  -webkit-user-select: all; user-select: all;   /* one tap selects the whole thing */
+.addr-label { margin: 0 0 10px; color: var(--ink-3); font-size: .8rem; font-weight: 600; }
+.addr-row { display: flex; align-items: center; gap: 10px; }
+.addr-row code {
+  flex: 1; min-width: 0; padding: 14px 14px; border-radius: 12px; background: var(--surface-low);
+  font: 700 1.05rem/1.2 var(--font-mono); color: var(--primary); word-break: break-all;
+  -webkit-user-select: all; user-select: all;
 }
 .copy {
-  flex: none; min-width: 74px; padding: 0 14px;
-  border: 2px solid #1a1c1c; border-radius: 8px;
-  background: #340075; color: #fff;
-  font: 700 13px/1 inherit; cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
+  flex: none; height: 48px; min-width: 84px; padding: 0 16px; border: 0; border-radius: 12px;
+  background: var(--primary); color: #fff; font-weight: 700; font-size: .9rem; cursor: pointer;
 }
 .copy:active { transform: scale(.97); }
-.alt { margin: 9px 0 0; font-size: 12px; color: #4a4452; line-height: 1.4; }
-.hidden { display: none; }
+.addr-hint { margin: 10px 0 0; color: var(--ink-3); font-size: .78rem; }
+
+.steps { list-style: none; margin: 0 0 24px; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.steps li { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; font-size: .78rem; font-weight: 600; line-height: 1.3; color: var(--ink-2); }
+.step-icon {
+  position: relative; width: 56px; height: 56px; display: grid; place-items: center;
+  border-radius: 18px; background: var(--primary-fixed); color: var(--primary);
+}
+.step-icon svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.step-icon b {
+  position: absolute; top: -6px; inset-inline-end: -6px; width: 22px; height: 22px; display: grid; place-items: center;
+  border-radius: 50%; background: var(--coral); color: #fff; font-size: .7rem;
+}
+
+.done {
+  width: 100%; height: 56px; border: 0; border-radius: 16px; background: var(--coral); color: #fff;
+  font-weight: 700; font-size: 1rem; cursor: pointer; box-shadow: 0 10px 24px rgba(254,105,68,.25);
+}
+.done:disabled { opacity: .6; }
+.after { margin: 12px 0 0; color: var(--ink-3); font-size: .8rem; text-align: center; line-height: 1.45; }
+.state {
+  display: none; margin: 0 0 20px; padding: 14px 16px; border-radius: 16px;
+  background: var(--primary-fixed); color: var(--primary); font-size: .9rem; font-weight: 600; line-height: 1.45;
+}
+.state.show { display: block; }
+.state.bad { background: #ffdad6; color: var(--error); }
+.retry { display: none; width: 100%; height: 48px; margin-top: 10px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); font-weight: 700; cursor: pointer; }
 </style>
 </head>
 <body>
-<div class="card">
+<header class="topbar">
   <div class="brand">
-    <svg class="brand-mark" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <rect x="8" y="10" width="56" height="46" rx="18" fill="#340075" stroke="#1a1c1c" stroke-width="3"/>
-      <circle cx="24" cy="40" r="9" fill="#f3f3f3" stroke="#1a1c1c" stroke-width="2.5"/>
-      <circle cx="48" cy="40" r="9" fill="#f3f3f3" stroke="#1a1c1c" stroke-width="2.5"/>
-      <path d="M30 52q6 5 12 0" fill="none" stroke="#1a1c1c" stroke-width="2.5" stroke-linecap="round"/>
-    </svg>
-    <div class="brand-name">sudo<span>|</span></div>
+    <span class="brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5 10 17 19 7"/></svg></span>
+    <span class="brand-name">sudo</span>
   </div>
+  <span class="step-chip" id="ssid">{{SSID}}</span>
+</header>
 
-  <div class="check-wrap">✓</div>
-  <h1>Joining "{{SSID}}"</h1>
+<main class="wrap">
+  <h1>Save this address</h1>
+  <p class="sub">It is how you open sudo once your phone is back on your home Wi‑Fi.</p>
 
-  <div class="notice" id="notice">
-    <strong>Save the address below before you leave this page.</strong>
-    sudo is about to drop its own Wi‑Fi and join yours, which disconnects your
-    phone and closes this page — so this is your only chance to read it. Copy
-    it, or just screenshot this page. Switch back to your home Wi‑Fi, wait
-    about a minute, then open it.
-  </div>
+  <div class="state" id="state" role="status"></div>
 
-  <div class="next">
-    <strong id="addr-head">Where sudo will be:</strong>
-    <div class="addr">
+  <section class="addr-card">
+    <p class="addr-label">Your sudo address</p>
+    <div class="addr-row">
       <code id="url-name">{{DASHBOARD_URL}}</code>
       <button type="button" class="copy" data-target="url-name">Copy</button>
     </div>
+    <p class="addr-hint">A screenshot works too.</p>
+  </section>
 
-    <div id="ip-block" class="hidden">
-      <p class="alt">Or use this one — plenty of phones, Android especially, cannot resolve <em>.local</em> names at all:</p>
-      <div class="addr">
-        <code id="url-ip"></code>
-        <button type="button" class="copy" data-target="url-ip">Copy</button>
-      </div>
-    </div>
+  <ol class="steps" aria-label="What happens next">
+    <li><span class="step-icon"><b>1</b><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg></span>Copy the address</li>
+    <li><span class="step-icon"><b>2</b><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0M2 9a14 14 0 0 1 20 0"/><circle cx="12" cy="19.5" r=".8"/></svg></span>Join {{SSID}}</li>
+    <li><span class="step-icon"><b>3</b><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M7 6.5h.01M10 6.5h.01"/></svg></span>Open it</li>
+  </ol>
 
-    <p style="margin-top:10px;font-size:13px">The dashboard opens directly — no password needed.</p>
-  </div>
-
-  <p class="hint" id="join-status">If sudo cannot join — a mistyped password, usually — <strong>{{AP_NAME}}</strong> comes back on its own, and you can reconnect and try another network.</p>
-  <button type="button" id="done" class="copy hidden" style="margin-top:14px;width:100%;height:44px">Try a different network</button>
-</div>
+  <button type="button" class="done" id="done">Done, connect sudo</button>
+  <p class="after" id="after">sudo then joins {{SSID}} and this page closes. Give it about a minute before you open the address.</p>
+  <button type="button" class="retry" id="retry">Try a different network</button>
+</main>
 
 <script>
-  // The portal is plain http, so navigator.clipboard is undefined in most
-  // browsers (it needs a secure context). Fall back to execCommand, which
-  // still works here, and to selecting the text if even that is blocked.
-  function copyText(text, node) {
-    if (navigator.clipboard && window.isSecureContext) {
-      return navigator.clipboard.writeText(text);
-    }
+  // Plain http, so navigator.clipboard is usually missing (it needs a secure
+  // context). Fall back to execCommand, then to selecting the text.
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text);
     return new Promise(function (resolve, reject) {
       var ta = document.createElement('textarea');
-      ta.value = text;
-      ta.setAttribute('readonly', '');
-      ta.style.position = 'fixed';
-      ta.style.top = '-1000px';
+      ta.value = text; ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed'; ta.style.top = '-1000px';
       document.body.appendChild(ta);
-      ta.select();
-      ta.setSelectionRange(0, text.length);   // iOS needs the explicit range
+      ta.select(); ta.setSelectionRange(0, text.length);
       var ok = false;
       try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
       document.body.removeChild(ta);
       if (ok) { resolve(); } else { reject(); }
     });
   }
-
-  // The AP goes down while sudo joins the home network, so this page loses its
-  // connection mid-poll -- every failed fetch here is expected, not an error.
-  // It comes back up afterwards precisely so the address below can arrive.
-  // Not `status`: at global scope that is window.status, a legacy string
-  // accessor, and assignments to .innerHTML on it vanish without an error.
-  var statusLine = document.getElementById('join-status');
-  var ipBlock = document.getElementById('ip-block');
-  var doneBtn = document.getElementById('done');
-  // The AP goes down for good on success -- the device stays on the home
-  // network from then on -- so this poll exists for one case only: a join that
-  // fails, where the hotspot comes back and the page can say so instead of
-  // sitting there dead. It gives up rather than retrying forever.
-  var timer = setInterval(poll, 2500);
-  setTimeout(function () { clearInterval(timer); }, 90000);
-
-  function poll() {
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', '/joined?t=' + Date.now(), true);
-    xhr.timeout = 4000;
-    xhr.onload = function () {
-      if (xhr.status !== 200) { return; }
-      var data;
-      try { data = JSON.parse(xhr.responseText); } catch (e) { return; }
-      render(data);
-    };
-    xhr.send();
-  }
-
-  function render(data) {
-    if (data.state === 'ok') {
-      clearInterval(timer);
-      if (data.url) {
-        document.getElementById('url-ip').textContent = data.url;
-        ipBlock.classList.remove('hidden');
-      }
-      var notice = document.getElementById('notice');
-      notice.classList.add('found');
-      notice.innerHTML = '<strong>Screenshot this page now.</strong> sudo is on ' +
-        (data.ssid || 'your network') + ', and this page is about to close. The ' +
-        'address below is the only way back in — copy it or screenshot it before ' +
-        'you switch Wi‑Fi.';
-      document.getElementById('addr-head').textContent = 'Your address — save it:';
-      statusLine.textContent = '';
-      doneBtn.classList.remove('hidden');
-    } else if (data.state === 'failed') {
-      clearInterval(timer);
-      statusLine.textContent = data.error || 'sudo could not join that network.';
-      doneBtn.textContent = 'Try a different network';
-      doneBtn.dataset.retry = '1';
-      doneBtn.classList.remove('hidden');
-    }
-  }
-
-  doneBtn.addEventListener('click', function () { window.location.href = '/'; });
-
-  poll();
-
   Array.prototype.forEach.call(document.querySelectorAll('.copy'), function (button) {
     button.addEventListener('click', function () {
       var code = document.getElementById(button.dataset.target);
-      var text = code.textContent.trim();
-      copyText(text, code).then(function () {
+      copyText(code.textContent.trim()).then(function () {
         button.textContent = 'Copied';
         setTimeout(function () { button.textContent = 'Copy'; }, 1800);
       }).catch(function () {
-        // Nothing left to try — select it so one long-press copies.
         var range = document.createRange();
         range.selectNodeContents(code);
         var sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(range);
+        sel.removeAllRanges(); sel.addRange(range);
         button.textContent = 'Hold to copy';
         setTimeout(function () { button.textContent = 'Copy'; }, 2600);
       });
     });
   });
+
+  var stateBox = document.getElementById('state');
+  var doneBtn = document.getElementById('done');
+  var retryBtn = document.getElementById('retry');
+  var after = document.getElementById('after');
+  function say(text, bad) {
+    stateBox.textContent = text;
+    stateBox.className = 'state show' + (bad ? ' bad' : '');
+  }
+
+  // "Done" is what starts the move. The hotspot drops a couple of seconds
+  // later, so the reply may never arrive -- that is the expected outcome.
+  doneBtn.addEventListener('click', function () {
+    doneBtn.disabled = true;
+    var ssid = document.getElementById('ssid').textContent;
+    say('Connecting to ' + ssid + '. You can switch your phone back to it now.');
+    after.textContent = 'In about a minute, open your address.';
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', '/go', true);
+    xhr.timeout = 5000;
+    xhr.send('');
+    startPolling();
+  });
+  retryBtn.addEventListener('click', function () { window.location.href = '/setup'; });
+
+  // Only a failed join brings the hotspot back; then this page can say so.
+  var timer = null;
+  function startPolling() {
+    if (timer) return;
+    timer = setInterval(poll, 3000);
+    setTimeout(function () { clearInterval(timer); }, 180000);
+  }
+  function poll() {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', '/joined?t=' + Date.now(), true);
+    xhr.timeout = 4000;
+    xhr.onload = function () {
+      if (xhr.status !== 200) return;
+      var data;
+      try { data = JSON.parse(xhr.responseText); } catch (e) { return; }
+      if (data.state === 'failed') {
+        clearInterval(timer);
+        say(data.error || 'sudo could not join that network.', true);
+        doneBtn.style.display = 'none';
+        after.textContent = '';
+        retryBtn.style.display = 'block';
+      }
+    };
+    xhr.send();
+  }
 </script>
 </body>
 </html>
