@@ -422,8 +422,8 @@ def guess_kind(d):
 
 def _clean_name(n):
     n = str(n or "").strip()
-    n = re.sub(r"^[0-9A-Fa-f]{12}@", "", n)                     # AirPlay: "FA2D7E8B52A1@Rand's MacBook Pro"
-    n = re.sub(r"\s*\[[0-9a-fA-F:]{17}\]$", "", n)             # Linux: "dandihouse [88:a2:...]"
+    n = re.sub(r"^[0-9A-Fa-f]{12}@", "", n)                     # AirPlay: "FA2D7E8B52A1@Sam's MacBook Pro"
+    n = re.sub(r"\s*\[[0-9a-fA-F:]{17}\]$", "", n)             # Linux: "kitchenpi [aa:bb:...]"
     n = re.sub(r"\.(lan|local|home|localdomain|domain|router)$", "", n, flags=re.I)
     n = re.sub(r"^\[([^\]]+)\]\s*", r"\1 ", n).strip()            # "[LG] 2" -> "LG 2"
     if re.fullmatch(r"[A-Za-z0-9]+(-[A-Za-z0-9]+)+", n):
