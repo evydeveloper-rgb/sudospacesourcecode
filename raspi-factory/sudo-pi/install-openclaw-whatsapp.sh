@@ -22,9 +22,11 @@ fail() { set_status error "$1"; echo "FAILED: $1"; exit 1; }
 
 [ -x "$OC_BIN" ] || fail "OpenClaw is not installed on this device yet"
 
+fresh=0
 if ls -d /opt/sudo/openclaw/npm/projects/openclaw-whatsapp-* >/dev/null 2>&1; then
   echo "WhatsApp plugin already installed"
 else
+  fresh=1
   set_status installing "Downloading WhatsApp for your agent (about a minute)…"
   "$OC_BIN" plugins install "@openclaw/whatsapp@${PLUGIN_VERSION}" \
     || fail "Could not download WhatsApp — check the internet connection and try again"
@@ -36,5 +38,14 @@ systemctl disable --now sudo-whatsapp-bridge.service 2>/dev/null || true
 
 set_status installing "Starting WhatsApp…"
 /usr/local/bin/sudo-configure-picoclaw.sh || true
+# A new plugin only loads when the gateway starts, and the configure step
+# leaves a running gateway alone when the config itself did not change.
+# Also restart when WhatsApp is linked but not connected -- the case of an
+# agent moved in from another device, whose plugin arrived after the gateway.
+if [ "$fresh" = 1 ] || ! systemctl is-active --quiet sudo-openclaw-gateway.service; then
+  systemctl restart sudo-openclaw-gateway.service 2>/dev/null || true
+else
+  systemctl try-restart sudo-openclaw-gateway.service 2>/dev/null || true
+fi
 set_status ready ""
 echo "=== install-openclaw-whatsapp complete $(date) ==="
