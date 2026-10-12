@@ -218,5 +218,5 @@ They make a screen look generated rather than designed:
 4. **Look at it.** Screenshot it at 375 px and on desktop, in one dark
    theme (`midnight`), and in Arabic. Fix what looks off, then look again.
    - Claude Code: use the built-in browser.
-   - Claudia: `sudo-screenshot <url> /tmp/shot.png 390 844`.
+   - An agent working on the device: `sudo-screenshot <url> /tmp/shot.png 390 844`.
 5. **Ship** only once it reads as Sudo on all of those.
