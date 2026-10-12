@@ -13,6 +13,14 @@ trap 'rm -rf "$tmpdir"' EXIT
 
 echo "Downloading PicoClaw $VERSION..."
 curl -fsSL "$URL" -o "$tmpdir/picoclaw.tar.gz"
-tar -xzf "$tmpdir/picoclaw.tar.gz" -C "$DEST"
-chmod +x "$DEST/picoclaw" "$DEST/picoclaw-launcher" 2>/dev/null || chmod +x "$DEST/picoclaw"
+# Unpack aside and take only the programs. The release tarball also carries
+# PicoClaw's own README and LICENSE, and unpacking straight into picoclaw/
+# overwrote our README (with its note on how Sudo uses PicoClaw).
+mkdir -p "$tmpdir/x"
+tar -xzf "$tmpdir/picoclaw.tar.gz" -C "$tmpdir/x"
+for bin in picoclaw picoclaw-launcher; do
+  found="$(find "$tmpdir/x" -type f -name "$bin" | head -n 1)"
+  [ -n "$found" ] && install -m 755 "$found" "$DEST/$bin"
+done
+[ -f "$DEST/picoclaw" ] || { echo "ERROR: no picoclaw binary in the release" >&2; exit 1; }
 echo "Installed: $DEST/picoclaw ($(du -h "$DEST/picoclaw" | cut -f1))"
