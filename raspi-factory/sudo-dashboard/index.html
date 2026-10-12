@@ -4979,6 +4979,7 @@
     }
 
     async function loadWhatsappInfo() {
+      state.waLoading = true;
       try {
         const info = await api('/api/agent/whatsapp', {}, 20000);
         state.waInfo = info;
@@ -4987,6 +4988,7 @@
         // A slow gateway; the status flag still covers step 2.
       }
       state.waChecked = true;
+      state.waLoading = false;
       renderSetupGuide();
     }
 
@@ -5788,6 +5790,10 @@
     function renderSetupGuide() {
       const s = state.status;
       if (!s) return;
+      // A new device loads this page during the welcome, before setup is
+      // finished, so the WhatsApp check that the Finish setup tab waits for
+      // never ran -- the tab only appeared after a reload. Run it once now.
+      if (s.profile_done && !state.waChecked && !state.waLoading) loadWhatsappInfo();
       const done = setupProgress();
       const count = SETUP_STEPS.filter(step => done[step.key]).length;
       const left = SETUP_STEPS.length - count;
