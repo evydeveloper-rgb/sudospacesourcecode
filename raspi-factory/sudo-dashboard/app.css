@@ -197,6 +197,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .hub-button:hover, .hub-button.active { background: var(--primary); color: var(--on-primary); border-color: var(--primary); }
 .hub-button svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
 .hub-button[hidden] { display: none; }
+/* "online" is the normal state, so it is not shown; only a problem is. */
+.device-state:not(.issue) { display: none; }
 
 /* Apps: each tile sits in a cell with a small archive button in the corner
    opposite its tag. Shown on hover with a mouse, always on touch. */
@@ -217,6 +219,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .apps-archive summary em { font-style: normal; color: var(--ink-3); margin-inline-start: 4px; }
 .apps-archive .microcopy { margin: 8px 0 10px; }
 .apps-archive-list { display: grid; gap: 8px; }
+.apps-archive-empty { margin: 0; padding: 12px; border: 1px dashed var(--line-2); border-radius: var(--radius-lg); color: var(--ink-3); font-size: .8rem; }
 .apps-archive-row {
   display: flex; align-items: center; gap: 12px; padding: 10px 12px;
   border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface);
@@ -1380,6 +1383,11 @@ body.site-mode .crm-site-body { max-width: 880px; margin: 0 auto; padding: 20px 
   background: var(--accent-soft); border-color: var(--accent); color: var(--ink);
 }
 .info-btn:focus-visible { outline: 3px solid rgba(52, 0, 117, .25); outline-offset: 2px; }
+/* An ⓘ beside a page title (Apps): the page's explanation, on demand. */
+.title-with-info { display: flex; align-items: center; gap: 10px; }
+.info-btn.title-info { width: 26px; height: 26px; font-size: .78rem; position: relative; }
+.info-btn.title-info::after { content: ""; position: absolute; inset: -8px; }
+.info-bubble.apps-info { max-width: 60ch; font-size: .82rem; }
 /* The labelled sibling of .info-btn. Same job, but it carries words, so it
    cannot inherit the 17px circle -- that is what wrapped "What you give up"
    one word per line. */
@@ -1782,19 +1790,19 @@ body.site-mode .crm-site-body { max-width: 880px; margin: 0 auto; padding: 20px 
     margin: 10px 8px 8px; color: var(--muted);
     font: 600 .62rem/1 var(--font-mono); letter-spacing: .1em; text-transform: uppercase;
   }
-  .rail-nav { display: flex; flex-direction: column; gap: 6px; }
+  .rail-nav { display: flex; flex-direction: column; gap: 2px; }
   .rail-nav button {
     position: relative; display: flex; align-items: center; gap: 12px;
-    padding: 11px 12px; border: 1px solid transparent; border-radius: 12px;
-    background: none; color: var(--muted); font-size: .87rem; font-weight: 650;
+    padding: 7px 10px; border: 1px solid transparent; border-radius: 10px;
+    background: none; color: var(--muted); font-size: .82rem; font-weight: 650;
     cursor: pointer; text-align: start; transition: background .18s var(--ease-out), color .18s var(--ease-out);
   }
   .rail-nav button:hover { background: var(--surface-soft); color: var(--ink); }
   .rail-icon {
-    width: 32px; height: 32px; display: grid; place-items: center; flex: none;
-    border-radius: 9px; background: var(--surface-soft); color: inherit;
+    width: 28px; height: 28px; display: grid; place-items: center; flex: none;
+    border-radius: 8px; background: var(--surface-soft); color: inherit;
   }
-  .rail-icon svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+  .rail-icon svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
   /* Active item: bordered, lifted, with the design's left indicator bar. */
   .rail-nav button.active {
     border-color: var(--line-2); background: var(--surface-soft);
@@ -1817,7 +1825,7 @@ body.site-mode .crm-site-body { max-width: 880px; margin: 0 auto; padding: 20px 
   /* Home sits beside Settings at the foot of the rail; the top bar's copy
      of it is only for phones, where there is no rail. */
   .rail-gear.rail-home { inset-inline-end: 44px; }
-  .topbar .brand-home, .topbar .hub-button { display: none; }
+  .topbar .brand-home { display: none; }
   .rail-gear svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
   .rail-avatar {
     width: 38px; height: 38px; display: grid; place-items: center; flex: none;

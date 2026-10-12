@@ -56,10 +56,6 @@
             <span class="rail-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7H6a5 5 0 0 0 0 10h3M15 7h3a5 5 0 0 1 0 10h-3M8 12h8"/></svg></span>
             <span data-i18n="nav.connectors">Connectors</span>
           </button>
-          <button type="button" data-tab="hub">
-            <span class="rail-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></svg></span>
-            <span data-i18n="top.knowledgeHub">Knowledge hub</span>
-          </button>
         </nav>
       </div>
       <div class="rail-foot">
@@ -744,14 +740,29 @@
       <section class="view" id="view-apps" aria-labelledby="apps-title">
         <div class="view-heading">
           <div>
-            <h1 id="apps-title" data-i18n="nav.apps">Apps</h1>
-            <p class="lede" data-i18n="apps.focusedSpacesSudoCan">Focused spaces sudo can help you run.</p>
+            <div class="title-with-info">
+              <h1 id="apps-title" data-i18n="nav.apps">Apps</h1>
+              <button class="info-btn title-info" type="button" data-info="apps-info" aria-expanded="false" aria-label="About apps" data-i18n-attr="aria-label:apps.about">i</button>
+            </div>
+            <div class="info-bubble apps-info" id="apps-info" data-i18n="apps.focusedSpacesSudoCan"></div>
           </div>
         </div>
         <div class="app-grid">
           <button type="button" class="mini-app crm" id="crm-open" data-app="contacts">
             <div class="mini-icon">◎</div><span class="ready-tag" data-i18n="apps.ready">ready</span>
             <h2 data-i18n="apps.crm">Contacts</h2><p data-i18n="apps.whoYouTalkToOn">Who you talk to on WhatsApp — and who your agent may message.</p>
+          </button>
+          <button type="button" class="mini-app lilac house-tile" id="house-open" data-app="home">
+            <div class="mini-icon">⌂</div><span class="ready-tag" data-i18n="apps.ready">ready</span>
+            <h2 data-i18n="apps.home">Home</h2><p data-i18n="house.tile">Every device on your Wi-Fi, and who's home.</p>
+          </button>
+          <button type="button" class="mini-app st-tile" id="st-open" data-app="screentime">
+            <div class="mini-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z M12 7v5l3 2"/></svg></div><span class="ready-tag" data-i18n="apps.ready">ready</span>
+            <h2 data-i18n="st.app">Screen time</h2><p data-i18n="st.tile">How long each device spends on which apps, and controls for kids.</p>
+          </button>
+          <button type="button" class="mini-app create" id="create-app">
+            <div class="mini-icon">+</div>
+            <h2 data-i18n="apps.createYourOwn">Create your own</h2><p data-i18n="apps.describeWhatYouWant">Describe what you want and sudo builds it with you.</p>
           </button>
           <article class="mini-app mint" data-app="finance">
             <div class="mini-icon">↗</div><span class="soon" data-i18n="apps.comingSoon">coming soon</span>
@@ -765,21 +776,9 @@
             <div class="mini-icon">≡</div><span class="soon" data-i18n="apps.comingSoon">coming soon</span>
             <h2 data-i18n="apps.journal">Journal</h2><p data-i18n="apps.aQuietPlaceTo">A quiet place to think out loud with sudo.</p>
           </article>
-          <button type="button" class="mini-app lilac house-tile" id="house-open" data-app="home">
-            <div class="mini-icon">⌂</div><span class="ready-tag" data-i18n="apps.ready">ready</span>
-            <h2 data-i18n="apps.home">Home</h2><p data-i18n="house.tile">Every device on your Wi-Fi, and who's home.</p>
-          </button>
-          <button type="button" class="mini-app st-tile" id="st-open" data-app="screentime">
-            <div class="mini-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z M12 7v5l3 2"/></svg></div><span class="ready-tag" data-i18n="apps.ready">ready</span>
-            <h2 data-i18n="st.app">Screen time</h2><p data-i18n="st.tile">How long each device spends on which apps, and controls for kids.</p>
-          </button>
-          <button type="button" class="mini-app create" id="create-app">
-            <div class="mini-icon">+</div>
-            <h2 data-i18n="apps.createYourOwn">Create your own</h2><p data-i18n="apps.describeWhatYouWant">Describe what you want and sudo builds it with you.</p>
-          </button>
         </div>
 
-        <section class="apps-archive" id="apps-archive" hidden>
+        <section class="apps-archive" id="apps-archive">
           <details>
             <summary><span data-i18n="apps.archiveTitle">Archive</span> <em id="apps-archive-count"></em></summary>
             <p class="microcopy" data-i18n="apps.archiveHint">Archived apps are only tucked away: their data stays, and anything they run, like kids' controls, keeps running. Bring one back any time.</p>
@@ -5791,8 +5790,9 @@
         row.append(icon, name, restore);
         list.append(row);
       });
-      $('apps-archive').hidden = !archived.length;
-      $('apps-archive-count').textContent = archived.length ? String(archived.length) : '';
+      // Always there, so people know where archived apps go.
+      if (!archived.length) list.append(hEl('p', 'apps-archive-empty', t('apps.archiveEmpty')));
+      $('apps-archive-count').textContent = String(archived.length);
     }
 
     async function setAppArchived(id, archived) {
@@ -6242,6 +6242,7 @@
     // until data arrives.
     function renderLangDefaults() {
       $('device-state').textContent = state.connIssue ? t('top.connectionIssue') : t('top.online');
+      $('device-state-wrap').classList.toggle('issue', !!state.connIssue);
       renderFilesSummary();
       if (!state.sshData) $('ssh-summary').textContent = t('ssh.summaryOff');
       if (!state.wifiData) $('wifi-current').textContent = t('common.checking');
@@ -6711,6 +6712,7 @@
     init().catch(error => {
       state.connIssue = true;
       $('device-state').textContent = t('top.connectionIssue');
+      $('device-state-wrap').classList.add('issue');
       addMessage('system', error.message);
     });
   </script>
