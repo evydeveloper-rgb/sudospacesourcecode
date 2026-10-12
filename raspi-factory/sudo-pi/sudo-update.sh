@@ -253,7 +253,7 @@ fi
 write_status "applying" "Installing ${LATEST}…" "$CURRENT" "$LATEST"
 extract="$STAGE/extract"
 mkdir -p "$extract"
-if ! tar -xzf "$TGZ" -C "$extract" 2>>"$LOG"; then
+if ! tar --no-same-owner -xzf "$TGZ" -C "$extract" 2>>"$LOG"; then
   write_status "error" "Could not unpack the update bundle — nothing changed." "$CURRENT" "$LATEST"
   exit 1
 fi
@@ -285,6 +285,9 @@ apply_dir "sudo-dashboard" "$DASHBOARD_DIR"
 apply_dir "wifi-setup"     "$WIFI_DIR"
 apply_dir "picoclaw"       "$PICOCLAW_DIR"
 apply_dir "openclaw"       /opt/sudo-openclaw
+# App code belongs to root. A bundle built elsewhere can carry its builder's
+# user id, and OpenClaw will not load a plugin that is not root-owned.
+chown -R root:root "$DASHBOARD_DIR" "$WIFI_DIR" "$PICOCLAW_DIR" /opt/sudo-openclaw 2>>"$LOG" || true
 
 # Carry the owner's saved choices across versions before the configure step
 # reads them. App code changed; the person's settings must come with it.

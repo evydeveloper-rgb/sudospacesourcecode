@@ -167,7 +167,7 @@
           <div class="welcome-step welcome-wide" id="welcome-step3" hidden>
             <h1 data-i18n="wel.persTitle">pick my personality.</h1>
             <p class="lede" data-i18n="wel.persLede">Choose any that fit. Each one changes my soul file below, and you can edit it yourself too.</p>
-            <div class="pers-chips" id="pers-chips" role="group" data-i18n-attr="aria-label:wel.persTitle"></div>
+            <div class="pers-chips" id="pers-chips" role="radiogroup" data-i18n-attr="aria-label:wel.persTitle"></div>
             <label class="soul-label" for="soul-editor"><span class="soul-name">SOUL.md</span><span data-i18n="wel.persFile">who your agent is</span></label>
             <textarea id="soul-editor" class="soul-editor" spellcheck="false" rows="14"></textarea>
             <div class="pers-files-note">
@@ -1265,10 +1265,10 @@
               <fieldset>
                 <legend data-i18n="set.profile.personality">Personality</legend>
                 <div class="option-grid" id="personality-options">
-                  <button type="button" data-value="friendly"><strong data-i18n="set.profile.friendly">Friendly</strong><small data-i18n="set.profile.warmAndEasygoing">Warm and easygoing.</small></button>
-                  <button type="button" data-value="professional"><strong data-i18n="set.profile.professional">Professional</strong><small data-i18n="set.profile.crispAndMeasured">Crisp and measured.</small></button>
-                  <button type="button" data-value="concise"><strong data-i18n="set.profile.concise">Concise</strong><small data-i18n="set.profile.onlyTheWordsNeeded">Only the words needed.</small></button>
-                  <button type="button" data-value="creative"><strong data-i18n="set.profile.creative">Creative</strong><small data-i18n="set.profile.playfulAndCurious">Playful and curious.</small></button>
+                  <button type="button" data-value="friendly"><strong data-i18n="pers.s.friendly">friendly</strong><small data-i18n="pers.s.friendlyHint"></small></button>
+                  <button type="button" data-value="concise"><strong data-i18n="pers.s.concise">concise</strong><small data-i18n="pers.s.conciseHint"></small></button>
+                  <button type="button" data-value="analytical"><strong data-i18n="pers.s.analytical">Analytical</strong><small data-i18n="pers.s.analyticalHint">Thinks it through with you</small></button>
+                  <button type="button" data-value="creative"><strong data-i18n="pers.s.creative">creative</strong><small data-i18n="pers.s.creativeHint"></small></button>
                 </div>
               </fieldset>
               <button class="primary-button" id="save-profile" type="button" data-i18n="set.profile.saveSettings">Save settings</button>
@@ -2061,6 +2061,9 @@
       // The nav is noise until they've actually set the thing up.
       document.querySelector('.bottom-nav').hidden = tab === 'welcome';
       document.querySelector('.side-rail').hidden = tab === 'welcome';
+      // Setup stands alone: no rail column, no install banner (step one of
+      // the welcome already shows how to add sudo to the home screen).
+      document.body.classList.toggle('welcome-mode', tab === 'welcome');
       // Setup shows progress; the running app shows connection state.
       $('step-chip').hidden = tab !== 'welcome';
       $('device-state-wrap').hidden = tab === 'welcome';
@@ -2345,6 +2348,7 @@
     function renderWelcomeStep(step) {
       state.welcomeStep = step;
       for (let i = 0; i < WELCOME_STEPS; i += 1) $('welcome-step' + i).hidden = step !== i;
+      $('view-welcome').classList.toggle('wide', step === 3);
       $('welcome-back-2').hidden = !isPhoneFlow();
       renderWelcomeDots();
       if (step === 1) loadWelcomeAddress();
@@ -2412,42 +2416,42 @@
     // Personality: traits write a Sudo-managed block at the top of SOUL.md
     // (the same block Settings > Personality writes); the rest of the file is
     // the agent's, editable here as plain text.
-    const PERS_TRAITS = ['friendly', 'short', 'professional', 'playful', 'encouraging', 'direct', 'patient'];
-
-    function setSoulBlock(text, name, body) {
-      const start = `<!-- sudo:${name} -->`, end = `<!-- /sudo:${name} -->`;
-      const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      text = text.replace(new RegExp('\\n*' + esc(start) + '[\\s\\S]*?' + esc(end) + '\\n*'), '\n\n');
-      if (!body) return text;
-      const i = text.indexOf('\n');
-      const title = i < 0 ? text : text.slice(0, i);
-      const rest = i < 0 ? '' : text.slice(i + 1);
-      return `${title}\n\n${start}\n${body}\n${end}\n\n` + rest.replace(/^\n+/, '');
-    }
+    const PERS_STYLES = ['friendly', 'concise', 'analytical', 'creative'];
 
     function renderPersChips() {
       const wrap = $('pers-chips');
-      state.persTraits = state.persTraits || new Set();
-      wrap.replaceChildren(...PERS_TRAITS.map(id => {
-        const b = hEl('button', 'pers-chip' + (state.persTraits.has(id) ? ' on' : ''));
+      wrap.replaceChildren(...PERS_STYLES.map(id => {
+        const on = state.persStyle === id;
+        const b = hEl('button', 'pers-chip' + (on ? ' on' : ''));
         b.type = 'button';
-        b.setAttribute('aria-pressed', state.persTraits.has(id) ? 'true' : 'false');
-        b.append(hEl('strong', '', t(`pers.${id}`)), hEl('small', '', t(`pers.${id}Hint`)));
-        b.addEventListener('click', () => {
-          if (state.persTraits.has(id)) state.persTraits.delete(id); else state.persTraits.add(id);
-          const lines = PERS_TRAITS.filter(x => state.persTraits.has(x)).map(x => '- ' + t(`pers.${x}Line`));
-          const ed = $('soul-editor');
-          ed.value = setSoulBlock(ed.value, 'personality', lines.join('\n'));
-          ed.scrollTop = 0;
-          ed.classList.remove('flash'); void ed.offsetWidth; ed.classList.add('flash');
-          renderPersChips();
-        });
+        b.setAttribute('role', 'radio');
+        b.setAttribute('aria-checked', on ? 'true' : 'false');
+        b.append(hEl('strong', '', t(`pers.s.${id}`)), hEl('small', '', t(`pers.s.${id}Hint`)));
+        b.addEventListener('click', () => pickPersStyle(id));
         return b;
       }));
     }
 
+    // One style at a time: it rewrites the voice sections of SOUL.md (on the
+    // device, so Settings and this page write the same words).
+    async function pickPersStyle(id) {
+      state.persStyle = id;
+      renderPersChips();
+      try {
+        const d = await api('/api/agent/soul-style?style=' + id);
+        const ed = $('soul-editor');
+        ed.value = d.content;
+        ed.scrollTop = 0;
+        ed.classList.remove('flash'); void ed.offsetWidth; ed.classList.add('flash');
+      } catch (error) {
+        $('pers-status').textContent = error.message;
+      }
+    }
+
     async function loadSoul() {
       const ed = $('soul-editor'), save = $('welcome-pers-save'), status = $('pers-status');
+      const current = (state.status && state.status.personality) || 'friendly';
+      state.persStyle = state.persStyle || (current === 'professional' ? 'analytical' : current);
       renderPersChips();
       if (state.soulLoaded) return;
       ed.disabled = true; save.disabled = true;
@@ -2475,10 +2479,11 @@
       save.disabled = true;
       status.textContent = t('common.saving');
       try {
-        await api('/api/agent/files', {
+        await api('/api/agent/soul-style', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: 'SOUL.md', content: $('soul-editor').value }),
+          body: JSON.stringify({ style: state.persStyle || 'friendly', content: $('soul-editor').value }),
         });
+        if (state.status) { state.status.personality = state.persStyle; state.status.welcome_pending = ''; }
         status.textContent = '';
         enterChatAfterWelcome();
       } catch (error) {
@@ -2523,6 +2528,7 @@
             model: 'sudo-default',
             remote_access: false,
             theme: state.theme,
+            welcome: true,
           }),
         });
         state.status = data;
@@ -6074,6 +6080,7 @@
     }
 
     async function selectPersonality(value) {
+      if (value === 'professional') value = 'analytical';   // the old name for it
       state.personality = value;
       document.querySelectorAll('#personality-options button').forEach(button => {
         const selected = button.dataset.value === value;
@@ -6250,8 +6257,8 @@
     }
 
     const PERSONALITY_LABELS = {
-      friendly: 'set.profile.friendly', professional: 'set.profile.professional',
-      concise: 'set.profile.concise', creative: 'set.profile.creative',
+      friendly: 'pers.s.friendly', professional: 'pers.s.analytical', analytical: 'pers.s.analytical',
+      concise: 'pers.s.concise', creative: 'pers.s.creative',
     };
 
     function renderAbilitiesSummary(status) {
@@ -6334,6 +6341,16 @@
       ensureGreeting();
       // Not while already in the flow: a refresh mid-setup would throw the
       // person back to the first question.
+      // Names saved but the personality step not done yet (a reload, a closed
+      // tab): back to that step rather than into the dashboard.
+      if (status.profile_done && status.welcome_pending === 'personality' && state.tab !== 'welcome'
+          && !state.welcomeResumed) {
+        state.welcomeResumed = true;
+        renderHowTo();
+        setTab('welcome');
+        renderWelcomeStep(3);
+        return;
+      }
       if (!status.profile_done && state.tab !== 'welcome') {
         // First run: two questions, not the whole settings surface.
         initWelcome();
@@ -6556,7 +6573,7 @@
         // and drops the held first hello in exactly once, so a poll arriving
         // here is all that is needed to catch a late-ready model.
         renderStatus(status);
-        if (status.profile_done && !wasDone && state.tab === 'welcome') {
+        if (status.profile_done && !wasDone && state.tab === 'welcome' && !status.welcome_pending) {
           $('messages').replaceChildren();
           state.greeted = false;
           setTab('chat');
@@ -6727,7 +6744,11 @@
     $('welcome-back-2').addEventListener('click', () => renderWelcomeStep(1));
     $('welcome-finish').addEventListener('click', finishWelcome);
     $('welcome-pers-save').addEventListener('click', savePersonality);
-    $('welcome-pers-skip').addEventListener('click', enterChatAfterWelcome);
+    $('welcome-pers-skip').addEventListener('click', () => {
+      api('/api/agent/welcome-done', { method: 'POST' }).catch(() => {});
+      if (state.status) state.status.welcome_pending = '';
+      enterChatAfterWelcome();
+    });
     document.querySelectorAll('[data-copy-from]').forEach(b => b.addEventListener('click', () =>
       copyText($(b.dataset.copyFrom).textContent.trim(), b)));
     $('home-preview-close').addEventListener('click', () => { $('home-preview').hidden = true; });

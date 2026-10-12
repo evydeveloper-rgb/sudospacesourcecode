@@ -55,9 +55,15 @@ else:
         print("Key source is 'own' but no user key saved — falling back to Sudo credits")
     print("Using Sudo-provided OpenRouter key")
 
-if not or_key:
-    print("No openrouter_key yet — skip picoclaw config")
-    raise SystemExit(0)
+# No key yet (a brand-new device, before Finish setup): the agent's files are
+# still written -- the welcome's personality step edits SOUL.md -- but the
+# PicoClaw config and the gateway wait for a key.
+no_key = not or_key
+if no_key:
+    print("No openrouter_key yet — agent files only, no PicoClaw config")
+    pathlib.Path("/run/sudo-configure-nokey").touch()
+else:
+    pathlib.Path("/run/sudo-configure-nokey").unlink(missing_ok=True)
 
 # --- Load and fill config template ---
 with open(config_template, encoding="utf-8") as f:
@@ -186,10 +192,11 @@ if not github_on:
 pathlib.Path(os.path.dirname(out_config)).mkdir(parents=True, exist_ok=True)
 pathlib.Path(workspace).mkdir(parents=True, exist_ok=True)
 
-with open(out_config, "w", encoding="utf-8") as f:
-    json.dump(cfg, f, indent=2)
-os.chmod(out_config, 0o600)
-print(f"Wrote {out_config}")
+if not no_key:
+    with open(out_config, "w", encoding="utf-8") as f:
+        json.dump(cfg, f, indent=2)
+    os.chmod(out_config, 0o600)
+    print(f"Wrote {out_config}")
 
 # --- A readable view of the gateway, inside the sandbox -------------------
 # The agent runs with restrict_to_workspace, and the real config lives outside
@@ -265,11 +272,20 @@ import re, shutil, time
 
 AGENT_LANGUAGES = {"en": "English", "es": "Spanish", "zh": "Simplified Chinese", "ar": "Arabic"}
 
+# Settings > Personality, changed after setup: a short override at the top of
+# SOUL.md, so the rest of the file (which the agent has been writing in) stays.
+# The welcome's personality step rewrites the style sections whole instead
+# (SOUL_STYLES in server.py); keep the two in the same spirit.
 PERSONALITY_INTROS = {
-    "professional": "You lean precise and formal, but never robotic. Structure your answers clearly.",
     "friendly": "",
-    "concise": "You are brief and direct. Prefer short answers unless asked for detail.",
-    "creative": "You are imaginative and playful while staying helpful and grounded.",
+    "concise": ("**Style: short and precise.** Lead with the answer. Cut filler, greetings and recaps. "
+                "Use a list when it is quicker to read. Add detail only when asked."),
+    "analytical": ("**Style: analytical.** Think in steps and show the reasoning that matters. Weigh the "
+                   "options, say how sure you are, and back claims with numbers or sources."),
+    "professional": ("**Style: analytical.** Think in steps and show the reasoning that matters. Weigh the "
+                     "options, say how sure you are, and back claims with numbers or sources."),
+    "creative": ("**Style: playful and creative.** Be curious and a little funny. Offer the unexpected "
+                 "idea next to the obvious one, and make things fun when it does not get in the way."),
 }
 
 SUDO_FILES = ["AGENTS.md", "HEARTBEAT.md"]
@@ -490,6 +506,12 @@ print("  Workspace: sessions/ ready")
 PY
 
 echo "=== configure-picoclaw complete $(date) ==="
+
+# Without a key there is nothing for a gateway to run on yet.
+if [ -f /run/sudo-configure-nokey ]; then
+  echo "No key yet — gateways left as they are"
+  exit 0
+fi
 
 # GitHub access reaches the agent's shell (git clone/push under exec) through
 # the process environment, which systemd only injects via a unit. Managed as a

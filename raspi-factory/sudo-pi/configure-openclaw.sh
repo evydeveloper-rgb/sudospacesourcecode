@@ -45,6 +45,11 @@ else:
     print(sudo.get("openrouter_key") or "")
 PY
 )
+# OpenClaw refuses to load a plugin whose files are not owned by root. Release
+# bundles built on a Windows machine carried that machine's user id, and the
+# updater kept it, so Sudo's own plugins were silently blocked. Every run puts
+# it right.
+chown -R root:root /opt/sudo-openclaw 2>/dev/null || true
 if [ -z "$key" ]; then
   echo "No OpenRouter key yet — skip"
   exit 0

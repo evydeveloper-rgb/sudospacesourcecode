@@ -1508,6 +1508,8 @@ body.site-mode .crm-site-body { max-width: 880px; margin: 0 auto; padding: 20px 
   padding: 26px 20px calc(30px + var(--safe-bottom));
 }
 .welcome-inner { width: min(100%, 440px); }
+.welcome-view.wide .welcome-inner { width: min(100%, 640px); }
+body.welcome-mode .install-hint { display: none !important; }
 .welcome-inner h1 {
   margin: 4px 0 8px; font-size: clamp(1.9rem, 8vw, 2.6rem);
   line-height: 1.05; letter-spacing: -.05em; font-weight: 750;
@@ -1772,6 +1774,9 @@ body.site-mode .crm-site-body { max-width: 880px; margin: 0 auto; padding: 20px 
   }
   .topbar { grid-column: 2; grid-row: 1; width: auto; }
   #app-main { grid-column: 2; grid-row: 2; min-height: 0; overflow-y: auto; }
+  /* Setup hides the rail, so it gets the whole width and sits centred. */
+  body.welcome-mode .app-shell { grid-template-columns: minmax(0, 1fr); }
+  body.welcome-mode .topbar, body.welcome-mode #app-main { grid-column: 1; }
   .bottom-nav { display: none; }
   /* Fill the column so the composer anchors to the bottom; the fixed bottom
      nav is hidden at this width, so nothing needs reserving. */
@@ -2409,7 +2414,7 @@ input[type="password"], input[type="tel"], input[type="number"], #ssh-key, #devi
 
 /* Welcome: personality chips and the soul file. */
 .welcome-wide { max-width: 640px; }
-.pers-chips { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin: 16px 0 18px; }
+.pers-chips { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 16px 0 18px; }
 .pers-chip {
   display: grid; gap: 2px; padding: 10px 12px; text-align: start; cursor: pointer;
   border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink); font: inherit;

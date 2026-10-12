@@ -86,6 +86,7 @@ BUNDLE_NAME="$(basename "$ROOT")"
 
 echo "Building $ASSET…"
 tar -czf "$WORK/$ASSET" \
+  --owner=0 --group=0 --numeric-owner \
   --exclude='.git' \
   --exclude='node_modules' \
   --exclude='*.tar.gz' \
