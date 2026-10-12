@@ -2470,8 +2470,14 @@ input[type="password"], input[type="tel"], input[type="number"], #ssh-key, #devi
 .model-card .microcopy { font-size: .76rem; }
 #home-model-warning { margin-top: 16px; }
 
+/* One column with one left edge: heading, tabs, intro and browser line up.
+   The breadcrumb sits above the list; a second column only appears for an
+   open file, beside the list it came from. */
+#view-home.active { max-width: 1000px; margin-inline: auto; }
+#view-home .view-heading { max-width: none; margin-inline: 0; }
+.home-crumbs { grid-column: 1 / -1; }
 @media (min-width: 900px) {
-  .home-browser { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .home-browser:has(.home-preview:not([hidden])) { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
 }
 .home-row-icon svg {
   width: 16px; height: 16px; display: block; stroke: var(--ink-3);
