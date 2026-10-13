@@ -2891,3 +2891,66 @@ input[type="password"], input[type="tel"], input[type="number"], #ssh-key, #devi
 .lm-read-key { display: flex; align-items: center; gap: 8px; margin: 6px 0 0 72px; color: var(--ink-3); font-size: .7rem; }
 .lm-read-key i { width: 2px; height: 12px; border-radius: 2px; background: var(--ink); }
 @media (max-width: 560px) { .lm-read-key { margin-inline-start: 0; } }
+
+/* ---- Finish setup: steps as pictures, a few words each ----------------------- */
+.milestone-body > .gs-brains:first-of-type, .milestone-body > .wa-options:first-of-type, .milestone-body > .guide-connectors:first-of-type { margin-top: 16px; }
+.gs-brains { display: grid; gap: 8px; margin-top: 16px; }
+.gs-brain { display: grid; grid-template-columns: 150px minmax(0, 1fr) 56px; align-items: center; gap: 10px; font-size: .78rem; color: var(--ink-2); }
+.gs-brain b { text-align: end; color: var(--ink); font-size: .82rem; }
+.gs-brain i { display: block; height: 14px; border-radius: 999px; }
+.gs-brain i.pi { width: 1%; min-width: 8px; background: var(--ink-4); }
+.gs-brain i.cloud { width: 100%; background: linear-gradient(90deg, var(--primary), var(--coral)); }
+.milestone-body p.gs-cap { margin: 8px 0 0; color: var(--ink-3); font-size: .76rem; line-height: 1.45; }
+
+.gs-steps {
+  list-style: none; margin: 18px 0 0; padding: 0;
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px;
+}
+.gs-steps.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.milestone-body .gs-steps li {
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  padding: 14px 10px 12px; border-radius: 16px; background: var(--surface-low);
+}
+.gs-ico {
+  position: relative; width: 52px; height: 52px; display: grid; place-items: center;
+  border-radius: 16px; background: var(--violet-tint); margin-bottom: 8px;
+}
+.gs-ico svg { width: 26px; height: 26px; fill: none; stroke: var(--primary); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.gs-ico b {
+  position: absolute; top: -6px; inset-inline-end: -6px; width: 22px; height: 22px; display: grid; place-items: center;
+  border-radius: 50%; background: var(--coral); color: #fff; font-size: .72rem; border: 2px solid var(--surface);
+}
+.gs-steps strong { display: block; font-size: .82rem; color: var(--ink); line-height: 1.3; }
+.gs-steps small { display: block; margin-top: 3px; color: var(--ink-3); font-size: .72rem; line-height: 1.35; }
+.gs-steps code { font-size: .7rem; }
+
+.gs-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.gs-chips > span, .gs-chips > button {
+  display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); font: 650 .76rem var(--font-sans);
+}
+.gs-chips > button { cursor: pointer; border-color: var(--line-2); color: var(--primary); }
+.gs-chips > button:hover { background: var(--violet-tint); }
+.gs-chips svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.milestone-body p.gs-alt { margin-top: 10px; color: var(--ink-3); font-size: .76rem; }
+
+.gs-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+.gs-tags span { padding: 3px 9px; border-radius: 8px; background: var(--surface); border: 1px solid var(--line); color: var(--ink-2); font-size: .72rem; font-weight: 650; }
+
+.gs-privacy { margin-top: 18px; padding: 4px 14px 6px; border: 1px solid var(--line); border-radius: 16px; }
+.milestone-body p.gs-privacy-head { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; }
+.gs-privacy-head svg { width: 18px; height: 18px; fill: none; stroke: var(--primary); stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.gs-privacy-head strong { color: var(--ink); font-size: .86rem; }
+.gs-privacy-head span { color: var(--ink-3); font-size: .74rem; }
+
+.gs-more { margin-top: 18px; border: 1px solid var(--line); border-radius: 16px; }
+.gs-more > summary { padding: 12px 14px; cursor: pointer; color: var(--primary); font-size: .82rem; font-weight: 700; }
+.gs-more[open] { padding-bottom: 14px; }
+.gs-more > :not(summary) { margin-inline: 14px; }
+.gs-more .soft-button { margin-top: 14px; }
+
+@media (max-width: 640px) {
+  .gs-steps, .gs-steps.three { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .gs-steps.three li:last-child { grid-column: 1 / -1; }
+  .gs-brain { grid-template-columns: 110px minmax(0, 1fr) 48px; }
+}
