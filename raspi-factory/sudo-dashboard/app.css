@@ -378,6 +378,28 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .hub-ideas-group h3 { margin: 0 0 8px; color: var(--ink-2); font-size: .8rem; }
 .hub-chips { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
 .hub-chips .prompt-chip { text-align: start; }
+.model-ask {
+  margin: 0 0 14px; padding: 12px 14px; border-radius: var(--radius-lg);
+  background: var(--violet-tint); color: var(--primary); font-size: .84rem; font-weight: 600; line-height: 1.45;
+}
+.model-tag.main { background: var(--primary); color: var(--on-primary); }
+.model-card.main { border-color: var(--primary); }
+.hub-guide { border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface); }
+.hub-guide summary { display: flex; align-items: center; gap: 12px; padding: 14px 16px; cursor: pointer; list-style: none; }
+.hub-guide summary::-webkit-details-marker { display: none; }
+.hub-guide summary strong { display: block; font-size: .9rem; }
+.hub-guide summary small { display: block; margin-top: 2px; color: var(--ink-3); font-size: .78rem; line-height: 1.35; }
+.hub-guide-icon {
+  width: 36px; height: 36px; flex: none; display: grid; place-items: center; border-radius: 10px;
+  background: var(--violet-tint); color: var(--primary);
+}
+.hub-guide-icon svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.hub-guide-body { padding: 0 16px 16px; }
+.hub-guide-body > p { margin: 0 0 10px; color: var(--ink-2); font-size: .84rem; line-height: 1.5; }
+.hub-guide-body h3 { margin: 14px 0 6px; font-size: .86rem; }
+.hub-steps { margin: 0; padding-inline-start: 20px; display: grid; gap: 6px; color: var(--ink-2); font-size: .82rem; line-height: 1.5; }
+.hub-steps code { font: .76rem var(--font-mono); background: var(--surface-container); padding: 1px 5px; border-radius: 5px; }
+.hub-guide .soft-button { margin-top: 14px; }
 .hub-faqs { border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface); }
 .hub-faq + .hub-faq { border-top: 1px solid var(--line); }
 .hub-faq summary { padding: 14px 16px; cursor: pointer; font-size: .86rem; font-weight: 650; }

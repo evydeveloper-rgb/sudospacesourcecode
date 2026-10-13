@@ -552,6 +552,32 @@ tools_md += [
     "",
 ]
 
+# Claude Code, once the owner installs it (Settings > Developer access). It
+# lives in the device user's own npm folder and signs in with the owner's
+# Claude subscription, so the agent runs it as that user.
+try:
+    import pwd
+    dev = pwd.getpwuid(1000)
+    claude_bin = os.path.join(dev.pw_dir, ".npm-global", "bin", "claude")
+except KeyError:
+    dev, claude_bin = None, ""
+if dev and os.path.exists(claude_bin):
+    tools_md += [
+        "## Claude Code (for coding jobs)",
+        "",
+        f"- Claude Code is installed. For a coding job (building or changing a page, an app or a "
+        f"script, or fixing something on this device), hand it over with the `exec` tool: "
+        f"`sudo -u {dev.pw_name} -H {claude_bin} -p \"<the whole task: what to build, where, and "
+        f"what done looks like>\" --permission-mode acceptEdits`. Run it from the folder it should "
+        f"work in (`cd <folder> && ...`).",
+        f"- It uses {owner}'s own Claude subscription. If it says it is not signed in, tell "
+        f"{owner} to connect from their computer (`ssh {dev.pw_name}@<this device>.local`), run "
+        "`claude` once and sign in.",
+        "- It can take a few minutes. Tell the owner you started it, then report what it changed "
+        "(and send a picture when it built something visual).",
+        "",
+    ]
+
 # Only Sudo's part, between the markers: notes the owner or the agent keep
 # after the end marker (an imported agent's own TOOLS.md lands there) stay.
 tools_path = "/opt/sudo/agent-workspace/TOOLS.md"

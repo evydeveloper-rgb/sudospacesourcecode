@@ -410,6 +410,33 @@
             </div>
           </section>
 
+          <section class="hub-section" aria-labelledby="hub-further">
+            <h2 id="hub-further" data-i18n="hub.furtherTitle">Go further</h2>
+            <details class="hub-guide" id="hub-guide-claude">
+              <summary>
+                <span class="hub-guide-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/></svg></span>
+                <span><strong data-i18n="hub.cc.title">Work on your sudo with Claude Code</strong>
+                <small data-i18n="hub.cc.sub">Let Claude Code change how your sudo works, and let your agent hand it coding jobs.</small></span>
+              </summary>
+              <div class="hub-guide-body">
+                <p data-i18n="hub.cc.intro">Claude Code is Anthropic's coding assistant. There are two ways to use it with sudo.</p>
+                <h3 data-i18n="hub.cc.aTitle">1. Claude Code on your computer</h3>
+                <ol class="hub-steps">
+                  <li data-i18n-html="hub.cc.a1">In Claude Code on your computer, ask: <em>"Make me an SSH key for my sudo and show me the public key."</em></li>
+                  <li data-i18n-html="hub.cc.a2">Here, open <strong>Settings → Developer access</strong>, turn on <strong>Terminal access</strong>, paste the key under <strong>Prefer to use your own SSH key?</strong> and tap <strong>Use this key instead</strong>.</li>
+                  <li data-i18n-html="hub.cc.a3">Back in Claude Code, ask it to connect with the address shown in Developer access (like <code>ssh you@sudo.local</code>) and tell it what you want to change. Your computer needs to be on the same Wi‑Fi.</li>
+                </ol>
+                <h3 data-i18n="hub.cc.bTitle">2. Your agent uses Claude Code</h3>
+                <ol class="hub-steps">
+                  <li data-i18n-html="hub.cc.b1">In <strong>Settings → Developer access</strong>, tap <strong>Install Claude Code</strong>.</li>
+                  <li data-i18n-html="hub.cc.b2">Sign in once with your Claude subscription: from your computer, connect with <code>ssh</code> as above, run <code>claude</code>, and follow the sign-in.</li>
+                  <li data-i18n-html="hub.cc.b3">Then just ask your agent, for example <em>"Use Claude Code to build me a page for my recipes."</em> It hands the job over and tells you when it is done.</li>
+                </ol>
+                <button class="soft-button" type="button" id="hub-cc-open" data-i18n="hub.cc.open">Open Developer access</button>
+              </div>
+            </details>
+          </section>
+
           <section class="hub-section" aria-labelledby="hub-faq">
             <h2 id="hub-faq" data-i18n="hub.faqTitle">Good to know</h2>
             <div class="hub-faqs">
@@ -1281,6 +1308,7 @@
              as such — and a plain warning that pinning one model drops the
              rest. -->
         <div class="home-panel" id="home-panel-agent" hidden>
+          <p class="model-ask" data-i18n="home.modelAsk">Want a different model? Just ask your agent to switch. Models cost different amounts per message, so we recommend keeping DeepSeek as your main one.</p>
           <div class="model-head">
             <span class="routing-pill" id="home-routing-pill">Auto</span>
             <p class="microcopy" id="home-routing-note"></p>
@@ -1321,7 +1349,7 @@
 
         <div class="settings-list">
           <div class="settings-group" data-i18n="settings.yourAgent">Your agent</div>
-          <section class="setting-card" id="profile-setting">
+          <section class="setting-card" id="profile-setting" hidden>
             <button class="setting-head" type="button" aria-expanded="true">
               <span class="setting-icon">✦</span>
               <span><strong data-i18n="set.profile.agentPersonality">Agent &amp; personality</strong><small id="profile-summary">Set up how sudo talks to you</small></span>
@@ -1348,7 +1376,7 @@
           <section class="setting-card" id="providers-setting">
             <button class="setting-head" type="button">
               <span class="setting-icon">⚿</span>
-              <span><strong data-i18n="key.title">AI key</strong><small id="providers-summary">No key yet</small></span>
+              <span><strong data-i18n="key.title">LLM provider API key (agent's brain)</strong><small id="providers-summary">No key yet</small></span>
               <span class="chevron">&rsaquo;</span>
             </button>
             <div class="setting-body">
@@ -1372,7 +1400,7 @@
               </div>
             </div>
           </section>
-          <section class="setting-card" id="routing-setting">
+          <section class="setting-card" id="routing-setting" hidden>
             <button class="setting-head" type="button">
               <span class="setting-icon">⇄</span>
               <span><strong data-i18n="set.routing.modelRouting">Model &amp; routing</strong><small id="routing-summary">Automatic</small></span>
@@ -2946,12 +2974,11 @@
         const strong = document.createElement('strong');
         strong.textContent = t('home.model.' + m.key) || m.label;
         head.append(strong);
-        if (m.key !== 'chat') {
-          const tag = document.createElement('span');
-          tag.className = 'model-tag';
-          tag.textContent = t('home.whenNeeded');
-          head.append(tag);
-        }
+        const tag = document.createElement('span');
+        tag.className = 'model-tag' + (m.key === 'chat' ? ' main' : '');
+        tag.textContent = m.key === 'chat' ? t('home.mainTag') : t('home.whenNeeded');
+        head.append(tag);
+        if (m.key === 'chat') card.classList.add('main');
         const name = document.createElement('code');
         name.className = 'model-name';
         name.textContent = m.model;
@@ -6961,6 +6988,7 @@
 
     initAppArchive();
     $('hub-setup').addEventListener('click', () => setTab('setup'));
+    $('hub-cc-open').addEventListener('click', () => { setTab('settings'); openSettingPage('ssh-setting'); });
     initSetupGuide();
     $('composer-model').addEventListener('click', () => {
       setTab('settings');
