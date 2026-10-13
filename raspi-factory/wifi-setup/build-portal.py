@@ -63,6 +63,9 @@ h = h.replace(
 
 # Where to find it afterwards.
 h = h.replace('</main>',
+    # Isolated networks (offices, hotels, guest Wi-Fi) let sudo join but keep
+    # phones and laptops from reaching it afterwards.
+    '<p class="font-body-md text-on-surface-variant text-center text-sm" style="margin:-8px auto 18px;max-width:34rem;padding:10px 14px;border-radius:14px;background:#fff4e5;color:#7a4b00"><strong>Office, hotel or guest Wi‑Fi?</strong> Those often stop devices from reaching each other, so you could not open sudo afterwards. Use your home Wi‑Fi or your phone\'s hotspot.</p>'
     '<p class="font-body-md text-on-surface-variant text-center text-sm pb-xl">'
     "Nothing changes yet: next you save sudo's address, then tell it to connect. "
     'It will be at '
