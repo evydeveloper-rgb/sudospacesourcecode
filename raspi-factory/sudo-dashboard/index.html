@@ -1438,6 +1438,20 @@
              the background" gets its own lane, so it does not hold the chat
              hostage -- this is where you watch it and read the answer. -->
         <div class="home-panel" id="home-panel-tasks" hidden>
+          <!-- Open loops: what the agent still owes. Backed by PENDING.md in
+               its workspace -- the same file it reads every conversation --
+               so a line added or deleted here is one the agent sees too. -->
+          <h2 class="task-section-title" data-i18n="home.loops.title">Open loops</h2>
+          <p class="section-intro" data-i18n="home.loops.intro">Things sudo still owes you — promised, deferred or waiting on someone. It keeps this list itself; add one here and it will pick it up next time you talk.</p>
+          <form class="loop-add" id="loop-add">
+            <label class="sr-only" for="loop-add-text" data-i18n="home.loops.addLabel">New open loop</label>
+            <input id="loop-add-text" type="text" dir="auto" maxlength="300" autocomplete="off"
+                   placeholder="Follow up with the landlord about the heater" data-i18n-attr="placeholder:home.loops.placeholder">
+            <button class="soft-button" type="submit" data-i18n="home.loops.add">Add</button>
+          </form>
+          <div class="loop-list" id="loop-list" role="list"></div>
+
+          <h2 class="task-section-title" data-i18n="home.runs.title">Running now</h2>
           <p class="section-intro" data-i18n="home.tasksIntro">Work sudo is doing off to the side. Send anything long with the clock button next to the message box and it runs here — the chat stays free while it works, and the answer lands back in the conversation when it's done.</p>
           <div class="run-list" id="run-list" role="list"></div>
         </div>
@@ -2482,7 +2496,14 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ message, history, record: true }),
         }, 130000, t('chat.slowReply'));
-        addMessage('agent', data.reply || t('chat.noResponse'));
+        if (data.source === 'provisioning') {
+          // Not an answer -- the agent is still installing. Say so plainly
+          // and keep watching, so the banner clears the moment it lands.
+          addMessage('system', t('ready.provisioning'));
+          refreshStatus();
+        } else {
+          addMessage('agent', data.reply || t('chat.noResponse'));
+        }
       } catch (error) {
         addMessage('system', error.message);
       } finally {
@@ -2960,9 +2981,126 @@
 
     function loadHome() {
       loadHomeModels();
+      loadLoops();
       loadRuns();
       if (!homeFilesLoaded) { homeFilesLoaded = true; loadHomeTree(); }
     }
+
+    // ── Open loops (the Tasks panel) ─────────────────────────────────────
+    // The agent's PENDING.md as a list. The server re-reads the file on every
+    // call and answers with the whole list, so the agent's own edits show up
+    // and a line it already changed is never overwritten from a stale copy.
+    const LOOP_STATUSES = ['open', 'started', 'working', 'done'];
+
+    async function loopsCall(options) {
+      try {
+        const data = await api('/api/agent/loops', options);
+        renderLoops(data.loops || []);
+      } catch (error) {
+        // A 404 means the agent changed that line first; show its version.
+        loadLoops();
+        if (!/not found/i.test(error.message)) loopsMessage(error.message);
+      }
+    }
+
+    function loopsMessage(text) {
+      const list = $('loop-list');
+      const msg = document.createElement('p');
+      msg.className = 'microcopy';
+      msg.textContent = text;
+      list.append(msg);
+    }
+
+    async function loadLoops() {
+      if (!$('loop-list')) return;
+      try {
+        const data = await api('/api/agent/loops');
+        renderLoops(data.loops || []);
+      } catch (error) {
+        $('loop-list').replaceChildren();
+        loopsMessage(error.message);
+      }
+    }
+
+    // "3d ago" style age, and a nudge once a loop passes the week the agent
+    // is told to surface-or-drop by.
+    function loopAge(added) {
+      if (!added) return { label: '', stale: false };
+      const days = Math.floor((Date.now() - new Date(added + 'T00:00:00')) / 86400000);
+      if (!(days >= 0)) return { label: added, stale: false };
+      const label = days === 0 ? t('home.loops.today') : tn('home.loops.daysAgo', days);
+      return { label, stale: days >= 7 };
+    }
+
+    function renderLoops(loops) {
+      const list = $('loop-list');
+      list.replaceChildren();
+      if (!loops.length) {
+        loopsMessage(t('home.loops.empty'));
+        return;
+      }
+      loops.forEach(loop => {
+        const status = LOOP_STATUSES.includes(loop.status) ? loop.status : 'open';
+        const age = loopAge(loop.added);
+        const card = document.createElement('div');
+        card.className = 'loop-card ' + status + (age.stale && status !== 'done' ? ' stale' : '');
+        card.setAttribute('role', 'listitem');
+        const head = document.createElement('div');
+        head.className = 'run-head';
+        const text = document.createElement('strong');
+        text.dir = 'auto';
+        text.textContent = loop.text;
+        // The pill is the status control: tap to step Open → Started →
+        // Working → Done. Written straight into the file, so the agent sees it.
+        const pill = document.createElement('button');
+        pill.type = 'button';
+        pill.className = 'run-pill loop-pill ' + status;
+        pill.textContent = t('home.loops.status.' + status);
+        pill.title = t('home.loops.changeStatus');
+        pill.addEventListener('click', () => {
+          pill.disabled = true;
+          const next = LOOP_STATUSES[(LOOP_STATUSES.indexOf(status) + 1) % LOOP_STATUSES.length];
+          loopsCall({
+            method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: loop.id, status: next }),
+          });
+        });
+        head.append(text, pill);
+        const foot = document.createElement('div');
+        foot.className = 'loop-foot';
+        const meta = document.createElement('small');
+        meta.className = 'microcopy';
+        meta.textContent = age.stale && status !== 'done'
+          ? age.label + ' · ' + t('home.loops.stale') : age.label;
+        const del = document.createElement('button');
+        del.type = 'button';
+        del.className = 'loop-delete';
+        del.textContent = t('home.loops.delete');
+        del.addEventListener('click', () => {
+          del.disabled = true;
+          loopsCall({
+            method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: loop.id }),
+          });
+        });
+        foot.append(meta, del);
+        card.append(head, foot);
+        list.append(card);
+      });
+    }
+
+    $('loop-add').addEventListener('submit', async event => {
+      event.preventDefault();
+      const input = $('loop-add-text');
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = '';
+      await loopsCall({
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      });
+      input.focus();
+    });
 
     // ── Background runs (the Tasks panel) ────────────────────────────────
     let runsTimer = null;
@@ -5776,6 +5914,14 @@
       const bar = $('model-progress');
       const fill = $('model-progress-fill');
 
+      // The cloud agent is still being installed. Nothing else answers in the
+      // meantime, so the banner says that rather than going quiet.
+      if (ready && where === 'cloud' && status.agent_backend === 'provisioning') {
+        if (bar) bar.hidden = true;
+        text.textContent = t('ready.provisioning');
+        banner.hidden = false;
+        return;
+      }
       if (ready) {
         banner.hidden = true;
         return;
@@ -7353,6 +7499,9 @@
     function modelSettled(status) {
       if (!status) return false;
       const where = status.answering_with && status.answering_with.where;
+      // Still installing the agent: keep polling so the chat switches over
+      // on its own.
+      if (where === 'cloud' && status.agent_backend === 'provisioning') return false;
       if (where && where !== 'none') return true;
       return ((status.local_model && status.local_model.state) || 'absent') === 'failed';
     }

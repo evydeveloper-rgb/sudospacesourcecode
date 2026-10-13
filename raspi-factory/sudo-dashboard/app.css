@@ -1181,8 +1181,7 @@ body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
   .crm-meta, .crm-actions { justify-self: start; }
 }
 
-/* ==========================================================================
-   Site mode — a feature that is a site of its own on the dashboard's URL.
+/* ===================================================================   Site mode — a feature that is a site of its own on the dashboard's URL.
    The Contacts app lives here. The rail, top bar and bottom nav come off, the
    shell becomes a plain full-height page, and the feature draws its own
    header instead -- the same shape as the apps in the sites directory, but
@@ -1939,8 +1938,7 @@ body.welcome-mode .install-hint { display: none !important; }
 .theme-opt strong { display: block; padding: 9px 11px 3px; font-size: .78rem; }
 .theme-opt small { display: block; padding: 0 11px 10px; color: var(--muted); font-size: .66rem; line-height: 1.3; }
 
-/* ==========================================================================
-   Desktop shell — from the Stitch "Setup Dashboard (Desktop)" screen.
+/* ===================================================================   Desktop shell — from the Stitch "Setup Dashboard (Desktop)" screen.
    Metrics taken from that export: 280px rail, 1400px content cap, and the
    12-column 8/4 split. Built on our own tokens rather than the design's
    fixed light palette, so all four themes still work at this width.
@@ -2036,8 +2034,7 @@ body.welcome-mode .install-hint { display: none !important; }
   #app-main { max-width: 1180px; margin-inline: auto; width: 100%; }
 }
 
-/* ==========================================================================
-   Settings as pages. Tapping a row replaces the list with that one section,
+/* ===================================================================   Settings as pages. Tapping a row replaces the list with that one section,
    rather than expanding it in place — the list had grown long enough that an
    opened section pushed everything else off-screen.
    ========================================================================== */
@@ -2954,3 +2951,38 @@ input[type="password"], input[type="tel"], input[type="number"], #ssh-key, #devi
   .gs-steps.three li:last-child { grid-column: 1 / -1; }
   .gs-brain { grid-template-columns: 110px minmax(0, 1fr) 48px; }
 }
+/* Tasks panel: open loops (PENDING.md) above the live runs. Same card and
+   pill language as the runs; the pill doubles as the status control. */
+.task-section-title {
+  margin: 22px 0 0; font-size: .8rem; font-weight: 750; letter-spacing: .02em;
+  color: var(--ink);
+}
+.task-section-title:first-child { margin-top: 6px; }
+.loop-add { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin: 12px 0 10px; }
+.loop-add input {
+  min-width: 0; min-height: 42px; padding: 0 13px; border: 1px solid var(--line);
+  border-radius: 12px; background: var(--surface); color: var(--ink); font: inherit; font-size: .86rem;
+}
+.loop-add input:focus-visible { outline: 3px solid var(--accent-soft); border-color: var(--accent); }
+.loop-add .soft-button { margin: 0; }
+.loop-list { display: grid; gap: 8px; margin-bottom: 8px; }
+.loop-card {
+  border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface);
+  padding: 11px 14px; display: flex; flex-direction: column; gap: 6px;
+}
+/* Past the week the agent is told to surface-or-drop by: a quiet coral
+   stripe, the same way a failed run is marked. */
+.loop-card.stale { border-inline-start: 3px solid var(--accent); }
+.loop-card.done strong { color: var(--ink-3); text-decoration: line-through; }
+.loop-pill { border: 0; font: inherit; font-size: .68rem; font-weight: 700; cursor: pointer; }
+.loop-pill:focus-visible { outline: 3px solid var(--accent-soft); outline-offset: 2px; }
+.loop-pill.started { background: var(--amber-tint); color: #7a4a00; }
+.loop-pill.working { background: var(--on-tint); color: var(--coral-2); }
+.loop-pill.done { background: var(--surface-container); color: var(--ink-3); }
+.loop-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.loop-foot .microcopy { margin: 0; }
+.loop-delete {
+  border: 0; background: none; padding: 4px 0; font: inherit; font-size: .72rem; font-weight: 700;
+  color: var(--ink-3); cursor: pointer;
+}
+.loop-delete:hover { color: var(--error); }

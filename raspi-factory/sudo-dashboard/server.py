@@ -54,8 +54,12 @@ WORKSPACE = "/opt/sudo/agent-workspace"
 # than a directory walk, so a stray file can never be served.
 # The agent's own files first (it edits these as it learns), then Sudo's.
 # memory/MEMORY.md is where PicoClaw kept long-term memory before OpenClaw.
-AGENT_FILES = ["USER.md", "MEMORY.md", "IDENTITY.md", "SOUL.md", "AGENTS.md", "TOOLS.md",
-               "RUNTIME.md", "HEARTBEAT.md", "BOOTSTRAP.md", "memory/MEMORY.md"]
+AGENT_FILES = ["USER.md", "MEMORY.md", "PENDING.md", "IDENTITY.md", "SOUL.md", "AGENTS.md",
+               "TOOLS.md", "RUNTIME.md", "HEARTBEAT.md", "BOOTSTRAP.md", "memory/MEMORY.md"]
+# Open loops: one line per thing the agent still owes. The agent edits it as it
+# works and the Tasks panel edits the same file, so there is one list, not two.
+PENDING_FILE = os.path.join(WORKSPACE, "PENDING.md")
+PENDING_TEMPLATE = "/opt/picoclaw/workspace/PENDING.md"
 # Installing Node takes minutes, so the job runs detached and the dashboard
 # polls this status file rather than holding an HTTP request open.
 DEVTOOLS_STALE_SECS = 15 * 60
@@ -94,6 +98,16 @@ OPENCLAW_TOKEN_FILE = "/etc/sudo/openclaw_gateway_token"
 # costs ~6s of Node start-up per message on a Pi before the model is even asked.
 OPENCLAW_CHAT_URL = "http://127.0.0.1:18790/v1/chat/completions"
 OPENCLAW_STARTUP_WAIT = 60
+# First boot with Wi-Fi installs OpenClaw (install-openclaw.sh). Until it lands
+# the agent is "provisioning": the chat says so instead of a different brain
+# answering under the same name.
+OPENCLAW_INSTALL_UNIT = "sudo-openclaw-install.service"
+OPENCLAW_INSTALL_LOG = "/var/log/sudo-openclaw-install.log"
+# An install that has not even started this long after Wi-Fi came up is not
+# going to (no network to fetch Node with); stop promising it is on its way.
+OPENCLAW_INSTALL_GRACE = 30 * 60
+PROVISIONING_MESSAGE = ("Your agent is getting set up (~2-3 min). You can keep this "
+                        "page open; it'll switch over on its own.")
 
 LOCALMODEL_STATUS = "/var/lib/sudo-localmodel-status"
 LOCALMODEL_SCRIPT = "/usr/local/bin/sudo-install-local-model.sh"
@@ -879,6 +893,111 @@ def read_agent_files():
     return out
 
 
+# ── Open loops (PENDING.md) ─────────────────────────────────────────────────
+# One line per loop, the same file the agent reads at the start of every
+# conversation:   - [added 2026-10-13] what's open → next action [status: working]
+# "Open" carries no tag. Everything that is not a loop line (title, notes,
+# comments) is left exactly as the agent wrote it.
+LOOP_STATUSES = ("open", "started", "working", "done")
+LOOP_MAX_LEN = 300
+_LOOP_LINE = re.compile(
+    r"^- (?:\[added (\d{4}-\d{2}-\d{2})\]\s*)?(.*?)"
+    r"(?:\s*\[status:\s*(open|started|working|done)\])?\s*$", re.I)
+_loops_lock = threading.Lock()
+
+
+def _read_pending() -> list[str]:
+    text = read_text(PENDING_FILE)
+    if text is None:
+        text = read_text(PENDING_TEMPLATE) or "# PENDING — open loops\n\n"
+    return text.splitlines()
+
+
+def _loop_positions(lines: list[str]):
+    """(index, loop) for every loop line, skipping anything inside <!-- -->."""
+    in_comment = False
+    for i, line in enumerate(lines):
+        if in_comment:
+            in_comment = "-->" not in line
+            continue
+        if line.lstrip().startswith("<!--"):
+            in_comment = "-->" not in line
+            continue
+        m = _LOOP_LINE.match(line)
+        if not m or not m.group(2).strip():
+            continue
+        yield i, {
+            "id": hashlib.sha1(line.encode("utf-8")).hexdigest()[:12],
+            "text": m.group(2).strip(),
+            "added": m.group(1),
+            "status": (m.group(3) or "open").lower(),
+        }
+
+
+def _format_loop(text: str, added: str | None, status: str) -> str:
+    line = f"- [added {added}] {text}" if added else f"- {text}"
+    return line if status == "open" else f"{line} [status: {status}]"
+
+
+def _clean_loop_text(value) -> str:
+    text = " ".join(str(value or "").split())
+    # A typed "[status: …]" would be read back as the status; keep it out.
+    text = re.sub(r"\[status:[^\]]*\]", "", text, flags=re.I).strip()
+    return text[:LOOP_MAX_LEN]
+
+
+def _write_pending(lines: list[str]) -> None:
+    os.makedirs(WORKSPACE, exist_ok=True)
+    tmp = PENDING_FILE + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        f.write("\n".join(lines).rstrip("\n") + "\n")
+    os.replace(tmp, PENDING_FILE)
+
+
+def read_loops() -> list[dict]:
+    return [loop for _, loop in _loop_positions(_read_pending())]
+
+
+def add_loop(text: str) -> dict:
+    with _loops_lock:
+        lines = _read_pending()
+        positions = list(_loop_positions(lines))
+        line = _format_loop(text, time.strftime("%Y-%m-%d"), "open")
+        # After the last loop, so the list keeps its order; otherwise at the end.
+        at = positions[-1][0] + 1 if positions else len(lines)
+        if not positions and lines and lines[-1].strip():
+            lines.append("")
+            at += 1
+        lines.insert(at, line)
+        _write_pending(lines)
+        return next(loop for i, loop in _loop_positions(lines) if i == at)
+
+
+def update_loop(loop_id: str, status: str | None = None, text: str | None = None):
+    """Rewrite one loop in place. None if the id no longer matches a line --
+    the agent may have just edited or resolved it."""
+    with _loops_lock:
+        lines = _read_pending()
+        for i, loop in _loop_positions(lines):
+            if loop["id"] != loop_id:
+                continue
+            lines[i] = _format_loop(text or loop["text"], loop["added"], status or loop["status"])
+            _write_pending(lines)
+            return next(l for j, l in _loop_positions(lines) if j == i)
+    return None
+
+
+def delete_loop(loop_id: str) -> bool:
+    with _loops_lock:
+        lines = _read_pending()
+        for i, loop in _loop_positions(lines):
+            if loop["id"] == loop_id:
+                del lines[i]
+                _write_pending(lines)
+                return True
+    return False
+
+
 # ── Device files (the Home tab) ─────────────────────────────────────────────
 # A read-only look at what is actually on the device. The owner owns the box,
 # so nothing here is a secret from them -- but it is still deliberately a
@@ -1136,7 +1255,8 @@ def setup_status(include_sensitive=False):
         "profile_done": bool(cfg.get("profile_done")),
         "welcome_pending": cfg.get("welcome_pending") or "",
         "cloud_registered": os.path.isfile("/var/lib/sudo-cloud-registered"),
-        "agent_ready": os.path.isfile(OPENCLAW_CONFIG if agent_backend(cfg) == "openclaw" else PICOCLAW_CONFIG)
+        "agent_ready": agent_backend(cfg) != "provisioning"
+                       and os.path.isfile(OPENCLAW_CONFIG if agent_backend(cfg) == "openclaw" else PICOCLAW_CONFIG)
                        and bool(agent_brain(cfg)),
         "agent_name": cfg.get("agent_name", "sudo"),
         "user_name": cfg.get("user_name"),
@@ -1968,13 +2088,53 @@ def picoclaw_chat(message: str, session_key: str = DASHBOARD_SESSION) -> str:
     return clean_agent_text(proc.stdout or proc.stderr or "") or "(empty response)"
 
 
+class AgentProvisioningError(RuntimeError):
+    """The agent is still being installed; nothing can answer yet."""
+
+
+_install_failed_cache = {"at": 0.0, "value": False}
+
+
+def openclaw_install_failed() -> bool:
+    """True once the OpenClaw install has visibly given up: it ran and left no
+    binary behind, or it never got to run long after Wi-Fi came up. Cached for
+    a few seconds -- this rides along on every status poll."""
+    now = time.time()
+    if now - _install_failed_cache["at"] < 5:
+        return _install_failed_cache["value"]
+    failed = False
+    try:
+        active = subprocess.run(["systemctl", "is-active", OPENCLAW_INSTALL_UNIT],
+                                capture_output=True, text=True, timeout=3).stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        active = ""
+    if active not in ("active", "activating"):
+        if "=== install-openclaw" in (read_text(OPENCLAW_INSTALL_LOG) or ""):
+            failed = True   # it ran, and there is still no binary
+        elif os.path.isfile(WIFI_MARKER):
+            failed = now - os.path.getmtime(WIFI_MARKER) > OPENCLAW_INSTALL_GRACE
+    _install_failed_cache.update(at=now, value=failed)
+    return failed
+
+
 def agent_backend(cfg=None) -> str:
-    """Which brain answers: OpenClaw once installed, unless the owner pinned
-    picoclaw. Same rule as the end of configure-picoclaw.sh."""
+    """Which brain answers.
+
+    openclaw      -- installed, and the owner has not pinned anything else.
+    provisioning  -- OpenClaw is still installing; the chat shows a setting-up
+                     state rather than another brain answering in the meantime.
+    picoclaw      -- only when the owner pinned it (support escape hatch), or
+                     silently, as last-resort recovery, when the OpenClaw
+                     install could not complete and picoclaw is on the card.
+    configure-picoclaw.sh hands over to OpenClaw on the same installed rule."""
     cfg = cfg if cfg is not None else read_json_file(CONFIG)
-    if cfg.get("agent_backend") == "picoclaw" or not os.path.isfile(OPENCLAW_BIN):
+    if cfg.get("agent_backend") == "picoclaw":
         return "picoclaw"
-    return "openclaw"
+    if os.path.isfile(OPENCLAW_BIN):
+        return "openclaw"
+    if os.path.isfile(PICOCLAW_BIN) and openclaw_install_failed():
+        return "picoclaw"
+    return "provisioning"
 
 
 def openclaw_chat(message: str, session_key: str = DASHBOARD_SESSION) -> str:
@@ -2261,8 +2421,11 @@ def openclaw_whatsapp_state() -> dict:
 
 
 def agent_chat(message: str, session_key: str = DASHBOARD_SESSION) -> str:
-    if agent_backend() == "openclaw":
+    backend = agent_backend()
+    if backend == "openclaw":
         return openclaw_chat(message, session_key)
+    if backend == "provisioning":
+        raise AgentProvisioningError(PROVISIONING_MESSAGE)
     return picoclaw_chat(message, session_key)
 
 
@@ -2495,7 +2658,7 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                 self.send_header("Access-Control-Allow-Origin", origin)
                 self.send_header("Vary", "Origin")
                 self.send_header("Access-Control-Allow-Credentials", "true")
-                self.send_header("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
+                self.send_header("Access-Control-Allow-Methods", "GET,POST,PATCH,DELETE,OPTIONS")
                 self.send_header(
                     "Access-Control-Allow-Headers",
                     "Content-Type, Authorization",
@@ -3489,6 +3652,45 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             self.send_json({"workspace": WORKSPACE, "files": read_agent_files()})
             return True
 
+        # Open loops: the agent's PENDING.md, as a list the owner can edit.
+        if path == "/api/agent/loops":
+            if self.command == "GET":
+                self.send_json({"loops": read_loops()})
+                return True
+            try:
+                body = self.read_body_json()
+            except (ValueError, json.JSONDecodeError):
+                self.send_json({"error": "Invalid JSON"}, code=400)
+                return True
+            if not isinstance(body, dict):
+                body = {}
+            query = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            loop_id = str(body.get("id") or (query.get("id") or [""])[0]).strip()
+            if self.command == "POST":
+                text = _clean_loop_text(body.get("text"))
+                if not text:
+                    self.send_json({"error": "text required"}, code=400)
+                    return True
+                loop = add_loop(text)
+                self.send_json({"ok": True, "loop": loop, "loops": read_loops()})
+                return True
+            if self.command == "PATCH":
+                status = str(body.get("status") or "").lower() or None
+                if status and status not in LOOP_STATUSES:
+                    self.send_json({"error": f"status must be one of {', '.join(LOOP_STATUSES)}"}, code=400)
+                    return True
+                text = _clean_loop_text(body.get("text")) if "text" in body else None
+                loop = update_loop(loop_id, status, text) if loop_id else None
+                if not loop:
+                    self.send_json({"error": "loop not found", "loops": read_loops()}, code=404)
+                    return True
+                self.send_json({"ok": True, "loop": loop, "loops": read_loops()})
+                return True
+            if self.command == "DELETE":
+                if not (loop_id and delete_loop(loop_id)):
+                    self.send_json({"error": "loop not found", "loops": read_loops()}, code=404)
+                    return True
+
         # Community: joined or not, join, feed, post, map, report, leave.
         if path.startswith("/api/community/"):
             route = path[len("/api/community"):]
@@ -3695,6 +3897,9 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             cfg = read_json_file(CONFIG)
             if cfg.get("agent_backend") != "picoclaw" and not agent_brain(cfg):
                 self.send_json({"error": "Add an API key in Settings first."}, code=400)
+                return True
+            if agent_backend(cfg) == "provisioning":
+                self.send_json({"error": PROVISIONING_MESSAGE, "code": "provisioning"}, code=409)
                 return True
             run = start_bg_run(task)
             self.send_json({"ok": True, "run": {
@@ -4175,7 +4380,11 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                     reply_json({"reply": reply, "source": "local"})
                     return True
                 if agent_brain(cfg):
-                    reply = agent_chat(message, session_key)
+                    try:
+                        reply = agent_chat(message, session_key)
+                    except AgentProvisioningError as exc:
+                        self.send_json({"reply": str(exc), "source": "provisioning"})
+                        return True
                     reply_json({"reply": reply, "source": "cloud",
                                 "note": "on-device model unavailable"})
                     return True
@@ -4188,6 +4397,10 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             try:
                 reply = agent_chat(message, session_key)
                 reply_json({"reply": reply, "source": "cloud"})
+            except AgentProvisioningError as exc:
+                # Still installing: a setting-up note, not a reply, so it is
+                # not written into the transcript as if the agent had said it.
+                self.send_json({"reply": str(exc), "source": "provisioning"})
             except SpendGuardError as exc:
                 # Breaker tripped: the turn was never sent, so tell the user
                 # plainly instead of surfacing it as an error.
@@ -4364,6 +4577,11 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             self.handle_api(path)
             return
         self.send_error(405)
+
+    # Only the open-loops endpoint takes these; anything else falls through
+    # handle_api to its usual not-found.
+    do_PATCH = do_POST
+    do_DELETE = do_POST
 
 
 def migrate_config_if_needed() -> None:
