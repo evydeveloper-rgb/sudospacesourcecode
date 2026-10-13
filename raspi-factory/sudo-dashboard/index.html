@@ -86,6 +86,9 @@
       </div>
       <div class="topbar-right">
         <div class="device-state" id="device-state-wrap"><i aria-hidden="true"></i><span id="device-state">online</span></div>
+        <button type="button" class="hub-button top-gear" data-tab="settings" aria-label="Settings" title="Settings" data-i18n-attr="aria-label:nav.settings,title:nav.settings">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
+        </button>
         <button type="button" class="hub-button" id="hub-button" data-tab="hub" aria-label="Knowledge hub" title="Knowledge hub" data-i18n-attr="aria-label:top.knowledgeHub,title:top.knowledgeHub">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></svg>
         </button>
@@ -681,7 +684,7 @@
               </div>
 
               <h3 data-i18n="guide.cloud.preferFullyPrivate">Prefer fully private?</h3>
-              <p data-i18n-html="guide.cloud.switchBackToThe">Switch back to the on-device model any time in Settings → Model &amp; routing → <em>Keep it on this device</em>. It’s fully private and free. We’re also working on fine-tuned, compressed local models made for Sudo. Coming soon.</p>
+              <p data-i18n-html="guide.cloud.switchBackToThe">Switch to the on-device model any time in Home → Agent &amp; models → <em>On-device models</em>. It’s fully private and free. We’re also working on fine-tuned, compressed local models made for Sudo. Coming soon.</p>
               <button class="soft-button" type="button" data-go="routing" data-i18n="guide.cloud.openModelRouting">Open Model &amp; routing</button>
 
               <div class="milestone-actions">
@@ -1308,6 +1311,16 @@
              as such — and a plain warning that pinning one model drops the
              rest. -->
         <div class="home-panel" id="home-panel-agent" hidden>
+          <div class="model-seg" role="tablist" aria-label="Model kinds" data-i18n-attr="aria-label:lm.kinds">
+            <button type="button" role="tab" class="model-seg-btn active" data-mseg="cloud" aria-selected="true">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 18a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 8.5a4.5 4.5 0 0 1-.5 9.5Z"/></svg><span data-i18n="lm.tabCloud">Cloud models</span>
+            </button>
+            <button type="button" role="tab" class="model-seg-btn" data-mseg="local" aria-selected="false">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9.5 9.5h5v5h-5zM9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg><span data-i18n="lm.tabLocal">On-device models</span>
+            </button>
+          </div>
+
+          <div id="mseg-cloud">
           <p class="model-ask" data-i18n="home.modelAsk">Want a different model? Just ask your agent to switch. Models cost different amounts per message, so we recommend keeping DeepSeek as your main one.</p>
           <div class="model-head">
             <span class="routing-pill" id="home-routing-pill">Auto</span>
@@ -1315,7 +1328,128 @@
           </div>
           <div class="model-grid" id="home-model-grid"></div>
           <div class="warning-copy" id="home-model-warning" data-i18n-html="home.modelWarning">
-            <strong>Why more than one model.</strong> Automatic lets sudo hand each job to the model that can actually do it — a photo goes to the model that can see, a drawing to the one that can paint. Switching to <em>Always this one</em> in Model &amp; routing forces everything onto a single model, and anything it can't do stops working. That is the trade: one model is simpler, several keep every ability.
+            <strong>Why more than one model.</strong> sudo hands each job to the model that can actually do it: a photo goes to the one that can see, a picture request to the one that can make images. If you ask your agent to use one model for everything, anything that model cannot do stops working.
+          </div>
+          </div>
+
+          <!-- On-device models: a small workstation for what runs on the Pi
+               itself. What it is, what else fits this board, switching, and
+               how these models work -- in numbers, not adjectives. -->
+          <div id="mseg-local" class="lm" hidden>
+            <div class="lm-only">
+              <div class="lm-only-row">
+                <div>
+                  <strong data-i18n="lm.only">Use only the on-device model</strong>
+                  <small id="lm-answering"></small>
+                </div>
+                <label class="switch">
+                  <input id="lm-only" type="checkbox">
+                  <span aria-hidden="true"></span>
+                  <em class="sr-only" data-i18n="lm.only">Use only the on-device model</em>
+                </label>
+              </div>
+              <p class="lm-caution">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 20h20Z"/><path d="M12 10v4M12 17h.01"/></svg>
+                <span data-i18n-html="lm.caution">Good for basic chatting, <strong>not a daily driver</strong>. It can’t search the web, use your apps or handle long tasks. Only this chat stays on the Pi: WhatsApp and other channels keep using your cloud model.</span>
+              </p>
+              <p class="form-status" id="lm-status" role="status"></p>
+            </div>
+
+            <h3 class="lm-h" data-i18n="lm.yourPi">Your Pi</h3>
+            <div class="lm-specs" id="lm-specs"><p class="microcopy" data-i18n="lm.loading">Reading the device…</p></div>
+
+            <h3 class="lm-h" data-i18n="lm.runningNow">Running now</h3>
+            <div class="lm-progress" id="lm-progress" hidden>
+              <div class="lm-progress-head"><strong id="lm-progress-title"></strong><span id="lm-progress-pct"></span></div>
+              <div class="model-progress"><div class="model-progress-fill" id="lm-progress-fill"></div></div>
+              <small id="lm-progress-msg"></small>
+            </div>
+            <div class="lm-now" id="lm-now"></div>
+
+            <h3 class="lm-h" data-i18n="lm.pickTitle">Models for your Pi</h3>
+            <p class="lm-sub" id="lm-pick-lede"></p>
+            <div id="lm-tiers"></div>
+            <div id="lm-custom"></div>
+
+            <h3 class="lm-h" data-i18n="lm.learnTitle">How on-device models work</h3>
+            <div class="lm-learn">
+              <details class="hub-guide" open>
+                <summary>
+                  <span class="hub-guide-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="6" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/><circle cx="12" cy="12" r="2"/><path d="m7.5 7.5 3 3M16.5 7.5l-3 3M7.5 16.5l3-3M16.5 16.5l-3-3"/></svg></span>
+                  <span><strong data-i18n="lm.l1.title">Parameters: what the “B” means</strong><small data-i18n="lm.l1.sub">Size is knowledge, and memory</small></span>
+                </summary>
+                <div class="hub-guide-body">
+                  <p data-i18n-html="lm.l1.body">A <strong>parameter</strong> is one number the model learned in training. <strong>1.7B</strong> means 1.7 billion of them. More parameters hold more knowledge and follow instructions better, but take more memory and run slower.</p>
+                  <div class="lm-scale">
+                    <div class="lm-scale-row"><span>Gemma 3 270M</span><div class="lm-scale-track"><i style="width:43%"></i></div><b>0.27B</b></div>
+                    <div class="lm-scale-row"><span>Qwen3 1.7B</span><div class="lm-scale-track"><i style="width:58%"></i></div><b>2B</b></div>
+                    <div class="lm-scale-row"><span>Qwen3 14B</span><div class="lm-scale-track"><i style="width:73%"></i></div><b>15B</b></div>
+                    <div class="lm-scale-row cloud"><span data-i18n="lm.l1.cloud">Cloud models</span><div class="lm-scale-track"><i style="width:100%"></i></div><b>500B+</b></div>
+                  </div>
+                  <p class="lm-note" data-i18n="lm.l1.note">The scale is squeezed: the cloud bar stands for about 250 times Qwen3 1.7B. Cloud models run on data-centre hardware, which is why they are so much smarter.</p>
+                </div>
+              </details>
+
+              <details class="hub-guide">
+                <summary>
+                  <span class="hub-guide-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h10M4 17h5"/></svg></span>
+                  <span><strong data-i18n="lm.l2.title">Quantization: shrinking a model to fit</strong><small data-i18n="lm.l2.sub">Why a 2B model is a 1.4 GB file</small></span>
+                </summary>
+                <div class="hub-guide-body">
+                  <p data-i18n-html="lm.l2.body">Each parameter is stored as a number. Fresh from training it takes <strong>16 bits</strong>. Quantization rounds it to <strong>8 or 4 bits</strong>: the file shrinks by half or three quarters, and quality drops a little.</p>
+                  <div class="lm-quant">
+                    <div class="lm-quant-row"><span class="lm-quant-bits">16-bit</span><div class="lm-quant-track"><i style="width:100%"></i></div><b>4.1 GB</b><small data-i18n="lm.l2.q16">Original</small></div>
+                    <div class="lm-quant-row"><span class="lm-quant-bits">8-bit</span><div class="lm-quant-track"><i style="width:54%"></i></div><b>2.2 GB</b><small data-i18n="lm.l2.q8">Almost no difference</small></div>
+                    <div class="lm-quant-row"><span class="lm-quant-bits">4-bit</span><div class="lm-quant-track"><i style="width:33%"></i></div><b>1.4 GB</b><small data-i18n="lm.l2.q4">Small loss, rarely noticed</small></div>
+                  </div>
+                  <p class="lm-note" data-i18n="lm.l2.caption">Qwen3 1.7B at each precision. Below 4 bits, answers get noticeably worse.</p>
+                  <p class="lm-decode-title" data-i18n="lm.l2.decode">Reading a name like Q4_K_M</p>
+                  <div class="lm-decode">
+                    <div><code>Q4</code><span data-i18n="lm.l2.dQ">4 bits per weight</span></div>
+                    <div><code>K</code><span data-i18n="lm.l2.dK">“k-quant”: weights in small blocks, each with its own scale, so rounding errors stay small</span></div>
+                    <div><code>M</code><span data-i18n="lm.l2.dM">Medium: a few sensitive layers kept at 6 bits (S = fewer, L = more)</span></div>
+                  </div>
+                  <p class="lm-formula"><span data-i18n="lm.l2.formula">File size ≈ parameters × bits ÷ 8</span></p>
+                </div>
+              </details>
+
+              <details class="hub-guide">
+                <summary>
+                  <span class="hub-guide-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14 16 9"/><path d="M3.5 18a9 9 0 1 1 17 0"/></svg></span>
+                  <span><strong data-i18n="lm.l3.title">Speed: why bigger is slower</strong><small data-i18n="lm.l3.sub">Memory speed sets the pace</small></span>
+                </summary>
+                <div class="hub-guide-body">
+                  <p data-i18n-html="lm.l3.body">To write each <strong>token</strong> (about ¾ of a word), the model reads every one of its weights from memory once. So the Pi’s <strong>memory speed</strong>, not its processor, sets the pace.</p>
+                  <div class="lm-eq">
+                    <div class="lm-eq-box"><b>≈ 9 GB/s</b><small data-i18n="lm.l3.bw">Pi 5 memory</small></div>
+                    <span class="lm-eq-op">÷</span>
+                    <div class="lm-eq-box"><b>1.4 GB</b><small data-i18n="lm.l3.size">model file</small></div>
+                    <span class="lm-eq-op">≈</span>
+                    <div class="lm-eq-box hot"><b data-i18n="lm.l3.result">6 tokens/s</b><small data-i18n="lm.l3.out">writing speed</small></div>
+                  </div>
+                  <p class="lm-note" data-i18n="lm.l3.note">You read about 4–5 tokens a second, so anything above that feels live. Before writing, the model also reads your message and the chat so far, so long chats take longer to start.</p>
+                </div>
+              </details>
+
+              <details class="hub-guide">
+                <summary>
+                  <span class="hub-guide-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4Z"/></svg></span>
+                  <span><strong data-i18n="lm.l4.title">Fine-tune your own model</strong><small data-i18n="lm.l4.sub">Teach a small model your style, then run it here</small></span>
+                </summary>
+                <div class="hub-guide-body">
+                  <p data-i18n-html="lm.l4.body">Fine-tuning teaches an existing model from your own examples. The Pi can <strong>run</strong> models but not train them: training needs a graphics card, like a gaming PC or a free Google Colab notebook.</p>
+                  <ol class="lm-steps">
+                    <li><b>1</b><div><strong data-i18n="lm.l4.s1">Pick a base</strong><span data-i18n="lm.l4.s1b">A small model that already fits, such as Qwen3 1.7B.</span></div></li>
+                    <li><b>2</b><div><strong data-i18n="lm.l4.s2">Collect examples</strong><span data-i18n="lm.l4.s2b">200–1,000 question and answer pairs in the style you want, one per line in a .jsonl file.</span></div></li>
+                    <li><b>3</b><div><strong data-i18n="lm.l4.s3">Train a LoRA</strong><span data-i18n="lm.l4.s3b">With Unsloth. A LoRA trains a small add-on (under 1% of the weights) instead of the whole model, often in under an hour.</span></div></li>
+                    <li><b>4</b><div><strong data-i18n="lm.l4.s4">Export as GGUF, 4-bit</strong><span data-i18n="lm.l4.s4b">Unsloth saves a Q4_K_M .gguf file and a matching Modelfile.</span></div></li>
+                    <li><b>5</b><div><strong data-i18n="lm.l4.s5">Load it on the Pi</strong><span data-i18n="lm.l4.s5b">Copy both files over (Developer access), then run:</span></div></li>
+                  </ol>
+                  <pre class="lm-code">ollama create my-model -f Modelfile</pre>
+                  <p class="lm-note" data-i18n="lm.l4.note">It then shows up on this page under “Your own models”, ready to switch to.</p>
+                </div>
+              </details>
+            </div>
           </div>
         </div>
 
@@ -1348,31 +1482,296 @@
         </div>
 
         <div class="settings-list">
-          <div class="settings-group" data-i18n="settings.yourAgent">Your agent</div>
-          <section class="setting-card" id="profile-setting" hidden>
-            <button class="setting-head" type="button" aria-expanded="true">
-              <span class="setting-icon">✦</span>
-              <span><strong data-i18n="set.profile.agentPersonality">Agent &amp; personality</strong><small id="profile-summary">Set up how sudo talks to you</small></span>
+          <div class="settings-group" data-i18n="settings.device">Device</div>
+          <section class="setting-card" id="update-setting">
+            <button class="setting-head" type="button" aria-expanded="false">
+              <span class="setting-icon">⟳</span>
+              <span><strong data-i18n="set.update.updates">Updates</strong><small id="update-summary">Version 1.0.0</small></span>
               <span class="chevron">›</span>
             </button>
             <div class="setting-body">
-              <div class="field-grid">
-                <label><span data-i18n="set.profile.yourName">Your name</span><input id="user-name" autocomplete="name" placeholder="What should I call you?" data-i18n-attr="placeholder:welcome.whatShouldICall"></label>
-                <label><span data-i18n="set.profile.agentName">Agent name</span><input id="agent-name" placeholder="sudo" maxlength="32"></label>
+              <p class="section-intro" data-i18n="set.update.newVersionsInstallOver">New versions install over Wi‑Fi — no reflashing the card. Your files, memory, keys and WhatsApp pairing are kept; only the app changes.</p>
+              <div class="access-row">
+                <div><strong data-i18n="set.update.currentVersion">Current version</strong><small id="update-current">1.0.0</small></div>
+                <span class="status-pill good" id="update-pill">up to date</span>
               </div>
-              <fieldset>
-                <legend data-i18n="set.profile.personality">Personality</legend>
-                <div class="option-grid" id="personality-options">
-                  <button type="button" data-value="friendly"><strong data-i18n="pers.s.friendly">friendly</strong><small data-i18n="pers.s.friendlyHint"></small></button>
-                  <button type="button" data-value="concise"><strong data-i18n="pers.s.concise">concise</strong><small data-i18n="pers.s.conciseHint"></small></button>
-                  <button type="button" data-value="analytical"><strong data-i18n="pers.s.analytical">Analytical</strong><small data-i18n="pers.s.analyticalHint">Thinks it through with you</small></button>
-                  <button type="button" data-value="creative"><strong data-i18n="pers.s.creative">creative</strong><small data-i18n="pers.s.creativeHint"></small></button>
+              <div class="access-row">
+                <div>
+                  <strong data-i18n="set.update.automaticUpdates">Automatic updates</strong>
+                  <small data-i18n="set.update.checksOnceADay">Checks once a day and installs new versions overnight.</small>
                 </div>
-              </fieldset>
-              <button class="primary-button" id="save-profile" type="button" data-i18n="set.profile.saveSettings">Save settings</button>
-              <p class="form-status" id="profile-status" role="status"></p>
+                <label class="switch"><input type="checkbox" id="update-auto"><span></span></label>
+              </div>
+              <button class="primary-button" id="update-check" type="button" data-i18n="set.update.checkForUpdates">Check for updates</button>
+              <button class="primary-button" id="update-apply" type="button" hidden data-i18n="set.update.updateNow">Update now</button>
+              <p class="microcopy" id="update-message"></p>
+              <p class="form-status" id="update-status" role="status"></p>
+              <p class="update-links">
+                <a id="update-releases" href="https://github.com/evydeveloper-rgb/sudospacesourcecode/releases" target="_blank" rel="noopener noreferrer" data-i18n="set.update.whatSNewIn">What’s new in each version</a> ·
+                <a id="update-repo" href="https://github.com/evydeveloper-rgb/sudospacesourcecode" target="_blank" rel="noopener noreferrer" data-i18n="set.update.seeTheCode">See the code</a>
+              </p>
             </div>
           </section>
+          <section class="setting-card" id="wifi-setting">
+            <button class="setting-head" type="button" aria-expanded="false">
+              <span class="setting-icon">⌁</span>
+              <span><strong data-i18n="set.wifi.title">Wi-Fi</strong><small id="wifi-summary">Checking…</small></span>
+              <span class="chevron">›</span>
+            </button>
+            <div class="setting-body">
+              <div class="wifi-warn" role="note">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 20h20Z"/><path d="M12 10v4M12 17h.01"/></svg>
+                <p data-i18n-html="wifi.warn"><strong>Moving sudo to another Wi‑Fi?</strong> The phone or computer you use must join that same Wi‑Fi to open sudo again, unless <strong>Access from anywhere</strong> is on.</p>
+              </div>
+              <div class="wifi-now">
+                <span class="wifi-now-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2 9a14 14 0 0 1 20 0M5.5 12.5a9 9 0 0 1 13 0M9 16a4 4 0 0 1 6 0"/><circle cx="12" cy="19.5" r="1.1"/></svg></span>
+                <div><small data-i18n="wifi.connectedTo">Connected to</small><strong id="wifi-current">Checking…</strong></div>
+                <span class="status-pill good" id="wifi-state-pill" data-i18n="set.access.connected">connected</span>
+              </div>
+              <div class="wifi-head">
+                <span id="wifi-available-label" data-i18n="wifi.nearby">Nearby networks</span>
+                <button class="wifi-rescan" type="button" id="wifi-rescan" data-i18n-attr="aria-label:wifi.rescan,title:wifi.rescan"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 5.5v5h-5"/><path d="M19.6 14.4a8 8 0 1 1-1.2-7.4l2.1 2"/></svg></button>
+              </div>
+              <div class="wifi-list" id="wifi-list" aria-live="polite">
+                <p class="microcopy" id="wifi-list-note">Scanning for networks…</p>
+              </div>
+              <div class="wifi-join" id="wifi-box" hidden>
+                <label for="wifi-username" id="wifi-username-label" hidden data-i18n="set.access.username">Username</label>
+                <input id="wifi-username" autocomplete="off" spellcheck="false" hidden data-i18n-attr="placeholder:set.access.username2" placeholder="username">
+                <label for="wifi-password" class="sr-only" data-i18n="login.password">Password</label>
+                <input id="wifi-password" type="password" autocomplete="off" spellcheck="false" data-i18n-attr="placeholder:set.access.networkPassword" placeholder="network password">
+                <button class="primary-button" id="wifi-connect" type="button" data-i18n="set.access.joinNetwork">Join network</button>
+              </div>
+              <p class="form-status" id="wifi-status" role="status"></p>
+              <details class="wifi-region">
+                <summary><span data-i18n="set.access.wiFiRegion">Wi‑Fi region</span></summary>
+                <select id="wifi-country">
+                  <option value="US">United States</option>
+                  <option value="GB">United Kingdom</option>
+                  <option value="ID">Indonesia</option>
+                  <option value="SG">Singapore</option>
+                  <option value="MY">Malaysia</option>
+                  <option value="AU">Australia</option>
+                  <option value="JP">Japan</option>
+                  <option value="DE">Germany</option>
+                  <option value="NL">Netherlands</option>
+                  <option value="CN">China</option>
+                  <option value="IN">India</option>
+                  <option value="CA">Canada</option>
+                  <option value="FR">France</option>
+                  <option value="ES">Spain</option>
+                  <option value="IT">Italy</option>
+                  <option value="BR">Brazil</option>
+                  <option value="MX">Mexico</option>
+                  <option value="PH">Philippines</option>
+                  <option value="TH">Thailand</option>
+                  <option value="VN">Vietnam</option>
+                  <option value="KR">South Korea</option>
+                  <option value="TW">Taiwan</option>
+                  <option value="HK">Hong Kong</option>
+                  <option value="AE">United Arab Emirates</option>
+                  <option value="SA">Saudi Arabia</option>
+                  <option value="ZA">South Africa</option>
+                  <option value="NG">Nigeria</option>
+                  <option value="EG">Egypt</option>
+                  <option value="PK">Pakistan</option>
+                  <option value="BD">Bangladesh</option>
+                  <option value="NZ">New Zealand</option>
+                  <option value="SE">Sweden</option>
+                  <option value="NO">Norway</option>
+                  <option value="DK">Denmark</option>
+                  <option value="FI">Finland</option>
+                  <option value="PL">Poland</option>
+                  <option value="TR">Turkey</option>
+                  <option value="RU">Russia</option>
+                  <option value="AR">Argentina</option>
+                  <option value="CO">Colombia</option>
+                  <option value="CL">Chile</option>
+                  <option value="PE">Peru</option>
+                  <option value="IL">Israel</option>
+                  <option value="IE">Ireland</option>
+                  <option value="CH">Switzerland</option>
+                  <option value="AT">Austria</option>
+                  <option value="BE">Belgium</option>
+                  <option value="PT">Portugal</option>
+                  <option value="GR">Greece</option>
+                  <option value="KE">Kenya</option>
+                </select>
+                <p class="microcopy" data-i18n="wifi.regionNote">Set at setup from your phone. It decides which Wi‑Fi channels sudo may use.</p>
+              </details>
+            </div>
+          </section>
+          <section class="setting-card" id="ssh-setting">
+            <button class="setting-head" type="button" aria-expanded="false">
+              <span class="setting-icon">⌘</span>
+              <span><strong data-i18n="set.ssh.developerAccess">Developer access</strong><small id="ssh-summary">Terminal off</small></span>
+              <span class="chevron">›</span>
+            </button>
+            <div class="setting-body">
+              <div class="settings-subgroup" data-i18n="dev.anywhere">access from anywhere</div>
+              <div class="access-row">
+                <div>
+                  <strong data-i18n="set.access.accessFromAnywhere">Access from anywhere</strong>
+                  <small data-i18n="set.access.createsATemporaryPublic">Creates a temporary public Cloudflare link.</small>
+                </div>
+                <label class="switch">
+                  <input id="remote-toggle" type="checkbox">
+                  <span aria-hidden="true"></span>
+                  <em class="sr-only" data-i18n="set.access.toggleRemoteAccess">Toggle remote access</em>
+                </label>
+              </div>
+
+
+              <button class="info-btn" type="button" data-info="remote-info" aria-expanded="false" aria-label="About access from anywhere" data-i18n-attr="aria-label:set.access.aboutAccessFromAnywhere">i</button>
+              <div class="info-bubble" id="remote-info" data-i18n-html="set.access.normallyYourDashboardOnly">
+                Normally your dashboard only works on your home Wi‑Fi. Turn this on and sudo creates a public web address that reaches your device from anywhere — useful on the go.<br><br>
+                <strong>Treat that link like a password.</strong> There's no login screen: anyone who has it can chat with your agent and change these settings. Don't post it or send it to anyone you wouldn't hand your unlocked phone to.<br><br>
+                The link changes when your device restarts. Turn this off when you don't need it.
+              </div>
+              <div class="remote-box" id="remote-box" hidden>
+                <a id="remote-url" href="#" target="_blank" rel="noopener"></a>
+                <button id="copy-remote" type="button" data-i18n="set.access.copy">Copy</button>
+              </div>
+              <div class="settings-subgroup" data-i18n="set.access.passwordForThePublic">password for the public link</div>
+
+              <div class="access-row">
+                <div>
+                  <strong data-i18n="set.access.askForAPassword">Ask for a password</strong>
+                  <small data-i18n="set.access.appliesToThePublic">Applies to the public link only. Your home network never asks.</small>
+                </div>
+                <label class="switch">
+                  <input id="remote-pw-toggle" type="checkbox">
+                  <span aria-hidden="true"></span>
+                  <em class="sr-only" data-i18n="set.access.requireAPasswordOn">Require a password on the public link</em>
+                </label>
+              </div>
+
+              <div class="addr-row">
+                <code id="remote-pw-value">—</code>
+                <button type="button" id="remote-pw-copy" data-i18n="set.access.copy">Copy</button>
+              </div>
+              <p class="microcopy" id="remote-pw-note">Only shown on your home network.</p>
+
+              <label for="remote-pw-new" data-i18n="set.access.changeIt">Change it</label>
+              <input id="remote-pw-new" type="password" autocomplete="new-password" spellcheck="false" placeholder="at least 10 characters" data-i18n-attr="placeholder:set.access.atLeast10Characters">
+              <button class="primary-button" id="remote-pw-save" type="button" data-i18n="set.access.savePassword">Save password</button>
+              <p class="form-status" id="remote-pw-status" role="status"></p>
+
+              <p class="warning-copy" id="remote-pw-warning" hidden data-i18n-html="set.access.stronglyRecommendedLeaveThis"><strong>Strongly recommended: leave this on.</strong> With it off, the public link is a web address that opens your dashboard for anyone who has it — no login, no limit on attempts, from anywhere in the world. They could read your chats, change your settings, and use your API credit. Links get shared, logged by services you paste them into, and forwarded by accident.</p>
+
+              
+              <div class="settings-subgroup" data-i18n="dev.terminal">terminal and coding tools</div>
+
+              <div class="access-row">
+                <div>
+                  <strong data-i18n="set.ssh.terminalAccessSsh">Terminal access (SSH)</strong>
+                  <small data-i18n="set.ssh.logIntoThisDevice">Log into this device from your computer and work on it directly.</small>
+                </div>
+                <label class="switch">
+                  <input id="ssh-toggle" type="checkbox">
+                  <span aria-hidden="true"></span>
+                  <em class="sr-only" data-i18n="set.ssh.toggleTerminalAccess">Toggle terminal access</em>
+                </label>
+              </div>
+              <button class="info-btn" type="button" data-info="ssh-info" aria-expanded="false" aria-label="About terminal access" data-i18n-attr="aria-label:set.ssh.aboutTerminalAccess">i</button>
+              <div class="info-bubble" id="ssh-info" data-i18n-html="set.ssh.itSYourDevice">
+                It's your device, so you can have full access to it. This opens a way to log in from a computer on your home Wi‑Fi and use it like any other machine — install things, read files, change how sudo works.<br><br>
+                <strong>You don't need this for normal use.</strong> Everything the device is meant to do, it does from this dashboard.<br><br>
+                <strong>Home Wi‑Fi only.</strong> This is never reachable from the internet, even with <em>Access from anywhere</em> switched on.<br><br>
+                Changes you make by hand are undone if the device is ever re‑flashed.
+              </div>
+
+              <div id="ssh-details" hidden>
+                <p class="key-state" id="ssh-command">ssh …</p>
+                <div id="ssh-password-wrap">
+                  <div class="label-row">
+                    <span class="label-text" data-i18n="login.password">Password</span>
+                    <button class="info-btn" type="button" data-info="ssh-pw-info" aria-expanded="false" aria-label="About this password" data-i18n-attr="aria-label:set.ssh.aboutThisPassword">i</button>
+                  </div>
+                  <div class="info-bubble" id="ssh-pw-info" data-i18n="set.ssh.generatedJustNowFor">
+                    Generated just now for your device's user account. Copy it somewhere safe — you can always come back here to see it again while you're on your home Wi‑Fi.
+                  </div>
+                  <div class="remote-box">
+                    <a id="ssh-password" href="#" onclick="return false;"></a>
+                    <button id="copy-ssh" type="button" data-i18n="set.access.copy">Copy</button>
+                  </div>
+                </div>
+                <p class="microcopy" id="ssh-remote-note" hidden data-i18n="set.ssh.openThisPageOn">
+                  Open this page on your home Wi‑Fi to see the password — it isn't shown over the public link.
+                </p>
+              </div>
+
+              <div class="label-row">
+                <span class="label-text" data-i18n="set.ssh.preferToUseYour">Prefer to use your own SSH key?</span>
+                <button class="info-btn" type="button" data-info="ssh-key-info" aria-expanded="false" aria-label="About SSH keys" data-i18n-attr="aria-label:set.ssh.aboutSshKeys">i</button>
+              </div>
+              <div class="info-bubble" id="ssh-key-info" data-i18n-html="set.ssh.anSshKeyIs">
+                An SSH key is a pair of files on your computer — a private half that never leaves it, and a public half that's safe to share. You put the public half here, and your computer proves it holds the private half when it connects. No password to type or remember.<br><br>
+                <strong>If you don't have one</strong>, skip this — the password above works fine. To make one, run <code>ssh-keygen -t ed25519</code> on your computer, then paste the contents of <code>~/.ssh/id_ed25519.pub</code>.
+              </div>
+              <input id="ssh-key" type="text" placeholder="ssh-ed25519 AAAA…" autocomplete="off" spellcheck="false">
+              <button class="primary-button" id="save-ssh-key" type="button" data-i18n="set.ssh.useThisKeyInstead">Use this key instead</button>
+              <p class="form-status" id="ssh-status" role="status"></p>
+
+              <div id="devtools-wrap" hidden>
+                <div class="label-row">
+                  <span class="label-text">Claude Code</span>
+                  <button class="info-btn" type="button" data-info="devtools-info" aria-expanded="false" aria-label="About Claude Code" data-i18n-attr="aria-label:set.ssh.aboutClaudeCode">i</button>
+                </div>
+                <div class="info-bubble" id="devtools-info" data-i18n-html="set.ssh.claudeCodeIsAn">
+                  Claude Code is an AI assistant that runs in a terminal and can read and change the files on this device — handy if you want to customise how sudo works.<br><br>
+                  We don't ship it preinstalled, so the device stays small and you always get the current version. Installing takes a few minutes and needs internet. You can watch the progress right here.
+                </div>
+                <button class="primary-button" id="install-devtools" type="button" data-i18n="set.ssh.installClaudeCode">Install Claude Code</button>
+                <p class="form-status" id="devtools-status" role="status"></p>
+                <div id="devtools-done" hidden>
+                  <p class="microcopy" data-i18n="set.ssh.installedOpenATerminal">Installed. Open a terminal on your computer and run these:</p>
+                  <p class="key-state" id="devtools-cmd-ssh">ssh …</p>
+                  <p class="key-state">claude</p>
+                </div>
+
+                <div class="label-row"><span class="label-text">Codex</span></div>
+                <p class="microcopy" style="margin-top:0" data-i18n="set.ssh.openaiSTerminalAssistant">OpenAI's terminal assistant. Same idea, different provider — you can have both.</p>
+                <button class="primary-button" id="install-codex" type="button" data-i18n="set.ssh.installCodex">Install Codex</button>
+                <p class="form-status" id="codex-status" role="status"></p>
+                <div id="codex-done" hidden>
+                  <p class="key-state">codex</p>
+                </div>
+              </div>
+            </div>
+          </section>
+          <section class="setting-card" id="github-setting">
+            <button class="setting-head" type="button" aria-expanded="false">
+              <span class="setting-icon">⌥</span>
+              <span><strong>GitHub</strong><small id="github-summary">Not connected</small></span>
+              <span class="chevron">›</span>
+            </button>
+            <div class="setting-body">
+              <p class="section-intro" data-i18n="set.github.giveSudoAGithub">Give sudo a GitHub token and it can work with your repositories directly — cloning one, pushing changes, opening an issue — instead of only talking you through it.</p>
+              <label for="github-username"><span data-i18n="set.github.githubUsername">GitHub username</span> <span class="optional-tag" data-i18n="set.github.optional">optional</span></label>
+              <input id="github-username" autocomplete="off" spellcheck="false" placeholder="your-handle" data-i18n-attr="placeholder:set.github.yourHandle">
+              <label for="github-token" data-i18n="set.github.personalAccessToken">Personal access token</label>
+              <input id="github-token" type="password" autocomplete="off" spellcheck="false" placeholder="ghp_… or github_pat_…" data-i18n-attr="placeholder:set.github.ghpOrGithubPat">
+              <p class="microcopy" data-i18n-html="set.github.createOneAtGithub">Create one at <strong>github.com → Settings → Developer settings → Personal access tokens</strong>. Choose only the scopes sudo needs; a fine-grained token limited to the repos you care about is the safest. Stored on this device only.</p>
+              <button class="primary-button" id="save-github" type="button" data-i18n="set.github.saveToken">Save token</button>
+
+              <div class="access-row">
+                <div>
+                  <strong data-i18n="set.github.letSudoUseMy">Let sudo use my repos</strong>
+                  <small data-i18n="set.github.whenOffTheToken">When off, the token is saved but sudo cannot reach GitHub.</small>
+                </div>
+                <label class="switch"><input type="checkbox" id="github-toggle"><span></span></label>
+              </div>
+              <p class="form-status" id="github-status" role="status"></p>
+
+              <button class="info-link" type="button" aria-expanded="false" aria-controls="github-info" data-i18n="set.github.whatTheTokenCan">What the token can do ⓘ</button>
+              <div class="info-bubble" id="github-info" data-i18n-html="set.github.aTokenIsA">
+                A token is a key to your GitHub account. What it can reach is exactly what you ticked when you made it — repo access lets sudo clone, push and open issues; nothing else.<br><br>
+                <strong>Treat it like a password.</strong> Keep it off unless you want sudo working in your repos, and revoke it on GitHub the moment you are done. It is stored on this device only and never leaves it except to talk to GitHub.
+              </div>
+            </div>
+          </section>
+          <div class="settings-group" data-i18n="settings.yourAgent">Your agent</div>
           <section class="setting-card" id="providers-setting">
             <button class="setting-head" type="button">
               <span class="setting-icon">⚿</span>
@@ -1398,149 +1797,6 @@
                 A key straight from <strong>DeepSeek, OpenAI, Anthropic or Google</strong> runs your agent on that company's model, usually cheaper if you already pay them.<br><br>
                 Keys stay on this device and only ever go to the company they belong to.
               </div>
-            </div>
-          </section>
-          <section class="setting-card" id="routing-setting" hidden>
-            <button class="setting-head" type="button">
-              <span class="setting-icon">⇄</span>
-              <span><strong data-i18n="set.routing.modelRouting">Model &amp; routing</strong><small id="routing-summary">Automatic</small></span>
-              <span class="chevron">&rsaquo;</span>
-            </button>
-            <div class="setting-body">
-              <p class="section-intro" data-i18n="set.routing.whichModelAnswersYou">Which model answers you. Automatic is the cheapest sensible choice on every message; fixed always uses the one you pick.</p>
-
-              <div class="access-row">
-                <div>
-                  <strong data-i18n="set.routing.answeringRightNow">Answering right now</strong>
-                  <small id="answering-with">Checking&hellip;</small>
-                </div>
-              </div>
-
-              <div class="access-row">
-                <div>
-                  <strong data-i18n="set.routing.keepItOnThis">Keep it on this device</strong>
-                  <small data-i18n="set.routing.answerWithTheOn">Answer with the on-device model even when a key is saved. Nothing you type leaves the house.</small>
-                </div>
-                <label class="switch">
-                  <input id="prefer-local-toggle" type="checkbox">
-                  <span aria-hidden="true"></span>
-                  <em class="sr-only" data-i18n="set.routing.preferTheOnDevice">Prefer the on-device model</em>
-                </label>
-              </div>
-              <button class="info-link" type="button" aria-expanded="false" aria-controls="local-info" data-i18n="set.routing.whatYouGiveUp">What you give up &#9432;</button>
-              <div class="info-bubble" id="local-info" data-i18n-html="set.routing.theOnDeviceModel">
-                The on-device model is small &mdash; roughly a thousandth the size of the cloud ones. It can greet you, chat, and handle simple things. It cannot search the web, reason through anything long, or look at images.<br><br>
-                It costs nothing to run and works with the internet down.<br><br>
-                If it is not installed yet, messages still go to the cloud rather than failing.
-              </div>
-              <p class="form-status" id="prefer-local-status" role="status"></p>
-              <div class="option-grid" id="routing-options">
-                <button type="button" data-value="auto"><strong data-i18n="set.routing.automatic">Automatic</strong><small data-i18n="set.routing.picksPerMessageCheapest">Picks per message. Cheapest that can do the job.</small></button>
-                <button type="button" data-value="fixed"><strong data-i18n="set.routing.alwaysThisOne">Always this one</strong><small data-i18n="set.routing.sameModelEveryTime">Same model every time.</small></button>
-              </div>
-
-              <button class="info-link" type="button" aria-expanded="false" aria-controls="routing-info" data-i18n="set.routing.howAutomaticRoutingPicks">How automatic routing picks ⓘ</button>
-              <div class="info-bubble" id="routing-info" data-i18n-html="set.routing.shortAndSimpleAsks">
-                <strong>Short and simple asks</strong> go to the cheapest text model, which is where most messages land.<br><br>
-                <strong>Anything with an image</strong> goes to a model that can actually see — the default is text-only, so without this it would just guess.<br><br>
-                <strong>Long or multi-step work</strong> steps up to a stronger model, because a cheap model looping on a hard task costs more than the good model doing it once.<br><br>
-                You are billed per message, so automatic usually costs less than pinning everything to one strong model.
-              </div>
-
-              <div id="fixed-model-wrap" hidden>
-              <div class="label-row">
-                <span class="label-text" data-i18n="guide.cloud.model">Model</span>
-                <button class="info-btn" type="button" data-info="model-info" aria-expanded="false" aria-label="About models" data-i18n-attr="aria-label:set.routing.aboutModels">i</button>
-              </div>
-              <div class="info-bubble" id="model-info" data-i18n-html="set.routing.theBrainYourAgent">
-                The brain your agent thinks with. All four cost you differently per message — cheaper ones are quicker and fine for everyday chat, pricier ones reason better on hard problems.<br><br>
-                <strong>DeepSeek V4 Flash</strong> — the default, and by far the cheapest. Text only, so it can't look at photos you send.<br>
-                <strong>GPT-4o mini</strong> — cheap and quick, and can read images.<br>
-                <strong>Claude Haiku 4.5</strong> — a step up in quality, reads images.<br>
-                <strong>Claude Sonnet 4.5</strong> — the strongest here and the most expensive. Best for tricky, multi-step work.<br><br>
-                Switch whenever you like. If you send a photo to a model that can't see, sudo hands it to one that can.
-              </div>
-              <label class="sr-only" for="model" data-i18n="guide.cloud.model">Model</label>
-              <select id="model">
-                <option value="sudo-default" data-i18n="set.routing.optDefault">DeepSeek V4 Flash · default</option>
-                <option value="sudo-fast" data-i18n="set.routing.optFast">GPT-4o mini · fast</option>
-                <option value="sudo-budget" data-i18n="set.routing.optBudget">Claude Haiku 4.5 · balanced</option>
-                <option value="sudo-smart" data-i18n="set.routing.optSmart">Claude Sonnet 4.5 · smart</option>
-              </select>
-              </div>
-              <p class="form-status" id="routing-status" role="status"></p>
-
-              <div class="settings-subgroup" data-i18n="set.routing.onDeviceGreeter">on-device greeter</div>
-              <div class="access-row">
-                <div>
-                  <strong id="local-model-state">Checking…</strong>
-                  <small id="local-model-note">A small model that runs on the device itself.</small>
-                </div>
-              </div>
-              <button class="info-link" type="button" aria-expanded="false" aria-controls="local-model-info" data-i18n="set.routing.whatThisIs">What this is ⓘ</button>
-              <div class="info-bubble" id="local-model-info" data-i18n-html="set.routing.gemma3270mAbout">
-                <strong>Gemma 3 270M</strong>, about 200MB, running on the Pi rather than in the cloud. It greets you and keeps sudo talking when there is no API key or no internet.<br><br>
-                It is deliberately small: quick to answer, but it cannot browse, remember past chats, or answer factual questions. Those go to the cloud model.<br><br>
-                It downloads by itself a few minutes after the device first joins Wi-Fi. If it says <em>not installed</em> long after that, the device could not reach the download.
-              </div>
-            </div>
-          </section>
-          <section class="setting-card" id="language-setting">
-            <button class="setting-head" type="button" aria-expanded="false">
-              <span class="setting-icon" aria-hidden="true">文</span>
-              <span><strong data-i18n="lang.title">Language</strong><small id="language-summary">English · replies match you</small></span>
-              <span class="chevron">›</span>
-            </button>
-            <div class="setting-body">
-              <div class="settings-subgroup" id="ui-language-label" data-i18n="lang.dashHead">dashboard language</div>
-              <p class="section-intro" data-i18n="lang.dashIntro">The words on these screens. Changes right away, on every phone and computer that opens this dashboard.</p>
-              <div class="option-grid lang-grid" id="ui-language-options" role="group" aria-labelledby="ui-language-label">
-                <button type="button" data-value="en" lang="en"><strong>English</strong></button>
-                <button type="button" data-value="es" lang="es"><strong>Español</strong></button>
-                <button type="button" data-value="zh" lang="zh-CN"><strong>中文</strong></button>
-                <button type="button" data-value="ar" lang="ar" dir="rtl"><strong>العربية</strong></button>
-              </div>
-              <p class="form-status" id="ui-language-status" role="status"></p>
-
-              <div class="settings-subgroup" id="agent-language-label" data-i18n="lang.agentHead">agent’s reply language</div>
-              <p class="section-intro" data-i18n="lang.agentIntro">The language {agent} answers you in. This only changes the agent’s replies, not this dashboard. You can always ask it for another language right in the chat.</p>
-              <div class="option-grid lang-grid" id="agent-language-options" role="group" aria-labelledby="agent-language-label">
-                <button type="button" data-value="auto" class="lang-auto"><strong data-i18n="lang.agentAuto">Match how I write to it</strong><small data-i18n="lang.agentAutoNote">Replies in whatever language you use</small></button>
-                <button type="button" data-value="en" lang="en"><strong>English</strong></button>
-                <button type="button" data-value="es" lang="es"><strong>Español</strong></button>
-                <button type="button" data-value="zh" lang="zh-CN"><strong>中文</strong></button>
-                <button type="button" data-value="ar" lang="ar" dir="rtl"><strong>العربية</strong></button>
-              </div>
-              <p class="form-status" id="agent-language-status" role="status"></p>
-            </div>
-          </section>
-          <section class="setting-card" id="theme-setting">
-            <button class="setting-head" type="button" aria-expanded="false">
-              <span class="setting-icon">◐</span>
-              <span><strong data-i18n="set.theme.look">Look</strong><small id="theme-summary">Default</small></span>
-              <span class="chevron">&rsaquo;</span>
-            </button>
-            <div class="setting-body">
-              <p class="section-intro" data-i18n="set.theme.coloursOnlyNothingChanges">Colours only — nothing changes about how sudo behaves. Applies as soon as you pick.</p>
-              <div class="theme-grid" id="theme-options">
-                <button type="button" class="theme-opt" data-value="default">
-                  <span class="theme-swatch"><i style="background:#f9f9f9"></i><i style="background:#340075"></i><i style="background:#fe6944"></i></span>
-                  <strong data-i18n="welcome.default">Default</strong><small data-i18n="welcome.lightPurpleAndCoral">Light, purple and coral.</small>
-                </button>
-                <button type="button" class="theme-opt" data-value="minimal">
-                  <span class="theme-swatch"><i style="background:#fafafa"></i><i style="background:#27272a"></i><i style="background:#f2603c"></i></span>
-                  <strong data-i18n="welcome.minimal">Minimal</strong><small data-i18n="welcome.nearMonochromeQuiet">Near-monochrome. Quiet.</small>
-                </button>
-                <button type="button" class="theme-opt" data-value="terminal">
-                  <span class="theme-swatch"><i style="background:#0f0f11"></i><i style="background:#17171a"></i><i style="background:#fe6944"></i></span>
-                  <strong data-i18n="welcome.terminal">Terminal</strong><small data-i18n="welcome.darkCoralAccents">Dark, coral accents.</small>
-                </button>
-                <button type="button" class="theme-opt" data-value="midnight">
-                  <span class="theme-swatch"><i style="background:#0d0b14"></i><i style="background:#161222"></i><i style="background:#b994ff"></i></span>
-                  <strong data-i18n="welcome.midnight">Midnight</strong><small data-i18n="welcome.darkVioletAccents">Dark, violet accents.</small>
-                </button>
-              </div>
-              <p class="form-status" id="theme-status" role="status"></p>
             </div>
           </section>
           <div class="settings-group" data-i18n="settings.safety">Safety</div>
@@ -1683,314 +1939,63 @@
               <p class="form-status" id="spend-status" role="status"></p>
             </div>
           </section>
-          <div class="settings-group" data-i18n="settings.device">Device</div>
-          <section class="setting-card" id="update-setting">
+          <div class="settings-group" data-i18n="settings.dashboard">Sudo dashboard</div>
+          <section class="setting-card" id="theme-setting">
             <button class="setting-head" type="button" aria-expanded="false">
-              <span class="setting-icon">⟳</span>
-              <span><strong data-i18n="set.update.updates">Updates</strong><small id="update-summary">Version 1.0.0</small></span>
-              <span class="chevron">›</span>
+              <span class="setting-icon">◐</span>
+              <span><strong data-i18n="set.theme.look">Look</strong><small id="theme-summary">Default</small></span>
+              <span class="chevron">&rsaquo;</span>
             </button>
             <div class="setting-body">
-              <p class="section-intro" data-i18n="set.update.newVersionsInstallOver">New versions install over Wi‑Fi — no reflashing the card. Your files, memory, keys and WhatsApp pairing are kept; only the app changes.</p>
-              <div class="access-row">
-                <div><strong data-i18n="set.update.currentVersion">Current version</strong><small id="update-current">1.0.0</small></div>
-                <span class="status-pill good" id="update-pill">up to date</span>
+              <p class="section-intro" data-i18n="set.theme.coloursOnlyNothingChanges">Colours only — nothing changes about how sudo behaves. Applies as soon as you pick.</p>
+              <div class="theme-grid" id="theme-options">
+                <button type="button" class="theme-opt" data-value="default">
+                  <span class="theme-swatch"><i style="background:#f9f9f9"></i><i style="background:#340075"></i><i style="background:#fe6944"></i></span>
+                  <strong data-i18n="welcome.default">Default</strong><small data-i18n="welcome.lightPurpleAndCoral">Light, purple and coral.</small>
+                </button>
+                <button type="button" class="theme-opt" data-value="minimal">
+                  <span class="theme-swatch"><i style="background:#fafafa"></i><i style="background:#27272a"></i><i style="background:#f2603c"></i></span>
+                  <strong data-i18n="welcome.minimal">Minimal</strong><small data-i18n="welcome.nearMonochromeQuiet">Near-monochrome. Quiet.</small>
+                </button>
+                <button type="button" class="theme-opt" data-value="terminal">
+                  <span class="theme-swatch"><i style="background:#0f0f11"></i><i style="background:#17171a"></i><i style="background:#fe6944"></i></span>
+                  <strong data-i18n="welcome.terminal">Terminal</strong><small data-i18n="welcome.darkCoralAccents">Dark, coral accents.</small>
+                </button>
+                <button type="button" class="theme-opt" data-value="midnight">
+                  <span class="theme-swatch"><i style="background:#0d0b14"></i><i style="background:#161222"></i><i style="background:#b994ff"></i></span>
+                  <strong data-i18n="welcome.midnight">Midnight</strong><small data-i18n="welcome.darkVioletAccents">Dark, violet accents.</small>
+                </button>
               </div>
-              <div class="access-row">
-                <div>
-                  <strong data-i18n="set.update.automaticUpdates">Automatic updates</strong>
-                  <small data-i18n="set.update.checksOnceADay">Checks once a day and installs new versions overnight.</small>
-                </div>
-                <label class="switch"><input type="checkbox" id="update-auto"><span></span></label>
-              </div>
-              <button class="primary-button" id="update-check" type="button" data-i18n="set.update.checkForUpdates">Check for updates</button>
-              <button class="primary-button" id="update-apply" type="button" hidden data-i18n="set.update.updateNow">Update now</button>
-              <p class="microcopy" id="update-message"></p>
-              <p class="form-status" id="update-status" role="status"></p>
-              <p class="update-links">
-                <a id="update-releases" href="https://github.com/evydeveloper-rgb/sudospacesourcecode/releases" target="_blank" rel="noopener noreferrer" data-i18n="set.update.whatSNewIn">What’s new in each version</a> ·
-                <a id="update-repo" href="https://github.com/evydeveloper-rgb/sudospacesourcecode" target="_blank" rel="noopener noreferrer" data-i18n="set.update.seeTheCode">See the code</a>
-              </p>
+              <p class="form-status" id="theme-status" role="status"></p>
             </div>
           </section>
-          <section class="setting-card" id="access-setting">
+          <section class="setting-card" id="language-setting">
             <button class="setting-head" type="button" aria-expanded="false">
-              <span class="setting-icon">⌁</span>
-              <span><strong data-i18n="set.access.accessNetwork">Access &amp; network</strong><small id="access-summary">raspberrypi.local · no password</small></span>
+              <span class="setting-icon" aria-hidden="true">文</span>
+              <span><strong data-i18n="lang.title">Language</strong><small id="language-summary">English · replies match you</small></span>
               <span class="chevron">›</span>
             </button>
             <div class="setting-body">
-              <label for="device-name" data-i18n="set.access.deviceName">Device name</label>
-              <input id="device-name" autocomplete="off" spellcheck="false" placeholder="sudo" maxlength="63">
-              <p class="microcopy" data-i18n="set.access.thisIsTheWeb">This is the web address you use to reach sudo. Letters, numbers and hyphens.</p>
-              <button class="primary-button" id="save-hostname" type="button" data-i18n="set.access.renameDevice">Rename device</button>
-              <p class="form-status" id="hostname-status" role="status"></p>
-              <div class="info-bubble" id="hostname-done" style="border-inline-start-color: var(--ok);"></div>
-
-              <div class="settings-subgroup" data-i18n="set.access.network">network</div>
-
-              <div class="access-row">
-                <div><strong data-i18n="set.access.homeNetwork">Home network</strong><small data-i18n="set.access.anyoneOnThisWi">Anyone on this Wi-Fi can open the dashboard.</small></div>
-                <span class="status-pill good" data-i18n="set.access.connected">connected</span>
+              <div class="settings-subgroup" id="ui-language-label" data-i18n="lang.dashHead">dashboard language</div>
+              <p class="section-intro" data-i18n="lang.dashIntro">The words on these screens. Changes right away, on every phone and computer that opens this dashboard.</p>
+              <div class="option-grid lang-grid" id="ui-language-options" role="group" aria-labelledby="ui-language-label">
+                <button type="button" data-value="en" lang="en"><strong>English</strong></button>
+                <button type="button" data-value="es" lang="es"><strong>Español</strong></button>
+                <button type="button" data-value="zh" lang="zh-CN"><strong>中文</strong></button>
+                <button type="button" data-value="ar" lang="ar" dir="rtl"><strong>العربية</strong></button>
               </div>
+              <p class="form-status" id="ui-language-status" role="status"></p>
 
-              <div class="access-row">
-                <div>
-                  <strong data-i18n="set.access.accessFromAnywhere">Access from anywhere</strong>
-                  <small data-i18n="set.access.createsATemporaryPublic">Creates a temporary public Cloudflare link.</small>
-                </div>
-                <label class="switch">
-                  <input id="remote-toggle" type="checkbox">
-                  <span aria-hidden="true"></span>
-                  <em class="sr-only" data-i18n="set.access.toggleRemoteAccess">Toggle remote access</em>
-                </label>
+              <div class="settings-subgroup" id="agent-language-label" data-i18n="lang.agentHead">agent’s reply language</div>
+              <p class="section-intro" data-i18n="lang.agentIntro">The language {agent} answers you in. This only changes the agent’s replies, not this dashboard. You can always ask it for another language right in the chat.</p>
+              <div class="option-grid lang-grid" id="agent-language-options" role="group" aria-labelledby="agent-language-label">
+                <button type="button" data-value="auto" class="lang-auto"><strong data-i18n="lang.agentAuto">Match how I write to it</strong><small data-i18n="lang.agentAutoNote">Replies in whatever language you use</small></button>
+                <button type="button" data-value="en" lang="en"><strong>English</strong></button>
+                <button type="button" data-value="es" lang="es"><strong>Español</strong></button>
+                <button type="button" data-value="zh" lang="zh-CN"><strong>中文</strong></button>
+                <button type="button" data-value="ar" lang="ar" dir="rtl"><strong>العربية</strong></button>
               </div>
-
-
-              <button class="info-btn" type="button" data-info="remote-info" aria-expanded="false" aria-label="About access from anywhere" data-i18n-attr="aria-label:set.access.aboutAccessFromAnywhere">i</button>
-              <div class="info-bubble" id="remote-info" data-i18n-html="set.access.normallyYourDashboardOnly">
-                Normally your dashboard only works on your home Wi‑Fi. Turn this on and sudo creates a public web address that reaches your device from anywhere — useful on the go.<br><br>
-                <strong>Treat that link like a password.</strong> There's no login screen: anyone who has it can chat with your agent and change these settings. Don't post it or send it to anyone you wouldn't hand your unlocked phone to.<br><br>
-                The link changes when your device restarts. Turn this off when you don't need it.
-              </div>
-              <div class="remote-box" id="remote-box" hidden>
-                <a id="remote-url" href="#" target="_blank" rel="noopener"></a>
-                <button id="copy-remote" type="button" data-i18n="set.access.copy">Copy</button>
-              </div>
-              <div class="settings-subgroup" data-i18n="set.access.passwordForThePublic">password for the public link</div>
-
-              <div class="access-row">
-                <div>
-                  <strong data-i18n="set.access.askForAPassword">Ask for a password</strong>
-                  <small data-i18n="set.access.appliesToThePublic">Applies to the public link only. Your home network never asks.</small>
-                </div>
-                <label class="switch">
-                  <input id="remote-pw-toggle" type="checkbox">
-                  <span aria-hidden="true"></span>
-                  <em class="sr-only" data-i18n="set.access.requireAPasswordOn">Require a password on the public link</em>
-                </label>
-              </div>
-
-              <div class="addr-row">
-                <code id="remote-pw-value">—</code>
-                <button type="button" id="remote-pw-copy" data-i18n="set.access.copy">Copy</button>
-              </div>
-              <p class="microcopy" id="remote-pw-note">Only shown on your home network.</p>
-
-              <label for="remote-pw-new" data-i18n="set.access.changeIt">Change it</label>
-              <input id="remote-pw-new" type="password" autocomplete="new-password" spellcheck="false" placeholder="at least 10 characters" data-i18n-attr="placeholder:set.access.atLeast10Characters">
-              <button class="primary-button" id="remote-pw-save" type="button" data-i18n="set.access.savePassword">Save password</button>
-              <p class="form-status" id="remote-pw-status" role="status"></p>
-
-              <p class="warning-copy" id="remote-pw-warning" hidden data-i18n-html="set.access.stronglyRecommendedLeaveThis"><strong>Strongly recommended: leave this on.</strong> With it off, the public link is a web address that opens your dashboard for anyone who has it — no login, no limit on attempts, from anywhere in the world. They could read your chats, change your settings, and use your API credit. Links get shared, logged by services you paste them into, and forwarded by accident.</p>
-
-              <p class="microcopy" data-i18n-html="set.access.localDashboardHttpRaspberrypi">Local dashboard: <strong>http://raspberrypi.local</strong></p>
-
-            </div>
-          </section>
-          <section class="setting-card" id="wifi-setting">
-            <button class="setting-head" type="button" aria-expanded="false">
-              <span class="setting-icon">⌁</span>
-              <span><strong data-i18n="set.wifi.title">Wi-Fi</strong><small id="wifi-summary">Checking…</small></span>
-              <span class="chevron">›</span>
-            </button>
-            <div class="setting-body">
-              <p class="section-intro" data-i18n="set.wifi.intro">The network sudo is on, and the ones nearby. Pick another to move the device — it reconnects and this dashboard comes back on the new address.</p>
-
-              <div class="access-row">
-                <div>
-                  <strong data-i18n="set.wifi.currentNetwork">Current network</strong>
-                  <small id="wifi-current">Checking…</small>
-                </div>
-                <span class="status-pill good" id="wifi-state-pill" data-i18n="set.access.connected">connected</span>
-              </div>
-
-              <div class="settings-subgroup" id="wifi-available-label" data-i18n="set.wifi.availableNetworks">available networks</div>
-
-              <div class="wifi-box" id="wifi-box">
-                <div class="wifi-list" id="wifi-list" aria-live="polite">
-                  <p class="microcopy" id="wifi-list-note">Scanning for networks…</p>
-                </div>
-                <label for="wifi-password" data-i18n="login.password">Password</label>
-                <input id="wifi-password" type="password" autocomplete="off" spellcheck="false" placeholder="network password" data-i18n-attr="placeholder:set.access.networkPassword">
-                <label for="wifi-username" id="wifi-username-label" hidden><span data-i18n="set.access.username">Username</span> <span class="optional-tag" data-i18n="set.access.thisNetworkAsksFor">this network asks for one</span></label>
-                <input id="wifi-username" autocomplete="off" spellcheck="false" placeholder="username" hidden data-i18n-attr="placeholder:set.access.username2">
-                <button class="primary-button" id="wifi-connect" type="button" data-i18n="set.access.joinNetwork">Join network</button>
-                <p class="form-status" id="wifi-status" role="status"></p>
-                <p class="microcopy" id="wifi-hint" data-i18n="set.access.pickANetworkAbove">Pick a network above, type its password, then join. If you are opening the dashboard on the home network, the page will drop for a few seconds while sudo moves — it comes back on the new address.</p>
-              </div>
-
-              <label><span data-i18n="set.access.wiFiRegion">Wi‑Fi region</span>
-                <select id="wifi-country">
-                  <option value="US">United States</option>
-                  <option value="GB">United Kingdom</option>
-                  <option value="ID">Indonesia</option>
-                  <option value="SG">Singapore</option>
-                  <option value="MY">Malaysia</option>
-                  <option value="AU">Australia</option>
-                  <option value="JP">Japan</option>
-                  <option value="DE">Germany</option>
-                  <option value="NL">Netherlands</option>
-                  <option value="CN">China</option>
-                  <option value="IN">India</option>
-                  <option value="CA">Canada</option>
-                  <option value="FR">France</option>
-                  <option value="ES">Spain</option>
-                  <option value="IT">Italy</option>
-                  <option value="BR">Brazil</option>
-                  <option value="MX">Mexico</option>
-                  <option value="PH">Philippines</option>
-                  <option value="TH">Thailand</option>
-                  <option value="VN">Vietnam</option>
-                  <option value="KR">South Korea</option>
-                  <option value="TW">Taiwan</option>
-                  <option value="HK">Hong Kong</option>
-                  <option value="AE">United Arab Emirates</option>
-                  <option value="SA">Saudi Arabia</option>
-                  <option value="ZA">South Africa</option>
-                  <option value="NG">Nigeria</option>
-                  <option value="EG">Egypt</option>
-                  <option value="PK">Pakistan</option>
-                  <option value="BD">Bangladesh</option>
-                  <option value="NZ">New Zealand</option>
-                  <option value="SE">Sweden</option>
-                  <option value="NO">Norway</option>
-                  <option value="DK">Denmark</option>
-                  <option value="FI">Finland</option>
-                  <option value="PL">Poland</option>
-                  <option value="TR">Turkey</option>
-                  <option value="RU">Russia</option>
-                  <option value="AR">Argentina</option>
-                  <option value="CO">Colombia</option>
-                  <option value="CL">Chile</option>
-                  <option value="PE">Peru</option>
-                  <option value="IL">Israel</option>
-                  <option value="IE">Ireland</option>
-                  <option value="CH">Switzerland</option>
-                  <option value="AT">Austria</option>
-                  <option value="BE">Belgium</option>
-                  <option value="PT">Portugal</option>
-                  <option value="GR">Greece</option>
-                  <option value="KE">Kenya</option>
-                </select>
-              </label>
-              <p class="microcopy" data-i18n="set.access.autoDetectedAtSetup">Auto-detected at setup. Controls which Wi‑Fi channels the device is allowed to use — only change this if you've moved it to a different country.</p>
-</div>
-          </section>
-          <section class="setting-card" id="ssh-setting">
-            <button class="setting-head" type="button" aria-expanded="false">
-              <span class="setting-icon">⌘</span>
-              <span><strong data-i18n="set.ssh.developerAccess">Developer access</strong><small id="ssh-summary">Terminal off</small></span>
-              <span class="chevron">›</span>
-            </button>
-            <div class="setting-body">
-              <div class="access-row">
-                <div>
-                  <strong data-i18n="set.ssh.terminalAccessSsh">Terminal access (SSH)</strong>
-                  <small data-i18n="set.ssh.logIntoThisDevice">Log into this device from your computer and work on it directly.</small>
-                </div>
-                <label class="switch">
-                  <input id="ssh-toggle" type="checkbox">
-                  <span aria-hidden="true"></span>
-                  <em class="sr-only" data-i18n="set.ssh.toggleTerminalAccess">Toggle terminal access</em>
-                </label>
-              </div>
-              <button class="info-btn" type="button" data-info="ssh-info" aria-expanded="false" aria-label="About terminal access" data-i18n-attr="aria-label:set.ssh.aboutTerminalAccess">i</button>
-              <div class="info-bubble" id="ssh-info" data-i18n-html="set.ssh.itSYourDevice">
-                It's your device, so you can have full access to it. This opens a way to log in from a computer on your home Wi‑Fi and use it like any other machine — install things, read files, change how sudo works.<br><br>
-                <strong>You don't need this for normal use.</strong> Everything the device is meant to do, it does from this dashboard.<br><br>
-                <strong>Home Wi‑Fi only.</strong> This is never reachable from the internet, even with <em>Access from anywhere</em> switched on.<br><br>
-                Changes you make by hand are undone if the device is ever re‑flashed.
-              </div>
-
-              <div id="ssh-details" hidden>
-                <p class="key-state" id="ssh-command">ssh …</p>
-                <div id="ssh-password-wrap">
-                  <div class="label-row">
-                    <span class="label-text" data-i18n="login.password">Password</span>
-                    <button class="info-btn" type="button" data-info="ssh-pw-info" aria-expanded="false" aria-label="About this password" data-i18n-attr="aria-label:set.ssh.aboutThisPassword">i</button>
-                  </div>
-                  <div class="info-bubble" id="ssh-pw-info" data-i18n="set.ssh.generatedJustNowFor">
-                    Generated just now for your device's user account. Copy it somewhere safe — you can always come back here to see it again while you're on your home Wi‑Fi.
-                  </div>
-                  <div class="remote-box">
-                    <a id="ssh-password" href="#" onclick="return false;"></a>
-                    <button id="copy-ssh" type="button" data-i18n="set.access.copy">Copy</button>
-                  </div>
-                </div>
-                <p class="microcopy" id="ssh-remote-note" hidden data-i18n="set.ssh.openThisPageOn">
-                  Open this page on your home Wi‑Fi to see the password — it isn't shown over the public link.
-                </p>
-              </div>
-
-              <div class="label-row">
-                <span class="label-text" data-i18n="set.ssh.preferToUseYour">Prefer to use your own SSH key?</span>
-                <button class="info-btn" type="button" data-info="ssh-key-info" aria-expanded="false" aria-label="About SSH keys" data-i18n-attr="aria-label:set.ssh.aboutSshKeys">i</button>
-              </div>
-              <div class="info-bubble" id="ssh-key-info" data-i18n-html="set.ssh.anSshKeyIs">
-                An SSH key is a pair of files on your computer — a private half that never leaves it, and a public half that's safe to share. You put the public half here, and your computer proves it holds the private half when it connects. No password to type or remember.<br><br>
-                <strong>If you don't have one</strong>, skip this — the password above works fine. To make one, run <code>ssh-keygen -t ed25519</code> on your computer, then paste the contents of <code>~/.ssh/id_ed25519.pub</code>.
-              </div>
-              <input id="ssh-key" type="text" placeholder="ssh-ed25519 AAAA…" autocomplete="off" spellcheck="false">
-              <button class="primary-button" id="save-ssh-key" type="button" data-i18n="set.ssh.useThisKeyInstead">Use this key instead</button>
-              <p class="form-status" id="ssh-status" role="status"></p>
-
-              <div id="devtools-wrap" hidden>
-                <div class="label-row">
-                  <span class="label-text">Claude Code</span>
-                  <button class="info-btn" type="button" data-info="devtools-info" aria-expanded="false" aria-label="About Claude Code" data-i18n-attr="aria-label:set.ssh.aboutClaudeCode">i</button>
-                </div>
-                <div class="info-bubble" id="devtools-info" data-i18n-html="set.ssh.claudeCodeIsAn">
-                  Claude Code is an AI assistant that runs in a terminal and can read and change the files on this device — handy if you want to customise how sudo works.<br><br>
-                  We don't ship it preinstalled, so the device stays small and you always get the current version. Installing takes a few minutes and needs internet. You can watch the progress right here.
-                </div>
-                <button class="primary-button" id="install-devtools" type="button" data-i18n="set.ssh.installClaudeCode">Install Claude Code</button>
-                <p class="form-status" id="devtools-status" role="status"></p>
-                <div id="devtools-done" hidden>
-                  <p class="microcopy" data-i18n="set.ssh.installedOpenATerminal">Installed. Open a terminal on your computer and run these:</p>
-                  <p class="key-state" id="devtools-cmd-ssh">ssh …</p>
-                  <p class="key-state">claude</p>
-                </div>
-
-                <div class="label-row"><span class="label-text">Codex</span></div>
-                <p class="microcopy" style="margin-top:0" data-i18n="set.ssh.openaiSTerminalAssistant">OpenAI's terminal assistant. Same idea, different provider — you can have both.</p>
-                <button class="primary-button" id="install-codex" type="button" data-i18n="set.ssh.installCodex">Install Codex</button>
-                <p class="form-status" id="codex-status" role="status"></p>
-                <div id="codex-done" hidden>
-                  <p class="key-state">codex</p>
-                </div>
-              </div>
-            </div>
-          </section>
-          <section class="setting-card" id="github-setting">
-            <button class="setting-head" type="button" aria-expanded="false">
-              <span class="setting-icon">⌥</span>
-              <span><strong>GitHub</strong><small id="github-summary">Not connected</small></span>
-              <span class="chevron">›</span>
-            </button>
-            <div class="setting-body">
-              <p class="section-intro" data-i18n="set.github.giveSudoAGithub">Give sudo a GitHub token and it can work with your repositories directly — cloning one, pushing changes, opening an issue — instead of only talking you through it.</p>
-              <label for="github-username"><span data-i18n="set.github.githubUsername">GitHub username</span> <span class="optional-tag" data-i18n="set.github.optional">optional</span></label>
-              <input id="github-username" autocomplete="off" spellcheck="false" placeholder="your-handle" data-i18n-attr="placeholder:set.github.yourHandle">
-              <label for="github-token" data-i18n="set.github.personalAccessToken">Personal access token</label>
-              <input id="github-token" type="password" autocomplete="off" spellcheck="false" placeholder="ghp_… or github_pat_…" data-i18n-attr="placeholder:set.github.ghpOrGithubPat">
-              <p class="microcopy" data-i18n-html="set.github.createOneAtGithub">Create one at <strong>github.com → Settings → Developer settings → Personal access tokens</strong>. Choose only the scopes sudo needs; a fine-grained token limited to the repos you care about is the safest. Stored on this device only.</p>
-              <button class="primary-button" id="save-github" type="button" data-i18n="set.github.saveToken">Save token</button>
-
-              <div class="access-row">
-                <div>
-                  <strong data-i18n="set.github.letSudoUseMy">Let sudo use my repos</strong>
-                  <small data-i18n="set.github.whenOffTheToken">When off, the token is saved but sudo cannot reach GitHub.</small>
-                </div>
-                <label class="switch"><input type="checkbox" id="github-toggle"><span></span></label>
-              </div>
-              <p class="form-status" id="github-status" role="status"></p>
-
-              <button class="info-link" type="button" aria-expanded="false" aria-controls="github-info" data-i18n="set.github.whatTheTokenCan">What the token can do ⓘ</button>
-              <div class="info-bubble" id="github-info" data-i18n-html="set.github.aTokenIsA">
-                A token is a key to your GitHub account. What it can reach is exactly what you ticked when you made it — repo access lets sudo clone, push and open issues; nothing else.<br><br>
-                <strong>Treat it like a password.</strong> Keep it off unless you want sudo working in your repos, and revoke it on GitHub the moment you are done. It is stored on this device only and never leaves it except to talk to GitHub.
-              </div>
+              <p class="form-status" id="agent-language-status" role="status"></p>
             </div>
           </section>
           <div class="settings-group" data-i18n="settings.billingCredits">Billing & credits</div>
@@ -2010,7 +2015,22 @@
               <p class="form-status error-text" id="billing-error" role="alert"></p>
             </div>
           </section>
-          <div class="settings-group" data-i18n="settings.reset">Reset</div>
+          <div class="settings-group" data-i18n="settings.thisDevice">This device</div>
+          <section class="setting-card" id="name-setting">
+            <button class="setting-head" type="button" aria-expanded="false">
+              <span class="setting-icon">✎</span>
+              <span><strong data-i18n="set.access.deviceName">Device name</strong><small id="access-summary">sudo.local</small></span>
+              <span class="chevron">›</span>
+            </button>
+            <div class="setting-body">
+              <label for="device-name" data-i18n="set.access.deviceName">Device name</label>
+              <input id="device-name" autocomplete="off" spellcheck="false" placeholder="sudo" maxlength="63">
+              <p class="microcopy" data-i18n="set.access.thisIsTheWeb">This is the web address you use to reach sudo. Letters, numbers and hyphens.</p>
+              <button class="primary-button" id="save-hostname" type="button" data-i18n="set.access.renameDevice">Rename device</button>
+              <p class="form-status" id="hostname-status" role="status"></p>
+              <div class="info-bubble" id="hostname-done" style="border-inline-start-color: var(--ok);"></div>
+            </div>
+          </section>
           <section class="setting-card" id="reset-setting">
             <button class="setting-head" type="button" aria-expanded="false">
               <span class="setting-icon">↺</span>
@@ -2030,7 +2050,116 @@
               <p class="form-status" id="reset-status" role="status"></p>
             </div>
           </section>
-          <!-- Shown in the Home tab now (the agent workspace); kept for its summary code. -->
+          <!-- Kept for their code; their jobs moved elsewhere. -->
+          <section class="setting-card" id="profile-setting" hidden>
+            <button class="setting-head" type="button" aria-expanded="true">
+              <span class="setting-icon">✦</span>
+              <span><strong data-i18n="set.profile.agentPersonality">Agent &amp; personality</strong><small id="profile-summary">Set up how sudo talks to you</small></span>
+              <span class="chevron">›</span>
+            </button>
+            <div class="setting-body">
+              <div class="field-grid">
+                <label><span data-i18n="set.profile.yourName">Your name</span><input id="user-name" autocomplete="name" placeholder="What should I call you?" data-i18n-attr="placeholder:welcome.whatShouldICall"></label>
+                <label><span data-i18n="set.profile.agentName">Agent name</span><input id="agent-name" placeholder="sudo" maxlength="32"></label>
+              </div>
+              <fieldset>
+                <legend data-i18n="set.profile.personality">Personality</legend>
+                <div class="option-grid" id="personality-options">
+                  <button type="button" data-value="friendly"><strong data-i18n="pers.s.friendly">friendly</strong><small data-i18n="pers.s.friendlyHint"></small></button>
+                  <button type="button" data-value="concise"><strong data-i18n="pers.s.concise">concise</strong><small data-i18n="pers.s.conciseHint"></small></button>
+                  <button type="button" data-value="analytical"><strong data-i18n="pers.s.analytical">Analytical</strong><small data-i18n="pers.s.analyticalHint">Thinks it through with you</small></button>
+                  <button type="button" data-value="creative"><strong data-i18n="pers.s.creative">creative</strong><small data-i18n="pers.s.creativeHint"></small></button>
+                </div>
+              </fieldset>
+              <button class="primary-button" id="save-profile" type="button" data-i18n="set.profile.saveSettings">Save settings</button>
+              <p class="form-status" id="profile-status" role="status"></p>
+            </div>
+          </section>
+          <section class="setting-card" id="routing-setting" hidden>
+            <button class="setting-head" type="button">
+              <span class="setting-icon">⇄</span>
+              <span><strong data-i18n="set.routing.modelRouting">Model &amp; routing</strong><small id="routing-summary">Automatic</small></span>
+              <span class="chevron">&rsaquo;</span>
+            </button>
+            <div class="setting-body">
+              <p class="section-intro" data-i18n="set.routing.whichModelAnswersYou">Which model answers you. Automatic is the cheapest sensible choice on every message; fixed always uses the one you pick.</p>
+
+              <div class="access-row">
+                <div>
+                  <strong data-i18n="set.routing.answeringRightNow">Answering right now</strong>
+                  <small id="answering-with">Checking&hellip;</small>
+                </div>
+              </div>
+
+              <div class="access-row">
+                <div>
+                  <strong data-i18n="set.routing.keepItOnThis">Keep it on this device</strong>
+                  <small data-i18n="set.routing.answerWithTheOn">Answer with the on-device model even when a key is saved. Nothing you type leaves the house.</small>
+                </div>
+                <label class="switch">
+                  <input id="prefer-local-toggle" type="checkbox">
+                  <span aria-hidden="true"></span>
+                  <em class="sr-only" data-i18n="set.routing.preferTheOnDevice">Prefer the on-device model</em>
+                </label>
+              </div>
+              <button class="info-link" type="button" aria-expanded="false" aria-controls="local-info" data-i18n="set.routing.whatYouGiveUp">What you give up &#9432;</button>
+              <div class="info-bubble" id="local-info" data-i18n-html="set.routing.theOnDeviceModel">
+                The on-device model is small &mdash; roughly a thousandth the size of the cloud ones. It can greet you, chat, and handle simple things. It cannot search the web, reason through anything long, or look at images.<br><br>
+                It costs nothing to run and works with the internet down.<br><br>
+                If it is not installed yet, messages still go to the cloud rather than failing.
+              </div>
+              <p class="form-status" id="prefer-local-status" role="status"></p>
+              <div class="option-grid" id="routing-options">
+                <button type="button" data-value="auto"><strong data-i18n="set.routing.automatic">Automatic</strong><small data-i18n="set.routing.picksPerMessageCheapest">Picks per message. Cheapest that can do the job.</small></button>
+                <button type="button" data-value="fixed"><strong data-i18n="set.routing.alwaysThisOne">Always this one</strong><small data-i18n="set.routing.sameModelEveryTime">Same model every time.</small></button>
+              </div>
+
+              <button class="info-link" type="button" aria-expanded="false" aria-controls="routing-info" data-i18n="set.routing.howAutomaticRoutingPicks">How automatic routing picks ⓘ</button>
+              <div class="info-bubble" id="routing-info" data-i18n-html="set.routing.shortAndSimpleAsks">
+                <strong>Short and simple asks</strong> go to the cheapest text model, which is where most messages land.<br><br>
+                <strong>Anything with an image</strong> goes to a model that can actually see — the default is text-only, so without this it would just guess.<br><br>
+                <strong>Long or multi-step work</strong> steps up to a stronger model, because a cheap model looping on a hard task costs more than the good model doing it once.<br><br>
+                You are billed per message, so automatic usually costs less than pinning everything to one strong model.
+              </div>
+
+              <div id="fixed-model-wrap" hidden>
+              <div class="label-row">
+                <span class="label-text" data-i18n="guide.cloud.model">Model</span>
+                <button class="info-btn" type="button" data-info="model-info" aria-expanded="false" aria-label="About models" data-i18n-attr="aria-label:set.routing.aboutModels">i</button>
+              </div>
+              <div class="info-bubble" id="model-info" data-i18n-html="set.routing.theBrainYourAgent">
+                The brain your agent thinks with. All four cost you differently per message — cheaper ones are quicker and fine for everyday chat, pricier ones reason better on hard problems.<br><br>
+                <strong>DeepSeek V4 Flash</strong> — the default, and by far the cheapest. Text only, so it can't look at photos you send.<br>
+                <strong>GPT-4o mini</strong> — cheap and quick, and can read images.<br>
+                <strong>Claude Haiku 4.5</strong> — a step up in quality, reads images.<br>
+                <strong>Claude Sonnet 4.5</strong> — the strongest here and the most expensive. Best for tricky, multi-step work.<br><br>
+                Switch whenever you like. If you send a photo to a model that can't see, sudo hands it to one that can.
+              </div>
+              <label class="sr-only" for="model" data-i18n="guide.cloud.model">Model</label>
+              <select id="model">
+                <option value="sudo-default" data-i18n="set.routing.optDefault">DeepSeek V4 Flash · default</option>
+                <option value="sudo-fast" data-i18n="set.routing.optFast">GPT-4o mini · fast</option>
+                <option value="sudo-budget" data-i18n="set.routing.optBudget">Claude Haiku 4.5 · balanced</option>
+                <option value="sudo-smart" data-i18n="set.routing.optSmart">Claude Sonnet 4.5 · smart</option>
+              </select>
+              </div>
+              <p class="form-status" id="routing-status" role="status"></p>
+
+              <div class="settings-subgroup" data-i18n="set.routing.onDeviceGreeter">on-device greeter</div>
+              <div class="access-row">
+                <div>
+                  <strong id="local-model-state">Checking…</strong>
+                  <small id="local-model-note">A small model that runs on the device itself.</small>
+                </div>
+              </div>
+              <button class="info-link" type="button" aria-expanded="false" aria-controls="local-model-info" data-i18n="set.routing.whatThisIs">What this is ⓘ</button>
+              <div class="info-bubble" id="local-model-info" data-i18n-html="set.routing.gemma3270mAbout">
+                <strong>Gemma 3 270M</strong>, about 200MB, running on the Pi rather than in the cloud. It greets you and keeps sudo talking when there is no API key or no internet.<br><br>
+                It is deliberately small: quick to answer, but it cannot browse, remember past chats, or answer factual questions. Those go to the cloud model.<br><br>
+                It downloads by itself a few minutes after the device first joins Wi-Fi. If it says <em>not installed</em> long after that, the device could not reach the download.
+              </div>
+            </div>
+          </section>
           <section class="setting-card" id="files-setting" hidden>
             <button class="setting-head" type="button" aria-expanded="false">
               <span class="setting-icon">◫</span>
@@ -2043,6 +2172,8 @@
               <p class="microcopy" data-i18n-html="set.files.storedOnThisDevice">Stored on this device at <code>/opt/sudo/agent-workspace</code>. To edit them, turn on terminal access below.</p>
             </div>
           </section>
+
+          
 
           
 
@@ -2071,9 +2202,6 @@
       </button>
       <button type="button" data-tab="community">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg><span data-i18n="bnav.community">community</span>
-      </button>
-      <button type="button" data-tab="settings">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 6H10M6 6H3M21 12h-7M10 12H3M21 18h-3M14 18H3"/><circle cx="8" cy="6" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="16" cy="18" r="2"/></svg><span data-i18n="bnav.settings">settings</span>
       </button>
     </nav>
   </div>
@@ -2139,6 +2267,7 @@
       // Setup is one path: no shortcuts out of it in the top bar.
       document.querySelector('.topbar .brand-home').hidden = tab === 'welcome';
       $('hub-button').hidden = tab === 'welcome';
+      document.querySelector('.top-gear').hidden = tab === 'welcome';
       if (tab !== 'settings' && state.settingPage) closeSettingPage();
       // The WhatsApp setup panel polls while it is open; leaving the tab stops it.
       if (tab !== 'channels') stopWhatsappPoll();
@@ -2941,6 +3070,381 @@
           $('home-panel-' + name).hidden = tab.dataset.home !== name;
         });
       });
+    });
+
+    // --- Agent & models: cloud models / on-device models ------------------
+    document.querySelectorAll('.model-seg-btn').forEach(btn =>
+      btn.addEventListener('click', () => showModelSeg(btn.dataset.mseg)));
+
+    function showModelSeg(name) {
+      document.querySelectorAll('.model-seg-btn').forEach(b => {
+        const on = b.dataset.mseg === name;
+        b.classList.toggle('active', on);
+        b.setAttribute('aria-selected', String(on));
+      });
+      $('mseg-cloud').hidden = name !== 'cloud';
+      $('mseg-local').hidden = name !== 'local';
+      if (name === 'local') loadLocalModels();
+      else stopLocalPoll();
+    }
+
+    let localData = null;
+    let localPoll = null;
+    function stopLocalPoll() {
+      if (localPoll) { clearTimeout(localPoll); localPoll = null; }
+    }
+
+    async function loadLocalModels() {
+      stopLocalPoll();
+      try {
+        localData = await api('/api/local-models', {}, 20000);
+        renderLocalModels(localData);
+        // A download is running: follow it until it lands or fails.
+        if (localData.install && localData.install.state === 'installing' && !$('mseg-local').hidden) {
+          localPoll = setTimeout(loadLocalModels, 3000);
+        }
+      } catch (error) {
+        $('lm-status').textContent = error.message;
+      }
+    }
+
+    // Files in GB the way Ollama and the download page show them (1 GB =
+    // 1,000,000,000 bytes); memory in the GB the system reports.
+    const lmFileGB = bytes => bytes / 1e9;
+    function lmSize(gb) {
+      if (gb < 1) return t('lm.mb', { n: Math.round(gb * 1000) });
+      return t('lm.gb', { n: gb >= 10 ? Math.round(gb) : gb.toFixed(1) });
+    }
+    function lmParams(billions) {
+      if (!billions) return '';
+      return billions < 1 ? Math.round(billions * 1000) + 'M' : (Math.round(billions * 10) / 10) + 'B';
+    }
+    function lmBits(quant) {
+      const m = /^Q(\d)/i.exec(quant || '');
+      if (m) return t('lm.bits', { n: m[1] });
+      return /F16|BF16/i.test(quant || '') ? t('lm.bits', { n: 16 }) : (quant || '');
+    }
+    function lmEl(tag, cls, text) {
+      const node = document.createElement(tag);
+      if (cls) node.className = cls;
+      if (text != null) node.textContent = text;
+      return node;
+    }
+    const LM_ICON = {
+      board: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><rect x="7" y="9" width="5" height="5" rx="1"/><path d="M15 9h3M15 12h3M15 15h3"/></svg>',
+      memory: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="7" width="20" height="10" rx="1.5"/><path d="M6 10v4M10 10v4M14 10v4M18 10v4M5 17v2M19 17v2"/></svg>',
+      disk: '<svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>',
+      chip: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9.5 9.5h5v5h-5zM9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg>',
+      eye: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>',
+      think: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3Z"/></svg>',
+    };
+
+    function renderLocalModels(d) {
+      const dev = d.device || {};
+      $('lm-only').checked = !!d.prefer_local;
+      $('lm-only').disabled = !d.runtime;
+      $('lm-answering').textContent = !d.runtime ? t('lm.noRuntime')
+        : d.prefer_local ? t('lm.answeringLocal', { model: (d.active_info && d.active_info.name) || d.active })
+          : t('lm.answeringCloud');
+
+      // Your Pi: three facts and where the memory goes.
+      const specs = $('lm-specs');
+      specs.replaceChildren();
+      const chips = lmEl('div', 'lm-spec-chips');
+      [
+        ['board', dev.board || '', [dev.cores ? t('lm.cores', { n: dev.cores }) : '', dev.cpu].filter(Boolean).join(' · ')],
+        ['memory', t('lm.gb', { n: dev.ram_nominal }), t('lm.memory')],
+        ['disk', lmSize(dev.disk_free_gb || 0), t('lm.freeStorage')],
+      ].forEach(([icon, big, small]) => {
+        const chip = lmEl('div', 'lm-spec');
+        chip.innerHTML = LM_ICON[icon];
+        const text = lmEl('div');
+        text.append(lmEl('strong', '', big), lmEl('small', '', small));
+        chip.append(text);
+        chips.append(chip);
+      });
+      const total = dev.ram_gb || 1;
+      const activeNeed = d.active_info && d.active_info.bytes ? (d.active_info.bytes / 1073741824) * 1.1 + 0.3 : 0;
+      const left = Math.max(0, (dev.room_gb || 0) - activeNeed);
+      const bar = lmEl('div', 'lm-membar');
+      [['sys', dev.reserve_gb], ['model', activeNeed], ['room', left]].forEach(([cls, gb]) => {
+        const seg = lmEl('span', 'seg ' + cls);
+        seg.style.width = Math.max(0, Math.min(100, (gb / total) * 100)) + '%';
+        bar.append(seg);
+      });
+      const legend = lmEl('div', 'lm-legend');
+      [['sys', t('lm.legSys'), dev.reserve_gb], ['model', d.active, activeNeed], ['room', t('lm.legRoom'), left]].forEach(([cls, label, gb]) => {
+        const item = lmEl('span');
+        item.append(lmEl('i', cls), document.createTextNode(`${label} `), lmEl('b', '', t('lm.gb', { n: (gb || 0).toFixed(1) })));
+        legend.append(item);
+      });
+      specs.append(chips, lmEl('p', 'lm-membar-title', t('lm.memTitle', { n: dev.ram_nominal })), bar, legend);
+
+      // A download in progress.
+      const inst = d.install || {};
+      const downloading = inst.state === 'installing';
+      $('lm-progress').hidden = !downloading;
+      if (downloading) {
+        const target = (d.catalog || []).find(m => m.id === inst.target);
+        $('lm-progress-title').textContent = t('lm.downloading', { model: target ? target.name : (inst.target || '') });
+        $('lm-progress-pct').textContent = inst.percent != null ? inst.percent + '%' : '';
+        $('lm-progress-fill').style.width = (inst.percent || 4) + '%';
+        // The step it is on, minus the download's own percentage: one number
+        // on screen, the overall one above.
+        $('lm-progress-msg').textContent = (inst.message || '').replace(/\s*\d+%$/, '');
+      } else if (inst.state === 'failed' && inst.message) {
+        $('lm-status').textContent = inst.message;
+      }
+
+      renderLocalNow(d);
+
+      // Models, grouped by the size of Pi they run well on.
+      const mine = dev.ram_nominal;
+      $('lm-pick-lede').textContent = t('lm.pickLede', { n: mine });
+      const tiers = $('lm-tiers');
+      tiers.replaceChildren();
+      [...new Set((d.catalog || []).map(m => m.tier))].sort((a, b) => a - b).forEach(tier => {
+        const group = lmEl('section', 'lm-tier' + (tier <= mine ? ' fits' : ' bigger') + (tier === mine ? ' mine' : ''));
+        const head = lmEl('header', 'lm-tier-head');
+        head.append(lmEl('span', 'lm-tier-ram', t('lm.gb', { n: tier })),
+                    lmEl('strong', '', t('lm.tierTitle', { n: tier })));
+        if (tier === mine) head.append(lmEl('em', 'lm-mine', t('lm.yourPiTag')));
+        else if (tier > mine) head.append(lmEl('em', 'lm-bigger', t('lm.biggerPi')));
+        const grid = lmEl('div', 'lm-grid');
+        d.catalog.filter(m => m.tier === tier).forEach(m => grid.append(localModelCard(m, d)));
+        group.append(head, grid);
+        tiers.append(group);
+      });
+
+      const custom = $('lm-custom');
+      custom.replaceChildren();
+      if ((d.custom || []).length) {
+        const group = lmEl('section', 'lm-tier fits');
+        const head = lmEl('header', 'lm-tier-head');
+        head.append(lmEl('strong', '', t('lm.ownModels')));
+        const grid = lmEl('div', 'lm-grid');
+        d.custom.forEach(m => grid.append(localModelCard({
+          ...m, name: m.name, maker: m.family, params: null, params_label: m.params_label,
+          installed: true, custom: true,
+        }, d)));
+        group.append(head, grid);
+        custom.append(group);
+      }
+    }
+
+    function renderLocalNow(d) {
+      const now = $('lm-now');
+      now.replaceChildren();
+      const info = d.active_info || {};
+      const head = lmEl('div', 'lm-now-head');
+      const icon = lmEl('span', 'lm-now-icon');
+      icon.innerHTML = LM_ICON.chip;
+      const title = lmEl('div');
+      title.append(lmEl('strong', '', info.name || d.active), lmEl('small', '', [info.maker, d.active].filter(Boolean).join(' · ')));
+      head.append(icon, title, lmEl('span', 'lm-state' + (d.active_loaded ? ' on' : ''),
+        d.active_loaded ? t('lm.inMemory') : t('lm.asleep')));
+      now.append(head);
+      if (info.blurb) now.append(lmEl('p', 'lm-blurb', t('lm.b.' + info.blurb)));
+
+      const facts = lmEl('div', 'lm-facts');
+      [
+        [info.params ? lmParams(info.params) : (info.params_label || '—'), t('lm.factParams')],
+        [info.bytes ? lmSize(lmFileGB(info.bytes)) : '—', t('lm.factFile')],
+        [lmBits(info.quant) || '—', t('lm.factPrecision')],
+      ].forEach(([big, small]) => {
+        const f = lmEl('div', 'lm-fact');
+        f.append(lmEl('b', '', big), lmEl('small', '', small));
+        facts.append(f);
+      });
+      now.append(facts);
+
+      // Speed: the estimate until it has been measured on this device.
+      const measured = d.measured && d.measured.tokens_per_sec;
+      const speed = measured || d.active_speed || 0;
+      now.append(lmSpeedBar(speed, measured ? t('lm.measured', { n: measured }) : t('lm.estimate', { n: speed })));
+      const key = lmEl('p', 'lm-read-key');
+      key.append(lmEl('i'), document.createTextNode(t('lm.readKey')));
+      now.append(key);
+      const row = lmEl('div', 'lm-now-actions');
+      const test = lmEl('button', 'soft-button', t('lm.testSpeed'));
+      test.type = 'button';
+      test.disabled = !d.runtime;
+      test.addEventListener('click', () => testLocalSpeed(test));
+      row.append(test);
+      now.append(row);
+      const out = lmEl('div', 'lm-test-out');
+      out.id = 'lm-test-out';
+      if (d.measured) fillSpeedResult(out, d.measured);
+      now.append(out);
+    }
+
+    // Speed on a 0-20 tokens/s track, with a mark where reading speed is.
+    function lmSpeedBar(speed, label) {
+      const wrap = lmEl('div', 'lm-bar');
+      wrap.append(lmEl('span', 'lm-bar-label', t('lm.speed')));
+      const track = lmEl('div', 'lm-track speed');
+      const fill = lmEl('i');
+      fill.style.width = Math.min(100, (speed / 20) * 100) + '%';
+      const mark = lmEl('b', 'read-mark');
+      mark.title = t('lm.readingSpeed');
+      track.append(fill, mark);
+      wrap.append(track, lmEl('span', 'lm-bar-val', label));
+      return wrap;
+    }
+
+    function fillSpeedResult(out, r) {
+      out.replaceChildren();
+      const line = lmEl('p', 'lm-test-line', t('lm.testResult', {
+        speed: r.tokens_per_sec, load: r.load_sec, total: r.total_sec,
+      }));
+      out.append(line);
+      if (r.reply) out.append(lmEl('blockquote', 'lm-test-reply', r.reply));
+    }
+
+    async function testLocalSpeed(btn) {
+      btn.disabled = true;
+      const old = btn.textContent;
+      btn.textContent = t('lm.testing');
+      try {
+        const r = await api('/api/local-models/test', { method: 'POST' }, 320000);
+        if (localData) { localData.measured = r; localData.active_loaded = true; }
+        renderLocalNow(localData || {});
+      } catch (error) {
+        $('lm-status').textContent = error.message;
+        btn.disabled = false;
+        btn.textContent = old;
+      }
+    }
+
+    function localModelCard(m, d) {
+      const dev = d.device || {};
+      const card = lmEl('article', 'lm-card fit-' + (m.fit || 'fits') + (m.active ? ' active' : ''));
+      const head = lmEl('div', 'lm-card-head');
+      head.append(lmEl('strong', '', m.name));
+      if (m.active) head.append(lmEl('span', 'lm-badge use', t('lm.inUse')));
+      else if (m.id === d.recommended) head.append(lmEl('span', 'lm-badge rec', t('lm.bestForYou')));
+      card.append(head, lmEl('small', 'lm-maker', [m.maker, m.id].filter(Boolean).join(' · ')));
+      if (m.blurb) card.append(lmEl('p', 'lm-blurb', t('lm.b.' + m.blurb)));
+
+      const tags = lmEl('div', 'lm-tags');
+      const params = m.params ? lmParams(m.params) : m.params_label;
+      if (params) tags.append(lmEl('span', '', t('lm.paramsTag', { n: params })));
+      tags.append(lmEl('span', '', lmSize(lmFileGB(m.bytes))));
+      if (m.quant) tags.append(lmEl('span', '', lmBits(m.quant)));
+      if (m.sees || (m.capabilities || []).includes('vision')) {
+        const tag = lmEl('span', 'feat');
+        tag.innerHTML = LM_ICON.eye;
+        tag.append(t('lm.seesImages'));
+        tags.append(tag);
+      }
+      if (m.thinks || (m.capabilities || []).includes('thinking')) {
+        const tag = lmEl('span', 'feat');
+        tag.innerHTML = LM_ICON.think;
+        tag.append(t('lm.thinks'));
+        tags.append(tag);
+      }
+      card.append(tags);
+
+      // Memory: what it needs against the room this Pi has for a model.
+      const room = dev.room_gb || 1;
+      const mem = lmEl('div', 'lm-bar');
+      mem.append(lmEl('span', 'lm-bar-label', t('lm.memoryShort')));
+      const track = lmEl('div', 'lm-track mem');
+      const fill = lmEl('i');
+      fill.style.width = Math.min(100, (m.need_gb / room) * 100) + '%';
+      track.append(fill);
+      mem.append(track, lmEl('span', 'lm-bar-val', t('lm.needOf', { need: m.need_gb.toFixed(1), room: room.toFixed(1) })));
+      card.append(mem, lmSpeedBar(m.speed || 0, t('lm.estimate', { n: m.speed || 0 })));
+
+      if (m.fit === 'tight') card.append(lmEl('p', 'lm-fit-note', t('lm.tightNote')));
+      if (m.fit === 'too_big') card.append(lmEl('p', 'lm-fit-note', t('lm.tooBigNote', { n: m.tier || '' })));
+
+      const actions = lmEl('div', 'lm-actions');
+      const busy = d.install && d.install.state === 'installing';
+      if (m.active) {
+        actions.append(lmEl('span', 'lm-active-note', t('lm.answeringNow')));
+      } else if (m.installed) {
+        const use = lmEl('button', 'primary-button', t('lm.switch'));
+        use.type = 'button';
+        use.disabled = busy;
+        use.addEventListener('click', () => switchLocalModel(m, use));
+        actions.append(use);
+        if (m.id !== 'gemma3:270m') {
+          const rm = lmEl('button', 'ghost-button', t('lm.remove'));
+          rm.type = 'button';
+          rm.addEventListener('click', () => removeLocalModel(m, rm));
+          actions.append(rm);
+        }
+      } else if (m.fit === 'too_big') {
+        const no = lmEl('button', 'ghost-button', t('lm.tooBig'));
+        no.type = 'button';
+        no.disabled = true;
+        actions.append(no);
+      } else {
+        const get = lmEl('button', m.fit === 'tight' ? 'ghost-button' : 'soft-button',
+          t('lm.download', { size: lmSize(lmFileGB(m.bytes)) }));
+        get.type = 'button';
+        get.disabled = busy || !d.runtime;
+        get.addEventListener('click', () => switchLocalModel(m, get));
+        actions.append(get);
+      }
+      card.append(actions);
+      return card;
+    }
+
+    async function switchLocalModel(m, btn) {
+      if (!m.installed) {
+        const room = ((localData && localData.device) || {}).room_gb || 0;
+        const ask = m.fit === 'tight'
+          ? t('lm.confirmTight', { model: m.name, need: m.need_gb.toFixed(1), room: room.toFixed(1) })
+          : t('lm.confirmDownload', { model: m.name, size: lmSize(lmFileGB(m.bytes)) });
+        if (!confirm(ask)) return;
+      }
+      btn.disabled = true;
+      $('lm-status').textContent = '';
+      try {
+        await api('/api/local-models/use', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model: m.id }),
+        }, 30000);
+        await loadLocalModels();
+      } catch (error) {
+        $('lm-status').textContent = error.message;
+        btn.disabled = false;
+      }
+    }
+
+    async function removeLocalModel(m, btn) {
+      if (!confirm(t('lm.confirmRemove', { model: m.name, size: lmSize(lmFileGB(m.bytes)) }))) return;
+      btn.disabled = true;
+      try {
+        await api('/api/local-models/remove', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model: m.id }),
+        }, 40000);
+        await loadLocalModels();
+      } catch (error) {
+        $('lm-status').textContent = error.message;
+        btn.disabled = false;
+      }
+    }
+
+    $('lm-only').addEventListener('change', async () => {
+      const wanted = $('lm-only').checked;
+      try {
+        const r = await api('/api/local-models/prefer', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ on: wanted }),
+        });
+        if (state.status) state.status.prefer_local = r.prefer_local;
+        if ($('prefer-local-toggle')) $('prefer-local-toggle').checked = r.prefer_local;
+        if (localData) { localData.prefer_local = r.prefer_local; renderLocalModels(localData); }
+        $('lm-status').textContent = wanted ? t('local.staying') : t('local.usingCloud');
+        setTimeout(() => { $('lm-status').textContent = ''; }, 2500);
+      } catch (error) {
+        $('lm-only').checked = !wanted;
+        $('lm-status').textContent = error.message;
+      }
     });
 
     async function loadHomeModels() {
@@ -5770,6 +6274,8 @@
       if (pill) {
         pill.hidden = current.state !== 'connected';
       }
+      $('wifi-current').textContent = current.state === 'connected'
+        ? (current.ssid || t('wifi.unknown')) : $('wifi-current').textContent;
       const summary = $('wifi-summary');
       if (summary) summary.textContent = label;
       const list = $('wifi-list');
@@ -5782,28 +6288,46 @@
         list.append(p);
         return;
       }
+      const box = $('wifi-box');
+      box.hidden = true;
+      list.after(box);
       nets.forEach(net => {
         const row = document.createElement('button');
         row.type = 'button';
-        row.className = 'wifi-option';
+        const isCurrent = current.state === 'connected' && net.ssid === current.ssid;
+        row.className = 'wifi-option' + (isCurrent ? ' current' : '');
         row.setAttribute('aria-pressed', String(net.ssid === wifiPending));
+        // Signal as bars, not a number.
+        const level = net.signal >= 75 ? 4 : net.signal >= 50 ? 3 : net.signal >= 25 ? 2 : 1;
+        const bars = document.createElement('span');
+        bars.className = 'wifi-sig l' + level;
+        bars.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path class="b4" d="M2 9a14 14 0 0 1 20 0"/><path class="b3" d="M5.5 12.5a9 9 0 0 1 13 0"/><path class="b2" d="M9 16a4 4 0 0 1 6 0"/><circle class="b1" cx="12" cy="19.5" r="1.1"/></svg>';
         const name = document.createElement('span');
         name.className = 'wifi-name';
         name.textContent = net.ssid;
-        const lock = document.createElement('span');
-        lock.className = 'wifi-lock';
-        lock.textContent = net.open ? t('wifi.open') : (net.enterprise ? t('wifi.enterprise') : t('wifi.secured'));
-        const bars = document.createElement('span');
-        bars.className = 'wifi-bars';
-        bars.textContent = `${net.signal}%`;
-        row.append(name, lock, bars);
-        row.addEventListener('click', () => selectWifi(net));
+        const side = document.createElement('span');
+        side.className = 'wifi-lock';
+        side.textContent = isCurrent ? t('set.access.connected') : (net.open ? t('wifi.open') : (net.enterprise ? t('wifi.enterprise') : ''));
+        if (!net.open && !isCurrent) {
+          const lock = document.createElement('span');
+          lock.className = 'wifi-lockicon';
+          lock.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
+          side.prepend(lock);
+        }
+        row.append(bars, name, side);
+        if (!isCurrent) row.addEventListener('click', () => selectWifi(net, row));
         list.append(row);
       });
     }
 
-    function selectWifi(net) {
+    function selectWifi(net, row) {
       wifiPending = net.ssid;
+      const box = $('wifi-box');
+      if (row) row.after(box);
+      box.hidden = false;
+      $('wifi-password').value = '';
+      $('wifi-password').hidden = !!net.open;
+      setTimeout(() => (net.enterprise ? $('wifi-username') : $('wifi-password')).focus(), 50);
       document.querySelectorAll('.wifi-option').forEach(btn =>
         btn.setAttribute('aria-pressed', String(btn.querySelector('.wifi-name').textContent === net.ssid)));
       // Enterprise networks want a username too; a plain one does not.
@@ -5813,15 +6337,19 @@
       $('wifi-status').textContent = t('wifi.selected', { ssid: net.ssid });
     }
 
-    async function openWifi() {
+    let wifiScanSeq = 0;
+    async function openWifi(fresh) {
+      const seq = ++wifiScanSeq;
       $('wifi-status').textContent = '';
       const note = $('wifi-list-note');
       if (note) note.textContent = t('wifi.scanning');
       try {
-        const data = await api('/api/device/wifi', {}, 30000);
-        renderWifi(data);
+        const data = await api('/api/device/wifi' + (fresh === true ? '?fresh=1' : ''), {}, 45000);
+        // Only the newest scan draws: an older one finishing late would
+        // replace the list the person is already picking from.
+        if (seq === wifiScanSeq) renderWifi(data);
       } catch (error) {
-        $('wifi-status').textContent = error.message;
+        if (seq === wifiScanSeq) $('wifi-status').textContent = error.message;
       }
     }
 
@@ -7006,7 +7534,37 @@
       if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); $('chat-form').requestSubmit(); }
     });
     // Inline explanations: tap to open, tap again (or open another) to close.
+    // ⓘ: hover shows the explanation as a frosted pop-up beside the button;
+    // a tap or click pins it (touch screens have no hover). It floats above
+    // the page, so it never pushes or hides the text around it.
+    function placeInfoPop(button, bubble) {
+      bubble.classList.add('pop');
+      const r = button.getBoundingClientRect();
+      const w = Math.min(340, window.innerWidth - 24);
+      bubble.style.width = w + 'px';
+      const left = Math.max(12, Math.min(window.innerWidth - w - 12, r.left + r.width / 2 - w / 2));
+      bubble.style.left = left + 'px';
+      bubble.style.top = '0px';
+      const hgt = bubble.offsetHeight;
+      const below = r.bottom + 8;
+      bubble.style.top = (below + hgt < window.innerHeight - 8 ? below : Math.max(8, r.top - hgt - 8)) + 'px';
+    }
+    let infoHideTimer = null;
     document.querySelectorAll('.info-btn, .info-link').forEach(button => {
+      const bubbleOf = () => $(button.dataset.info || button.getAttribute('aria-controls'));
+      button.addEventListener('mouseenter', () => {
+        const bubble = bubbleOf();
+        if (!bubble || !matchMedia('(hover: hover)').matches) return;
+        clearTimeout(infoHideTimer);
+        document.querySelectorAll('.info-bubble.pop.show').forEach(b => { if (b !== bubble && !b.dataset.pinned) b.classList.remove('show'); });
+        bubble.classList.add('show');
+        placeInfoPop(button, bubble);
+      });
+      button.addEventListener('mouseleave', () => {
+        const bubble = bubbleOf();
+        if (!bubble || bubble.dataset.pinned) return;
+        infoHideTimer = setTimeout(() => { if (!bubble.matches(':hover')) bubble.classList.remove('show'); }, 180);
+      });
       button.addEventListener('click', event => {
         event.stopPropagation();
         // The icon buttons name their bubble with data-info, the labelled ones
@@ -7014,10 +7572,14 @@
         // threw on click and none of their bubbles ever opened.
         const bubble = $(button.dataset.info || button.getAttribute('aria-controls'));
         if (!bubble) return;
-        const opening = !bubble.classList.contains('show');
-        document.querySelectorAll('.info-bubble.show').forEach(b => b.classList.remove('show'));
+        const opening = !bubble.dataset.pinned;
+        document.querySelectorAll('.info-bubble.show').forEach(b => { b.classList.remove('show'); delete b.dataset.pinned; });
         document.querySelectorAll('.info-btn, .info-link').forEach(b => b.setAttribute('aria-expanded', 'false'));
-        bubble.classList.toggle('show', opening);
+        if (opening) {
+          bubble.dataset.pinned = '1';
+          bubble.classList.add('show');
+          placeInfoPop(button, bubble);
+        }
         button.setAttribute('aria-expanded', String(opening));
       });
     });
@@ -7083,6 +7645,18 @@
     $('save-github').addEventListener('click', saveGithub);
     $('github-toggle').addEventListener('change', toggleGithub);
     $('wifi-connect').addEventListener('click', connectWifi);
+    $('wifi-rescan').addEventListener('click', () => openWifi(true));
+    // A pinned pop-up closes on a tap elsewhere, Escape, or a scroll.
+    const closeInfoPops = () => document.querySelectorAll('.info-bubble.pop.show').forEach(b => {
+      b.classList.remove('show'); delete b.dataset.pinned; });
+    document.addEventListener('click', event => {
+      if (!event.target.closest('.info-bubble, .info-btn, .info-link')) closeInfoPops();
+    });
+    document.addEventListener('keydown', event => { if (event.key === 'Escape') closeInfoPops(); });
+    document.addEventListener('scroll', closeInfoPops, true);
+    document.querySelectorAll('.info-bubble').forEach(b => b.addEventListener('mouseleave', () => {
+      if (!b.dataset.pinned) b.classList.remove('show'); }));
+    $('wifi-password').addEventListener('keydown', event => { if (event.key === 'Enter') connectWifi(); });
     $('save-auto-key').addEventListener('click', saveAutoKey);
     $('save-hostname').addEventListener('click', saveHostname);
     $('login-go').addEventListener('click', submitLogin);

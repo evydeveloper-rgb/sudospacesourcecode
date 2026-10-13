@@ -99,6 +99,10 @@ LOCALMODEL_STATUS = "/var/lib/sudo-localmodel-status"
 LOCALMODEL_SCRIPT = "/usr/local/bin/sudo-install-local-model.sh"
 OLLAMA_URL = "http://127.0.0.1:11434"
 LOCAL_MODEL = "gemma3:270m"
+# Which on-device model answers. Written by the installer when a download
+# finishes and passes its test, and by the dashboard when switching between
+# models already on the device. Absent means the greeter above.
+LOCALMODEL_ACTIVE = "/var/lib/sudo-localmodel-active"
 # The embedding model memory search runs on (cloud, via OpenRouter — the same
 # key as chat). Kept in step with memorySearch in configure-openclaw.sh.
 EMBED_MODEL = "text-embedding-3-small"
@@ -551,7 +555,7 @@ GITHUB_TOKEN_RE = re.compile(
 )
 
 
-def run_privileged(unit, script, *args, wait=True, timeout=60):
+def run_privileged(unit, script, *args, wait=True, timeout=60, pipe=False):
     """Run a helper outside this service's sandbox.
 
     The dashboard has ProtectSystem=full and ProtectHome=true, so it cannot
@@ -561,8 +565,34 @@ def run_privileged(unit, script, *args, wait=True, timeout=60):
     cmd = ["systemd-run", "--quiet", "--collect", f"--unit={unit}"]
     if wait:
         cmd.append("--wait")
+    # A transient unit's output goes to the journal; --pipe hands it back to
+    # us instead, for the helpers whose output is their answer.
+    if pipe:
+        cmd.append("--pipe")
     cmd += ["/bin/bash", script, *args]
     return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+
+
+_wifi_scan_lock = threading.Lock()
+_wifi_scan_cache = {"at": 0.0, "networks": []}
+
+
+def wifi_scan(fresh=False):
+    """Nearby networks, one scan at a time.
+
+    The scan runs as a fixed-name transient unit, so a second request while
+    one is running would fail and come back empty. Callers queue on the lock
+    instead and reuse a scan that finished in the last 20 seconds; a scan
+    that finds nothing keeps the last good list rather than blanking it.
+    """
+    with _wifi_scan_lock:
+        if not fresh and time.time() - _wifi_scan_cache["at"] < 20:
+            return _wifi_scan_cache["networks"]
+        scan = run_privileged("sudo-wifi-scan", WIFI_SCRIPT, "scan", wait=True, timeout=30, pipe=True)
+        networks = wifi_networks(scan.stdout)
+        if networks or time.time() - _wifi_scan_cache["at"] > 120:
+            _wifi_scan_cache.update(at=time.time(), networks=networks)
+        return _wifi_scan_cache["networks"]
 
 
 def set_ssh_password():
@@ -998,7 +1028,7 @@ def model_map(cfg):
         {"key": "vision", "label": "Sees photos you send",
          "model": _short(VISION_PRIMARY), "alias": "sudo-vision",
          "note": "Used only when your chat model can't see images itself."},
-        {"key": "image", "label": "Draws pictures",
+        {"key": "image", "label": "Generates pictures",
          "model": _short(IMAGE_GEN_PRIMARY), "alias": "sudo-image",
          "note": "For image generation, when you ask it to make a picture."},
         {"key": "stt", "label": "Hears voice notes",
@@ -1007,7 +1037,7 @@ def model_map(cfg):
         {"key": "tts", "label": "Speaks replies aloud",
          "model": _short(real_model_for("sudo-tts")), "alias": "sudo-tts",
          "note": "Only used when a spoken reply is asked for."},
-        {"key": "compact", "label": "Tidies long conversations",
+        {"key": "compact", "label": "Tidies long conversations (compaction)",
          "model": _short(real_model_for(chat_alias)), "alias": chat_alias,
          "note": "Summarises old turns so a long chat keeps fitting."},
         # Embeddings ride the on-device model, so this entry only appears once
@@ -1017,8 +1047,8 @@ def model_map(cfg):
          "note": "Turns your saved notes into meaning so memory search finds the right one."},
     ]
     if local_ready:
-        entries.append({"key": "local", "label": "On-device greeter",
-                        "model": LOCAL_MODEL, "alias": "gemma3:270m",
+        entries.append({"key": "local", "label": "On-device model",
+                        "model": active_local_model(), "alias": active_local_model(),
                         "note": "A small model on the device for quick, private chats."})
     return {
         "entries": entries,
@@ -1066,8 +1096,9 @@ def answering_with(cfg):
     # An explicit choice to stay on-device outranks having a key, but only
     # when there is actually something on the device to answer with.
     if cfg.get("prefer_local") and local_ready:
-        return {"where": "local", "model": LOCAL_MODEL, "via": "on this device, by choice",
-                "label": f"{LOCAL_MODEL} · on this device"}
+        local = active_local_model()
+        return {"where": "local", "model": local, "via": "on this device, by choice",
+                "label": f"{local} · on this device"}
     brain = agent_brain(cfg)
     if brain and brain["provider"] != "openrouter":
         return {"where": "cloud", "model": brain["model"], "via": f"your {brain['name']} key",
@@ -1085,8 +1116,9 @@ def answering_with(cfg):
         return {"where": "cloud", "model": label, "via": whose,
                 "label": f"{label} · {whose}"}
     if local_ready:
-        return {"where": "local", "model": LOCAL_MODEL, "via": "on this device",
-                "label": f"{LOCAL_MODEL} · on this device"}
+        local = active_local_model()
+        return {"where": "local", "model": local, "via": "on this device",
+                "label": f"{local} · on this device"}
     return {"where": "none", "model": None, "via": None,
             "label": "No model yet — add a key in Settings"}
 
@@ -1356,7 +1388,9 @@ def local_model_state():
         # older installs, so the UI treats a missing value as "unknown" and
         # falls back to the indeterminate dot rather than showing a fake 0.
         "percent": data.get("percent"),
-        "model": LOCAL_MODEL,
+        "model": active_local_model(),
+        # What is downloading right now, when that is not the active one.
+        "target": data.get("model"),
     }
 
 
@@ -1420,6 +1454,272 @@ def update_state():
     }
 
 
+def active_local_model():
+    return (read_text(LOCALMODEL_ACTIVE) or "").strip() or LOCAL_MODEL
+
+
+# Models offered for the device, smallest first. Sizes are the real download
+# from the Ollama library (bytes), so the memory maths below is about the
+# actual file, not a rounded guess. "quant" is how the weights are stored.
+LOCAL_CATALOG = [
+    {"id": "gemma3:270m", "name": "Gemma 3 270M", "maker": "Google", "params": 0.27,
+     "bytes": 291554440, "quant": "Q8_0", "blurb": "greeter"},
+    {"id": "qwen3:0.6b", "name": "Qwen3 0.6B", "maker": "Alibaba", "params": 0.75,
+     "bytes": 522653277, "quant": "Q4_K_M", "blurb": "tinythinker", "thinks": True},
+    {"id": "gemma3:1b", "name": "Gemma 3 1B", "maker": "Google", "params": 1.0,
+     "bytes": 806067267, "quant": "Q4_K_M", "blurb": "quickchat"},
+    {"id": "deepseek-r1:1.5b", "name": "DeepSeek R1 1.5B", "maker": "DeepSeek", "params": 1.8,
+     "bytes": 1117322281, "quant": "Q4_K_M", "blurb": "reasoner", "thinks": True},
+    {"id": "qwen3:1.7b", "name": "Qwen3 1.7B", "maker": "Alibaba", "params": 2.0,
+     "bytes": 1359292957, "quant": "Q4_K_M", "blurb": "allrounder", "thinks": True},
+    {"id": "llama3.2:3b", "name": "Llama 3.2 3B", "maker": "Meta", "params": 3.2,
+     "bytes": 2019392628, "quant": "Q4_K_M", "blurb": "writer"},
+    {"id": "phi4-mini:3.8b", "name": "Phi-4 mini", "maker": "Microsoft", "params": 3.8,
+     "bytes": 2491876363, "quant": "Q4_K_M", "blurb": "maths"},
+    {"id": "qwen3:4b", "name": "Qwen3 4B", "maker": "Alibaba", "params": 4.0,
+     "bytes": 2497293444, "quant": "Q4_K_M", "blurb": "smarter", "thinks": True},
+    {"id": "qwen3.5:4b", "name": "Qwen3.5 4B", "maker": "Alibaba", "params": 4.2,
+     "bytes": 3324173757, "quant": "Q4_K_M", "blurb": "newest", "sees": True, "thinks": True},
+    {"id": "gemma3:4b", "name": "Gemma 3 4B", "maker": "Google", "params": 3.9,
+     "bytes": 3350272259, "quant": "Q4_K_M", "blurb": "eyes", "sees": True},
+    {"id": "llama3.1:8b", "name": "Llama 3.1 8B", "maker": "Meta", "params": 8.0,
+     "bytes": 4920752841, "quant": "Q4_K_M", "blurb": "solid"},
+    {"id": "qwen3:8b", "name": "Qwen3 8B", "maker": "Alibaba", "params": 8.2,
+     "bytes": 5225387677, "quant": "Q4_K_M", "blurb": "big", "thinks": True},
+    {"id": "qwen3.5:9b", "name": "Qwen3.5 9B", "maker": "Alibaba", "params": 9.0,
+     "bytes": 6550825373, "quant": "Q4_K_M", "blurb": "bignew", "sees": True, "thinks": True},
+    {"id": "gemma3:12b", "name": "Gemma 3 12B", "maker": "Google", "params": 11.8,
+     "bytes": 8164039587, "quant": "Q4_K_M", "blurb": "large", "sees": True},
+    {"id": "qwen3:14b", "name": "Qwen3 14B", "maker": "Alibaba", "params": 14.8,
+     "bytes": 9276198077, "quant": "Q4_K_M", "blurb": "largest", "thinks": True},
+]
+LOCAL_CATALOG_IDS = {m["id"] for m in LOCAL_CATALOG}
+# The best pick for each size of board, by its nominal RAM.
+LOCAL_RECOMMENDED = {2: "gemma3:1b", 4: "qwen3:1.7b", 8: "qwen3:4b", 16: "qwen3:14b"}
+# Kept free for the system, the agent and the dashboard. Measured on a 4 GB
+# Pi 5 with the agent running; a model that eats into this pushes the agent
+# into swap-less memory pressure and earlyoom starts killing things.
+LOCAL_RESERVE_GB = 1.6
+GB = 1024 ** 3
+
+
+def local_model_need_gb(size_bytes):
+    """Memory a model takes while answering: the weights plus working room
+    for the conversation (the KV cache) and the runtime itself."""
+    return size_bytes / GB * 1.1 + 0.3
+
+
+def local_speed_estimate(size_bytes, board):
+    """Tokens per second, roughly. Writing each token reads every weight once,
+    so speed is memory bandwidth over model size: about 9 GB/s in practice on
+    a Pi 5, about 4 on a Pi 4."""
+    bandwidth = 9.0 if "Pi 5" in board else 4.0 if "Pi 4" in board else 6.0
+    return round(min(40.0, bandwidth / max(size_bytes / GB, 0.05)), 1)
+
+
+def device_specs():
+    total_kb = avail_kb = 0
+    try:
+        with open("/proc/meminfo", encoding="utf-8") as f:
+            for line in f:
+                if line.startswith("MemTotal:"):
+                    total_kb = int(line.split()[1])
+                elif line.startswith("MemAvailable:"):
+                    avail_kb = int(line.split()[1])
+    except OSError:
+        pass
+    board = (read_text("/proc/device-tree/model") or "").replace("\x00", "").strip() or "This device"
+    # "Raspberry Pi 5 Model B Rev 1.1" -> "Raspberry Pi 5"
+    board = re.sub(r"\s+Model\s.*$", "", board)
+    total_gb = total_kb / 1024 / 1024
+    # The size on the box: 3.95 GB of usable memory is a 4 GB board.
+    nominal = next((n for n in (1, 2, 4, 8, 16, 32) if total_gb <= n * 1.02), 32)
+    try:
+        disk = shutil.disk_usage("/")
+        disk_free, disk_total = disk.free / GB, disk.total / GB
+    except OSError:
+        disk_free = disk_total = 0
+    cpu = "Arm Cortex-A76 · 2.4 GHz" if "Pi 5" in board else "Arm Cortex-A72 · 1.8 GHz" if "Pi 4" in board else ""
+    return {
+        "board": board, "ram_gb": round(total_gb, 2), "ram_nominal": nominal,
+        "ram_free_gb": round(avail_kb / 1024 / 1024, 2),
+        "reserve_gb": LOCAL_RESERVE_GB, "room_gb": round(max(0.0, total_gb - LOCAL_RESERVE_GB), 2),
+        "disk_free_gb": round(disk_free, 1), "disk_total_gb": round(disk_total, 1),
+        "cores": os.cpu_count() or 0, "cpu": cpu,
+    }
+
+
+def local_fit(size_bytes, specs):
+    need = local_model_need_gb(size_bytes)
+    if need <= specs["room_gb"]:
+        return "fits"
+    if need <= specs["room_gb"] + 0.7:
+        return "tight"
+    return "too_big"
+
+
+def ollama_call(path, body=None, method=None, timeout=10):
+    data = json.dumps(body).encode("utf-8") if body is not None else None
+    request = urllib.request.Request(
+        f"{OLLAMA_URL}{path}", data=data, method=method or ("POST" if data else "GET"),
+        headers={"Content-Type": "application/json"},
+    )
+    with urllib.request.urlopen(request, timeout=timeout) as response:
+        raw = response.read().decode("utf-8")
+    return json.loads(raw) if raw.strip() else {}
+
+
+def ollama_installed():
+    """What is on the device, straight from Ollama. None when it is not
+    running, which is different from running with nothing pulled."""
+    try:
+        return ollama_call("/api/tags", timeout=4).get("models") or []
+    except Exception:
+        return None
+
+
+def local_model_caps(model):
+    for m in ollama_installed() or []:
+        if m.get("name") == model:
+            return m.get("capabilities") or []
+    return []
+
+
+def local_models_overview():
+    cfg = read_json_file(CONFIG)
+    specs = device_specs()
+    installed = ollama_installed()
+    try:
+        loaded = {m.get("name") for m in (ollama_call("/api/ps", timeout=4).get("models") or [])}
+    except Exception:
+        loaded = set()
+    active = active_local_model()
+    by_id = {m["id"]: m for m in LOCAL_CATALOG}
+    have = {}
+    for m in installed or []:
+        details = m.get("details") or {}
+        have[m.get("name")] = {
+            "id": m.get("name"), "bytes": m.get("size") or 0,
+            "quant": details.get("quantization_level") or "",
+            "params_label": details.get("parameter_size") or "",
+            "family": details.get("family") or "",
+            "capabilities": m.get("capabilities") or [],
+            "in_catalog": m.get("name") in by_id,
+        }
+    catalog = []
+    for m in LOCAL_CATALOG:
+        need = local_model_need_gb(m["bytes"])
+        # The smallest board this runs comfortably on.
+        tier = next((n for n in (2, 4, 8, 16, 32) if need <= n * 0.987 - LOCAL_RESERVE_GB), 64)
+        catalog.append({
+            **m, "need_gb": round(need, 2), "tier": tier,
+            "fit": local_fit(m["bytes"], specs),
+            "speed": local_speed_estimate(m["bytes"], specs["board"]),
+            "installed": m["id"] in have, "active": m["id"] == active,
+        })
+    # Anything else on the device -- a model the owner made themselves with
+    # `ollama create`, say -- is still theirs to switch to.
+    extra = []
+    for name, info in have.items():
+        if info["in_catalog"] or name.startswith(EMBED_MODEL):
+            continue
+        extra.append({**info, "name": name, "active": name == active,
+                      "need_gb": round(local_model_need_gb(info["bytes"]), 2),
+                      "fit": local_fit(info["bytes"], specs),
+                      "speed": local_speed_estimate(info["bytes"], specs["board"])})
+    active_info = have.get(active) or {}
+    return {
+        "device": specs,
+        "runtime": installed is not None,
+        "active": active,
+        "active_info": {**active_info, **({k: by_id[active][k] for k in ("name", "maker", "params", "quant", "blurb")}
+                                          if active in by_id else {"name": active})},
+        "active_loaded": active in loaded,
+        "active_speed": local_speed_estimate(active_info.get("bytes") or 0, specs["board"]) if active_info else None,
+        "catalog": catalog,
+        "custom": extra,
+        "recommended": LOCAL_RECOMMENDED.get(specs["ram_nominal"], "qwen3:1.7b"),
+        "install": local_model_state(),
+        "prefer_local": bool(cfg.get("prefer_local")),
+        "measured": cfg.get("local_speed_test") if (cfg.get("local_speed_test") or {}).get("model") == active else None,
+    }
+
+
+def local_model_switch(model):
+    """Make `model` the one that answers. Already on the device: immediate.
+    Otherwise start the download; the installer makes it active only once it
+    has answered a test prompt, so a failed download leaves the old one."""
+    installed = ollama_installed()
+    names = {m.get("name") for m in installed or []}
+    if model not in names and model not in LOCAL_CATALOG_IDS:
+        raise ValueError("That model isn't one sudo knows how to install.")
+    if (local_model_state() or {}).get("state") == "installing":
+        raise ValueError("A download is already running. Let it finish first.")
+    previous = active_local_model()
+    if model in names:
+        with open(LOCALMODEL_ACTIVE, "w", encoding="utf-8") as f:
+            f.write(model + "\n")
+        if previous != model:
+            local_model_unload(previous)
+        return {"ok": True, "active": model, "downloading": False}
+    entry = next(m for m in LOCAL_CATALOG if m["id"] == model)
+    specs = device_specs()
+    if local_fit(entry["bytes"], specs) == "too_big":
+        raise ValueError("That model needs more memory than this Pi has.")
+    if specs["disk_free_gb"] and entry["bytes"] / GB + 1 > specs["disk_free_gb"]:
+        raise ValueError("Not enough free storage for that download.")
+    # The old model stays loaded until the new one is ready; freeing it first
+    # gives the download's test run the memory it needs.
+    local_model_unload(previous)
+    run_privileged("sudo-local-model-switch", LOCALMODEL_SCRIPT, model, wait=False)
+    return {"ok": True, "active": previous, "downloading": True, "target": model}
+
+
+def local_model_unload(model):
+    try:
+        ollama_call("/api/generate", {"model": model, "keep_alive": 0}, timeout=15)
+    except Exception:
+        pass
+
+
+def local_model_remove(model):
+    if model == active_local_model():
+        raise ValueError("Switch to another model before removing this one.")
+    if model == LOCAL_MODEL:
+        raise ValueError("The greeter stays: it answers when nothing else can.")
+    local_model_unload(model)
+    ollama_call("/api/delete", {"model": model, "name": model}, method="DELETE", timeout=30)
+
+
+def local_model_speed_test():
+    """Ask the active model one short question and time it. Ollama reports
+    its own timings, so this is a measurement, not an estimate."""
+    model = active_local_model()
+    body = {"model": model, "stream": False, "keep_alive": "30m",
+            "prompt": "In two sentences, what is a Raspberry Pi?",
+            "options": {"num_predict": 80, "temperature": 0.2}}
+    if "thinking" in local_model_caps(model):
+        body["think"] = False
+    started = time.time()
+    data = ollama_call("/api/generate", body, timeout=300)
+    tokens = data.get("eval_count") or 0
+    secs = (data.get("eval_duration") or 0) / 1e9
+    result = {
+        "model": model,
+        "tokens_per_sec": round(tokens / secs, 1) if secs else None,
+        "load_sec": round((data.get("load_duration") or 0) / 1e9, 1),
+        "prompt_tokens_per_sec": round((data.get("prompt_eval_count") or 0)
+                                       / max((data.get("prompt_eval_duration") or 0) / 1e9, 1e-3), 1),
+        "total_sec": round(time.time() - started, 1),
+        "reply": (data.get("response") or "").strip()[:400],
+        "at": time.time(),
+    }
+    cfg = read_json_file(CONFIG)
+    cfg["local_speed_test"] = result
+    write_json_file(CONFIG, cfg)
+    return result
+
+
 def local_model_chat(message, history=None, cfg=None):
     """Ask the on-device model. Returns None if it cannot answer.
 
@@ -1439,21 +1739,28 @@ def local_model_chat(message, history=None, cfg=None):
             messages.append({"role": role, "content": text})
     messages.append({"role": "user", "content": message})
 
-    payload = json.dumps({
-        "model": LOCAL_MODEL,
+    model = active_local_model()
+    body = {
+        "model": model,
         "messages": messages,
         "stream": False,
         # Keep it resident between messages, or every reply pays the load cost
         # again -- on a Pi that is the difference between 1s and 10s.
         "keep_alive": "30m",
-        "options": {"num_predict": 120, "temperature": 0.6},
-    }).encode("utf-8")
+        # The greeter stays brief; a bigger model gets room for a real answer.
+        "options": {"num_predict": 120 if model == LOCAL_MODEL else 400, "temperature": 0.6},
+    }
+    # Thinking models (Qwen3, DeepSeek R1) otherwise spend the whole budget
+    # thinking and hand back an empty answer.
+    if "thinking" in local_model_caps(model):
+        body["think"] = False
+    payload = json.dumps(body).encode("utf-8")
     request = urllib.request.Request(
         f"{OLLAMA_URL}/api/chat", data=payload,
         headers={"Content-Type": "application/json"}, method="POST",
     )
     try:
-        with urllib.request.urlopen(request, timeout=90) as response:
+        with urllib.request.urlopen(request, timeout=90 if model == LOCAL_MODEL else 240) as response:
             data = json.loads(response.read().decode("utf-8"))
         reply = ((data.get("message") or {}).get("content") or "").strip()
         return reply or None
@@ -3325,6 +3632,39 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             self.send_json({"ok": True, "name": name, "bytes": len(content.encode("utf-8"))})
             return True
 
+        # On-device models: the workstation in Home -> Agent & models.
+        if path == "/api/local-models" and self.command == "GET":
+            self.send_json(local_models_overview())
+            return True
+
+        if path.startswith("/api/local-models/") and self.command == "POST":
+            try:
+                body = self.read_body_json()
+            except (ValueError, json.JSONDecodeError):
+                body = {}
+            action = path.rsplit("/", 1)[-1]
+            try:
+                if action == "use":
+                    self.send_json(local_model_switch(str(body.get("model") or "").strip()))
+                elif action == "remove":
+                    local_model_remove(str(body.get("model") or "").strip())
+                    self.send_json({"ok": True})
+                elif action == "test":
+                    self.send_json(local_model_speed_test())
+                elif action == "prefer":
+                    cfg = read_json_file(CONFIG)
+                    cfg["prefer_local"] = bool(body.get("on"))
+                    write_json_file(CONFIG, cfg)
+                    self.send_json({"ok": True, "prefer_local": cfg["prefer_local"],
+                                    "answering_with": answering_with(cfg)})
+                else:
+                    self.send_json({"error": "Not found"}, code=404)
+            except ValueError as error:
+                self.send_json({"error": str(error)}, code=400)
+            except Exception:
+                self.send_json({"error": "The on-device model runtime didn't answer. Try again in a moment."}, code=502)
+            return True
+
         # Home tab: what the agent is running on, and what is on the device.
         if path == "/api/agent/models" and self.command == "GET":
             self.send_json(model_map(read_json_file(CONFIG)))
@@ -3613,10 +3953,9 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
         if path == "/api/device/wifi" and self.command == "GET":
             # Current network plus the nearby list, in one call: the Settings
             # card needs both to draw itself, and they share the scan cost.
-            scan = run_privileged("sudo-wifi-scan", WIFI_SCRIPT, "scan", wait=True, timeout=30)
             self.send_json({
                 "current": wifi_current(),
-                "networks": wifi_networks(scan.stdout),
+                "networks": wifi_scan(fresh="fresh" in self.path),
                 "country": read_wifi_country(),
             })
             return True

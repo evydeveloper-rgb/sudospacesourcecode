@@ -16,8 +16,15 @@
 set -uo pipefail
 
 STATUS="/var/lib/sudo-localmodel-status"
+ACTIVE="/var/lib/sudo-localmodel-active"
 LOG="/var/log/sudo-local-model.log"
-MODEL="${SUDO_LOCAL_MODEL:-gemma3:270m}"
+# With an argument: the owner picked another model in the dashboard, and it
+# becomes the active one only if it downloads and answers. Without one (the
+# boot run): make sure the active model -- the greeter on a new device -- is
+# in place.
+SWITCH="${1:-}"
+MODEL="${SWITCH:-$(cat "$ACTIVE" 2>/dev/null || true)}"
+MODEL="${MODEL:-${SUDO_LOCAL_MODEL:-gemma3:270m}}"
 
 # systemd gives a service almost no environment, and the ollama CLI reads
 # $HOME to find its model directory. Without it, `ollama pull` does not fail
@@ -45,15 +52,16 @@ else
 fi
 
 set_status() {
-  python3 - "$1" "$2" "${3:-0}" "$STATUS" <<'PY'
+  python3 - "$1" "$2" "${3:-0}" "$STATUS" "$MODEL" <<'PY'
 import json, sys, time
-state, message, percent, path = sys.argv[1:5]
+state, message, percent, path, model = sys.argv[1:6]
 try:
     percent = int(percent)
 except Exception:
     percent = 0
 with open(path, "w", encoding="utf-8") as f:
-    json.dump({"state": state, "message": message, "percent": percent, "at": time.time()}, f)
+    json.dump({"state": state, "message": message, "percent": percent,
+               "model": model, "at": time.time()}, f)
 PY
 }
 
@@ -153,7 +161,7 @@ for raw in sys.stdin:
                     json.dump({"state": "installing",
                                "message": "Downloading %s… %d%%" % (model, p),
                                "percent": 12 + int(p * 0.78),
-                               "at": time.time()}, f)
+                               "model": model, "at": time.time()}, f)
             except OSError:
                 pass
     stripped = line.strip()
@@ -183,9 +191,17 @@ fi
 echo "smoke test"
 set_status installing "Waking ${MODEL} up for the first time…" 92
 
+# Thinking models (Qwen3, DeepSeek R1) would think first and can run out the
+# clock before saying anything, so the test asks them not to.
+THINK=""
+if curl -sf --max-time 10 http://127.0.0.1:11434/api/show -d "{\"model\":\"${MODEL}\"}" 2>/dev/null \
+     | python3 -c 'import json,sys; sys.exit(0 if "thinking" in (json.load(sys.stdin).get("capabilities") or []) else 1)' 2>/dev/null; then
+  THINK=',"think":false'
+fi
+
 smoke() {
-  curl -sf --max-time 120 http://127.0.0.1:11434/api/generate \
-    -d "{\"model\":\"${MODEL}\",\"prompt\":\"Say hello in five words.\",\"stream\":false}" \
+  curl -sf --max-time 240 http://127.0.0.1:11434/api/generate \
+    -d "{\"model\":\"${MODEL}\",\"prompt\":\"Say hello in five words.\",\"stream\":false${THINK}}" \
     2>/dev/null | python3 -c 'import json,sys; print(json.load(sys.stdin).get("response","").strip())' 2>/dev/null
 }
 
@@ -201,6 +217,16 @@ for attempt in 1 2 3 4 5; do
   # spinning up, and a moment's wait clears it.
   sleep $((attempt * 5))
 done
+
+if [ -z "$reply" ] && [ -n "$SWITCH" ]; then
+  # A model the owner chose that will not answer stays on disk but does not
+  # take over: the one that was working keeps answering.
+  set_status failed "${MODEL} downloaded but would not answer on this device" 0
+  echo "smoke test: no reply after retries — not switching"
+  exit 1
+fi
+
+echo "$MODEL" > "$ACTIVE"
 
 if [ -z "$reply" ]; then
   # Downloaded but never answered across five tries. Keep the model (it is on

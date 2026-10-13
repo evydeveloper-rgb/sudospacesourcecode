@@ -21,8 +21,11 @@
 set -uo pipefail
 
 LOG=/var/log/sudo-wifi.log
-exec >> "$LOG" 2>&1
-echo "=== wifi.sh $* @ $(date) ==="
+# Only the notes go to the log. The results (net=..., ok=...) are this
+# script's answer and must reach the caller: sending stdout to the log too
+# is why the dashboard's list of nearby networks always came back empty.
+exec 2>> "$LOG"
+echo "=== wifi.sh $* @ $(date) ===" >&2
 
 IWD=wlan0
 
@@ -138,4 +141,4 @@ case "${1:-}" in
     *) echo "error=usage"; exit 2 ;;
 esac
 
-echo "=== wifi.sh done @ $(date) ==="
+echo "=== wifi.sh done @ $(date) ===" >&2

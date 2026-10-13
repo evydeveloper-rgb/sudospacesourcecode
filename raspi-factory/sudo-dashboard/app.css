@@ -198,6 +198,55 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .hub-button svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
 .hub-button[hidden], .brand-home[hidden] { display: none; }
 
+/* ⓘ pop-ups: frosted glass floating beside the button. The blur keeps the
+   page behind it from showing through the words. */
+.info-bubble.pop {
+  position: fixed; z-index: 200; margin: 0; max-height: 60vh; overflow: auto;
+  padding: 12px 14px; border: 1px solid var(--line); border-inline-start: 1px solid var(--line);
+  border-radius: 14px; font-size: .78rem; line-height: 1.5; color: var(--ink);
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  -webkit-backdrop-filter: blur(16px) saturate(1.3); backdrop-filter: blur(16px) saturate(1.3);
+  box-shadow: 0 12px 32px rgba(20, 16, 30, .16);
+}
+.info-bubble.pop.show { animation: enter .14s ease both; }
+
+/* Settings > Wi-Fi: the warning, the current network, nearby networks. */
+.wifi-warn {
+  display: flex; align-items: flex-start; gap: 10px; margin: 0 0 14px; padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--error) 35%, transparent); border-radius: 14px;
+  background: color-mix(in srgb, var(--error) 10%, var(--surface)); color: var(--error);
+}
+.wifi-warn svg { width: 22px; height: 22px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.wifi-warn p { margin: 0; font-size: .82rem; line-height: 1.45; }
+.wifi-now { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+.wifi-now-icon { width: 38px; height: 38px; flex: none; display: grid; place-items: center; border-radius: 11px; background: var(--violet-tint); color: var(--primary); }
+.wifi-now-icon svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.wifi-now > div { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.wifi-now small { color: var(--ink-3); font-size: .72rem; }
+.wifi-now strong { font-size: .95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wifi-head { display: flex; align-items: center; justify-content: space-between; margin: 18px 2px 8px; color: var(--ink-2); font-size: .8rem; font-weight: 700; }
+.wifi-rescan { width: 32px; height: 32px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink-3); cursor: pointer; }
+.wifi-rescan svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+#wifi-setting .wifi-list { display: grid; gap: 6px; }
+#wifi-setting .wifi-option {
+  display: flex; align-items: center; gap: 12px; width: 100%; padding: 11px 12px; text-align: start;
+  border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink); font: inherit; cursor: pointer;
+}
+#wifi-setting .wifi-option[aria-pressed="true"] { border-color: var(--primary); box-shadow: inset 0 0 0 1px var(--primary); }
+#wifi-setting .wifi-option.current { cursor: default; background: var(--surface-low); }
+#wifi-setting .wifi-name { flex: 1; min-width: 0; font-size: .88rem; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#wifi-setting .wifi-lock { display: inline-flex; align-items: center; gap: 4px; color: var(--ink-3); font-size: .72rem; }
+.wifi-lockicon svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; }
+.wifi-sig svg { width: 20px; height: 20px; display: block; fill: none; stroke: var(--line-2); stroke-width: 2.2; stroke-linecap: round; }
+.wifi-sig .b1 { fill: var(--line-2); stroke: none; }
+.wifi-sig.l1 .b1, .wifi-sig.l2 .b1, .wifi-sig.l3 .b1, .wifi-sig.l4 .b1 { fill: var(--primary); }
+.wifi-sig.l2 .b2, .wifi-sig.l3 .b2, .wifi-sig.l4 .b2, .wifi-sig.l3 .b3, .wifi-sig.l4 .b3, .wifi-sig.l4 .b4 { stroke: var(--primary); }
+.wifi-join { display: grid; gap: 8px; margin: 2px 0 6px; padding: 12px; border-radius: 12px; background: var(--surface-container); }
+.wifi-join .primary-button { margin: 0; }
+.wifi-region { margin-top: 16px; }
+.wifi-region summary { cursor: pointer; color: var(--ink-3); font-size: .78rem; font-weight: 650; }
+.wifi-region select { margin-top: 8px; width: 100%; }
+
 /* Community (Sudo's own page, Sudo's palette: coral = alive, purple = you). */
 .com { max-width: 680px; margin: 0 auto; }
 .com [hidden] { display: none !important; }
@@ -2688,3 +2737,157 @@ input[type="password"], input[type="tel"], input[type="number"], #ssh-key, #devi
 .wa-contact-list li > div:first-child { flex: 1 1 140px; min-width: 0; }
 .wa-contact-add { margin-top: 4px; }
 .wa-contact-list { margin-bottom: 4px; }
+
+/* ---- Agent & models: cloud / on-device ------------------------------------ */
+.model-seg {
+  display: flex; gap: 4px; margin: 0 0 16px; padding: 4px;
+  background: var(--surface-low); border-radius: 14px; max-width: 420px;
+}
+.model-seg-btn {
+  flex: 1 1 0; display: flex; align-items: center; justify-content: center; gap: 8px;
+  border: 0; background: transparent; color: var(--ink-2); cursor: pointer;
+  padding: 9px 12px; border-radius: 10px; font: 650 .84rem var(--font-sans);
+}
+.model-seg-btn svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.model-seg-btn.active { background: var(--surface); color: var(--primary); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+
+.lm-h { margin: 26px 0 10px; font-size: .95rem; }
+.lm-sub { margin: -4px 0 12px; color: var(--ink-3); font-size: .8rem; }
+.lm-note { margin: 10px 0 0; color: var(--ink-3); font-size: .76rem; line-height: 1.5; }
+
+.lm-only { padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface); }
+.lm-only-row { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.lm-only-row strong { display: block; font-size: .9rem; }
+.lm-only-row small { display: block; margin-top: 3px; color: var(--ink-3); font-size: .76rem; }
+.lm-caution {
+  display: flex; gap: 10px; align-items: flex-start; margin: 12px 0 0; padding: 10px 12px;
+  border-radius: 12px; background: var(--amber-tint); color: #5c3a00; font-size: .78rem; line-height: 1.45;
+}
+.lm-caution svg { width: 18px; height: 18px; flex: none; margin-top: 1px; fill: none; stroke: #b26b00; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.lm-only .form-status:empty { display: none; }
+
+.lm-specs { padding: 16px; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface); }
+.lm-spec-chips { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+.lm-spec { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; background: var(--surface-low); }
+.lm-spec svg { width: 30px; height: 30px; flex: none; padding: 6px; border-radius: 9px; background: var(--violet-tint); fill: none; stroke: var(--primary); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.lm-spec strong { display: block; font-size: .86rem; }
+.lm-spec small { display: block; color: var(--ink-3); font-size: .72rem; }
+.lm-membar-title { margin: 16px 0 6px; font-size: .78rem; font-weight: 650; color: var(--ink-2); }
+.lm-membar { display: flex; height: 14px; border-radius: 999px; overflow: hidden; background: var(--surface-container); }
+.lm-membar .seg { height: 100%; }
+.lm-membar .seg.sys, .lm-legend i.sys { background: var(--ink-4); }
+.lm-membar .seg.model, .lm-legend i.model { background: var(--primary); }
+.lm-membar .seg.room, .lm-legend i.room { background: var(--on-primary-container); }
+.lm-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 8px; color: var(--ink-2); font-size: .74rem; }
+.lm-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.lm-legend i { width: 9px; height: 9px; border-radius: 3px; }
+
+.lm-progress { margin-bottom: 10px; padding: 12px 14px; border-radius: var(--radius-lg); background: var(--violet-tint); }
+.lm-progress-head { display: flex; justify-content: space-between; gap: 10px; font-size: .84rem; color: var(--primary); }
+.lm-progress .model-progress { margin: 8px 0 6px; }
+.lm-progress small { color: var(--ink-2); font-size: .74rem; }
+
+.lm-now { padding: 16px; border: 1.5px solid var(--primary); border-radius: var(--radius-lg); background: var(--surface); }
+.lm-now-head { display: flex; align-items: center; gap: 12px; }
+.lm-now-head > div { flex: 1 1 auto; min-width: 0; }
+.lm-now-head strong { display: block; font-size: 1rem; }
+.lm-now-head small { display: block; color: var(--ink-3); font: .74rem var(--font-mono); }
+.lm-now-icon { width: 42px; height: 42px; flex: none; display: grid; place-items: center; border-radius: 12px; background: var(--primary); }
+.lm-now-icon svg { width: 22px; height: 22px; fill: none; stroke: var(--on-primary); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.lm-state { padding: 4px 10px; border-radius: 999px; background: var(--surface-container); color: var(--ink-2); font-size: .7rem; font-weight: 700; white-space: nowrap; }
+.lm-state.on { background: var(--violet-tint); color: var(--primary); }
+.lm-blurb { margin: 8px 0 0; color: var(--ink-2); font-size: .8rem; line-height: 1.45; }
+.lm-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 12px 0; }
+.lm-fact { padding: 10px; border-radius: 12px; background: var(--surface-low); text-align: center; }
+.lm-fact b { display: block; font-size: 1.05rem; }
+.lm-fact small { display: block; margin-top: 2px; color: var(--ink-3); font-size: .7rem; }
+.lm-now-actions { margin-top: 12px; }
+.lm-test-line { margin: 10px 0 0; color: var(--ink-2); font-size: .78rem; }
+.lm-test-reply { margin: 8px 0 0; padding: 8px 12px; border-inline-start: 3px solid var(--line-2); color: var(--ink-2); font-size: .78rem; font-style: italic; }
+
+.lm-bar { display: grid; grid-template-columns: 62px minmax(0, 1fr) auto; align-items: center; gap: 10px; margin-top: 8px; }
+.lm-bar-label { color: var(--ink-3); font-size: .72rem; font-weight: 650; }
+.lm-bar-val { color: var(--ink-2); font-size: .72rem; font-weight: 650; white-space: nowrap; }
+.lm-track { position: relative; height: 8px; border-radius: 999px; background: var(--surface-container); }
+.lm-track i { position: absolute; inset-block: 0; inset-inline-start: 0; border-radius: 999px; background: var(--primary); }
+.lm-track.speed i { background: var(--coral); }
+/* Reading speed, about 5 tokens a second, on a 0-20 track. */
+.lm-track .read-mark { position: absolute; top: -3px; bottom: -3px; inset-inline-start: 25%; width: 2px; border-radius: 2px; background: var(--ink); }
+
+.lm-tier { margin-top: 14px; }
+.lm-tier-head { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.lm-tier-head strong { font-size: .86rem; }
+.lm-tier-ram { padding: 3px 9px; border-radius: 8px; background: var(--ink); color: var(--surface); font: 700 .72rem var(--font-mono); }
+.lm-mine { padding: 3px 9px; border-radius: 999px; background: var(--coral-tint); color: var(--coral-2); font-size: .7rem; font-style: normal; font-weight: 750; }
+.lm-bigger { color: var(--ink-3); font-size: .74rem; font-style: normal; }
+.lm-tier.bigger .lm-tier-ram { background: var(--ink-4); }
+.lm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 12px; }
+.lm-card { display: flex; flex-direction: column; padding: 14px; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface); }
+.lm-card.active { border: 1.5px solid var(--primary); background: color-mix(in srgb, var(--violet-tint) 35%, var(--surface)); }
+.lm-card.fit-too_big { opacity: .55; }
+.lm-card.fit-tight .lm-track.mem i { background: var(--amber); }
+.lm-card.fit-too_big .lm-track.mem i { background: var(--error); }
+.lm-card-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.lm-card-head strong { font-size: .92rem; }
+.lm-badge { padding: 2px 8px; border-radius: 999px; font-size: .66rem; font-weight: 750; }
+.lm-badge.use { background: var(--primary); color: var(--on-primary); }
+.lm-badge.rec { background: var(--coral-tint); color: var(--coral-2); }
+.lm-maker { display: block; margin-top: 2px; color: var(--ink-3); font: .7rem var(--font-mono); }
+.lm-tags { display: flex; flex-wrap: wrap; gap: 5px; margin: 10px 0 4px; }
+.lm-tags span { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 8px; background: var(--surface-low); color: var(--ink-2); font-size: .7rem; font-weight: 650; }
+.lm-tags span.feat { background: var(--sky-tint); color: #1d4f7a; }
+.lm-tags svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.lm-fit-note { margin: 8px 0 0; color: #8a5300; font-size: .72rem; line-height: 1.4; }
+.lm-card.fit-too_big .lm-fit-note { color: var(--error); }
+.lm-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 12px; }
+.lm-actions .primary-button, .lm-actions .ghost-button, .lm-actions .soft-button { min-height: 36px; padding: 0 14px; font-size: .78rem; }
+.lm-active-note { color: var(--primary); font-size: .76rem; font-weight: 700; }
+
+.lm-learn { display: grid; gap: 10px; }
+.lm-scale, .lm-quant { display: grid; gap: 8px; margin-top: 12px; }
+.lm-scale-row { display: grid; grid-template-columns: 110px minmax(0, 1fr) 52px; align-items: center; gap: 10px; font-size: .76rem; color: var(--ink-2); }
+.lm-scale-row b, .lm-quant-row b { text-align: end; color: var(--ink); font-size: .76rem; }
+.lm-scale-track, .lm-quant-track { position: relative; height: 12px; border-radius: 999px; background: var(--surface-container); }
+.lm-scale-track i, .lm-quant-track i { position: absolute; inset-block: 0; inset-inline-start: 0; border-radius: 999px; background: var(--primary); }
+.lm-scale-row.cloud .lm-scale-track i { background: linear-gradient(90deg, var(--primary), var(--coral)); }
+.lm-quant-row { display: grid; grid-template-columns: 52px minmax(0, 1fr) 52px 150px; align-items: center; gap: 10px; font-size: .76rem; }
+.lm-quant-bits { font: 700 .74rem var(--font-mono); color: var(--ink); }
+.lm-quant-row small { color: var(--ink-3); font-size: .72rem; }
+.lm-quant-row:nth-child(2) .lm-quant-track i { background: var(--violet); }
+.lm-quant-row:nth-child(3) .lm-quant-track i { background: var(--coral); }
+.hub-guide-body > p.lm-decode-title { margin: 16px 0 8px; font-size: .8rem; font-weight: 700; color: var(--ink); }
+.lm-decode { display: grid; gap: 6px; }
+.lm-decode div { display: grid; grid-template-columns: 44px minmax(0, 1fr); align-items: baseline; gap: 10px; font-size: .78rem; color: var(--ink-2); line-height: 1.4; }
+.lm-decode code { padding: 3px 0; border-radius: 6px; background: var(--ink); color: var(--surface); font: 700 .74rem var(--font-mono); text-align: center; }
+.hub-guide-body > p.lm-formula { margin: 14px 0 0; padding: 10px 12px; border-radius: 12px; background: var(--surface-low); font: 650 .8rem var(--font-mono); color: var(--ink); text-align: center; }
+.lm-eq { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.lm-eq-box { min-width: 96px; padding: 10px 12px; border-radius: 12px; background: var(--surface-low); text-align: center; }
+.lm-eq-box b { display: block; font-size: .95rem; }
+.lm-eq-box small { display: block; margin-top: 2px; color: var(--ink-3); font-size: .7rem; }
+.lm-eq-box.hot { background: var(--coral-tint); }
+.lm-eq-op { font-size: 1.2rem; font-weight: 700; color: var(--ink-3); }
+.lm-steps { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 10px; }
+.lm-steps li { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 10px; align-items: start; }
+.lm-steps li > b { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; background: var(--primary); color: var(--on-primary); font-size: .78rem; }
+.lm-steps strong { display: block; font-size: .82rem; }
+.lm-steps span { display: block; margin-top: 2px; color: var(--ink-2); font-size: .78rem; line-height: 1.45; }
+.lm-code { margin: 10px 0 0 38px; padding: 10px 12px; border-radius: 10px; background: var(--ink); color: var(--surface); font: .76rem var(--font-mono); overflow-x: auto; }
+@media (max-width: 560px) {
+  .lm-facts { gap: 6px; }
+  .lm-quant-row { grid-template-columns: 46px minmax(0, 1fr) 48px; }
+  .lm-quant-row small { grid-column: 2 / -1; margin-top: -4px; }
+  .lm-scale-row { grid-template-columns: 92px minmax(0, 1fr) 44px; }
+  .lm-code { margin-inline-start: 0; }
+}
+
+/* Settings lives in the rail on wide screens; on a phone it is this gear in
+   the top bar, so the bottom bar keeps room for the places people go. */
+.hub-button.top-gear { color: var(--ink-2); }
+.hub-button.top-gear:hover, .hub-button.top-gear.active { color: var(--on-primary); }
+.hub-button.top-gear[hidden] { display: none; }
+@media (min-width: 1024px) {
+  .topbar .top-gear { display: none; }
+}
+.lm-read-key { display: flex; align-items: center; gap: 8px; margin: 6px 0 0 72px; color: var(--ink-3); font-size: .7rem; }
+.lm-read-key i { width: 2px; height: 12px; border-radius: 2px; background: var(--ink); }
+@media (max-width: 560px) { .lm-read-key { margin-inline-start: 0; } }
