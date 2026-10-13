@@ -3690,6 +3690,8 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                 if not (loop_id and delete_loop(loop_id)):
                     self.send_json({"error": "loop not found", "loops": read_loops()}, code=404)
                     return True
+                self.send_json({"ok": True, "loops": read_loops()})
+                return True
 
         # Community: joined or not, join, feed, post, map, report, leave.
         if path.startswith("/api/community/"):
