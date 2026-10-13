@@ -90,3 +90,18 @@ delete BOOTSTRAP.md; you will not need it again.
 
 `RUNTIME.md` and `TOOLS.md` are written by Sudo and describe your current
 setup. Read them; don't edit them.
+
+## Open loops (PENDING.md)
+
+**PENDING.md** is the list of what you still owe — one line per loop:
+`- [added YYYY-MM-DD] what's open → next action`. The person sees the same
+list in Home → Tasks and can add, mark or delete lines there too.
+
+- Read PENDING.md at the start of every conversation.
+- The moment you defer or promise something ("I'll check tomorrow", "once
+  they reply…"), add a line, quietly, in the same turn.
+- The moment a loop resolves, delete its line. A `[status: done]` line the
+  person marked is yours to delete.
+- When you pick one up, tag it `[status: working]` at the end of the line.
+- A loop older than about 7 days: bring it up with the person, or drop it.
+  Never let the list grow stale.

@@ -192,7 +192,7 @@ copy_factory_files() {
 
     cp "$PICOCLAW/picoclaw" "$boot/picoclaw/"
     cp "$PICOCLAW/config.template.json" "$boot/picoclaw/"
-    # Agent workspace templates (SOUL/IDENTITY/USER/AGENTS/HEARTBEAT)
+    # Agent workspace templates (SOUL/IDENTITY/USER/AGENTS/HEARTBEAT/PENDING)
     mkdir -p "$boot/picoclaw/workspace"
     cp "$PICOCLAW/workspace/"*.md "$boot/picoclaw/workspace/"
     [ -d "$PICOCLAW/workspace/knowledge" ] && cp -r "$PICOCLAW/workspace/knowledge" "$boot/picoclaw/workspace/"

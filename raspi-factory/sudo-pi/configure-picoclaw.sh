@@ -300,6 +300,10 @@ SUDO_FILES = ["AGENTS.md", "HEARTBEAT.md"]
 if not openclaw_brain:
     SUDO_FILES.append("BOOTSTRAP.md")
 AGENT_FILES = ["SOUL.md", "IDENTITY.md", "USER.md", "MEMORY.md"]
+# PENDING.md (open loops) is the agent's too, and the Tasks panel edits it:
+# created once, never rewritten. Kept out of AGENT_FILES so the one-off
+# take-over below never backs it up and deletes it.
+LOOP_FILES = ["PENDING.md"]
 # Outside the workspace: the agent has no business editing what Sudo last
 # applied. Reset deletes it along with the workspace.
 STATE_PATH = "/var/lib/sudo-agent-files.json"
@@ -431,7 +435,7 @@ if not applied.get("agent_owned"):
     if os.path.isfile(old_mem):
         os.remove(old_mem)
 
-for fname in AGENT_FILES:
+for fname in AGENT_FILES + LOOP_FILES:
     path = os.path.join(workspace, fname)
     if not os.path.exists(path):
         content = template(fname)
