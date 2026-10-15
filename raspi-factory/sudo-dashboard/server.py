@@ -361,6 +361,45 @@ def remote_enabled():
     return os.path.isfile(REMOTE_MARKER)
 
 
+CMDLINE = "/boot/firmware/cmdline.txt"
+
+
+def set_regdom_raspi(code):
+    """raspi-config's Wi-Fi country, without risking the boot partition.
+
+    raspi-config rewrites cmdline.txt on the FAT boot partition with sed -i,
+    and FAT keeps no journal: if the power goes before that write reaches
+    the card, cmdline.txt is left empty and the Pi no longer boots. That
+    happened to a demo unit unplugged two minutes after its Wi-Fi was set.
+    So the file is only rewritten when the country actually changes, the
+    write is flushed to the card at once, and an emptied file is put back.
+    """
+    try:
+        with open(CMDLINE, encoding="utf-8") as f:
+            before = f.read()
+    except OSError:
+        before = ""
+    if ("cfg80211.ieee80211_regdom=%s" % code) in before.split():
+        # Already this country: only the running radio needs telling.
+        subprocess.run(["iw", "reg", "set", code], capture_output=True, timeout=10)
+        return
+    subprocess.run(["raspi-config", "nonint", "do_wifi_country", code],
+                   capture_output=True, timeout=10)
+    subprocess.run(["sync"], capture_output=True, timeout=30)
+    try:
+        with open(CMDLINE, encoding="utf-8") as f:
+            after = f.read()
+    except OSError:
+        after = ""
+    if not after.strip() and before.strip():
+        line = " ".join(t for t in before.split() if not t.startswith("cfg80211.ieee80211_regdom="))
+        with open(CMDLINE, "w", encoding="utf-8") as f:
+            f.write("%s cfg80211.ieee80211_regdom=%s\n" % (line, code))
+            f.flush()
+            os.fsync(f.fileno())
+        subprocess.run(["sync"], capture_output=True, timeout=30)
+
+
 def apply_wifi_country(code):
     """Set the wireless regulatory domain, whatever board this is.
 
@@ -374,8 +413,7 @@ def apply_wifi_country(code):
         return
     if shutil.which("raspi-config"):
         try:
-            subprocess.run(["raspi-config", "nonint", "do_wifi_country", code],
-                           capture_output=True, timeout=10)
+            set_regdom_raspi(code)
             return
         except Exception:
             pass
