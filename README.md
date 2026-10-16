@@ -59,6 +59,33 @@ Everyone will be able to *use* an agent. The durable value is *owning* one — y
 
 ---
 
+## Install it on your own Pi
+
+**You need:** a Raspberry Pi 5 (4 GB or more) with its power supply, a microSD card (16 GB or more), and a Mac, Linux or Windows computer with an SD card reader.
+
+1. **Flash Raspberry Pi OS.** Use [Raspberry Pi Imager](https://www.raspberrypi.com/software/) and pick **Raspberry Pi OS (64-bit)**. You don't need to set up Wi-Fi in Imager; sudo does that itself.
+2. **Download this repository** (green **Code** button → **Download ZIP**, or `git clone`) and unzip it.
+3. **Put sudo on the card.** With the card still in your computer, open a terminal in the downloaded folder and run the line for your computer:
+
+   ```bash
+   # macOS
+   bash raspi-factory/prepare-sd.sh /Volumes/bootfs
+   # Linux
+   bash raspi-factory/prepare-sd.sh /media/$USER/bootfs
+   # Windows (Git Bash) — use your card's drive letter
+   bash raspi-factory/prepare-sd.sh /d
+   ```
+
+   It downloads two small programs, copies sudo onto the card and sets it to install itself on first boot. Copying the repository onto the card by hand does nothing: this script is what makes the Pi install it.
+4. **Eject the card safely**, put it in the Pi and plug in power. The first boot sets things up and restarts on its own; give it 2–5 minutes.
+5. **On your phone, join the Wi-Fi called `RaspiSetup`** (open, no password). The setup page opens by itself, or go to <http://192.168.4.1/>. Pick your home Wi-Fi, save sudo's address, and follow the steps.
+
+The first setup downloads the agent, which can take 10–15 minutes. After that, updates install from **Settings → Updates**.
+
+**Something wrong?** If `RaspiSetup` doesn't appear after 5 minutes, put the card back in your computer: `firstrun.log` and `hotspot.log` on it say what happened.
+
+---
+
 ## Repository layout
 
 ```
