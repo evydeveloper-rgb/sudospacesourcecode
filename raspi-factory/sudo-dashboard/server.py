@@ -1514,7 +1514,69 @@ def telegram_state(cfg=None):
         return {"state": "none"}
     state = "connected" if str(tg.get("owner_id") or "").strip() else "token"
     return {"state": state, "bot_username": tg.get("bot_username"),
-            "bot_name": tg.get("bot_name"), "owner_name": tg.get("owner_name")}
+            "bot_name": tg.get("bot_name"), "owner_name": tg.get("owner_name"),
+            # Who answers there right now: the full agent once there is a
+            # key, the on-device model until then (telegram_local_loop).
+            "answering": "agent" if agent_brain(cfg) else "local"}
+
+
+TELEGRAM_OFFSET_FILE = "/var/lib/sudo-telegram-offset"
+
+
+def telegram_local_loop():
+    """No cloud key yet: answer the owner on Telegram with the on-device model.
+
+    The agent (OpenClaw) only runs once there is a key, and from then on it
+    polls the bot itself, so this loop steps aside the moment a key exists.
+    It answers the way the dashboard chat does without a key: the same short
+    prompt, a reply in seconds, chat only (no tools, reminders or apps).
+    Only the owner's private chat is answered; everyone else is ignored.
+    """
+    history = []
+    while True:
+        try:
+            cfg = read_json_file(CONFIG)
+            tg = cfg.get("telegram") or {}
+            token = tg.get("token")
+            owner = str(tg.get("owner_id") or "").strip()
+            if not token or not owner or agent_brain(cfg):
+                history = []
+                time.sleep(15)
+                continue
+            try:
+                offset = int(read_text(TELEGRAM_OFFSET_FILE) or 0)
+            except ValueError:
+                offset = 0
+            updates = telegram_call(token, "getUpdates", {
+                "timeout": 25, "offset": offset,
+                "allowed_updates": json.dumps(["message"])}, timeout=40)
+            for update in updates or []:
+                offset = max(offset, int(update.get("update_id") or 0) + 1)
+                with open(TELEGRAM_OFFSET_FILE, "w", encoding="utf-8") as f:
+                    f.write(str(offset))
+                msg = update.get("message") or {}
+                chat = msg.get("chat") or {}
+                if chat.get("type") != "private" or str((msg.get("from") or {}).get("id")) != owner:
+                    continue
+                text = (msg.get("text") or "").strip()
+                if text == "/start":
+                    reply = f"Hi, I'm {cfg.get('agent_name') or 'sudo'}. Say anything."
+                elif not text:
+                    reply = "I can only read text messages for now."
+                else:
+                    try:
+                        telegram_call(token, "sendChatAction", {"chat_id": chat["id"], "action": "typing"})
+                    except ValueError:
+                        pass
+                    reply = local_model_chat(text[:MAX_CHAT_LEN], history, cfg) or \
+                        "My on-device model isn't answering right now. Try again in a minute."
+                    history = (history + [{"role": "user", "text": text},
+                                          {"role": "agent", "text": reply}])[-2 * LOCAL_HISTORY_TURNS:]
+                telegram_call(token, "sendMessage", {"chat_id": chat["id"], "text": reply[:4000]})
+        except Exception:
+            # Telegram unreachable, or the agent polling the same bot (409)
+            # while a key was just added: wait and look again.
+            time.sleep(20)
 
 
 def run_configure_picoclaw():
@@ -4798,6 +4860,8 @@ if __name__ == "__main__":
             daemon_threads = True
 
         server = Fallback((BIND, PORT), DashboardHandler)
+
+    threading.Thread(target=telegram_local_loop, name="telegram-local", daemon=True).start()
 
     print(f"Sudo Dashboard listening on {BIND}:{PORT} remote={remote_enabled()}")
     server.serve_forever()

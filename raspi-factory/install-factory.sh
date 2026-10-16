@@ -131,6 +131,7 @@ WorkingDirectory=/opt/sudo/agent-workspace
 ExecStart=/opt/openclaw/node_modules/.bin/openclaw gateway run --port 18790
 Restart=on-failure
 RestartSec=5
+RestartPreventExitStatus=78
 User=root
 
 [Install]

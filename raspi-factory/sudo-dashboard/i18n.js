@@ -5731,3 +5731,7 @@ I18N.add('en', {"tg.change": "Use a different bot"});
 I18N.add('es', {"tg.change": "Usar otro bot"});
 I18N.add('zh', {"tg.change": "换一个机器人"});
 I18N.add('ar', {"tg.change": "استخدم بوتًا آخر"});
+I18N.add('en', {"tg.localNote": "Answering with the on-device model until you add an AI key in Settings."});
+I18N.add('es', {"tg.localNote": "Responde con el modelo del dispositivo hasta que añadas una clave de IA en Ajustes."});
+I18N.add('zh', {"tg.localNote": "在你于设置中添加 AI 密钥之前，由设备上的模型回复。"});
+I18N.add('ar', {"tg.localNote": "يرد النموذج المحلي إلى أن تضيف مفتاح ذكاء اصطناعي في الإعدادات."});

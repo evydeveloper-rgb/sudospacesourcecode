@@ -1162,6 +1162,7 @@
                 <div class="tg-done" id="telegram-done" hidden>
                   <p class="whatsapp-connected"><i aria-hidden="true"></i><span id="telegram-done-name"></span></p>
                   <p class="tg-note" data-i18n="tg.onlyYou">Only you can talk to it there.</p>
+                  <p class="tg-note" id="telegram-local-note" data-i18n="tg.localNote" hidden>Answering with the on-device model until you add an AI key in Settings.</p>
                   <button class="whatsapp-unlink" type="button" id="telegram-remove" data-i18n="tg.remove">Disconnect Telegram</button>
                 </div>
                 <p class="form-status" id="telegram-status" role="status"></p>
@@ -4052,6 +4053,7 @@
       $('telegram-token-row').hidden = s.state !== 'none';
       $('telegram-step2').hidden = s.state !== 'token';
       $('telegram-done').hidden = !connected;
+      $('telegram-local-note').hidden = !(connected && s.answering === 'local');
       $('telegram-confirm').hidden = true;
       if (bot) {
         $('telegram-open').href = 'https://t.me/' + s.bot_username;

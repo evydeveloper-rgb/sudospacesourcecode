@@ -515,9 +515,20 @@ PY
 
 echo "=== configure-picoclaw complete $(date) ==="
 
-# Without a key there is nothing for a gateway to run on yet.
+# A config the gateway refuses (exit 78) will not fix itself by retrying:
+# without this, a key-less device restarted it every few seconds forever,
+# burning most of a core. Managed as a drop-in so updated devices get it too.
+OC_DROPIN=/etc/systemd/system/sudo-openclaw-gateway.service.d
+mkdir -p "$OC_DROPIN"
+printf '[Service]\nRestartPreventExitStatus=78\n' > "$OC_DROPIN/20-no-config-loop.conf"
+systemctl daemon-reload 2>/dev/null || true
+
+# Without a key there is nothing for the agent gateway to run on yet. Stop it
+# rather than let it fail on a half-written config; the dashboard answers
+# Telegram with the on-device model meanwhile, and the first key starts it.
 if [ -f /run/sudo-configure-nokey ]; then
-  echo "No key yet — gateways left as they are"
+  systemctl stop sudo-openclaw-gateway.service 2>/dev/null || true
+  echo "No key yet — agent gateway stopped until one is added"
   exit 0
 fi
 
