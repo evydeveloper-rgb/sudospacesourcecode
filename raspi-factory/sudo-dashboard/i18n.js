@@ -5735,3 +5735,181 @@ I18N.add('en', {"tg.localNote": "Answering with the on-device model until you ad
 I18N.add('es', {"tg.localNote": "Responde con el modelo del dispositivo hasta que añadas una clave de IA en Ajustes."});
 I18N.add('zh', {"tg.localNote": "在你于设置中添加 AI 密钥之前，由设备上的模型回复。"});
 I18N.add('ar', {"tg.localNote": "يرد النموذج المحلي إلى أن تضيف مفتاح ذكاء اصطناعي في الإعدادات."});
+
+// ---- Old WhatsApp bridge -> reconnect banner ----------------------------------
+I18N.add('en', {
+  "legacyWa.title": "Reconnect WhatsApp to get reminders",
+  "legacyWa.body": "Sudo's WhatsApp connection was upgraded. Link it once more so your agent can message you first.",
+  "legacyWa.go": "Reconnect",
+  "legacyWa.later": "Later"
+});
+I18N.add('es', {
+  "legacyWa.title": "Vuelve a conectar WhatsApp para recibir recordatorios",
+  "legacyWa.body": "La conexión de WhatsApp de Sudo se actualizó. Vincúlala una vez más para que tu asistente pueda escribirte primero.",
+  "legacyWa.go": "Reconectar",
+  "legacyWa.later": "Más tarde"
+});
+I18N.add('zh', {
+  "legacyWa.title": "重新连接 WhatsApp 才能收到提醒",
+  "legacyWa.body": "Sudo 的 WhatsApp 连接已升级。再关联一次，你的助手就能主动给你发消息。",
+  "legacyWa.go": "重新连接",
+  "legacyWa.later": "稍后"
+});
+I18N.add('ar', {
+  "legacyWa.title": "أعد ربط واتساب لتصلك التذكيرات",
+  "legacyWa.body": "تمت ترقية اتصال واتساب في Sudo. اربطه مرة أخرى ليتمكن مساعدك من مراسلتك أولًا.",
+  "legacyWa.go": "إعادة الربط",
+  "legacyWa.later": "لاحقًا"
+});
+
+// ---- Finish setup: "Add a channel" ---------------------------------------------
+I18N.add('en', {
+  "setup.channel": "Channel",
+  "setup.nextChannel": "add a channel",
+  "gs.ch.title": "Add a channel",
+  "gs.ch.small": "WhatsApp or Telegram · 5 min",
+  "gs.ch.lede": "Pick one. Any channel checks this step off, and you can add the other later.",
+  "gs.ch.tabs": "Channels",
+  "gs.ch.done": "Done: {name} connected.",
+  "gs.ch.tgYourBot": "your own bot",
+  "gs.ch.tg1": "No second SIM",
+  "gs.ch.tg2": "Works from a phone",
+  "gs.ch.tg3": "Only you can talk to it",
+  "gs.ch.tgGo": "Set up Telegram in Channels",
+  "gs.ch.tgPrompt": "“Every morning at 8, send me my to-do on Telegram”",
+  "prompt.tgTodo": "Every morning at 8, send me my to-do on Telegram"
+});
+I18N.add('es', {
+  "setup.channel": "Canal",
+  "setup.nextChannel": "añade un canal",
+  "gs.ch.title": "Añade un canal",
+  "gs.ch.small": "WhatsApp o Telegram · 5 min",
+  "gs.ch.lede": "Elige uno. Cualquier canal completa este paso, y puedes añadir el otro después.",
+  "gs.ch.tabs": "Canales",
+  "gs.ch.done": "Listo: {name} conectado.",
+  "gs.ch.tgYourBot": "tu propio bot",
+  "gs.ch.tg1": "Sin segunda SIM",
+  "gs.ch.tg2": "Funciona desde el móvil",
+  "gs.ch.tg3": "Solo tú puedes hablarle",
+  "gs.ch.tgGo": "Configurar Telegram en Canales",
+  "gs.ch.tgPrompt": "“Cada mañana a las 8, mándame mi lista de tareas por Telegram”",
+  "prompt.tgTodo": "Cada mañana a las 8, mándame mi lista de tareas por Telegram"
+});
+I18N.add('zh', {
+  "setup.channel": "聊天渠道",
+  "setup.nextChannel": "添加一个聊天渠道",
+  "gs.ch.title": "添加一个聊天渠道",
+  "gs.ch.small": "WhatsApp 或 Telegram · 5 分钟",
+  "gs.ch.lede": "选一个就行。连上任意一个渠道这一步就完成了，另一个以后再加。",
+  "gs.ch.tabs": "聊天渠道",
+  "gs.ch.done": "完成：{name} 已连接。",
+  "gs.ch.tgYourBot": "你自己的机器人",
+  "gs.ch.tg1": "不需要第二张 SIM 卡",
+  "gs.ch.tg2": "用手机就能设置",
+  "gs.ch.tg3": "只有你能和它聊",
+  "gs.ch.tgGo": "去“渠道”设置 Telegram",
+  "gs.ch.tgPrompt": "“每天早上 8 点在 Telegram 上发我今天的待办”",
+  "prompt.tgTodo": "每天早上 8 点在 Telegram 上发我今天的待办"
+});
+I18N.add('ar', {
+  "setup.channel": "قناة",
+  "setup.nextChannel": "أضف قناة",
+  "gs.ch.title": "أضف قناة",
+  "gs.ch.small": "واتساب أو تيليغرام · 5 دقائق",
+  "gs.ch.lede": "اختر واحدة. أي قناة تكمل هذه الخطوة، ويمكنك إضافة الأخرى لاحقًا.",
+  "gs.ch.tabs": "القنوات",
+  "gs.ch.done": "تم: {name} متصل.",
+  "gs.ch.tgYourBot": "بوتك الخاص",
+  "gs.ch.tg1": "بلا شريحة ثانية",
+  "gs.ch.tg2": "يعمل من الهاتف",
+  "gs.ch.tg3": "أنت فقط من يمكنه محادثته",
+  "gs.ch.tgGo": "أعدّ تيليغرام في القنوات",
+  "gs.ch.tgPrompt": "“كل صباح الساعة 8، أرسل لي مهامي على تيليغرام”",
+  "prompt.tgTodo": "كل صباح الساعة 8، أرسل لي مهامي على تيليغرام"
+});
+
+// ---- Settings: home screen icon -------------------------------------------------
+I18N.add('en', {
+  "icon.title": "Home screen icon",
+  "icon.summary": "What sudo looks like on your phone",
+  "icon.pick": "Pick one",
+  "icon.upload": "Use your own picture",
+  "icon.saving": "Saving…",
+  "icon.saved": "Saved.",
+  "icon.failed": "Couldn't save the icon.",
+  "icon.badFile": "That file isn't a picture this browser can open.",
+  "icon.howIos": "Already on your home screen? Phones keep the old icon: remove sudo there, then in Safari tap Share → Add to Home Screen again.",
+  "icon.howOther": "Already on your home screen? Phones keep the old icon: remove sudo there, then add it again from your browser's menu.",
+  "icon.n.classic": "Classic",
+  "icon.n.paper": "Paper",
+  "icon.n.buddy": "Buddy",
+  "icon.n.prompt": "Prompt",
+  "icon.n.sky": "Sky",
+  "icon.n.leaf": "Leaf",
+  "icon.n.night": "Night",
+  "icon.n.sun": "Sun",
+  "icon.n.letter": "Your agent's initial"
+});
+I18N.add('es', {
+  "icon.title": "Icono de inicio",
+  "icon.summary": "Cómo se ve sudo en tu móvil",
+  "icon.pick": "Elige uno",
+  "icon.upload": "Usar tu propia imagen",
+  "icon.saving": "Guardando…",
+  "icon.saved": "Guardado.",
+  "icon.failed": "No se pudo guardar el icono.",
+  "icon.badFile": "Ese archivo no es una imagen que este navegador pueda abrir.",
+  "icon.howIos": "¿Ya está en tu pantalla de inicio? El móvil guarda el icono viejo: quita sudo de ahí y en Safari toca Compartir → Añadir a pantalla de inicio otra vez.",
+  "icon.howOther": "¿Ya está en tu pantalla de inicio? El móvil guarda el icono viejo: quita sudo de ahí y vuelve a añadirlo desde el menú del navegador.",
+  "icon.n.classic": "Clásico",
+  "icon.n.paper": "Papel",
+  "icon.n.buddy": "Colega",
+  "icon.n.prompt": "Terminal",
+  "icon.n.sky": "Cielo",
+  "icon.n.leaf": "Hoja",
+  "icon.n.night": "Noche",
+  "icon.n.sun": "Sol",
+  "icon.n.letter": "La inicial de tu asistente"
+});
+I18N.add('zh', {
+  "icon.title": "主屏幕图标",
+  "icon.summary": "sudo 在你手机上的样子",
+  "icon.pick": "选一个",
+  "icon.upload": "用自己的图片",
+  "icon.saving": "正在保存…",
+  "icon.saved": "已保存。",
+  "icon.failed": "图标保存失败。",
+  "icon.badFile": "这个浏览器打不开这个文件。",
+  "icon.howIos": "已经加到主屏幕了？手机会保留旧图标：先在主屏幕删掉 sudo，再在 Safari 里点 分享 → 添加到主屏幕。",
+  "icon.howOther": "已经加到主屏幕了？手机会保留旧图标：先在主屏幕删掉 sudo，再从浏览器菜单重新添加。",
+  "icon.n.classic": "经典",
+  "icon.n.paper": "纸张",
+  "icon.n.buddy": "小伙伴",
+  "icon.n.prompt": "命令行",
+  "icon.n.sky": "天空",
+  "icon.n.leaf": "叶子",
+  "icon.n.night": "夜晚",
+  "icon.n.sun": "太阳",
+  "icon.n.letter": "助手名字的首字母"
+});
+I18N.add('ar', {
+  "icon.title": "أيقونة الشاشة الرئيسية",
+  "icon.summary": "كيف يظهر sudo على هاتفك",
+  "icon.pick": "اختر واحدة",
+  "icon.upload": "استخدم صورتك",
+  "icon.saving": "جارٍ الحفظ…",
+  "icon.saved": "تم الحفظ.",
+  "icon.failed": "تعذّر حفظ الأيقونة.",
+  "icon.badFile": "لا يستطيع هذا المتصفح فتح هذا الملف كصورة.",
+  "icon.howIos": "هل هو على شاشتك الرئيسية بالفعل؟ يحتفظ الهاتف بالأيقونة القديمة: احذف sudo من هناك، ثم في Safari اضغط مشاركة ← إضافة إلى الشاشة الرئيسية مجددًا.",
+  "icon.howOther": "هل هو على شاشتك الرئيسية بالفعل؟ يحتفظ الهاتف بالأيقونة القديمة: احذف sudo من هناك، ثم أضفه مجددًا من قائمة المتصفح.",
+  "icon.n.classic": "كلاسيكي",
+  "icon.n.paper": "ورقي",
+  "icon.n.buddy": "رفيق",
+  "icon.n.prompt": "طرفية",
+  "icon.n.sky": "سماء",
+  "icon.n.leaf": "ورقة شجر",
+  "icon.n.night": "ليل",
+  "icon.n.sun": "شمس",
+  "icon.n.letter": "الحرف الأول من اسم مساعدك"
+});

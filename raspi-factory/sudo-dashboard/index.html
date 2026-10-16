@@ -105,6 +105,16 @@
     </div>
 
     <main id="app-main">
+      <div class="legacy-wa-banner" id="legacy-wa-banner" role="status" hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.3-.6L3 21l1.9-5a8.3 8.3 0 0 1-1-4A8.4 8.4 0 0 1 12 3a8.4 8.4 0 0 1 9 8.5Z"/><path d="M12 8v4M12 15h.01"/></svg>
+        <div>
+          <strong data-i18n="legacyWa.title">Reconnect WhatsApp to get reminders</strong>
+          <small data-i18n="legacyWa.body">Sudo's WhatsApp connection was upgraded. Link it once more so your agent can message you first.</small>
+        </div>
+        <button class="primary-button" type="button" id="legacy-wa-go" data-i18n="legacyWa.go">Reconnect</button>
+        <button class="legacy-wa-later" type="button" id="legacy-wa-later" data-i18n="legacyWa.later">Later</button>
+      </div>
+
       <section class="view welcome-view" id="view-welcome" aria-labelledby="welcome-title">
         <div class="welcome-inner">
           <label class="lang-pick">
@@ -503,7 +513,7 @@
             </div>
             <ol class="setup-track">
               <li><button type="button" data-open-step="cloud"><i aria-hidden="true">1</i><span data-i18n="guide.cloudModel">Cloud model</span></button></li>
-              <li><button type="button" data-open-step="whatsapp"><i aria-hidden="true">2</i><span>WhatsApp</span></button></li>
+              <li><button type="button" data-open-step="channel"><i aria-hidden="true">2</i><span data-i18n="setup.channel">Channel</span></button></li>
               <li><button type="button" data-open-step="apps"><i aria-hidden="true">3</i><span data-i18n="guide.yourApps">Your apps</span></button></li>
             </ol>
           </div>
@@ -664,18 +674,29 @@
           </article>
 
           <!-- Step 2 -->
-          <article class="milestone" id="step-whatsapp">
+          <article class="milestone" id="step-channel">
             <h2 class="milestone-title">
-              <button type="button" class="milestone-head" aria-expanded="false" aria-controls="step-whatsapp-body">
+              <button type="button" class="milestone-head" aria-expanded="false" aria-controls="step-channel-body">
                 <span class="milestone-num" aria-hidden="true">2</span>
-                <span class="milestone-copy"><strong data-i18n="guide.wa.connectWhatsapp">Connect WhatsApp</strong><small data-i18n="gs.w.small">Chat where you already chat · 5 min</small></span>
+                <span class="milestone-copy"><strong data-i18n="gs.ch.title">Add a channel</strong><small data-i18n="gs.ch.small">Chat where you already chat · 5 min</small></span>
                 <span class="milestone-pill">To do</span>
                 <span class="chevron" aria-hidden="true">›</span>
               </button>
             </h2>
-            <div class="milestone-body" id="step-whatsapp-body" hidden>
-              <p class="milestone-done-note" hidden data-i18n="gs.w.done">Done: WhatsApp is linked.</p>
+            <div class="milestone-body" id="step-channel-body" hidden>
+              <p class="milestone-done-note" hidden id="channel-done-note">Done: a channel is connected.</p>
+              <p class="gs-ch-lede" data-i18n="gs.ch.lede">Pick one. Any channel checks this step off, and you can add the other later.</p>
 
+              <div class="model-seg ch-seg" role="tablist" aria-label="Channels" data-i18n-attr="aria-label:gs.ch.tabs">
+                <button type="button" role="tab" class="ch-seg-btn active" data-chseg="whatsapp" aria-selected="true" aria-controls="chseg-whatsapp">
+                  <span class="channel-logo whatsapp" aria-hidden="true">W</span><span>WhatsApp</span><i class="ch-seg-ok" aria-hidden="true" hidden>✓</i>
+                </button>
+                <button type="button" role="tab" class="ch-seg-btn" data-chseg="telegram" aria-selected="false" aria-controls="chseg-telegram">
+                  <span class="channel-logo telegram" aria-hidden="true">T</span><span>Telegram</span><i class="ch-seg-ok" aria-hidden="true" hidden>✓</i>
+                </button>
+              </div>
+
+              <div id="chseg-whatsapp" role="tabpanel">
               <div class="wa-options">
                 <div class="wa-option">
                   <svg viewBox="0 0 180 112" aria-hidden="true">
@@ -767,6 +788,31 @@
               <div class="prompt-try">
                 <span data-i18n="guide.cloud.thenTryAsking">Then try asking</span>
                 <button class="prompt-chip" type="button" data-prompt="Send me my daily to-do on my WhatsApp" data-prompt-key="prompt.dailyTodo" data-i18n="guide.wa.sendMeMyDaily">“Send me my daily to-do on my WhatsApp”</button>
+              </div>
+              </div>
+
+              <div id="chseg-telegram" role="tabpanel" hidden>
+                <div class="tg-hero">
+                  <svg viewBox="0 0 180 112" aria-hidden="true">
+                    <rect class="ph-body" x="60" y="4" width="60" height="96" rx="9"/>
+                    <rect class="ph-head" x="61" y="5" width="58" height="16" rx="8"/>
+                    <circle class="ph-agent" cx="71" cy="13" r="4"/>
+                    <rect class="bub-you" x="80" y="28" width="34" height="11" rx="5"/>
+                    <rect class="bub-agent" x="66" y="44" width="40" height="16" rx="5"/>
+                    <rect class="bub-you" x="86" y="65" width="28" height="11" rx="5"/>
+                    <rect class="bub-agent" x="66" y="81" width="32" height="11" rx="5"/>
+                    <text x="90" y="110" data-i18n="gs.ch.tgYourBot">your own bot</text>
+                  </svg>
+                  <div class="gs-tags"><span data-i18n="gs.ch.tg1">No second SIM</span><span data-i18n="gs.ch.tg2">Works from a phone</span><span data-i18n="gs.ch.tg3">Only you can talk to it</span></div>
+                </div>
+                <ol class="gs-steps three" data-clone="telegram-steps"></ol>
+                <div class="milestone-actions">
+                  <button class="primary-button" type="button" data-go="telegram" data-i18n="gs.ch.tgGo">Set up Telegram in Channels</button>
+                </div>
+                <div class="prompt-try">
+                  <span data-i18n="guide.cloud.thenTryAsking">Then try asking</span>
+                  <button class="prompt-chip" type="button" data-prompt="Every morning at 8, send me my to-do on Telegram" data-prompt-key="prompt.tgTodo" data-i18n="gs.ch.tgPrompt">“Every morning at 8, send me my to-do on Telegram”</button>
+                </div>
               </div>
             </div>
           </article>
@@ -1126,7 +1172,7 @@
               </div>
 
               <div class="tg-panel" id="telegram-panel" hidden>
-                <ol class="gs-steps three">
+                <ol class="gs-steps three" id="telegram-steps">
                   <li>
                     <span class="gs-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 4v4M9 13h.01M15 13h.01M9 17h6"/></svg><b>1</b></span>
                     <strong data-i18n="tg.s1">Make a bot</strong>
@@ -2008,6 +2054,32 @@
                 </button>
               </div>
               <p class="form-status" id="theme-status" role="status"></p>
+            </div>
+          </section>
+          <section class="setting-card" id="icon-setting">
+            <button class="setting-head" type="button" aria-expanded="false">
+              <span class="setting-icon"><img class="icon-head-img" id="icon-head-img" src="/app-icon.png" alt=""></span>
+              <span><strong data-i18n="icon.title">Home screen icon</strong><small id="icon-summary" data-i18n="icon.summary">What sudo looks like on your phone</small></span>
+              <span class="chevron">&rsaquo;</span>
+            </button>
+            <div class="setting-body">
+              <div class="icon-preview">
+                <div class="icon-phone" aria-hidden="true">
+                  <span class="icon-app"><i></i><small>Notes</small></span>
+                  <span class="icon-app"><i></i><small>Maps</small></span>
+                  <span class="icon-app mine"><img id="icon-preview-img" src="/app-icon.png" alt=""><small id="icon-preview-name">sudo</small></span>
+                  <span class="icon-app"><i></i><small>Photos</small></span>
+                </div>
+              </div>
+              <p class="lm-h icon-h" data-i18n="icon.pick">Pick one</p>
+              <div class="icon-grid" id="icon-grid" role="radiogroup" aria-label="Icons" data-i18n-attr="aria-label:icon.pick"></div>
+              <label class="soft-button icon-upload">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+                <span data-i18n="icon.upload">Use your own picture</span>
+                <input type="file" id="icon-file" accept="image/*" hidden>
+              </label>
+              <p class="icon-how" id="icon-how"></p>
+              <p class="form-status" id="icon-status" role="status"></p>
             </div>
           </section>
           <section class="setting-card" id="language-setting">
@@ -4105,6 +4177,7 @@
         renderTelegram(await telegramPost('confirm'));
         $('telegram-status').textContent = t('tg.connected');
         if (state.status) state.status.telegram_connected = true;
+        renderSetupGuide();
       } catch (error) { $('telegram-status').textContent = error.message; }
     });
     $('telegram-no').addEventListener('click', () => {
@@ -4117,6 +4190,7 @@
         renderTelegram(await telegramPost('remove'));
         $('telegram-status').textContent = '';
         if (state.status) state.status.telegram_connected = false;
+        renderSetupGuide();
       } catch (error) { $('telegram-status').textContent = error.message; }
     });
 
@@ -6692,10 +6766,40 @@
     // --- Finish setup ---------------------------------------------------
     const SETUP_STEPS = [
       { key: 'cloud', label: 'guide.cloudModel', next: 'setup.nextCloud' },
-      { key: 'whatsapp', label: 'setup.whatsapp', next: 'setup.nextWhatsapp' },
+      { key: 'channel', label: 'setup.channel', next: 'setup.nextChannel' },
       { key: 'apps', label: 'guide.yourApps', next: 'setup.nextApps' },
     ];
     const GUIDE_CONNECTORS = ['gmail', 'googlecalendar', 'shopify', 'notion', 'slack', 'googledrive', 'outlook', 'github'];
+
+    function setupChannels() {
+      const s = state.status || {};
+      const accounts = (state.waInfo && state.waInfo.accounts) || {};
+      return {
+        whatsapp: !!((accounts.owner || {}).linked || (accounts.agent || {}).linked || s.whatsapp_connected),
+        telegram: !!s.telegram_connected,
+      };
+    }
+
+    function showChannelSeg(name) {
+      document.querySelectorAll('.ch-seg-btn').forEach(b => {
+        const on = b.dataset.chseg === name;
+        b.classList.toggle('active', on);
+        b.setAttribute('aria-selected', String(on));
+      });
+      $('chseg-whatsapp').hidden = name !== 'whatsapp';
+      $('chseg-telegram').hidden = name !== 'telegram';
+    }
+
+    function renderChannelStep() {
+      const linked = setupChannels();
+      document.querySelectorAll('.ch-seg-btn').forEach(b => {
+        b.querySelector('.ch-seg-ok').hidden = !linked[b.dataset.chseg];
+      });
+      const names = ['whatsapp', 'telegram'].filter(k => linked[k]).map(k => (k === 'whatsapp' ? 'WhatsApp' : 'Telegram'));
+      $('channel-done-note').textContent = names.length ? t('gs.ch.done', { name: names.join(' + ') }) : '';
+      // Land on the one they already use, so the done tab is the one in view.
+      if (!state.channelSegPicked) showChannelSeg(linked.telegram && !linked.whatsapp ? 'telegram' : 'whatsapp');
+    }
 
     function setupProgress() {
       const s = state.status || {};
@@ -6704,7 +6808,8 @@
       return {
         cloud: (s.answering_with && s.answering_with.where === 'cloud')
           || Object.values(s.provider_key_hints || {}).some(Boolean) || !!s.has_own_key,
-        whatsapp: !!((accounts.owner || {}).linked || (accounts.agent || {}).linked || s.whatsapp_connected),
+        // Any chat app checks the step off; WhatsApp and Telegram are both there.
+        channel: setupChannels().whatsapp || setupChannels().telegram,
         apps: !!s.has_composio,
       };
     }
@@ -6717,6 +6822,7 @@
       // never ran -- the tab only appeared after a reload. Run it once now.
       if (s.profile_done && !state.waChecked && !state.waLoading) loadWhatsappInfo();
       const done = setupProgress();
+      renderChannelStep();
       const count = SETUP_STEPS.filter(step => done[step.key]).length;
       const left = SETUP_STEPS.length - count;
       const allDone = left === 0;
@@ -7112,12 +7218,131 @@
       }, 80);
     }
 
+    // --- Home screen icon ---------------------------------------------------
+    // Premade icons are drawn here, turned into a 512px PNG and saved on the
+    // device; so is the owner's own picture, cropped to a square. Phones only
+    // read the icon when sudo is added to the home screen, so changing it
+    // means removing the old one and adding it again.
+    const ICON_FONT = "ui-monospace, 'SF Mono', Menlo, Consolas, monospace";
+    const ICON_SANS = "-apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+    const PREMADE_ICONS = {
+      classic: () => `<rect width="512" height="512" fill="#161311"/><text x="223" y="300" font-family="${ICON_FONT}" font-size="150" font-weight="700" fill="#f4eedf" text-anchor="middle" letter-spacing="-6">sudo</text><rect x="385" y="190" width="48" height="112" fill="#f2603c"/>`,
+      paper: () => `<rect width="512" height="512" fill="#f4eedf"/><text x="223" y="300" font-family="${ICON_FONT}" font-size="150" font-weight="700" fill="#161311" text-anchor="middle" letter-spacing="-6">sudo</text><rect x="385" y="190" width="48" height="112" fill="#f2603c"/>`,
+      buddy: () => `<rect width="512" height="512" fill="#5b2bb5"/><rect x="126" y="140" width="260" height="232" rx="72" fill="#f4eedf"/><circle cx="208" cy="246" r="24" fill="#161311"/><circle cx="304" cy="246" r="24" fill="#161311"/><path d="M216 310 q40 30 80 0" stroke="#161311" stroke-width="16" fill="none" stroke-linecap="round"/><rect x="242" y="92" width="28" height="56" rx="14" fill="#f4eedf"/><circle cx="256" cy="86" r="22" fill="#f2603c"/>`,
+      prompt: () => `<rect width="512" height="512" fill="#f2603c"/><path d="M150 176 l96 80 -96 80" stroke="#fff" stroke-width="40" fill="none" stroke-linecap="round" stroke-linejoin="round"/><rect x="276" y="310" width="96" height="36" rx="10" fill="#fff"/>`,
+      sky: () => `<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fd3ff"/><stop offset="1" stop-color="#3a7bd5"/></linearGradient></defs><rect width="512" height="512" fill="url(#g)"/><path d="M168 338a64 64 0 0 1 4-128 92 92 0 0 1 174 22 54 54 0 0 1-8 106Z" fill="#fff"/>`,
+      leaf: () => `<rect width="512" height="512" fill="#2fa67a"/><path d="M146 366c0-150 90-226 236-232-6 148-82 238-232 236Z" fill="#f4eedf"/><path d="M160 352c60-70 120-130 190-190" stroke="#2fa67a" stroke-width="16" stroke-linecap="round"/>`,
+      night: () => `<rect width="512" height="512" fill="#1b1f3b"/><path d="M300 120a140 140 0 1 0 96 222 120 120 0 0 1-96-222Z" fill="#ffd166"/><circle cx="372" cy="150" r="10" fill="#fff"/><circle cx="410" cy="226" r="7" fill="#fff"/><circle cx="140" cy="140" r="8" fill="#fff"/>`,
+      sun: () => `<rect width="512" height="512" fill="#ffb703"/><circle cx="256" cy="256" r="86" fill="#fff"/>${[0, 45, 90, 135, 180, 225, 270, 315].map(a => `<rect x="244" y="88" width="24" height="56" rx="12" fill="#fff" transform="rotate(${a} 256 256)"/>`).join('')}`,
+      letter: () => {
+        const name = ((state.status && state.status.agent_name) || 'sudo').trim();
+        const ch = (Array.from(name)[0] || 's').toUpperCase().replace(/[<>&"']/g, '');
+        return `<rect width="512" height="512" fill="#fe6944"/><text x="256" y="338" font-family="${ICON_SANS}" font-size="250" font-weight="800" fill="#fff" text-anchor="middle">${ch}</text>`;
+      },
+    };
+    let iconState = { choice: 'classic', custom: false, version: 0 };
+
+    function iconSvg(key) {
+      return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">${PREMADE_ICONS[key]()}</svg>`;
+    }
+
+    function loadImage(src) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error(t('icon.badFile')));
+        img.src = src;
+      });
+    }
+
+    // Draw onto an opaque square: phones turn transparency black.
+    async function iconPng(source) {
+      const canvas = document.createElement('canvas');
+      canvas.width = canvas.height = 512;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, 512, 512);
+      const w = source.naturalWidth || source.width;
+      const hgt = source.naturalHeight || source.height;
+      const side = Math.min(w, hgt);
+      ctx.drawImage(source, (w - side) / 2, (hgt - side) / 2, side, side, 0, 0, 512, 512);
+      return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    }
+
+    async function saveIcon(blob, choice) {
+      $('icon-status').textContent = t('icon.saving');
+      try {
+        const res = await fetch('/api/app-icon?choice=' + encodeURIComponent(choice), {
+          method: 'POST', headers: { 'Content-Type': 'image/png' }, body: blob, credentials: 'same-origin',
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || t('icon.failed'));
+        iconState = data;
+        renderIcons();
+        $('icon-status').textContent = t('icon.saved');
+      } catch (error) {
+        $('icon-status').textContent = error.message;
+      }
+    }
+
+    function renderIcons() {
+      const src = `/app-icon.png?v=${iconState.version}`;
+      $('icon-preview-img').src = src;
+      $('icon-head-img').src = src;
+      const link = document.querySelector('link[rel="apple-touch-icon"]');
+      if (link) link.href = src;
+      $('icon-preview-name').textContent = 'sudo';
+      document.querySelectorAll('#icon-grid .icon-opt').forEach(b => {
+        const on = b.dataset.icon === iconState.choice;
+        b.classList.toggle('selected', on);
+        b.setAttribute('aria-checked', String(on));
+      });
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      $('icon-how').textContent = t(isIOS ? 'icon.howIos' : 'icon.howOther');
+    }
+
+    async function initIcons() {
+      $('icon-grid').replaceChildren(...Object.keys(PREMADE_ICONS).map(key => {
+        const b = hEl('button', 'icon-opt');
+        b.type = 'button';
+        b.dataset.icon = key;
+        b.setAttribute('role', 'radio');
+        b.setAttribute('aria-label', t('icon.n.' + key));
+        b.innerHTML = iconSvg(key).replace('width="512" height="512"', '');
+        b.addEventListener('click', async () => {
+          try {
+            const img = await loadImage('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(iconSvg(key)));
+            await saveIcon(await iconPng(img), key);
+          } catch (error) { $('icon-status').textContent = error.message; }
+        });
+        return b;
+      }));
+      $('icon-file').addEventListener('change', async () => {
+        const file = $('icon-file').files[0];
+        $('icon-file').value = '';
+        if (!file) return;
+        const url = URL.createObjectURL(file);
+        try {
+          await saveIcon(await iconPng(await loadImage(url)), 'custom');
+        } catch (error) {
+          $('icon-status').textContent = error.message;
+        } finally { URL.revokeObjectURL(url); }
+      });
+      try { iconState = await api('/api/app-icon'); } catch (_) {}
+      renderIcons();
+    }
+
     const SETUP_DESTINATIONS = {
       chat: () => setTab('chat'),
       providers: () => { setTab('settings'); openSettingPage('providers-setting'); },
       spend: () => { setTab('settings'); openSettingPage('spend-setting'); },
       routing: () => { setTab('settings'); openSettingPage('routing-setting'); },
       whatsapp: () => { setTab('channels'); revealField('whatsapp-connect'); },
+      telegram: () => {
+        setTab('channels');
+        if ($('telegram-panel').hidden) $('telegram-connect').click();
+        revealField('telegram-panel');
+      },
       connectors: () => { setTab('connectors'); revealField('composio-key'); },
       localmodels: () => {
         setTab('home');
@@ -7151,6 +7376,10 @@
           button.dataset.promptKey ? t(button.dataset.promptKey) : button.dataset.prompt)));
       document.querySelectorAll('[data-go]').forEach(button =>
         button.addEventListener('click', () => SETUP_DESTINATIONS[button.dataset.go]()));
+      document.querySelectorAll('.ch-seg-btn').forEach(b => b.addEventListener('click', () => {
+        state.channelSegPicked = true;
+        showChannelSeg(b.dataset.chseg);
+      }));
       document.querySelectorAll('[data-wa-pref]').forEach(input =>
         input.addEventListener('change', () => saveWaPref(input)));
     }
@@ -7364,7 +7593,22 @@
         : t('access.summaryLocal', { host: (s.hostname || 'raspberrypi') + '.local' });
     }
 
+    function renderLegacyWhatsapp(status) {
+      let later = false;
+      try { later = sessionStorage.getItem('sudo-legacy-wa-later') === '1'; } catch (_) {}
+      $('legacy-wa-banner').hidden = !(status && status.whatsapp_legacy) || later || state.tab === 'welcome';
+    }
+    $('legacy-wa-go').addEventListener('click', () => {
+      $('legacy-wa-banner').hidden = true;
+      SETUP_DESTINATIONS.whatsapp();
+    });
+    $('legacy-wa-later').addEventListener('click', () => {
+      try { sessionStorage.setItem('sudo-legacy-wa-later', '1'); } catch (_) {}
+      $('legacy-wa-banner').hidden = true;
+    });
+
     function renderStatus(status) {
+      renderLegacyWhatsapp(status);
       state.status = status;
       // The dashboard language is saved on the device so every phone and
       // computer shows the same one. A save from this screen still in flight
@@ -7781,6 +8025,7 @@
     $('hub-setup').addEventListener('click', () => setTab('setup'));
     $('hub-cc-open').addEventListener('click', () => { setTab('settings'); openSettingPage('ssh-setting'); });
     initSetupGuide();
+    initIcons();
     $('composer-model').addEventListener('click', () => {
       setTab('settings');
       openSettingPage('routing-setting');

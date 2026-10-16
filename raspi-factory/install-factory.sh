@@ -24,6 +24,7 @@ cp "${BOOT}/sudo-dashboard/app.css" /opt/sudo-dashboard/
 cp "${BOOT}/sudo-dashboard/i18n.js" /opt/sudo-dashboard/
 cp "${BOOT}/sudo-dashboard/manifest.json" /opt/sudo-dashboard/
 cp "${BOOT}/sudo-dashboard/"*.svg /opt/sudo-dashboard/
+cp "${BOOT}/sudo-dashboard/"*.png /opt/sudo-dashboard/ 2>/dev/null || true
 
 # ── WhatsApp bridge (source only -- npm install happens on demand, once
 # there is internet to fetch it with; see sudo-pi/install-whatsapp-bridge.sh)

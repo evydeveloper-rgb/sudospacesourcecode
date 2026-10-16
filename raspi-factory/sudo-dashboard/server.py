@@ -317,6 +317,38 @@ def _bg_run_worker(run_id: str) -> None:
         _bg_set(run_id, status="failed", error=str(exc), finishedAt=time.time())
 
 
+# The home-screen icon. The dashboard draws it (a premade one or the owner's
+# own picture, cropped square) and sends a PNG; the server only checks it is
+# one and serves it. Owner data, so an update never resets it.
+APP_ICON = "/opt/sudo/app-icon.png"
+APP_ICON_META = "/opt/sudo/app-icon.json"
+APP_ICON_MAX = 1536 * 1024
+
+
+def app_icon_state():
+    meta = read_json_file(APP_ICON_META) if os.path.isfile(APP_ICON_META) else {}
+    has = os.path.isfile(APP_ICON)
+    return {"choice": (meta.get("choice") if has else None) or "classic",
+            "custom": has,
+            "version": int(os.path.getmtime(APP_ICON)) if has else 0}
+
+
+def save_app_icon(data, choice):
+    if not data.startswith(b"\x89PNG\r\n\x1a\n") or data[12:16] != b"IHDR":
+        raise ValueError("That isn't a PNG image.")
+    width = int.from_bytes(data[16:20], "big")
+    height = int.from_bytes(data[20:24], "big")
+    if not (64 <= width <= 1024 and width == height):
+        raise ValueError("The icon must be a square between 64 and 1024 pixels.")
+    choice = choice if re.fullmatch(r"[a-z0-9-]{1,24}", choice or "") else "custom"
+    tmp = APP_ICON + ".tmp"
+    with open(tmp, "wb") as f:
+        f.write(data)
+    os.chmod(tmp, 0o644)
+    os.replace(tmp, APP_ICON)
+    write_json_file(APP_ICON_META, {"choice": choice})
+
+
 def write_json_file(path, data):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     tmp = path + ".tmp"
@@ -1339,6 +1371,7 @@ def setup_status(include_sensitive=False):
         # reason to ship a data-URI image on all of those. The channels page
         # polls whatsapp_state() directly for the real thing while it is open.
         "whatsapp_connected": whatsapp_state()["state"] == "connected",
+        "whatsapp_legacy": whatsapp_legacy(cfg),
         "telegram_connected": telegram_state(cfg)["state"] == "connected",
         "prefer_local": bool(cfg.get("prefer_local")),
         "ui_language": cfg.get("ui_language") if cfg.get("ui_language") in UI_LANGUAGES else None,
@@ -1654,6 +1687,20 @@ def local_model_state():
         # What is downloading right now, when that is not the active one.
         "target": data.get("model"),
     }
+
+
+def whatsapp_legacy(cfg=None):
+    """Linked through the old WhatsApp bridge only.
+
+    Devices that linked WhatsApp before Sudo moved to OpenClaw keep chatting
+    through the old bridge, but the agent cannot message them first, so
+    reminders and check-ins never arrive. They need one relink in Channels;
+    the dashboard says so until the agent's own link exists.
+    """
+    cfg = cfg if cfg is not None else read_json_file(CONFIG)
+    if agent_backend(cfg) != "openclaw" or (cfg.get("whatsapp_numbers") or {}):
+        return False
+    return os.path.isfile("/opt/sudo/whatsapp-auth/creds.json") or os.path.isfile(OWNER_FILE)
 
 
 def whatsapp_state():
@@ -3528,6 +3575,24 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
 
         # Telegram: make a bot, paste its token, say hi to it, confirm it was
         # you. The bot then answers that one person (configure-openclaw.sh).
+        if path == "/api/app-icon":
+            try:
+                if self.command == "POST":
+                    length = int(self.headers.get("Content-Length", 0) or 0)
+                    if length <= 0 or length > APP_ICON_MAX:
+                        raise ValueError("That picture is too big. Try a smaller one.")
+                    query = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+                    save_app_icon(self.rfile.read(length), (query.get("choice") or [""])[0])
+                elif self.command == "DELETE":
+                    for p in (APP_ICON, APP_ICON_META):
+                        if os.path.isfile(p):
+                            os.remove(p)
+            except ValueError as exc:
+                self.send_json({"error": str(exc)}, code=400)
+                return True
+            self.send_json(app_icon_state())
+            return True
+
         if path == "/api/agent/channels/telegram" and self.command == "GET":
             self.send_json(telegram_state())
             return True
@@ -4708,6 +4773,27 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             self.send_bytes(data, content_type=ctype)
             return
 
+        # Public like the page itself: a phone fetches these when it adds
+        # sudo to the home screen, without the dashboard's session.
+        if path == "/app-icon.png":
+            src = APP_ICON if os.path.isfile(APP_ICON) else os.path.join(ROOT, "app-icon-default.png")
+            try:
+                with open(src, "rb") as f:
+                    data = f.read()
+            except OSError:
+                self.send_error(404)
+                return
+            self.send_bytes(data, content_type="image/png")
+            return
+
+        if path == "/manifest.json":
+            manifest = read_json_file(os.path.join(ROOT, "manifest.json"))
+            v = app_icon_state()["version"]
+            manifest["icons"] = [{"src": f"/app-icon.png?v={v}", "sizes": "512x512",
+                                  "type": "image/png", "purpose": "any"}]
+            self.send_bytes(json.dumps(manifest), content_type="application/manifest+json")
+            return
+
         if path in ("/", ""):
             status = setup_status()
             if not status["profile_done"]:
@@ -4763,6 +4849,12 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
         # place to add things, promised to survive releases. Our own markup and
         # class names stay private and may change.
         if file_path.endswith("index.html"):
+            # iPhones ignore the manifest's icon and read this link instead,
+            # once, when "Add to Home Screen" is tapped. The version makes a
+            # new icon a new URL, so the phone never reuses the old picture.
+            v = app_icon_state()["version"]
+            icon = f'<link rel="apple-touch-icon" href="/app-icon.png?v={v}">'.encode()
+            data = data.replace(b"</head>", icon + b"</head>", 1)
             if os.path.isfile("/opt/sudo/theme.css"):
                 link = b'<link rel="stylesheet" href="/theme.css">'
                 data = data.replace(b"</head>", link + b"</head>", 1)

@@ -801,6 +801,13 @@ else
 fi
 systemctl daemon-reload 2>/dev/null || true
 
+# The old WhatsApp bridge hands over once the agent has its own WhatsApp
+# link (Channels -> WhatsApp). Before that it is the owner's only WhatsApp
+# connection, so it stays.
+if python3 -c 'import json,sys; c=json.load(open("/opt/sudo/config.json")); sys.exit(0 if (c.get("whatsapp_numbers") or {}) else 1)' 2>/dev/null; then
+  systemctl disable --now sudo-whatsapp-bridge.service 2>/dev/null || true
+fi
+
 # One brain at a time: both would otherwise answer the same channels.
 systemctl disable --now picoclaw-gateway.service 2>/dev/null || true
 systemctl enable "$UNIT" 2>/dev/null || true

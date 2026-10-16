@@ -3006,3 +3006,60 @@ input[type="password"], input[type="tel"], input[type="number"], #ssh-key, #devi
 .tg-row a.soft-button { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
 .tg-row .text-button { flex-basis: 100%; border: 0; background: none; color: var(--ink-3); font: 600 .74rem var(--font-sans); text-decoration: underline; cursor: pointer; }
 .tg-panel { margin-bottom: 12px; }
+
+/* Devices still on the old WhatsApp bridge: one relink brings reminders back. */
+.legacy-wa-banner {
+  flex: none; width: min(calc(100% - 24px), 720px); margin: 12px auto 0; padding: 12px 14px;
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  border: 1px solid var(--line); border-inline-start: 3px solid var(--coral);
+  border-radius: var(--radius); background: var(--color-bg-raised); box-shadow: var(--shadow);
+}
+.legacy-wa-banner[hidden] { display: none; }
+.legacy-wa-banner > svg { width: 24px; height: 24px; flex: none; fill: none; stroke: var(--coral); stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.legacy-wa-banner > div { flex: 1 1 220px; min-width: 0; }
+.legacy-wa-banner strong { display: block; font-size: .84rem; }
+.legacy-wa-banner small { display: block; margin-top: 3px; color: var(--muted); font-size: .72rem; line-height: 1.4; }
+.legacy-wa-banner .primary-button { width: auto; min-height: 38px; margin: 0; padding: 0 16px; font-size: .8rem; }
+.legacy-wa-later { border: 0; background: none; color: var(--ink-3); font: 650 .76rem var(--font-sans); cursor: pointer; }
+
+/* Finish setup step 2: one step, a tab per chat app. */
+.gs-ch-lede { margin: 0 0 12px; color: var(--ink-2); font-size: .82rem; line-height: 1.45; }
+.ch-seg { max-width: 360px; }
+.ch-seg-btn {
+  flex: 1 1 0; display: flex; align-items: center; justify-content: center; gap: 8px;
+  border: 0; background: transparent; color: var(--ink-2); cursor: pointer;
+  padding: 8px 12px; border-radius: 10px; font: 650 .84rem var(--font-sans);
+}
+.ch-seg-btn.active { background: var(--surface); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+.ch-seg-btn .channel-logo { width: 22px; height: 22px; font-size: .66rem; border-radius: 7px; flex: none; }
+.ch-seg-ok { font-style: normal; color: var(--ok); font-weight: 800; }
+.ch-seg-ok[hidden] { display: none; }
+.tg-hero { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 4px 0 14px; }
+.tg-hero svg { width: 180px; height: 112px; direction: ltr; }
+.tg-hero text { text-anchor: middle; font-family: var(--font-sans); font-size: 10px; font-weight: 650; fill: var(--ink-3); }
+.tg-hero .gs-tags { justify-content: center; }
+
+/* Settings -> Home screen icon */
+.icon-head-img { width: 100%; height: 100%; border-radius: 7px; object-fit: cover; display: block; }
+.icon-preview { display: flex; justify-content: center; margin: 2px 0 6px; }
+.icon-phone {
+  display: grid; grid-template-columns: repeat(4, 62px); gap: 14px; justify-content: center;
+  padding: 18px 18px 12px; border-radius: 26px;
+  background: linear-gradient(160deg, #d9d2ff, #ffd9cc); box-shadow: inset 0 0 0 1px rgba(0,0,0,.05);
+}
+.icon-app { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+.icon-app i, .icon-app img { width: 54px; height: 54px; border-radius: 13px; display: block; background: rgba(255,255,255,.55); }
+.icon-app img { object-fit: cover; box-shadow: 0 4px 10px rgba(0,0,0,.14); }
+.icon-app small { font-size: .62rem; color: #3d3550; max-width: 62px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.icon-app:not(.mine) small { opacity: .55; }
+.icon-h { margin-top: 16px; }
+.icon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(62px, 1fr)); gap: 10px; }
+.icon-opt {
+  padding: 0; aspect-ratio: 1; border-radius: 16px; overflow: hidden; cursor: pointer;
+  border: 2px solid transparent; background: none; outline-offset: 2px;
+}
+.icon-opt svg { width: 100%; height: 100%; display: block; border-radius: 13px; }
+.icon-opt.selected { border-color: var(--primary); }
+.icon-upload { display: inline-flex; align-items: center; justify-content: center; gap: 8px; margin-top: 14px; cursor: pointer; width: fit-content; padding-inline: 18px; }
+.icon-upload svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.icon-how { margin: 10px 0 0; color: var(--ink-3); font-size: .74rem; line-height: 1.5; }

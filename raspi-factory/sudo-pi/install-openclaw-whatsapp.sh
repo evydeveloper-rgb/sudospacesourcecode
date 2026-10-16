@@ -32,9 +32,11 @@ else
     || fail "Could not download WhatsApp — check the internet connection and try again"
 fi
 
-# Two WhatsApp sockets on one number knock each other off, so the old bridge
-# goes the moment OpenClaw owns WhatsApp.
-systemctl disable --now sudo-whatsapp-bridge.service 2>/dev/null || true
+# The old bridge (if this device had one) keeps running until the agent has
+# its own WhatsApp link: configure-openclaw.sh switches it off then. Switching
+# it off here cut owners off from WhatsApp entirely when they stopped before
+# scanning the new code. The two are separate linked devices, so they can
+# overlap for the few seconds between the scan and the configure run.
 
 set_status installing "Starting WhatsApp…"
 /usr/local/bin/sudo-configure-picoclaw.sh || true
