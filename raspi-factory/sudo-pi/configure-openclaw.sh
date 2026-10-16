@@ -100,7 +100,7 @@ import copy
 OUT_PATH = "/opt/sudo/openclaw/openclaw.json"
 # Plugins and tools Sudo switches on and off itself. They are dropped from the
 # carried-over lists and re-added below only when they apply.
-SUDO_PLUGINS = {"whatsapp", "admin-http-rpc", "sudo-contacts", "sudo-observer"}
+SUDO_PLUGINS = {"whatsapp", "admin-http-rpc", "sudo-contacts", "sudo-observer", "telegram"}
 SUDO_ALSO_ALLOW = {"message", "whatsapp_contacts", "whatsapp_chats", "whatsapp_new_numbers", "image"}
 SUDO_LOAD_PATHS = {"/opt/sudo-openclaw/plugins/sudo-contacts", "/opt/sudo-openclaw/plugins/sudo-observer"}
 
@@ -143,6 +143,7 @@ if also_allow:
     cfg["tools"]["alsoAllow"] = also_allow
 # WhatsApp is Sudo's to set (below), and only while its plugin is installed.
 cfg.get("channels", {}).pop("whatsapp", None)
+cfg.get("channels", {}).pop("telegram", None)
 token = open("/etc/sudo/openclaw_gateway_token", encoding="utf-8").read().strip()
 
 # Model aliases are shared with picoclaw's template so the Settings picker and
@@ -507,6 +508,59 @@ if whatsapp_installed:
         print("WhatsApp observer: read-others available (sudo-observer)")
 else:
     print("WhatsApp (OpenClaw): not added")
+
+# Telegram, once the owner has made a bot and said hi to it (Channels ->
+# Telegram). The bot answers the owner and nobody else: an allowlist of their
+# numeric Telegram ID, which the dashboard read from their first message.
+# Groups stay off. The Telegram plugin ships inside OpenClaw; it only has to
+# be allowed and enabled.
+tg = sudo.get("telegram") or {}
+tg_ready = bool(tg.get("token") and str(tg.get("owner_id") or "").strip())
+if tg_ready:
+    plugins = cfg.setdefault("plugins", {})
+    if "telegram" not in plugins.setdefault("allow", []):
+        plugins["allow"].append("telegram")
+    plugins.setdefault("entries", {})["telegram"] = {"enabled": True}
+    owner_tg = str(tg["owner_id"]).strip()
+    cfg.setdefault("channels", {})["telegram"] = {
+        "enabled": True,
+        "botToken": tg["token"],
+        "dmPolicy": "allowlist",
+        "allowFrom": [owner_tg],
+        "groupPolicy": "disabled",
+    }
+    also = cfg.setdefault("tools", {}).setdefault("alsoAllow", [])
+    if "message" not in also:
+        also.append("message")
+    user = sudo.get("user_name") or "your owner"
+    bot = tg.get("bot_username") or "your bot"
+    tools_md += [
+        "## Telegram",
+        "",
+        f"- {user} can talk to you on Telegram, through the bot @{bot}. Only {user} can reach you there.",
+        f"- To message {user} first on Telegram (a reminder, a check-in): the `message` tool, "
+        f"channel `telegram`, target `{owner_tg}`.",
+        "",
+    ]
+    print(f"Telegram: @{bot}, answers the owner only")
+else:
+    print("Telegram: not set up")
+
+# Nothing to reach the owner through: say so, so the agent never promises a
+# reminder it has no way to deliver. (Found on a device where reminders were
+# promised for days with no channel linked.)
+wa_linked = bool(whatsapp_installed and (sudo.get("whatsapp_numbers") or {}))
+if not wa_linked and not tg_ready:
+    user = sudo.get("user_name") or "your owner"
+    tools_md += [
+        "## Reaching " + user,
+        "",
+        f"- No chat app is linked yet (WhatsApp or Telegram), so you cannot message {user} first. "
+        f"Never promise a reminder or a check-in. If {user} asks for one, explain that you can "
+        "only reach them once they link WhatsApp or Telegram in Channels, and offer to set the "
+        "reminder up right after.",
+        "",
+    ]
 
 # Showing the owner what was built. People love seeing the thing, not reading
 # about it: a screenshot of the page or app answers "did it work?" better than

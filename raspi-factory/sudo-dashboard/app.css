@@ -2986,3 +2986,20 @@ input[type="password"], input[type="tel"], input[type="number"], #ssh-key, #devi
   color: var(--ink-3); cursor: pointer;
 }
 .loop-delete:hover { color: var(--error); }
+
+/* ---- Telegram setup panel -------------------------------------------------- */
+.tg-panel { margin-top: 12px; padding: 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-soft); }
+.tg-panel .gs-steps { margin-top: 0; }
+.tg-panel .gs-steps li { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 14px 10px 12px; border-radius: 16px; background: var(--surface); }
+.tg-panel .gs-steps a { color: var(--primary); font-weight: 650; }
+.tg-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; margin-top: 14px; }
+.tg-row input { flex: 1 1 220px; min-width: 0; min-height: 44px; padding: 0 14px; border: 1px solid var(--line-2); border-radius: 12px; background: var(--surface); color: var(--ink); font: .86rem var(--font-mono); }
+.tg-row .primary-button, .tg-row .ghost-button, .tg-row .soft-button { width: auto; min-height: 44px; margin-top: 0; padding: 0 18px; }
+.tg-confirm, .tg-done { margin-top: 14px; text-align: center; }
+.tg-confirm p { margin: 0; color: var(--ink-2); font-size: .86rem; }
+.tg-note { margin: 6px 0 0; color: var(--ink-3); font-size: .74rem; }
+.tg-panel .form-status:empty { display: none; }
+.tg-panel .whatsapp-panel-close { display: block; margin: 12px auto 0; }
+.tg-row a.soft-button { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+.tg-row .text-button { flex-basis: 100%; border: 0; background: none; color: var(--ink-3); font: 600 .74rem var(--font-sans); text-decoration: underline; cursor: pointer; }
+.tg-panel { margin-bottom: 12px; }

@@ -1071,6 +1071,11 @@ def _device_denied(path):
     real = os.path.realpath(path)
     if real in DEVICE_DENY_PATHS:
         return True
+    # Backups and copies of a secret file are as secret as the file:
+    # openclaw.json.bak, .bak.1, .last-good, config.json.tmp and the like all
+    # hold the same keys and gateway token.
+    if any(real.startswith(p + ".") for p in DEVICE_DENY_PATHS):
+        return True
     return any(real == d or real.startswith(d + os.sep) for d in DEVICE_DENY_DIRS)
 DEVICE_TEXT_EXTS = {".md", ".txt", ".json", ".jsonl", ".log", ".sh", ".py", ".js",
                     ".css", ".html", ".yml", ".yaml", ".conf", ".env", ".service",
@@ -1334,6 +1339,7 @@ def setup_status(include_sensitive=False):
         # reason to ship a data-URI image on all of those. The channels page
         # polls whatsapp_state() directly for the real thing while it is open.
         "whatsapp_connected": whatsapp_state()["state"] == "connected",
+        "telegram_connected": telegram_state(cfg)["state"] == "connected",
         "prefer_local": bool(cfg.get("prefer_local")),
         "ui_language": cfg.get("ui_language") if cfg.get("ui_language") in UI_LANGUAGES else None,
         "apps_archived": [a for a in cfg.get("apps_archived") or [] if a in APP_IDS],
@@ -1473,6 +1479,42 @@ def owner_session_key():
     except Exception:
         pass
     return "sudo-whatsapp:main"
+
+
+TELEGRAM_TOKEN_RE = re.compile(r"^\d{5,12}:[A-Za-z0-9_-]{30,60}$")
+# The person who last wrote to the bot, held until the owner confirms it is
+# them. Keyed by bot token so a changed token never confirms a stale person.
+_telegram_candidate = {}
+
+
+def telegram_call(token, method, params=None, timeout=15):
+    """One Bot API call. Raises ValueError with Telegram's own words."""
+    data = urllib.parse.urlencode(params).encode("utf-8") if params else None
+    request = urllib.request.Request(f"https://api.telegram.org/bot{token}/{method}", data=data)
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            out = json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as err:
+        try:
+            out = json.loads(err.read().decode("utf-8"))
+        except Exception:
+            raise ValueError(f"Telegram answered {err.code}")
+    except (urllib.error.URLError, TimeoutError, OSError):
+        raise ValueError("Could not reach Telegram. Check the internet connection.")
+    if not out.get("ok"):
+        raise ValueError(out.get("description") or "Telegram said no")
+    return out.get("result")
+
+
+def telegram_state(cfg=None):
+    """Where Telegram stands. Never includes the token itself."""
+    cfg = cfg if cfg is not None else read_json_file(CONFIG)
+    tg = cfg.get("telegram") or {}
+    if not tg.get("token"):
+        return {"state": "none"}
+    state = "connected" if str(tg.get("owner_id") or "").strip() else "token"
+    return {"state": state, "bot_username": tg.get("bot_username"),
+            "bot_name": tg.get("bot_name"), "owner_name": tg.get("owner_name")}
 
 
 def run_configure_picoclaw():
@@ -3420,6 +3462,87 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             observer = read_wa_observer(cfg)
             self.send_json({"read_others": observer["read_others"],
                             "in_summary": bool(cfg.get("whatsapp_in_summary", False))})
+            return True
+
+        # Telegram: make a bot, paste its token, say hi to it, confirm it was
+        # you. The bot then answers that one person (configure-openclaw.sh).
+        if path == "/api/agent/channels/telegram" and self.command == "GET":
+            self.send_json(telegram_state())
+            return True
+
+        if path.startswith("/api/agent/channels/telegram/") and self.command == "POST":
+            try:
+                body = self.read_body_json()
+            except (ValueError, json.JSONDecodeError):
+                body = {}
+            action = path.rsplit("/", 1)[-1]
+            cfg = read_json_file(CONFIG)
+            tg = dict(cfg.get("telegram") or {})
+            try:
+                if action == "token":
+                    token = str(body.get("token") or "").strip()
+                    if not TELEGRAM_TOKEN_RE.match(token):
+                        raise ValueError("That doesn't look like a bot token. It looks like 123456789:ABC… "
+                                         "and comes from @BotFather.")
+                    me = telegram_call(token, "getMe")
+                    changed = token != tg.get("token")
+                    tg.update({"token": token, "bot_username": me.get("username"),
+                               "bot_name": me.get("first_name")})
+                    if changed:
+                        for k in ("owner_id", "owner_name"):
+                            tg.pop(k, None)
+                    cfg["telegram"] = tg
+                    write_json_file(CONFIG, cfg)
+                    if changed:
+                        run_configure_picoclaw()
+                    self.send_json(telegram_state(cfg))
+                elif action == "find":
+                    if not tg.get("token"):
+                        raise ValueError("Paste your bot's token first.")
+                    if str(tg.get("owner_id") or "").strip():
+                        raise ValueError("Telegram is already connected.")
+                    updates = telegram_call(tg["token"], "getUpdates",
+                                            {"timeout": 0, "allowed_updates": json.dumps(["message"])})
+                    person = None
+                    for update in reversed(updates or []):
+                        msg = update.get("message") or {}
+                        if (msg.get("chat") or {}).get("type") == "private" and msg.get("from"):
+                            person = msg["from"]
+                            break
+                    if not person or person.get("is_bot"):
+                        self.send_json({"found": False})
+                    else:
+                        _telegram_candidate[tg["token"]] = person
+                        name = " ".join(x for x in (person.get("first_name"), person.get("last_name")) if x)
+                        self.send_json({"found": True, "name": name, "username": person.get("username")})
+                elif action == "confirm":
+                    person = _telegram_candidate.get(tg.get("token") or "")
+                    if not person:
+                        raise ValueError("Send your bot a message first, then try again.")
+                    name = " ".join(x for x in (person.get("first_name"), person.get("last_name")) if x)
+                    tg.update({"owner_id": str(person["id"]), "owner_name": name or person.get("username")})
+                    cfg["telegram"] = tg
+                    write_json_file(CONFIG, cfg)
+                    _telegram_candidate.pop(tg["token"], None)
+                    agent = cfg.get("agent_name") or "sudo"
+                    try:
+                        telegram_call(tg["token"], "sendMessage", {
+                            "chat_id": person["id"],
+                            "text": f"You're connected. This chat now goes to {agent}. "
+                                    "Give it a minute to wake up, then say hi."})
+                    except ValueError:
+                        pass
+                    run_configure_picoclaw()
+                    self.send_json(telegram_state(cfg))
+                elif action == "remove":
+                    cfg.pop("telegram", None)
+                    write_json_file(CONFIG, cfg)
+                    run_configure_picoclaw()
+                    self.send_json({"state": "none"})
+                else:
+                    self.send_json({"error": "Not found"}, code=404)
+            except ValueError as error:
+                self.send_json({"error": str(error)}, code=400)
             return True
 
         if path == "/api/agent/whatsapp/qr" and self.command == "POST":

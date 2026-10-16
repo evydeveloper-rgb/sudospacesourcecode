@@ -1113,14 +1113,59 @@
                 </div>
                 <div class="channel-row">
                   <span class="channel-logo telegram" aria-hidden="true">T</span>
-                  <span class="channel-copy"><strong>Telegram</strong><small data-i18n="set.channels.comingSoon">Coming soon</small></span>
-                  <span class="channel-soon" data-i18n="set.channels.comingSoon">Coming soon</span>
+                  <span class="channel-copy"><strong>Telegram</strong><small id="telegram-summary" data-i18n="wa.notConnected">not connected</small></span>
+                  <span class="channel-actions">
+                    <button class="channel-connect" type="button" id="telegram-connect" data-i18n="chat.setUp">Set up</button>
+                  </span>
                 </div>
                 <div class="channel-row">
                   <span class="channel-logo wechat" aria-hidden="true">微</span>
                   <span class="channel-copy"><strong>WeChat</strong><small data-i18n="set.channels.comingSoon">Coming soon</small></span>
                   <span class="channel-soon" data-i18n="set.channels.comingSoon">Coming soon</span>
                 </div>
+              </div>
+
+              <div class="tg-panel" id="telegram-panel" hidden>
+                <ol class="gs-steps three">
+                  <li>
+                    <span class="gs-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 4v4M9 13h.01M15 13h.01M9 17h6"/></svg><b>1</b></span>
+                    <strong data-i18n="tg.s1">Make a bot</strong>
+                    <small data-i18n-html="tg.s1b">Message <a href="https://t.me/BotFather" target="_blank" rel="noopener noreferrer">@BotFather</a>, send /newbot</small>
+                  </li>
+                  <li>
+                    <span class="gs-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="7.5" cy="15.5" r="4.5"/><path d="m10.7 12.3 9.8-9.8M17 6l3 3M14.5 8.5l2 2"/></svg><b>2</b></span>
+                    <strong data-i18n="tg.s2">Paste its token</strong>
+                    <small data-i18n="tg.s2b">BotFather sends it to you</small>
+                  </li>
+                  <li>
+                    <span class="gs-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/><path d="M8 12h.01M12 12h.01M16 12h.01"/></svg><b>3</b></span>
+                    <strong data-i18n="tg.s3">Say hi to your bot</strong>
+                    <small data-i18n="tg.s3b">So it knows it’s you</small>
+                  </li>
+                </ol>
+                <div class="tg-row" id="telegram-token-row">
+                  <input id="telegram-token" type="password" autocomplete="off" spellcheck="false" placeholder="123456789:ABC…" data-i18n-attr="aria-label:tg.tokenLabel" aria-label="Bot token">
+                  <button class="primary-button" type="button" id="telegram-save" data-i18n="tg.save">Save</button>
+                </div>
+                <div class="tg-row" id="telegram-step2" hidden>
+                  <a class="soft-button" id="telegram-open" href="https://t.me/" target="_blank" rel="noopener noreferrer">Open your bot</a>
+                  <button class="primary-button" type="button" id="telegram-find" data-i18n="tg.find">I said hi</button>
+                  <button class="text-button" type="button" id="telegram-change" data-i18n="tg.change">Use a different bot</button>
+                </div>
+                <div class="tg-confirm" id="telegram-confirm" hidden>
+                  <p><span data-i18n="tg.isThisYou">Is this you?</span> <strong id="telegram-who"></strong></p>
+                  <div class="tg-row">
+                    <button class="primary-button" type="button" id="telegram-yes" data-i18n="tg.yes">Yes, that’s me</button>
+                    <button class="ghost-button" type="button" id="telegram-no" data-i18n="tg.no">Not me</button>
+                  </div>
+                </div>
+                <div class="tg-done" id="telegram-done" hidden>
+                  <p class="whatsapp-connected"><i aria-hidden="true"></i><span id="telegram-done-name"></span></p>
+                  <p class="tg-note" data-i18n="tg.onlyYou">Only you can talk to it there.</p>
+                  <button class="whatsapp-unlink" type="button" id="telegram-remove" data-i18n="tg.remove">Disconnect Telegram</button>
+                </div>
+                <p class="form-status" id="telegram-status" role="status"></p>
+                <button class="whatsapp-panel-close" type="button" id="telegram-close" data-i18n="set.channels.close">Close</button>
               </div>
 
               <div class="channel-tip" data-i18n-html="set.channels.wantToGiveYour">
@@ -2266,6 +2311,7 @@
       if (tab !== 'settings' && state.settingPage) closeSettingPage();
       // The WhatsApp setup panel polls while it is open; leaving the tab stops it.
       if (tab !== 'channels') stopWhatsappPoll();
+      if (tab === 'channels') loadTelegram();
       // Home is read on demand: load it the first time it is opened, and
       // refresh the models every time (they change when routing does).
       if (tab === 'home') loadHome();
@@ -3991,6 +4037,86 @@
       clearTimeout(whatsappPollTimer);
       whatsappPollTimer = null;
     }
+
+    // --- Telegram -----------------------------------------------------------
+    async function loadTelegram() {
+      try { renderTelegram(await api('/api/agent/channels/telegram')); } catch (_) { /* stays as it was */ }
+    }
+
+    function renderTelegram(s) {
+      const connected = s.state === 'connected';
+      const bot = s.bot_username ? '@' + s.bot_username : '';
+      $('telegram-summary').textContent = connected ? t('tg.connectedVia', { bot })
+        : s.state === 'token' ? t('tg.almost') : t('wa.notConnected');
+      $('telegram-connect').textContent = connected ? t('tg.manage') : t('chat.setUp');
+      $('telegram-token-row').hidden = s.state !== 'none';
+      $('telegram-step2').hidden = s.state !== 'token';
+      $('telegram-done').hidden = !connected;
+      $('telegram-confirm').hidden = true;
+      if (bot) {
+        $('telegram-open').href = 'https://t.me/' + s.bot_username;
+        $('telegram-open').textContent = t('tg.open', { bot });
+        $('telegram-done-name').textContent = t('tg.connectedVia', { bot });
+      }
+    }
+
+    async function telegramPost(action, body) {
+      return api('/api/agent/channels/telegram/' + action, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body || {}),
+      }, 30000);
+    }
+
+    $('telegram-connect').addEventListener('click', () => {
+      $('telegram-panel').hidden = !$('telegram-panel').hidden;
+      $('telegram-status').textContent = '';
+      if (!$('telegram-panel').hidden) loadTelegram();
+    });
+    $('telegram-close').addEventListener('click', () => { $('telegram-panel').hidden = true; });
+    $('telegram-change').addEventListener('click', () => { $('telegram-token-row').hidden = false; $('telegram-token').focus(); });
+    $('telegram-save').addEventListener('click', async () => {
+      const btn = $('telegram-save');
+      btn.disabled = true;
+      $('telegram-status').textContent = t('tg.checking');
+      try {
+        const s = await telegramPost('token', { token: $('telegram-token').value.trim() });
+        $('telegram-token').value = '';
+        renderTelegram(s);
+        $('telegram-status').textContent = t('tg.nowSayHi');
+      } catch (error) {
+        $('telegram-status').textContent = error.message;
+      } finally { btn.disabled = false; }
+    });
+    $('telegram-find').addEventListener('click', async () => {
+      $('telegram-status').textContent = t('tg.looking');
+      try {
+        const r = await telegramPost('find');
+        if (!r.found) { $('telegram-status').textContent = t('tg.notYet'); return; }
+        $('telegram-who').textContent = r.name + (r.username ? ' (@' + r.username + ')' : '');
+        $('telegram-confirm').hidden = false;
+        $('telegram-status').textContent = '';
+      } catch (error) { $('telegram-status').textContent = error.message; }
+    });
+    $('telegram-yes').addEventListener('click', async () => {
+      $('telegram-status').textContent = t('tg.connecting');
+      try {
+        renderTelegram(await telegramPost('confirm'));
+        $('telegram-status').textContent = t('tg.connected');
+        if (state.status) state.status.telegram_connected = true;
+      } catch (error) { $('telegram-status').textContent = error.message; }
+    });
+    $('telegram-no').addEventListener('click', () => {
+      $('telegram-confirm').hidden = true;
+      $('telegram-status').textContent = t('tg.notMe');
+    });
+    $('telegram-remove').addEventListener('click', async () => {
+      if (!confirm(t('tg.removeConfirm'))) return;
+      try {
+        renderTelegram(await telegramPost('remove'));
+        $('telegram-status').textContent = '';
+        if (state.status) state.status.telegram_connected = false;
+      } catch (error) { $('telegram-status').textContent = error.message; }
+    });
 
     function renderWhatsappSummary(status) {
       const linked = !!status.whatsapp_connected
