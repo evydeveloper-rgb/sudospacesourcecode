@@ -48,6 +48,15 @@ log() { echo "$(date -Is) $*"; }
 {
 echo "=== sudo-heartbeat $(date -Is) ==="
 
+# Under OpenClaw the agent runs its own check-ins (agents.defaults.heartbeat,
+# set by configure-openclaw.sh from the same Settings switch); this script is
+# the PicoClaw path only.
+if [ -x /opt/openclaw/node_modules/.bin/openclaw ] && \
+   ! grep -q '"agent_backend": *"picoclaw"' /opt/sudo/config.json 2>/dev/null; then
+  log "OpenClaw handles check-ins itself — skipping"
+  exit 0
+fi
+
 hour=$(date +%H)
 if [ "$hour" -ge "$QUIET_START" ] || [ "$hour" -lt "$QUIET_END" ]; then
   log "quiet hours ($hour:00) — skipping"

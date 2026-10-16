@@ -313,6 +313,7 @@ else:
 # dashboard fetch QR codes from the gateway; loopback only, gateway token.
 import glob, re
 whatsapp_installed = bool(glob.glob("/opt/sudo/openclaw/npm/projects/openclaw-whatsapp-*"))
+owner_number, default_account, owner_tg = "", "owner", ""
 if whatsapp_installed:
     plugins = cfg.setdefault("plugins", {})
     for pid in ("whatsapp", "admin-http-rpc"):
@@ -561,6 +562,101 @@ if not wa_linked and not tg_ready:
         "reminder up right after.",
         "",
     ]
+
+SUDO_BEGIN_HB, SUDO_END_HB = "<!-- sudo:begin -->", "<!-- sudo:end -->"
+# Reaching the owner first: reminders (cron) and check-ins (heartbeat).
+# Where to: WhatsApp when it is linked and the owner's number is known, else
+# Telegram. Without one there is nowhere to send, and both stay quiet.
+reach = None
+if wa_linked and owner_number:
+    reach = {"channel": "whatsapp", "to": owner_number, "accountId": default_account}
+elif tg_ready:
+    reach = {"channel": "telegram", "to": owner_tg}
+
+if reach:
+    user = sudo.get("user_name") or "your owner"
+    acct = f", accountId `{reach['accountId']}`" if reach.get("accountId") else ""
+    # A reminder made in the dashboard chat has no chat to go back to: the job
+    # fires and OpenClaw skips the send for want of a target. Found on a
+    # device where reminders were set for days and none arrived.
+    tools_md += [
+        "## Reminders and recurring tasks",
+        "",
+        f"- Every cron job that should reach {user} needs an explicit delivery: mode `announce`, "
+        f"channel `{reach['channel']}`, to `{reach['to']}`{acct}. Set it on every job, even when "
+        f"you are chatting on that channel — a job made from the dashboard chat has nowhere else "
+        f"to go and is silently dropped.",
+        f"- Write the time in {user}'s own time zone, and say the time back when you confirm.",
+        "",
+    ]
+
+# Check-ins: OpenClaw's own heartbeat, behind Settings -> What sudo can do ->
+# "Speak up on its own". That switch is the sudo-heartbeat timer (the dashboard
+# flips it, then runs this), so the timer's state is the one source of truth.
+# The timer's own script only served PicoClaw and steps aside under OpenClaw.
+import subprocess
+try:
+    hb_switch = subprocess.run(["systemctl", "is-enabled", "sudo-heartbeat.timer"],
+                               capture_output=True, text=True, timeout=5).stdout.strip() == "enabled"
+except Exception:
+    hb_switch = False
+hb_path = "/opt/sudo/agent-workspace/HEARTBEAT.md"
+if reach and hb_switch:
+    hb = {
+        "every": "1h",
+        "target": reach["channel"],
+        "to": reach["to"],
+        "directPolicy": "allow",
+        # A fresh, light turn: HEARTBEAT.md plus tools, not the whole chat
+        # history, so an hourly look costs a fraction of a normal reply.
+        "isolatedSession": True,
+        "lightContext": True,
+        "activeHours": {"start": "08:00", "end": "22:00"},
+        "timeoutSeconds": 180,
+    }
+    if reach.get("accountId"):
+        hb["accountId"] = reach["accountId"]
+    defaults["heartbeat"] = hb
+    user = sudo.get("user_name") or "your owner"
+    hb_md = "\n".join([
+        "# HEARTBEAT",
+        "",
+        f"This is a check-in turn: you look, on your own, whether anything is worth messaging "
+        f"{user} about right now. Most of the time nothing is, and the answer is exactly "
+        f"HEARTBEAT_OK.",
+        "",
+        f"1. Read `check-ins.md` in this workspace (create it if it is missing). It lists what "
+        f"you already sent. Never send the same thing twice, and send at most two check-ins a "
+        f"day: if two are already there for today, reply HEARTBEAT_OK.",
+        "2. Look for something that is genuinely worth a message now:",
+        "   - an open loop in `PENDING.md` that is due, overdue or waiting on them;",
+        f"   - something {user} said they would do today (`memory_search`);",
+        "   - an event in the next two hours, if their calendar is connected.",
+        "3. Reminders they asked for are already scheduled with cron. Do not repeat those.",
+        "4. If nothing clears that bar, reply exactly HEARTBEAT_OK and nothing else.",
+        f"5. If something does: first add one line to `check-ins.md` (date, time, what it was "
+        f"about), then reply with one short, friendly message to {user}. No preamble, and never "
+        f"mention heartbeats or check-in rules.",
+        "",
+        f"Read `USER.md` if you need to know more about {user}. Never invent anything.",
+        "",
+    ])
+    print(f"Check-ins: on, hourly 08-22, to {reach['channel']}")
+else:
+    defaults["heartbeat"] = {"every": "0m"}
+    hb_md = ("# HEARTBEAT\n\nCheck-ins are off. For a reminder or a recurring task the person "
+             "asks for, use the cron tool.\n")
+    print("Check-ins: off" + ("" if hb_switch else " (switched off in Settings)")
+          + ("" if reach else " (no chat app linked)"))
+try:
+    hb_existing = open(hb_path, encoding="utf-8").read()
+except OSError:
+    hb_existing = ""
+hb_after = ""
+if SUDO_BEGIN_HB in hb_existing and SUDO_END_HB in hb_existing:
+    hb_after = hb_existing.split(SUDO_END_HB, 1)[1].lstrip("\n")
+with open(hb_path, "w", encoding="utf-8") as fh:
+    fh.write(f"{SUDO_BEGIN_HB}\n{hb_md}{SUDO_END_HB}\n" + ("\n" + hb_after if hb_after.strip() else ""))
 
 # Showing the owner what was built. People love seeing the thing, not reading
 # about it: a screenshot of the page or app answers "did it work?" better than
