@@ -5913,3 +5913,107 @@ I18N.add('ar', {
   "icon.n.sun": "شمس",
   "icon.n.letter": "الحرف الأول من اسم مساعدك"
 });
+
+// ---- Settings: time zone --------------------------------------------------------
+I18N.add('en', {
+  "tz.title": "Time zone",
+  "tz.intro": "Reminders and check-ins run on this clock. sudo follows your phone's time zone unless you pick one.",
+  "tz.pick": "Pick a time zone",
+  "tz.save": "Use this time zone",
+  "tz.follow": "Follow my phone again",
+  "tz.pinned": "picked by you",
+  "tz.fromPhone": "from your phone",
+  "tz.saving": "Saving…",
+  "tz.saved": "Saved."
+});
+I18N.add('es', {
+  "tz.title": "Zona horaria",
+  "tz.intro": "Los recordatorios y avisos usan este reloj. sudo sigue la zona horaria de tu móvil, salvo que elijas una.",
+  "tz.pick": "Elige una zona horaria",
+  "tz.save": "Usar esta zona horaria",
+  "tz.follow": "Volver a seguir mi móvil",
+  "tz.pinned": "elegida por ti",
+  "tz.fromPhone": "de tu móvil",
+  "tz.saving": "Guardando…",
+  "tz.saved": "Guardado."
+});
+I18N.add('zh', {
+  "tz.title": "时区",
+  "tz.intro": "提醒和主动问候都按这个时钟来。除非你自己选，sudo 会跟随你手机的时区。",
+  "tz.pick": "选择时区",
+  "tz.save": "使用这个时区",
+  "tz.follow": "重新跟随手机",
+  "tz.pinned": "你选的",
+  "tz.fromPhone": "来自你的手机",
+  "tz.saving": "正在保存…",
+  "tz.saved": "已保存。"
+});
+I18N.add('ar', {
+  "tz.title": "المنطقة الزمنية",
+  "tz.intro": "التذكيرات والرسائل تعمل على هذه الساعة. يتبع sudo المنطقة الزمنية لهاتفك ما لم تختر واحدة.",
+  "tz.pick": "اختر منطقة زمنية",
+  "tz.save": "استخدم هذه المنطقة",
+  "tz.follow": "اتبع هاتفي مجددًا",
+  "tz.pinned": "اخترتها أنت",
+  "tz.fromPhone": "من هاتفك",
+  "tz.saving": "جارٍ الحفظ…",
+  "tz.saved": "تم الحفظ."
+});
+
+// ---- Settings: dollar spending limits -------------------------------------------
+I18N.add('en', {
+  "usd.head": "Dollar limits",
+  "usd.messagesHead": "Message limits",
+  "usd.today": "Today",
+  "usd.month": "This month",
+  "usd.perDay": "Dollars per day",
+  "usd.perMonth": "Dollars per month",
+  "usd.pausedDay": "Paused: today's {limit} limit is reached. It switches back on at midnight, or raise the limit below.",
+  "usd.pausedMonth": "Paused: this month's {limit} limit is reached. It switches back on on the 1st, or raise the limit below.",
+  "usd.noOpenrouter": "Dollar limits work with an OpenRouter key, which reports what it spends. With another provider's key, set a monthly limit in that provider's console.",
+  "usd.noneSet": "No dollar limit set. Leave a box empty for no limit. Counts everything: chats, WhatsApp, Telegram, reminders and check-ins.",
+  "usd.checked": "From OpenRouter, checked at {time}. Counts chats, WhatsApp, Telegram, reminders and check-ins.",
+  "usd.firstCheck": "Checking spend with OpenRouter in the next few minutes."
+});
+I18N.add('es', {
+  "usd.head": "Límites en dólares",
+  "usd.messagesHead": "Límites de mensajes",
+  "usd.today": "Hoy",
+  "usd.month": "Este mes",
+  "usd.perDay": "Dólares por día",
+  "usd.perMonth": "Dólares por mes",
+  "usd.pausedDay": "En pausa: se alcanzó el límite de hoy de {limit}. Vuelve a medianoche, o sube el límite abajo.",
+  "usd.pausedMonth": "En pausa: se alcanzó el límite del mes de {limit}. Vuelve el día 1, o sube el límite abajo.",
+  "usd.noOpenrouter": "Los límites en dólares funcionan con una clave de OpenRouter, que informa lo que gasta. Con la clave de otro proveedor, pon un límite mensual en su consola.",
+  "usd.noneSet": "Sin límite en dólares. Deja un campo vacío para no poner límite. Cuenta todo: chats, WhatsApp, Telegram, recordatorios y avisos.",
+  "usd.checked": "Según OpenRouter, revisado a las {time}. Cuenta chats, WhatsApp, Telegram, recordatorios y avisos.",
+  "usd.firstCheck": "Revisando el gasto con OpenRouter en los próximos minutos."
+});
+I18N.add('zh', {
+  "usd.head": "美元上限",
+  "usd.messagesHead": "消息数上限",
+  "usd.today": "今天",
+  "usd.month": "本月",
+  "usd.perDay": "每日美元上限",
+  "usd.perMonth": "每月美元上限",
+  "usd.pausedDay": "已暂停：今天的 {limit} 上限已用完。午夜自动恢复，或在下方调高上限。",
+  "usd.pausedMonth": "已暂停：本月的 {limit} 上限已用完。下月 1 号自动恢复，或在下方调高上限。",
+  "usd.noOpenrouter": "美元上限需要 OpenRouter 密钥，它会报告实际花费。用其他服务商的密钥时，请在该服务商的控制台设置每月上限。",
+  "usd.noneSet": "还没设美元上限。留空表示不限。计入所有用量：聊天、WhatsApp、Telegram、提醒和主动问候。",
+  "usd.checked": "数据来自 OpenRouter，{time} 更新。计入聊天、WhatsApp、Telegram、提醒和主动问候。",
+  "usd.firstCheck": "几分钟内会向 OpenRouter 查询花费。"
+});
+I18N.add('ar', {
+  "usd.head": "حدود بالدولار",
+  "usd.messagesHead": "حدود الرسائل",
+  "usd.today": "اليوم",
+  "usd.month": "هذا الشهر",
+  "usd.perDay": "دولار في اليوم",
+  "usd.perMonth": "دولار في الشهر",
+  "usd.pausedDay": "متوقف: تم بلوغ حد اليوم {limit}. يعود عند منتصف الليل، أو ارفع الحد أدناه.",
+  "usd.pausedMonth": "متوقف: تم بلوغ حد الشهر {limit}. يعود في أول الشهر، أو ارفع الحد أدناه.",
+  "usd.noOpenrouter": "تعمل الحدود بالدولار مع مفتاح OpenRouter الذي يبلّغ عن إنفاقه. مع مفتاح مزوّد آخر، ضع حدًا شهريًا في لوحة ذلك المزوّد.",
+  "usd.noneSet": "لا يوجد حد بالدولار. اترك الخانة فارغة لعدم وضع حد. يحسب كل شيء: المحادثات وواتساب وتيليغرام والتذكيرات والرسائل.",
+  "usd.checked": "من OpenRouter، آخر فحص {time}. يحسب المحادثات وواتساب وتيليغرام والتذكيرات والرسائل.",
+  "usd.firstCheck": "سيُفحص الإنفاق مع OpenRouter خلال دقائق."
+});

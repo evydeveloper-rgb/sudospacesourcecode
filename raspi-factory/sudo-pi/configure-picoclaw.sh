@@ -521,6 +521,38 @@ echo "=== configure-picoclaw complete $(date) ==="
 OC_DROPIN=/etc/systemd/system/sudo-openclaw-gateway.service.d
 mkdir -p "$OC_DROPIN"
 printf '[Service]\nRestartPreventExitStatus=78\n' > "$OC_DROPIN/20-no-config-loop.conf"
+# Paused for the owner's dollar limit (sudo-spend-guard.py watch): the gateway
+# stays down until the watcher lifts it, whatever else starts it meanwhile --
+# a settings save, an update, a reboot.
+printf '[Service]\nExecCondition=/bin/sh -c "! test -f /opt/sudo/spend-paused.json"\n' \
+  > "$OC_DROPIN/30-spend-pause.conf"
+# The watcher itself. Written here rather than only in install-factory.sh so
+# devices that update (which re-runs this script) get it too.
+if [ ! -f /etc/systemd/system/sudo-spend-watch.timer ]; then
+  cat > /etc/systemd/system/sudo-spend-watch.service << 'UNIT'
+[Unit]
+Description=Sudo dollar spending limit
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /usr/local/bin/sudo-spend-guard.py watch
+TimeoutStartSec=180
+UNIT
+  cat > /etc/systemd/system/sudo-spend-watch.timer << 'UNIT'
+[Unit]
+Description=Check the dollar spending limit every 5 minutes
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+
+[Install]
+WantedBy=timers.target
+UNIT
+  systemctl daemon-reload 2>/dev/null || true
+  systemctl enable --now sudo-spend-watch.timer 2>/dev/null || true
+fi
 systemctl daemon-reload 2>/dev/null || true
 
 # Without a key there is nothing for the agent gateway to run on yet. Stop it

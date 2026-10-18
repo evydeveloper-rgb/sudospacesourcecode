@@ -2015,6 +2015,21 @@
                 <strong>It can't lock you out.</strong> If anything goes wrong reading the count, it lets the message through. Worst case you're back to no cap, never a bricked agent.
               </div>
 
+              <div class="usd-cap" id="usd-cap">
+                <p class="usd-head" data-i18n="usd.head">Dollar limits</p>
+                <div class="usd-paused" id="usd-paused" hidden></div>
+                <div class="usd-meters" id="usd-meters">
+                  <div class="usd-meter"><small data-i18n="usd.today">Today</small><strong id="usd-spent-day">$0.00</strong><i><b id="usd-bar-day"></b></i></div>
+                  <div class="usd-meter"><small data-i18n="usd.month">This month</small><strong id="usd-spent-month">$0.00</strong><i><b id="usd-bar-month"></b></i></div>
+                </div>
+                <div class="field-grid">
+                  <label><span data-i18n="usd.perDay">Dollars per day</span><input id="spend-usd-day" type="number" min="0" step="0.5" inputmode="decimal" placeholder="—"></label>
+                  <label><span data-i18n="usd.perMonth">Dollars per month</span><input id="spend-usd-month" type="number" min="0" step="1" inputmode="decimal" placeholder="—"></label>
+                </div>
+                <p class="microcopy" id="usd-note"></p>
+              </div>
+
+              <p class="usd-head" data-i18n="usd.messagesHead">Message limits</p>
               <div class="field-grid">
                 <label><span data-i18n="set.spend.messagesPerDay">Messages per day</span><input id="spend-max-per-day" type="number" min="1" step="10" inputmode="numeric" placeholder="300"></label>
                 <label><span data-i18n="set.spend.burstLimitPerMinute">Burst limit (per minute)</span><input id="spend-max-per-minute" type="number" min="1" step="1" inputmode="numeric" placeholder="12"></label>
@@ -2078,6 +2093,27 @@
               </label>
               <p class="icon-how" id="icon-how"></p>
               <p class="form-status" id="icon-status" role="status"></p>
+            </div>
+          </section>
+          <section class="setting-card" id="timezone-setting">
+            <button class="setting-head" type="button" aria-expanded="false">
+              <span class="setting-icon">◷</span>
+              <span><strong data-i18n="tz.title">Time zone</strong><small id="timezone-summary"></small></span>
+              <span class="chevron">&rsaquo;</span>
+            </button>
+            <div class="setting-body">
+              <p class="section-intro" data-i18n="tz.intro">Reminders and check-ins run on this clock. sudo follows your phone's time zone unless you pick one.</p>
+              <div class="tz-now">
+                <strong id="timezone-clock"></strong>
+                <small id="timezone-name"></small>
+              </div>
+              <label class="tz-label" for="timezone-select" data-i18n="tz.pick">Pick a time zone</label>
+              <select id="timezone-select" class="tz-select"></select>
+              <div class="tz-actions">
+                <button class="primary-button" type="button" id="timezone-save" data-i18n="tz.save">Use this time zone</button>
+                <button class="soft-button" type="button" id="timezone-follow" data-i18n="tz.follow" hidden>Follow my phone again</button>
+              </div>
+              <p class="form-status" id="timezone-status" role="status"></p>
             </div>
           </section>
           <section class="setting-card" id="language-setting">
@@ -3990,6 +4026,34 @@
       $('spend-live').textContent = s.tripped
         ? t('spend.livePaused', { used, cap })
         : t('spend.live', { used, cap });
+      renderUsd(status, textOnly);
+    }
+
+    function money(n) { return '$' + (Number(n) || 0).toFixed(2); }
+
+    function renderUsd(status, textOnly) {
+      const u = (status.spend_status || {}).usd || {};
+      const hasOr = !!status.usd_supported;
+      if (!textOnly) {
+        $('spend-usd-day').value = status.spend_usd_day || '';
+        $('spend-usd-month').value = status.spend_usd_month || '';
+      }
+      const tracked = u.source === 'openrouter';
+      $('usd-meters').hidden = !tracked;
+      $('spend-usd-day').disabled = $('spend-usd-month').disabled = !hasOr && !tracked;
+      $('usd-spent-day').textContent = u.limit_day ? `${money(u.spent_day)} / ${money(u.limit_day)}` : money(u.spent_day);
+      $('usd-spent-month').textContent = u.limit_month ? `${money(u.spent_month)} / ${money(u.limit_month)}` : money(u.spent_month);
+      $('usd-bar-day').style.width = u.limit_day ? Math.min(100, (u.spent_day / u.limit_day) * 100) + '%' : '0';
+      $('usd-bar-month').style.width = u.limit_month ? Math.min(100, (u.spent_month / u.limit_month) * 100) + '%' : '0';
+      const p = u.paused;
+      $('usd-paused').hidden = !p;
+      if (p) $('usd-paused').textContent = t(p.period === 'month' ? 'usd.pausedMonth' : 'usd.pausedDay', { limit: money(p.limit) });
+      let note;
+      if (!hasOr && !tracked) note = t('usd.noOpenrouter');
+      else if (!u.limit_day && !u.limit_month) note = t('usd.noneSet');
+      else if (u.checked_at) note = t('usd.checked', { time: new Date(u.checked_at * 1000).toLocaleTimeString(I18N.htmlLang(), { hour: 'numeric', minute: '2-digit' }) });
+      else note = t('usd.firstCheck');
+      $('usd-note').textContent = note;
     }
 
     async function saveSpend(changed) {
@@ -4004,6 +4068,8 @@
             spend_max_per_day: parseInt($('spend-max-per-day').value, 10) || 300,
             spend_max_per_minute: parseInt($('spend-max-per-minute').value, 10) || 12,
             spend_cooldown_min: parseInt($('spend-cooldown-min').value, 10) || 30,
+            spend_usd_day: $('spend-usd-day').value,
+            spend_usd_month: $('spend-usd-month').value,
           }),
         });
         renderStatus(data);
@@ -7605,8 +7671,74 @@
       $('legacy-wa-banner').hidden = true;
     });
 
+    // --- Time zone ----------------------------------------------------------
+    function phoneTimezone() {
+      try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (_) { return ''; }
+    }
+
+    async function postTimezone(tz, mode) {
+      return api('/api/device/timezone', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tz, mode }),
+      }, 40000);
+    }
+
+    function renderTimezone(status) {
+      if (!status || !status.timezone) return;
+      const tz = status.timezone;
+      let clock = '';
+      try { clock = new Date().toLocaleTimeString(I18N.htmlLang(), { timeZone: tz, hour: 'numeric', minute: '2-digit' }); } catch (_) {}
+      $('timezone-summary').textContent = `${tz.replace(/_/g, ' ')} · ${status.timezone_pinned ? t('tz.pinned') : t('tz.fromPhone')}`;
+      $('timezone-clock').textContent = clock;
+      $('timezone-name').textContent = tz.replace(/_/g, ' ');
+      $('timezone-follow').hidden = !status.timezone_pinned;
+      const sel = $('timezone-select');
+      if (!sel.options.length) {
+        let zones = [];
+        try { zones = Intl.supportedValuesOf('timeZone'); } catch (_) {}
+        if (!zones.includes(tz)) zones.push(tz);
+        const phone = phoneTimezone();
+        if (phone && !zones.includes(phone)) zones.push(phone);
+        sel.replaceChildren(...zones.sort().map(z => {
+          const o = document.createElement('option');
+          o.value = z; o.textContent = z.replace(/_/g, ' ');
+          return o;
+        }));
+      }
+      if (document.activeElement !== sel) sel.value = tz;
+    }
+
+    // Once per page load, after setup: send the phone's zone. The device
+    // ignores it when the owner pinned one in Settings.
+    async function syncTimezone(status) {
+      if (state.tzSynced || !status || !status.profile_done || status.timezone_pinned) return;
+      const phone = phoneTimezone();
+      state.tzSynced = true;
+      if (!phone || phone === status.timezone) return;
+      try {
+        const r = await postTimezone(phone, 'auto');
+        if (state.status) Object.assign(state.status, { timezone: r.timezone, timezone_pinned: r.timezone_pinned });
+        renderTimezone(state.status);
+      } catch (_) {}
+    }
+
+    async function saveTimezone(mode) {
+      const tz = mode === 'follow' ? phoneTimezone() : $('timezone-select').value;
+      $('timezone-status').textContent = t('tz.saving');
+      try {
+        const r = await postTimezone(tz, mode);
+        if (state.status) Object.assign(state.status, { timezone: r.timezone, timezone_pinned: r.timezone_pinned });
+        renderTimezone(state.status);
+        $('timezone-status').textContent = t('tz.saved');
+      } catch (error) { $('timezone-status').textContent = error.message; }
+    }
+    $('timezone-save').addEventListener('click', () => saveTimezone('pin'));
+    $('timezone-follow').addEventListener('click', () => saveTimezone('follow'));
+
     function renderStatus(status) {
       renderLegacyWhatsapp(status);
+      renderTimezone(status);
+      syncTimezone(status);
       state.status = status;
       // The dashboard language is saved on the device so every phone and
       // computer shows the same one. A save from this screen still in flight
@@ -8107,7 +8239,7 @@
     $('full-access-toggle').addEventListener('change', () => saveAbilities('full-access-toggle'));
     $('heartbeat-toggle').addEventListener('change', () => saveAbilities('heartbeat-toggle'));
     $('spend-toggle').addEventListener('change', () => saveSpend('spend-toggle'));
-    ['spend-max-per-day', 'spend-max-per-minute', 'spend-cooldown-min'].forEach(id =>
+    ['spend-max-per-day', 'spend-max-per-minute', 'spend-cooldown-min', 'spend-usd-day', 'spend-usd-month'].forEach(id =>
       $(id).addEventListener('change', () => saveSpend(null)));
     $('ssh-toggle').addEventListener('change', toggleSsh);
     $('save-ssh-key').addEventListener('click', saveSshKey);

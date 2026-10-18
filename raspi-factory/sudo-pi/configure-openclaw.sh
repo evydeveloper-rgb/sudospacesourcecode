@@ -155,6 +155,13 @@ primary = real.get(alias) or real["sudo-default"]
 
 defaults = cfg.setdefault("agents", {}).setdefault("defaults", {})
 defaults["workspace"] = "/opt/sudo/agent-workspace"
+# The owner's time zone (the dashboard sets it from their phone): what the
+# agent reads "now" and reminder times in, and the check-in hours follow it.
+owner_tz = (sudo.get("timezone") or "").strip()
+if owner_tz and os.path.isfile(f"/usr/share/zoneinfo/{owner_tz}"):
+    defaults["userTimezone"] = owner_tz
+else:
+    defaults.pop("userTimezone", None)
 defaults["model"] = {"primary": primary}
 # The text models are text-only, so an image the owner sends would arrive as
 # a file the model cannot look at -- and the agent answers as if it saw
@@ -586,7 +593,9 @@ if reach:
         f"channel `{reach['channel']}`, to `{reach['to']}`{acct}. Set it on every job, even when "
         f"you are chatting on that channel — a job made from the dashboard chat has nowhere else "
         f"to go and is silently dropped.",
-        f"- Write the time in {user}'s own time zone, and say the time back when you confirm.",
+        f"- Times are in {user}'s own time zone"
+        + (f" ({owner_tz})" if defaults.get("userTimezone") else "")
+        + ". Say the time back when you confirm a reminder.",
         "",
     ]
 

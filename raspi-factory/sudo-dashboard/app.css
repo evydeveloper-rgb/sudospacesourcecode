@@ -3063,3 +3063,25 @@ input[type="password"], input[type="tel"], input[type="number"], #ssh-key, #devi
 .icon-upload { display: inline-flex; align-items: center; justify-content: center; gap: 8px; margin-top: 14px; cursor: pointer; width: fit-content; padding-inline: 18px; }
 .icon-upload svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
 .icon-how { margin: 10px 0 0; color: var(--ink-3); font-size: .74rem; line-height: 1.5; }
+
+/* Settings -> Time zone */
+.tz-label { display: block; margin: 0 0 6px; font-size: .76rem; font-weight: 650; color: var(--ink-2); }
+.tz-now { display: flex; align-items: baseline; gap: 10px; margin: 4px 0 14px; }
+.tz-now strong { font-size: 1.5rem; font-weight: 750; letter-spacing: -.01em; }
+.tz-now small { color: var(--ink-3); font-size: .78rem; }
+.tz-select { width: 100%; min-height: 44px; padding: 0 12px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); color: var(--ink); font: 500 .86rem var(--font-sans); }
+.tz-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.tz-actions .primary-button, .tz-actions .soft-button { width: auto; margin: 0; padding-inline: 16px; }
+
+/* Settings -> Spending guard: dollar limits */
+.usd-cap { margin: 14px 0 6px; }
+.usd-head { margin: 16px 0 8px; font-size: .8rem; font-weight: 750; color: var(--ink-2); }
+.usd-meters { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.usd-meters[hidden] { display: none; }
+.usd-meter { padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+.usd-meter small { display: block; color: var(--ink-3); font-size: .7rem; }
+.usd-meter strong { display: block; margin: 2px 0 8px; font-size: 1rem; font-variant-numeric: tabular-nums; }
+.usd-meter i { display: block; height: 5px; border-radius: 3px; background: var(--surface-low); overflow: hidden; }
+.usd-meter b { display: block; height: 100%; width: 0; background: var(--coral); border-radius: 3px; }
+.usd-paused { margin-bottom: 10px; padding: 10px 12px; border-radius: var(--radius); border-inline-start: 3px solid var(--coral); background: var(--surface-low); font-size: .78rem; line-height: 1.45; }
+.usd-paused[hidden] { display: none; }

@@ -591,6 +591,23 @@ def gen_password(length=16):
 
 SSH_SETUP_SCRIPT = "/usr/local/bin/sudo-setup-ssh.sh"
 HOSTNAME_SCRIPT = "/usr/local/bin/sudo-set-hostname.sh"
+TIMEZONE_SCRIPT = "/usr/local/bin/sudo-set-timezone.sh"
+TIMEZONE_RE = re.compile(r"^[A-Za-z]+(/[A-Za-z0-9_+-]+){0,2}$")
+
+
+def valid_timezone(name):
+    return bool(name and TIMEZONE_RE.match(name) and os.path.isfile(f"/usr/share/zoneinfo/{name}"))
+
+
+def device_timezone():
+    """The zone the device clock is in now (what reminders run on)."""
+    try:
+        link = os.readlink("/etc/localtime")
+        if "zoneinfo/" in link:
+            return link.split("zoneinfo/", 1)[1]
+    except OSError:
+        pass
+    return (read_text("/etc/timezone") or "UTC").strip()
 WIFI_SCRIPT = "/usr/local/bin/sudo-wifi.sh"
 NOTIFY_SCRIPT = "/usr/local/bin/sudo-notify-owner.sh"
 
@@ -1358,6 +1375,9 @@ def setup_status(include_sensitive=False):
         "spend_max_per_day": int(cfg.get("spend_max_per_day", 300)),
         "spend_max_per_minute": int(cfg.get("spend_max_per_minute", 12)),
         "spend_cooldown_min": int(cfg.get("spend_cooldown_min", 30)),
+        "usd_supported": bool(effective_openrouter_key(cfg)),
+        "spend_usd_day": cfg.get("spend_usd_day"),
+        "spend_usd_month": cfg.get("spend_usd_month"),
         "spend_status": spend_guard("status"),
         "openrouter_key_source": (
             "own" if cfg.get("openrouter_key_source") == "own" else "sudo"
@@ -1373,6 +1393,8 @@ def setup_status(include_sensitive=False):
         "whatsapp_connected": whatsapp_state()["state"] == "connected",
         "whatsapp_legacy": whatsapp_legacy(cfg),
         "telegram_connected": telegram_state(cfg)["state"] == "connected",
+        "timezone": device_timezone(),
+        "timezone_pinned": bool(cfg.get("timezone_pinned")),
         "prefer_local": bool(cfg.get("prefer_local")),
         "ui_language": cfg.get("ui_language") if cfg.get("ui_language") in UI_LANGUAGES else None,
         "apps_archived": [a for a in cfg.get("apps_archived") or [] if a in APP_IDS],
@@ -2220,6 +2242,10 @@ def spend_guard(action: str) -> dict:
 
 def spend_guard_message(result: dict) -> str:
     """A human line for the user when the breaker refuses a turn."""
+    if result.get("reason") == "budget":
+        period = "monthly" if result.get("detail") == "month" else "daily"
+        return (f"I've reached the {period} spending limit set on this device, so I'm paused "
+                "until it resets. You can raise it in Settings → Spending guard.")
     if result.get("reason") == "daily_cap":
         return ("I've hit the daily message limit set on this device, so I'm "
                 "taking a break until tomorrow. You can raise it in Settings.")
@@ -4341,7 +4367,30 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                         cfg[num] = max(1, int(body.get(num)))
                     except (TypeError, ValueError):
                         pass
+            usd_changed = False
+            for key in ("spend_usd_day", "spend_usd_month"):
+                if key in body:
+                    try:
+                        value = round(float(body.get(key)), 2) if body.get(key) not in (None, "") else None
+                    except (TypeError, ValueError):
+                        value = None
+                    value = value if value and value > 0 else None
+                    usd_changed = usd_changed or cfg.get(key) != value
+                    if value is None:
+                        cfg.pop(key, None)
+                    else:
+                        cfg[key] = value
+            if "spend_enabled" in body:
+                usd_changed = True
             write_json_file(CONFIG, cfg)
+            if usd_changed:
+                # Apply a new limit now rather than at the next 5-minute tick:
+                # raising it lifts a pause, lowering it below today's spend pauses.
+                try:
+                    subprocess.Popen(["systemctl", "start", "--no-block", "sudo-spend-watch.service"],
+                                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                except OSError:
+                    pass
             if "heartbeat_enabled" in body:
                 # Not a config value: the timer itself is the state. Enabling
                 # or disabling the unit is the whole change, so there is
@@ -4408,6 +4457,42 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                     pass
 
             self.send_json({"ok": True, **setup_status(include_sensitive=False)})
+            return True
+
+        # Time zone. The dashboard sends the phone's own zone each time it
+        # opens ("auto"), so a card set up in one country and used in another
+        # follows its owner. Picking one in Settings pins it ("pin"); "follow"
+        # goes back to the phone's.
+        if path == "/api/device/timezone" and self.command == "POST":
+            try:
+                body = self.read_body_json()
+            except (ValueError, json.JSONDecodeError):
+                body = {}
+            tz = str(body.get("tz") or "").strip()
+            mode = body.get("mode") or "auto"
+            if not valid_timezone(tz):
+                self.send_json({"error": "That isn't a time zone this device knows."}, code=400)
+                return True
+            cfg = read_json_file(CONFIG)
+            if mode == "auto" and cfg.get("timezone_pinned"):
+                self.send_json({"timezone": device_timezone(), "timezone_pinned": True, "changed": False})
+                return True
+            pinned = mode == "pin"
+            changed = tz != device_timezone() or cfg.get("timezone") != tz
+            if changed:
+                result = run_privileged("sudo-set-timezone", TIMEZONE_SCRIPT, tz, timeout=30)
+                if result.returncode != 0:
+                    self.send_json({"error": "Couldn't change the time zone — see "
+                                             "/var/log/sudo-set-timezone.log"}, code=500)
+                    return True
+            if changed or bool(cfg.get("timezone_pinned")) != pinned:
+                cfg["timezone"] = tz
+                cfg["timezone_pinned"] = pinned
+                write_json_file(CONFIG, cfg)
+            if changed:
+                # The agent's own idea of "now" (OpenClaw's userTimezone).
+                run_configure_picoclaw()
+            self.send_json({"timezone": tz, "timezone_pinned": pinned, "changed": changed})
             return True
 
         if path == "/api/device/hostname" and self.command == "POST":
