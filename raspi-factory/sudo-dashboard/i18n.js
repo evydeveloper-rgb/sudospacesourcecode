@@ -5971,7 +5971,7 @@ I18N.add('en', {
   "usd.pausedDay": "Paused: today's {limit} limit is reached. It switches back on at midnight, or raise the limit below.",
   "usd.pausedMonth": "Paused: this month's {limit} limit is reached. It switches back on on the 1st, or raise the limit below.",
   "usd.noOpenrouter": "Dollar limits work with an OpenRouter key, which reports what it spends. With another provider's key, set a monthly limit in that provider's console.",
-  "usd.noneSet": "No dollar limit set. Leave a box empty for no limit. Counts everything: chats, WhatsApp, Telegram, reminders and check-ins.",
+  "usd.noneSet": "No dollar limit set; leave a box empty for none. Spend is from OpenRouter and counts everything: chats, WhatsApp, Telegram, reminders and check-ins.",
   "usd.checked": "From OpenRouter, checked at {time}. Counts chats, WhatsApp, Telegram, reminders and check-ins.",
   "usd.firstCheck": "Checking spend with OpenRouter in the next few minutes."
 });

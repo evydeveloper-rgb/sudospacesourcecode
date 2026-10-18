@@ -339,7 +339,9 @@ def cmd_watch():
     caps = _caps()
     paused = _read_json(PAUSE, None)
     limits = {"day": _usd_limit(cfg, "spend_usd_day"), "month": _usd_limit(cfg, "spend_usd_month")}
-    usd, state = _spend_now(cfg) if caps["spend_enabled"] and any(limits.values()) else (None, _read_json(USD_STATE, {}) or {})
+    # Read spend whenever the guard is on, limit or not: "what have I spent?"
+    # is worth showing by itself.
+    usd, state = _spend_now(cfg) if caps["spend_enabled"] else (None, _read_json(USD_STATE, {}) or {})
     _save_json(USD_STATE, state)
     over = None
     if usd:
