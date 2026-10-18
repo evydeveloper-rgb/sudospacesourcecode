@@ -27,7 +27,7 @@ PORT = 80
 TEMPLATE_DIR = "/opt/wifi-setup/templates"
 ASSET_DIR = "/opt/wifi-setup/assets"
 AP_IP = "192.168.4.1"
-AP_NAME = "RaspiSetup"
+AP_NAME = "Sudo Setup"
 MARKER = "/var/lib/wifi-setup-configured"
 PENDING_FILE = "/var/lib/wifi-setup-pending"
 CONFIG = "/opt/sudo/config.json"
@@ -510,7 +510,7 @@ def set_join(**fields):
 
 
 def restore_hotspot():
-    """Bring RaspiSetup back so the phone has a way in.
+    """Bring Sudo Setup back so the phone has a way in.
 
     Two callers, same reason: without an AP and without a home network the
     device is unreachable by any route until someone pulls the power. After a

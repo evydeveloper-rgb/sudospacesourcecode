@@ -1,9 +1,9 @@
 #!/bin/bash
 # reset-setup.sh — full "new user" reset, triggered from the dashboard.
 #
-# Same user-facing result as factory-reset.sh: Wi-Fi wiped, RaspiSetup hotspot
+# Same user-facing result as factory-reset.sh: Wi-Fi wiped, Sudo Setup hotspot
 # back, onboarding cleared, so the next boot walks the whole
-# RaspiSetup -> captive portal -> welcome -> chat flow from zero, exactly like
+# Sudo Setup -> captive portal -> welcome -> chat flow from zero, exactly like
 # a device out of the box.
 #
 # The ONE deliberate difference from factory-reset.sh: this does NOT tear down
@@ -135,5 +135,5 @@ ip addr show wlan0 2>/dev/null | grep -q 192.168.4.1 \
     || echo "hotspot not up yet — will retry on reboot"
 
 echo "=== reset-setup complete — rebooting $(date) ==="
-echo "Hotspot: RaspiSetup (open) -> http://192.168.4.1/"
+echo "Hotspot: Sudo Setup (open) -> http://192.168.4.1/"
 sync

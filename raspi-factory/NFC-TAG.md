@@ -4,8 +4,8 @@ What to write onto the tag that ships with a Sudo device.
 
 Fixed values, from `start-hotspot.sh` in `install-factory.sh`:
 
-    SSID      RaspiSetup
-    password  12345678
+    SSID      Sudo Setup
+    password  (none, the setup network is open)
     portal    http://192.168.4.1        (only while on the hotspot)
     dashboard http://raspberrypi.local  (after Wi-Fi setup, mDNS via avahi)
 
@@ -28,8 +28,10 @@ This is the right choice over a Wi-Fi record, which iOS ignores completely.
 A URL cannot make a phone join a Wi-Fi network. Joining is an OS action; no
 web page can trigger it. Three things actually work:
 
+> **To do:** `tag-assets/join-hotspot.svg` still encodes the old network name until it is regenerated from the payload below.
+
 **1. QR code — confirmed working on iPhone, use this.** `tag-assets/join-hotspot.svg` encodes
-`WIFI:S:RaspiSetup;T:WPA;P:12345678;;`. The iOS Camera app reads this natively
+`WIFI:S:Sudo Setup;T:nopass;;`. The iOS Camera app reads this natively
 and offers "Join Network" — the same payload iOS refuses over NFC. Android
 reads it too. No infrastructure, no app, works on both. Print it next to the
 NFC tag.
@@ -43,7 +45,7 @@ varies by phone, so confirm on real hardware before committing to it.
 is Apple's own device-configuration format: an XML property list carrying
 payloads (Wi-Fi, VPN, mail, certificates) that companies and schools use to
 set up staff iPhones. `tag-assets/sudo-setup.mobileconfig` is a working one
-for the RaspiSetup network, kept for reference.
+for the Sudo Setup network, kept for reference.
 
 It is the only route where a URL ends in the phone joining, but the cost is
 real. The phone needs internet to fetch it. Installing is download, then

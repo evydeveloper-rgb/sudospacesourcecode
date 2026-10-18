@@ -31,7 +31,7 @@ Usage: $0 [--repair | --reset | --retest] [BOOT_VOLUME_PATH]
 
   (default)     First-time factory install (firstrun.sh on next boot)
   --repair      Upgrade bundle — keeps WiFi + existing setup state
-  --reset       Wipe WiFi config and bring RaspiSetup hotspot back
+  --reset       Wipe WiFi config and bring Sudo Setup hotspot back
   --retest      Soft reset for full UX test — KEEPS WiFi, clears onboarding/remote
   --devreset    Repeat the new-user run WITHOUT losing your setup. Wipes WiFi
                 and onboarding like --reset, but keeps SSH, your API keys,
@@ -315,7 +315,7 @@ prepare_boot() {
             chmod +x "$boot/factory-reset.sh"
             patch_cmdline "$boot" "factory-reset.sh"
             echo ""
-            echo "Reset mode — will wipe WiFi config and restart RaspiSetup hotspot."
+            echo "Reset mode — will wipe WiFi config and restart Sudo Setup hotspot."
             ;;
         devreset)
             cp "$DEVRESET" "$boot/dev-reset.sh"
@@ -363,7 +363,7 @@ prepare_boot() {
     echo ""
     echo "Eject SD → boot Pi → wait ~2 min"
     if [ "$MODE" = "reset" ] || [ "$MODE" = "install" ] || [ "$MODE" = "devreset" ]; then
-        echo "Hotspot: RaspiSetup (open, no password) → http://192.168.4.1/"
+        echo "Hotspot: Sudo Setup (open, no password) → http://192.168.4.1/"
     else
         echo "WiFi kept → http://raspberrypi.local"
     fi

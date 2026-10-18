@@ -508,7 +508,7 @@ echo "=== hotspot start $(date) ==="
 echo "regdomain: $(iw reg get 2>/dev/null | grep -m1 country || echo unknown)"
 
 AP_IP="192.168.4.1"
-SSID="RaspiSetup"
+SSID="Sudo Setup"
 # No password: the setup network is open. See start_ap below.
 
 if [ -f /var/lib/wifi-setup-configured ]; then
@@ -541,6 +541,9 @@ nmcli radio wifi on 2>/dev/null || true
 nmcli device set wlan0 managed yes 2>/dev/null || true
 nmcli connection down "$SSID" 2>/dev/null || true
 nmcli connection delete "$SSID" 2>/dev/null || true
+# Devices set up before the rename still carry the old profile; remove it so it never lingers.
+nmcli connection down "RaspiSetup" 2>/dev/null || true
+nmcli connection delete "RaspiSetup" 2>/dev/null || true
 
 start_ap() {
     # Built by hand rather than through `nmcli device wifi hotspot`: that
@@ -713,7 +716,7 @@ fi
 # product.
 #
 # This watches for a usable address after boot. If none appears it clears the
-# configured marker and starts the hotspot and portal, so RaspiSetup shows up
+# configured marker and starts the hotspot and portal, so Sudo Setup shows up
 # again in Wi-Fi settings exactly like a new device. Reconnecting rewrites the
 # marker and the device returns to normal on its own.
 cat > /usr/local/bin/sudo-netwatch.sh << 'NETWATCH'
@@ -774,7 +777,7 @@ systemctl start wifi-setup.service 2>&1 || true
 systemctl is-active wifi-setup.service | sed 's/^/  portal: /' || true
 sleep 5
 ip addr show wlan0 2>/dev/null | grep -q "192.168.4.1" \
-    && echo "RaspiSetup is back at 192.168.4.1" \
+    && echo "Sudo Setup is back at 192.168.4.1" \
     || echo "hotspot did not come up — see /boot/firmware/hotspot.log"
 NETWATCH
 chmod +x /usr/local/bin/sudo-netwatch.sh

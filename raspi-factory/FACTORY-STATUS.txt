@@ -7,7 +7,7 @@ Agent brain: OpenClaw. PicoClaw is the on-card FALLBACK until OpenClaw installs.
 
 TARGET FLOW
 ───────────
-  1. Plug Pi → hotspot RaspiSetup appears
+  1. Plug Pi → hotspot Sudo Setup appears
   2. Captive portal → pick home WiFi → connect
   3. Pi reboots → installs OpenClaw (first boot), cloud registers device (background)
   4. User opens http://raspberrypi.local/

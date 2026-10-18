@@ -71,11 +71,11 @@ PY
     systemctl restart NetworkManager
     sleep 8
     nmcli radio wifi on 2>/dev/null || true
-    for con in $(nmcli -t -f NAME,TYPE connection show 2>/dev/null | awk -F: '$2=="802-11-wireless"{print $1}'); do
-        [ "$con" = "RaspiSetup" ] && continue
+    while IFS= read -r con; do
+        case "$con" in "Sudo Setup"|"RaspiSetup") continue ;; esac
         nmcli connection modify "$con" connection.autoconnect yes 2>/dev/null || true
         nmcli connection up "$con" 2>/dev/null && break || true
-    done
+    done < <(nmcli -t -f NAME,TYPE connection show 2>/dev/null | awk -F: '$2=="802-11-wireless"{print $1}')
 
     if [ -x /usr/local/bin/sudo-cloud-init.sh ]; then
         /usr/local/bin/sudo-cloud-init.sh || true

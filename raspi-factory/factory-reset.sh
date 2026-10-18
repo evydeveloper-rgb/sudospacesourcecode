@@ -1,6 +1,6 @@
 #!/bin/bash
 # factory-reset.sh — full factory WiFi reset (hotspot from zero)
-# Wipes home WiFi + setup markers, restores RaspiSetup captive portal.
+# Wipes home WiFi + setup markers, restores Sudo Setup captive portal.
 
 exec > /boot/firmware/factory-reset.log 2>&1
 set -x
@@ -40,7 +40,7 @@ rm -f /etc/sudo/autoupdate
 rfkill unblock wifi 2>/dev/null || true
 nmcli radio wifi on 2>/dev/null || true
 
-# Delete every WiFi connection profile (home + RaspiSetup leftovers)
+# Delete every WiFi connection profile (home + Sudo Setup leftovers)
 for con in $(nmcli -t -f NAME,TYPE connection show 2>/dev/null | awk -F: '$2=="802-11-wireless" || $2=="wifi"{print $1}'); do
     echo "Deleting WiFi profile: $con"
     nmcli connection delete "$con" 2>/dev/null || true
@@ -135,5 +135,5 @@ rm -f /boot/firmware/factory-reset.sh \
       /boot/firmware/firstrun.sh
 
 echo "=== factory-reset complete — rebooting $(date) ==="
-echo "Hotspot: RaspiSetup (open, no password) → http://192.168.4.1/"
+echo "Hotspot: Sudo Setup (open, no password) → http://192.168.4.1/"
 reboot

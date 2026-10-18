@@ -78,11 +78,11 @@ Everyone will be able to *use* an agent. The durable value is *owning* one — y
 
    It downloads two small programs, copies sudo onto the card and sets it to install itself on first boot. Copying the repository onto the card by hand does nothing: this script is what makes the Pi install it.
 4. **Eject the card safely**, put it in the Pi and plug in power. The first boot sets things up and restarts on its own; give it 2–5 minutes.
-5. **On your phone, join the Wi-Fi called `RaspiSetup`** (open, no password). The setup page opens by itself, or go to <http://192.168.4.1/>. Pick your home Wi-Fi, save sudo's address, and follow the steps.
+5. **On your phone, join the Wi-Fi called `Sudo Setup`** (open, no password). The setup page opens by itself, or go to <http://192.168.4.1/>. Pick your home Wi-Fi, save sudo's address, and follow the steps.
 
 The first setup downloads the agent, which can take 10–15 minutes. After that, updates install from **Settings → Updates**.
 
-**Something wrong?** If `RaspiSetup` doesn't appear after 5 minutes, put the card back in your computer: `firstrun.log` and `hotspot.log` on it say what happened.
+**Something wrong?** If `Sudo Setup` doesn't appear after 5 minutes, put the card back in your computer: `firstrun.log` and `hotspot.log` on it say what happened.
 
 ---
 

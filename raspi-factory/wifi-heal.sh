@@ -37,13 +37,14 @@ sleep 8
 nmcli radio wifi on 2>/dev/null || true
 nmcli device set wlan0 managed yes 2>/dev/null || true
 
-# Bring up any saved WiFi profiles (not RaspiSetup)
-for con in $(nmcli -t -f NAME,TYPE,TIMESTAMP-REAL connection show 2>/dev/null | awk -F: '$2=="802-11-wireless"{print $1}'); do
-    [ "$con" = "RaspiSetup" ] && continue
+# Bring up any saved WiFi profiles (not the setup hotspot). Read line by line:
+# profile names can contain spaces ("Sudo Setup", "My Home").
+while IFS= read -r con; do
+    case "$con" in "Sudo Setup"|"RaspiSetup") continue ;; esac
     echo "Trying connection: $con"
     nmcli connection modify "$con" connection.autoconnect yes 2>/dev/null || true
     nmcli connection up "$con" 2>/dev/null && break || true
-done
+done < <(nmcli -t -f NAME,TYPE,TIMESTAMP-REAL connection show 2>/dev/null | awk -F: '$2=="802-11-wireless"{print $1}')
 
 # If a wifi-setup marker exists, prefer dashboard; else hotspot
 if [ -f /var/lib/wifi-setup-configured ]; then

@@ -25,7 +25,7 @@ See CLOUDFLARE-SETUP.txt for how remote links work.
 ═══════════════════════════════════════════════
 USER FLOW (NON-TECHNICAL)
 ═══════════════════════════════════════════════
-1. Connect to RaspiSetup hotspot → pick home WiFi
+1. Connect to Sudo Setup hotspot → pick home WiFi
 2. Tap Connect & restart
 3. Open raspberrypi.local
 4. Complete onboarding → tap "Yes — link anywhere"
@@ -39,7 +39,7 @@ FLASH STEPS
 ═══════════════════════════════════════════════
   ./prepare-sd.sh          # fresh / upgrade copy to SD
   ./prepare-sd.sh --repair # upgrade existing Pi
-  ./prepare-sd.sh --reset  # wipe WiFi → RaspiSetup hotspot again
+  ./prepare-sd.sh --reset  # wipe WiFi → Sudo Setup hotspot again
 
 CONSTANT LED BLINK / NO HOTSPOT / NO WIFI
 ──────────────────────────────────────────
@@ -48,7 +48,7 @@ Do NOT keep running --repair/--retest on a blinking card.
 
   ./repair-boot-firmware.sh   # restore firmware from Imager cache
   ./prepare-sd.sh --reset
-  eject → boot Pi → RaspiSetup / 12345678 → http://192.168.4.1/
+  eject → boot Pi → Sudo Setup (open, no password) → http://192.168.4.1/
 
 If repair fails: re-flash Raspberry Pi OS with Imager, then ./prepare-sd.sh
 

@@ -2,7 +2,7 @@
 # dev-reset.sh — re-run the new-user experience without losing your setup.
 #
 # Same user-facing result as factory-reset.sh: Wi-Fi wiped, hotspot back,
-# onboarding cleared, so the next boot walks the full RaspiSetup -> captive
+# onboarding cleared, so the next boot walks the full Sudo Setup -> captive
 # portal -> welcome -> chat flow from zero.
 #
 # Unlike factory-reset.sh it does NOT touch anything you need to keep working
@@ -135,5 +135,5 @@ nmcli -t -f NAME,DEVICE,TYPE,STATE connection show --active || true
 rm -f /boot/firmware/dev-reset.sh
 
 echo "=== dev-reset complete — rebooting $(date) ==="
-echo "Hotspot: RaspiSetup (open, no password) → http://192.168.4.1/"
+echo "Hotspot: Sudo Setup (open, no password) → http://192.168.4.1/"
 reboot
