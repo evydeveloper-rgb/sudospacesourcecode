@@ -662,10 +662,16 @@ with open(hb_path, "w", encoding="utf-8") as fh:
 # Showing the owner what was built. People love seeing the thing, not reading
 # about it: a screenshot of the page or app answers "did it work?" better than
 # any sentence. sudo-screenshot drives the headless browser (Settings ->
-# Developer access); the message tool then sends the picture over WhatsApp.
+# Developer access); the message tool then sends the picture over whichever
+# chat app reaches the owner (WhatsApp, else Telegram).
 # Always offered: if the browser is not installed the script says so plainly,
 # so the agent can tell the owner how to turn it on rather than guess.
 owner = sudo.get("user_name") or "your owner"
+if reach:
+    send_to = (f"to {owner} with the `message` tool, channel `{reach['channel']}`, target `{reach['to']}`"
+               + (f", account `{reach['accountId']}`" if reach.get("accountId") else ""))
+else:
+    send_to = f"to {owner} once WhatsApp or Telegram is linked (until then, describe it instead)"
 tools_md += [
     "## Home: devices on the Wi-Fi and who's home",
     "",
@@ -696,7 +702,7 @@ tools_md += [
     "- Take the picture with the `exec` tool: `sudo-screenshot <url> /tmp/shot.png` (optionally "
     "a width and height, e.g. `390 844` for a phone-shaped page). It prints the file path on "
     "success.",
-    f"- Send it with the `message` tool, `mediaUrl` set to that path, to {owner} on WhatsApp. "
+    f"- Send it {send_to}, `mediaUrl` set to that path. "
     "A short line of context is enough; do not paste the path as text.",
     f"- If `sudo-screenshot` reports no browser, tell {owner} to open Settings -> Developer "
     "access and install the browser, then try again.",
