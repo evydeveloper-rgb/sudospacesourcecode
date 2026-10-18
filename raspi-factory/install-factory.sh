@@ -193,8 +193,11 @@ if [ -f "${BOOT}/sudo-factory.tar.gz" ]; then
         || printf '%s\n' "1.0.0" > /opt/sudo/version
     chmod 644 /opt/sudo/version 2>/dev/null || true
 fi
-# Cards prepared from a PC carry no bundle, only the version they were built from.
-if [ ! -s /opt/sudo/version ] && [ -f "${BOOT}/sudo-version" ]; then
+# Cards prepared from a PC carry no bundle, only the version they were built
+# from. That is the code this run just installed, so it wins over whatever an
+# earlier update recorded: a reset from a newer card used to keep reporting the
+# old version (and the updater compared against it).
+if [ ! -f "${BOOT}/sudo-factory.tar.gz" ] && [ -f "${BOOT}/sudo-version" ]; then
     tr -d ' \t\r\n' < "${BOOT}/sudo-version" > /opt/sudo/version
     chmod 644 /opt/sudo/version 2>/dev/null || true
 fi

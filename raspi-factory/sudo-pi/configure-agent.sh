@@ -460,14 +460,6 @@ UNIT
 fi
 systemctl daemon-reload 2>/dev/null || true
 
-# Without a key there is nothing for the agent gateway to run on yet. Stop it
-# rather than let it fail on a half-written config; the dashboard answers
-# Telegram with the on-device model meanwhile, and the first key starts it.
-if [ -f /run/sudo-configure-nokey ]; then
-  systemctl stop sudo-openclaw-gateway.service 2>/dev/null || true
-  echo "No key yet — agent gateway stopped until one is added"
-  exit 0
-fi
 
 # Check-ins ("Speak up on its own") used to be the sudo-heartbeat timer, which
 # ran a PicoClaw script. The switch is a config value now (OpenClaw runs the
@@ -510,6 +502,18 @@ if [ -e /usr/local/bin/picoclaw ] || [ -d /opt/picoclaw ] || [ -d /opt/sudo/pico
   else
     echo "OpenClaw not runnable yet — leaving PicoClaw's files for now"
   fi
+fi
+
+# Without a key there is nothing for the agent gateway to run on yet. Stop it
+# rather than let it fail on a half-written config; the dashboard answers
+# Telegram with the on-device model meanwhile, and the first key starts it.
+if [ -f /run/sudo-configure-nokey ]; then
+  # Disabled too, or every boot starts it, it refuses the key-less config and
+  # sits there "failed". configure-openclaw.sh enables it once there is a key.
+  systemctl disable --now sudo-openclaw-gateway.service 2>/dev/null || true
+  systemctl reset-failed sudo-openclaw-gateway.service 2>/dev/null || true
+  echo "No key yet — agent gateway stopped until one is added"
+  exit 0
 fi
 
 # The installer names helpers sudo-*.sh; the OTA updater installs them by
