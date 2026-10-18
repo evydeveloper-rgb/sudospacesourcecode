@@ -49,7 +49,7 @@ def main():
     ap.add_argument("--home", required=True, help="home dir on the old device, e.g. /home/alex")
     ap.add_argument("--agent-name", required=True)
     ap.add_argument("--user-name", required=True)
-    ap.add_argument("--template", default=os.path.join(os.path.dirname(__file__), "..", "picoclaw", "config.template.json"))
+    ap.add_argument("--template", default=os.path.join(os.path.dirname(__file__), "..", "openclaw", "models.json"))
     ap.add_argument("--no-tailscale", action="store_true")
     ap.add_argument("--out", required=True)
     a = ap.parse_args()

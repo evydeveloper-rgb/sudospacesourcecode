@@ -107,6 +107,6 @@ sudo -u "$DEV_USER" env PATH="${NPM_PREFIX}/bin:${PATH}" HOME="$DEV_HOME" \
 [ -x "${NPM_PREFIX}/bin/${BIN_NAME}" ] || fail "${LABEL} installed but the command is missing"
 
 # The agent learns about it on its next settings refresh; do that now.
-[ "$BIN_NAME" = "claude" ] && /usr/local/bin/sudo-configure-picoclaw.sh >/dev/null 2>&1 || true
+[ "$BIN_NAME" = "claude" ] && /usr/local/bin/sudo-configure-agent.sh >/dev/null 2>&1 || true
 set_status done "${LABEL} is ready."
 echo "=== install-devtools complete $(date) ==="

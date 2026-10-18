@@ -15,9 +15,8 @@ SUDO_DASH="$SCRIPT_DIR/sudo-dashboard"
 SUDO_PI="$SCRIPT_DIR/sudo-pi"
 WHATSAPP_BRIDGE="$SCRIPT_DIR/whatsapp-bridge"
 SUDO_API="$SCRIPT_DIR/sudo-api"
-PICOCLAW="$SCRIPT_DIR/picoclaw"
+OPENCLAW_SRC="$SCRIPT_DIR/openclaw"
 CLOUDFLARED="$SCRIPT_DIR/cloudflared"
-DOWNLOAD_PICO="$SCRIPT_DIR/scripts/download-picoclaw.sh"
 DOWNLOAD_CF="$SCRIPT_DIR/scripts/download-cloudflared.sh"
 
 MODE="install"
@@ -162,18 +161,14 @@ patch_cmdline() {
 copy_factory_files() {
     local boot="$1"
 
-    if [ ! -f "$PICOCLAW/picoclaw" ]; then
-        echo "PicoClaw binary missing — downloading..."
-        bash "$DOWNLOAD_PICO"
-    fi
-
     if [ ! -f "$CLOUDFLARED/cloudflared" ]; then
         echo "cloudflared binary missing — downloading..."
         bash "$DOWNLOAD_CF"
     fi
 
+    # picoclaw/ is from older cards; nothing reads it now.
     rm -rf "$boot/wifi-setup" "$boot/sudo-dashboard" "$boot/sudo-pi" "$boot/sudo-api" "$boot/picoclaw" "$boot/openclaw" "$boot/cloudflared" "$boot/whatsapp-bridge"
-    mkdir -p "$boot/wifi-setup/templates" "$boot/sudo-dashboard" "$boot/sudo-pi" "$boot/sudo-api" "$boot/picoclaw" "$boot/openclaw" "$boot/cloudflared" "$boot/whatsapp-bridge"
+    mkdir -p "$boot/wifi-setup/templates" "$boot/sudo-dashboard" "$boot/sudo-pi" "$boot/sudo-api" "$boot/openclaw" "$boot/cloudflared" "$boot/whatsapp-bridge"
 
     cp "$WIFI_SETUP/app.py" "$boot/wifi-setup/"
     cp "$WIFI_SETUP/templates/"*.html "$boot/wifi-setup/templates/"
@@ -191,14 +186,11 @@ copy_factory_files() {
     cp "$SUDO_DASH/"*.svg "$boot/sudo-dashboard/"
     cp "$SUDO_DASH/"*.png "$boot/sudo-dashboard/"
 
-    cp "$PICOCLAW/picoclaw" "$boot/picoclaw/"
-    cp "$PICOCLAW/config.template.json" "$boot/picoclaw/"
-    # Agent workspace templates (SOUL/IDENTITY/USER/AGENTS/HEARTBEAT/PENDING)
-    mkdir -p "$boot/picoclaw/workspace"
-    cp "$PICOCLAW/workspace/"*.md "$boot/picoclaw/workspace/"
-    [ -d "$PICOCLAW/workspace/knowledge" ] && cp -r "$PICOCLAW/workspace/knowledge" "$boot/picoclaw/workspace/"
-    cp "$SCRIPT_DIR/openclaw/openclaw.base.json" "$boot/openclaw/"
-    cp -r "$SCRIPT_DIR/openclaw/plugins" "$boot/openclaw/"
+    # OpenClaw's base settings, Sudo's model list, the agent's workspace
+    # templates (SOUL/IDENTITY/USER/AGENTS/HEARTBEAT/PENDING) and Sudo's plugins.
+    cp "$OPENCLAW_SRC/openclaw.base.json" "$OPENCLAW_SRC/models.json" "$boot/openclaw/"
+    cp -r "$OPENCLAW_SRC/workspace" "$boot/openclaw/"
+    cp -r "$OPENCLAW_SRC/plugins" "$boot/openclaw/"
     # The version this card carries. Without it the device reports 0.0.0 and
     # its first automatic update treats any release as newer.
     cp "$SCRIPT_DIR/VERSION" "$boot/sudo-version"
@@ -297,7 +289,7 @@ prepare_boot() {
     assert_boot_firmware "$boot"
 
     for f in "$INSTALL" "$WIFI_SETUP/app.py" "$SUDO_DASH/index.html" "$SUDO_DASH/server.py" "$SUDO_PI/device-secrets.sh" "$SUDO_PI/setup-remote-access.sh" \
-             "$PICOCLAW/config.template.json" "$PICOCLAW/workspace/SOUL.md" "$PICOCLAW/workspace/AGENTS.md"; do
+             "$OPENCLAW_SRC/models.json" "$OPENCLAW_SRC/workspace/SOUL.md" "$OPENCLAW_SRC/workspace/AGENTS.md"; do
         if [ ! -f "$f" ]; then
             echo "ERROR: Missing required file: $f"
             exit 1

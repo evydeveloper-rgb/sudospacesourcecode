@@ -39,7 +39,7 @@ fi
 # overlap for the few seconds between the scan and the configure run.
 
 set_status installing "Starting WhatsApp…"
-/usr/local/bin/sudo-configure-picoclaw.sh || true
+/usr/local/bin/sudo-configure-agent.sh || true
 # A new plugin only loads when the gateway starts, and the configure step
 # leaves a running gateway alone when the config itself did not change.
 # Also restart when WhatsApp is linked but not connected -- the case of an

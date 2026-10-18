@@ -99,6 +99,6 @@ PY
 touch "$MARKER"
 echo "=== sudo-cloud-init complete $(date) ==="
 
-if [ -x /usr/local/bin/sudo-configure-picoclaw.sh ]; then
-  /usr/local/bin/sudo-configure-picoclaw.sh || true
+if [ -x /usr/local/bin/sudo-configure-agent.sh ]; then
+  /usr/local/bin/sudo-configure-agent.sh || true
 fi

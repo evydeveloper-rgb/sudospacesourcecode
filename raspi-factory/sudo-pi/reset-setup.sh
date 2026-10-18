@@ -48,7 +48,7 @@ fi
 
 # 2) Stop the services that own Wi-Fi / the portal / the bridge.
 systemctl stop sudo-dashboard.service sudo-remote-access.service \
-    wifi-setup.service raspi-hotspot.service picoclaw-gateway.service sudo-openclaw-gateway.service \
+    wifi-setup.service raspi-hotspot.service sudo-openclaw-gateway.service \
     sudo-whatsapp-bridge.service 2>/dev/null || true
 systemctl disable sudo-dashboard.service sudo-cloud-init.service \
     sudo-remote-access.service 2>/dev/null || true
@@ -108,11 +108,11 @@ os.chmod(path, 0o600)
 print("kept:", sorted(data.keys()))
 PY
 
-# 5) Wipe the agent workspace + rendered picoclaw config. Both are regenerated
+# 5) Wipe the agent workspace. It is regenerated
 #    from templates on the next successful configure.
 rm -rf /opt/sudo/agent-workspace /var/lib/sudo-agent-files.json /opt/sudo/whatsapp-contacts.json /opt/sudo/home
 mkdir -p /opt/sudo/agent-workspace
-rm -f /opt/sudo/picoclaw/config.json
+rm -rf /opt/sudo/picoclaw   # left by older versions
 rm -rf /opt/sudo/openclaw
 rm -f /etc/sudo/agent.env
 rm -f /opt/sudo/dashboard-chat.json

@@ -93,14 +93,13 @@ raspi-factory/        Factory image builder + on-device runtime
 ├── sudo-dashboard/   On-device web dashboard (Python, no build step)
 ├── sudo-pi/          First-boot installers + configurators
 ├── wifi-setup/       Captive-portal Wi-Fi onboarding
-├── openclaw/         OpenClaw base config + sudo plugins
-├── picoclaw/         Fallback engine (until OpenClaw installs)
+├── openclaw/         OpenClaw base config, model list, agent templates + sudo plugins
 └── whatsapp-bridge/  WhatsApp connector
 design/               Design references
 assets/               README visuals
 ```
 
-**The agent brain is [OpenClaw](https://openclaw.ai).** On first boot the device installs OpenClaw (prebuilt arm64 bundle on the card, or npm) and hands over to it. PicoClaw ships on the card only as a fallback, so the box is never talking to nothing while OpenClaw installs.
+**The agent brain is [OpenClaw](https://openclaw.ai).** On first boot the device installs OpenClaw (prebuilt arm64 bundle on the card, or npm). Until it's in, the chat says the agent is setting up; if the install ever gives up, the dashboard offers a Retry.
 
 ---
 

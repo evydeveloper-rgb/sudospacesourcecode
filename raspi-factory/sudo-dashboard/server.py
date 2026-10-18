@@ -53,20 +53,20 @@ WORKSPACE = "/opt/sudo/agent-workspace"
 # The files that make up the agent's identity and memory. Fixed list rather
 # than a directory walk, so a stray file can never be served.
 # The agent's own files first (it edits these as it learns), then Sudo's.
-# memory/MEMORY.md is where PicoClaw kept long-term memory before OpenClaw.
+# memory/MEMORY.md is where older devices kept long-term memory.
 AGENT_FILES = ["USER.md", "MEMORY.md", "PENDING.md", "IDENTITY.md", "SOUL.md", "AGENTS.md",
                "TOOLS.md", "RUNTIME.md", "HEARTBEAT.md", "BOOTSTRAP.md", "memory/MEMORY.md"]
 # Open loops: one line per thing the agent still owes. The agent edits it as it
 # works and the Tasks panel edits the same file, so there is one list, not two.
 PENDING_FILE = os.path.join(WORKSPACE, "PENDING.md")
-PENDING_TEMPLATE = "/opt/picoclaw/workspace/PENDING.md"
+PENDING_TEMPLATE = "/opt/sudo-openclaw/workspace/PENDING.md"
 # Installing Node takes minutes, so the job runs detached and the dashboard
 # polls this status file rather than holding an HTTP request open.
 DEVTOOLS_STALE_SECS = 15 * 60
 
-# Model aliases defined in picoclaw/config.template.json. Keep this set, the
-# dashboard's <select>, and the config template in sync — a value outside this
-# set resolves to no model and the agent silently stops responding.
+# Model aliases defined in openclaw/models.json. Keep this set, the
+# dashboard's <select>, and that file in sync — a value outside this set
+# resolves to no model and the agent silently stops responding.
 ALLOWED_MODELS = {"sudo-default", "sudo-fast", "sudo-smart", "sudo-budget"}
 DEFAULT_MODEL = "sudo-default"
 # Dashboard colour schemes. Must match the [data-theme=...] blocks in app.css
@@ -88,9 +88,11 @@ DEFAULT_THEME = "default"
 # also reads SUDO_BILLING to decide whether to install/enable cloud-init.
 BILLING_ENABLED = os.environ.get("SUDO_BILLING", "0").lower() in ("1", "true", "yes")
 REMOTE_SCRIPT = "/usr/local/bin/sudo-remote-access.sh"
-PICOCLAW_BIN = "/usr/local/bin/picoclaw"
-PICOCLAW_CONFIG = "/opt/sudo/picoclaw/config.json"
-CONFIGURE_SCRIPT = "/usr/local/bin/sudo-configure-picoclaw.sh"
+# The settings script. Its old name stays as a shim on devices updated from
+# before the rename; prefer the new one.
+CONFIGURE_SCRIPT = next((p for p in ("/usr/local/bin/sudo-configure-agent.sh",
+                                     "/usr/local/bin/sudo-configure-picoclaw.sh") if os.path.isfile(p)),
+                        "/usr/local/bin/sudo-configure-agent.sh")
 OPENCLAW_BIN = "/opt/openclaw/node_modules/.bin/openclaw"
 OPENCLAW_CONFIG = "/opt/sudo/openclaw/openclaw.json"
 OPENCLAW_TOKEN_FILE = "/etc/sudo/openclaw_gateway_token"
@@ -108,6 +110,8 @@ OPENCLAW_INSTALL_LOG = "/var/log/sudo-openclaw-install.log"
 OPENCLAW_INSTALL_GRACE = 30 * 60
 PROVISIONING_MESSAGE = ("Your agent is getting set up (~2-3 min). You can keep this "
                         "page open; it'll switch over on its own.")
+INSTALL_FAILED_MESSAGE = ("Your agent didn't finish installing. Tap Retry at the top of "
+                          "the chat; it usually works on a second try.")
 
 LOCALMODEL_STATUS = "/var/lib/sudo-localmodel-status"
 LOCALMODEL_SCRIPT = "/usr/local/bin/sudo-install-local-model.sh"
@@ -143,12 +147,9 @@ RESET_STATUS = "/var/lib/sudo-reset-status.json"
 # thread instantly without history -- "but why" came back about something
 # else entirely -- but a long window costs tokens it does not have to spare.
 LOCAL_HISTORY_TURNS = 6
-# Cloud replies keep their thread in picoclaw's own session store rather than
-# in a transcript we reassemble on every call. picoclaw's `agent` CLI persists
-# each --session key to disk, so passing the caller's session key lets it
-# remember the conversation itself -- the same way the gateway path does. The
-# old code called `agent -m` with no session, which is why every cloud reply
-# was one-shot while the local model (which we do thread) kept context.
+# Cloud replies keep their thread in the agent's own session store rather
+# than in a transcript we reassemble on every call: passing the caller's
+# session key lets the agent remember the conversation itself.
 DASHBOARD_SESSION = "sudo-dashboard:web"
 # The on-device model takes its brief from the block marked SHORT in
 # BOOTSTRAP.md, so one file governs both models and they cannot drift
@@ -523,7 +524,7 @@ def agent_brain(cfg):
 def effective_openrouter_key(cfg):
     """The key the agent will actually use.
 
-    Must match the precedence in sudo-pi/configure-picoclaw.sh, or the UI
+    Must match the precedence in sudo-pi/configure-agent.sh, or the UI
     reports the agent as not ready while it is in fact configured, or the
     reverse. Order: Provider keys page, then the older own-key card, then
     Sudo credits.
@@ -821,7 +822,7 @@ def wifi_current() -> dict:
 # SOUL.md that are about voice ("Who You Are" and "Vibe"). Core Truths,
 # Boundaries and Continuity hold for every agent and stay as they are.
 # Settings > Personality later on adds a short override instead
-# (PERSONALITY_INTROS in configure-picoclaw.sh), since by then the agent has
+# (PERSONALITY_INTROS in configure-agent.sh), since by then the agent has
 # been writing in this file.
 SOUL_STYLES = {
     "friendly": {
@@ -1196,7 +1197,7 @@ def resolve_model(value):
 
 
 # What each alias actually is, for telling the owner plainly which model
-# answered. Must stay in step with picoclaw/config.template.json.
+# answered. Must stay in step with openclaw/models.json.
 MODEL_LABELS = {
     "sudo-default": "DeepSeek V4 Flash",
     "sudo-fast": "GPT-4o mini",
@@ -1287,7 +1288,7 @@ def real_model_for(alias):
     """The real OpenRouter id behind a picker alias, from the model list Sudo
     ships. Falls back to the alias itself so the UI never shows a blank."""
     try:
-        template = read_json_file("/opt/picoclaw/config.template.json", {}) or {}
+        template = read_json_file("/opt/sudo-openclaw/models.json", {}) or {}
         for m in template.get("model_list", []):
             if m.get("model_name") == alias:
                 return m.get("model") or alias
@@ -1347,8 +1348,8 @@ def setup_status(include_sensitive=False):
         "profile_done": bool(cfg.get("profile_done")),
         "welcome_pending": cfg.get("welcome_pending") or "",
         "cloud_registered": os.path.isfile("/var/lib/sudo-cloud-registered"),
-        "agent_ready": agent_backend(cfg) != "provisioning"
-                       and os.path.isfile(OPENCLAW_CONFIG if agent_backend(cfg) == "openclaw" else PICOCLAW_CONFIG)
+        "agent_ready": agent_backend(cfg) == "openclaw"
+                       and os.path.isfile(OPENCLAW_CONFIG)
                        and bool(agent_brain(cfg)),
         "agent_name": cfg.get("agent_name", "sudo"),
         "user_name": cfg.get("user_name"),
@@ -1369,7 +1370,8 @@ def setup_status(include_sensitive=False):
         "full_access_enabled": bool(cfg.get("full_access_enabled", False)),
         # On by default, like exec -- the device speaking first is the point.
         # Reflects the systemd timer, which is the single source of truth.
-        "heartbeat_enabled": heartbeat_enabled(),
+        # "Speak up on its own" (check-ins; configure-openclaw.sh).
+        "heartbeat_enabled": bool(cfg.get("checkins_enabled", True)),
         # Local cost circuit breaker — what the owner set, plus live counts.
         "spend_enabled": bool(cfg.get("spend_enabled", True)),
         "spend_max_per_day": int(cfg.get("spend_max_per_day", 300)),
@@ -1448,7 +1450,6 @@ def run_remote_access(enable: bool):
     )
 
 
-HEARTBEAT_TIMER = "sudo-heartbeat.timer"
 OWNER_FILE = "/opt/sudo/whatsapp-auth/owner.json"
 
 
@@ -1488,52 +1489,6 @@ def autoupdate_enabled() -> bool:
         return r.stdout.strip() == "enabled"
     except Exception:
         return False
-
-
-def heartbeat_enabled():
-    """Whether the proactive heartbeat timer is running right now.
-
-    Reads systemd rather than a config flag, so the Settings switch and the
-    unit can never disagree -- the state lives in exactly one place.
-    """
-    try:
-        r = subprocess.run(
-            ["systemctl", "is-enabled", HEARTBEAT_TIMER],
-            capture_output=True, text=True, timeout=3,
-        )
-        return r.stdout.strip() == "enabled"
-    except Exception:
-        return False
-
-
-def run_heartbeat(enable: bool):
-    try:
-        cmd = "enable" if enable else "disable"
-        # --now so the switch takes effect immediately, not at next boot.
-        subprocess.run(
-            ["systemctl", cmd, "--now", HEARTBEAT_TIMER],
-            capture_output=True, timeout=10,
-        )
-    except Exception:
-        pass
-
-
-def owner_session_key():
-    """The picoclaw session the owner's own WhatsApp thread uses.
-
-    Must match the key the bridge hands picoclaw on each message
-    (`sudo-whatsapp:<owner jid>`), or the heartbeat's context gate looks in
-    the wrong file and concludes nobody has talked to the device -- and so
-    never nudges anyone.
-    """
-    try:
-        with open(OWNER_FILE, encoding="utf-8") as f:
-            jid = (json.load(f) or {}).get("jid")
-        if jid:
-            return "sudo-whatsapp:" + str(jid).replace(":", "_")
-    except Exception:
-        pass
-    return "sudo-whatsapp:main"
 
 
 TELEGRAM_TOKEN_RE = re.compile(r"^\d{5,12}:[A-Za-z0-9_-]{30,60}$")
@@ -1634,7 +1589,7 @@ def telegram_local_loop():
             time.sleep(20)
 
 
-def run_configure_picoclaw():
+def apply_settings():
     """Apply settings, outside this service's sandbox: the configure scripts
     write unit files and drop-ins under /etc/systemd (the Composio relay, the
     GitHub env drop-in), which ProtectSystem=full makes read-only for a child
@@ -2255,54 +2210,6 @@ def spend_guard_message(result: dict) -> str:
             "safety cap so I don't burn through your API budget; it clears itself.")
 
 
-def picoclaw_chat(message: str, session_key: str = DASHBOARD_SESSION) -> str:
-    if not os.path.isfile(PICOCLAW_BIN):
-        raise RuntimeError("PicoClaw not installed on this device")
-    if not os.path.isfile(PICOCLAW_CONFIG):
-        # The agent config is written by configure-picoclaw.sh once cloud
-        # registration has produced an OpenRouter key. If the user reaches chat
-        # before that lands, build it now rather than making them go and press
-        # Save in Settings to trigger it as a side effect.
-        if read_json_file(CONFIG).get("openrouter_key") and os.path.isfile(CONFIGURE_SCRIPT):
-            subprocess.run([CONFIGURE_SCRIPT], capture_output=True, timeout=60)
-    if not os.path.isfile(PICOCLAW_CONFIG):
-        if not read_json_file(CONFIG).get("openrouter_key"):
-            raise RuntimeError(
-                "Still setting up — this device is registering with Sudo. "
-                "Give it a moment and try again."
-            )
-        raise RuntimeError("Agent not configured yet — see /var/log/sudo-picoclaw-config.log")
-
-    env = os.environ.copy()
-    env["HOME"] = "/root"
-    env["PICOCLAW_CONFIG"] = PICOCLAW_CONFIG
-    env["NO_COLOR"] = "1"
-    env["TERM"] = "dumb"
-    env["PICOCLAW_LOG_LEVEL"] = "error"
-
-    # Cost circuit breaker: this call reaches a paid model, so it is the unit
-    # the budget is counted in. Check before spending, record after.
-    gate = spend_guard("check")
-    if not gate.get("allowed", True):
-        raise SpendGuardError(spend_guard_message(gate))
-
-    proc = subprocess.run(
-        [PICOCLAW_BIN, "agent", "-m", message, "--session", session_key],
-        capture_output=True,
-        text=True,
-        timeout=120,
-        env=env,
-        cwd="/opt/sudo/agent-workspace",
-    )
-    if proc.returncode != 0:
-        err = clean_agent_text(proc.stderr or proc.stdout or "PicoClaw error")
-        if "insufficient" in err.lower() or "credit" in err.lower():
-            raise RuntimeError("Insufficient credits — top up at /billing.html")
-        raise RuntimeError(err[:500])
-    spend_guard("record")
-    return clean_agent_text(proc.stdout or proc.stderr or "") or "(empty response)"
-
-
 class AgentProvisioningError(RuntimeError):
     """The agent is still being installed; nothing can answer yet."""
 
@@ -2333,23 +2240,16 @@ def openclaw_install_failed() -> bool:
 
 
 def agent_backend(cfg=None) -> str:
-    """Which brain answers.
+    """Where the agent is.
 
-    openclaw      -- installed, and the owner has not pinned anything else.
-    provisioning  -- OpenClaw is still installing; the chat shows a setting-up
-                     state rather than another brain answering in the meantime.
-    picoclaw      -- only when the owner pinned it (support escape hatch), or
-                     silently, as last-resort recovery, when the OpenClaw
-                     install could not complete and picoclaw is on the card.
-    configure-picoclaw.sh hands over to OpenClaw on the same installed rule."""
-    cfg = cfg if cfg is not None else read_json_file(CONFIG)
-    if cfg.get("agent_backend") == "picoclaw":
-        return "picoclaw"
+    openclaw        -- installed.
+    provisioning    -- still installing; the chat shows a setting-up state.
+    install_failed  -- the install gave up; the dashboard offers Retry, and
+                       the on-device model answers meanwhile if there is one.
+    """
     if os.path.isfile(OPENCLAW_BIN):
         return "openclaw"
-    if os.path.isfile(PICOCLAW_BIN) and openclaw_install_failed():
-        return "picoclaw"
-    return "provisioning"
+    return "install_failed" if openclaw_install_failed() else "provisioning"
 
 
 def openclaw_chat(message: str, session_key: str = DASHBOARD_SESSION) -> str:
@@ -2631,7 +2531,7 @@ def openclaw_whatsapp_state() -> dict:
         write_json_file(CONFIG, cfg)
         # The owner's number is what both accounts allow in, and the agent is
         # told which number is whose -- apply it now it is known.
-        run_configure_picoclaw()
+        apply_settings()
     return state
 
 
@@ -2639,9 +2539,8 @@ def agent_chat(message: str, session_key: str = DASHBOARD_SESSION) -> str:
     backend = agent_backend()
     if backend == "openclaw":
         return openclaw_chat(message, session_key)
-    if backend == "provisioning":
-        raise AgentProvisioningError(PROVISIONING_MESSAGE)
-    return picoclaw_chat(message, session_key)
+    raise AgentProvisioningError(INSTALL_FAILED_MESSAGE if backend == "install_failed"
+                                 else PROVISIONING_MESSAGE)
 
 
 def remote_password_required() -> bool:
@@ -3243,7 +3142,7 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                     except OSError:
                         pass
 
-                run_configure_picoclaw()
+                apply_settings()
                 if cfg.get("remote_access"):
                     run_remote_access(True)
                 else:
@@ -3520,7 +3419,7 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             else:
                 cfg.pop("whatsapp_owner_number", None)
             write_json_file(CONFIG, cfg)
-            run_configure_picoclaw()
+            apply_settings()
             self.send_json(openclaw_whatsapp_state())
             return True
 
@@ -3592,8 +3491,8 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                 cfg["whatsapp_in_summary"] = bool(body.get("in_summary"))
             write_json_file(CONFIG, cfg)
             # configure-openclaw.sh re-derives the channel config (and, on a
-            # fresh device, seeds the observer file); picoclaw needs it too.
-            run_configure_picoclaw()
+            # fresh device, seeds the observer file).
+            apply_settings()
             observer = read_wa_observer(cfg)
             self.send_json({"read_others": observer["read_others"],
                             "in_summary": bool(cfg.get("whatsapp_in_summary", False))})
@@ -3617,6 +3516,22 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                 self.send_json({"error": str(exc)}, code=400)
                 return True
             self.send_json(app_icon_state())
+            return True
+
+        if path == "/api/agent/install/retry" and self.command == "POST":
+            if os.path.isfile(OPENCLAW_BIN):
+                self.send_json({"ok": True, "agent_backend": "openclaw"})
+                return True
+            try:
+                subprocess.run(["systemctl", "reset-failed", OPENCLAW_INSTALL_UNIT],
+                               capture_output=True, timeout=10)
+                subprocess.run(["systemctl", "start", "--no-block", OPENCLAW_INSTALL_UNIT],
+                               capture_output=True, timeout=10)
+            except (OSError, subprocess.SubprocessError) as exc:
+                self.send_json({"error": f"Couldn't start the install ({exc})"}, code=500)
+                return True
+            _install_failed_cache["at"] = 0.0
+            self.send_json({"ok": True, "agent_backend": "provisioning"})
             return True
 
         if path == "/api/agent/channels/telegram" and self.command == "GET":
@@ -3647,7 +3562,7 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                     cfg["telegram"] = tg
                     write_json_file(CONFIG, cfg)
                     if changed:
-                        run_configure_picoclaw()
+                        apply_settings()
                     self.send_json(telegram_state(cfg))
                 elif action == "find":
                     if not tg.get("token"):
@@ -3685,12 +3600,12 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                                     "Give it a minute to wake up, then say hi."})
                     except ValueError:
                         pass
-                    run_configure_picoclaw()
+                    apply_settings()
                     self.send_json(telegram_state(cfg))
                 elif action == "remove":
                     cfg.pop("telegram", None)
                     write_json_file(CONFIG, cfg)
-                    run_configure_picoclaw()
+                    apply_settings()
                     self.send_json({"state": "none"})
                 else:
                     self.send_json({"error": "Not found"}, code=404)
@@ -3768,7 +3683,7 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             numbers.pop(account, None)
             cfg["whatsapp_numbers"] = numbers
             write_json_file(CONFIG, cfg)
-            run_configure_picoclaw()
+            apply_settings()
             self.send_json(openclaw_whatsapp_state())
             return True
 
@@ -4211,10 +4126,10 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                 self.send_json({"error": f"task too long (max {MAX_CHAT_LEN})"}, code=400)
                 return True
             cfg = read_json_file(CONFIG)
-            if cfg.get("agent_backend") != "picoclaw" and not agent_brain(cfg):
+            if not agent_brain(cfg):
                 self.send_json({"error": "Add an API key in Settings first."}, code=400)
                 return True
-            if agent_backend(cfg) == "provisioning":
+            if agent_backend(cfg) != "openclaw":
                 self.send_json({"error": PROVISIONING_MESSAGE, "code": "provisioning"}, code=409)
                 return True
             run = start_bg_run(task)
@@ -4347,7 +4262,7 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                 cfg["agent_language"] = agent
             write_json_file(CONFIG, cfg)
             if agent_changed:
-                run_configure_picoclaw()
+                apply_settings()
             self.send_json({"ok": True, **setup_status(include_sensitive=False)})
             return True
 
@@ -4382,6 +4297,8 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                         cfg[key] = value
             if "spend_enabled" in body:
                 usd_changed = True
+            if "heartbeat_enabled" in body:
+                cfg["checkins_enabled"] = bool(body.get("heartbeat_enabled"))
             write_json_file(CONFIG, cfg)
             if usd_changed:
                 # Apply a new limit now rather than at the next 5-minute tick:
@@ -4391,12 +4308,7 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 except OSError:
                     pass
-            if "heartbeat_enabled" in body:
-                # Not a config value: the timer itself is the state. Enabling
-                # or disabling the unit is the whole change, so there is
-                # nothing that can drift out of sync.
-                run_heartbeat(bool(body.get("heartbeat_enabled")))
-            run_configure_picoclaw()
+            apply_settings()
             self.send_json({"ok": True, **setup_status(include_sensitive=False)})
             return True
 
@@ -4491,7 +4403,7 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                 write_json_file(CONFIG, cfg)
             if changed:
                 # The agent's own idea of "now" (OpenClaw's userTimezone).
-                run_configure_picoclaw()
+                apply_settings()
             self.send_json({"timezone": tz, "timezone_pinned": pinned, "changed": changed})
             return True
 
@@ -4602,7 +4514,7 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                     stored[provider] = pasted
                     cfg["provider_keys"] = stored
                     write_json_file(CONFIG, cfg)
-                    run_configure_picoclaw()
+                    apply_settings()
                     self.send_json({
                         "ok": True, "detected": provider,
                         **setup_status(include_sensitive=False),
@@ -4658,7 +4570,7 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                 cfg["github_enabled"] = bool(body.get("github_enabled"))
 
             write_json_file(CONFIG, cfg)  # chmod 600
-            run_configure_picoclaw()
+            apply_settings()
             self.send_json({"ok": True, **setup_status(include_sensitive=False)})
             return True
 
@@ -4688,7 +4600,7 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             cfg["openrouter_key_source"] = source
 
             write_json_file(CONFIG, cfg)  # chmod 600
-            run_configure_picoclaw()
+            apply_settings()
             self.send_json({"ok": True, **setup_status(include_sensitive=False)})
             return True
 
@@ -4723,7 +4635,7 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             if len(message) > MAX_CHAT_LEN:
                 self.send_json({"error": f"message too long (max {MAX_CHAT_LEN})"}, code=400)
                 return True
-            # No cloud key means picoclaw has nothing to talk to, so go
+            # No cloud key means the agent has nothing to talk to, so go
             # straight to the on-device model rather than waiting out a
             # timeout that was never going to produce an answer.
             cfg = read_json_file(CONFIG)
@@ -4734,7 +4646,7 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             history = body.get("history")
             if not isinstance(history, list):
                 history = []
-            # The caller's conversation identity. picoclaw keeps the actual
+            # The caller's conversation identity. The agent keeps the actual
             # transcript under this key; the local model still gets the
             # explicit history above. Defaults to the dashboard session so a
             # plain chat POST from the web box is still one conversation.
@@ -4773,9 +4685,14 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                 reply = agent_chat(message, session_key)
                 reply_json({"reply": reply, "source": "cloud"})
             except AgentProvisioningError as exc:
-                # Still installing: a setting-up note, not a reply, so it is
-                # not written into the transcript as if the agent had said it.
-                self.send_json({"reply": str(exc), "source": "provisioning"})
+                # Not installed (yet): the on-device model answers if there is
+                # one; otherwise a setting-up note, not a reply, so it is not
+                # written into the transcript as if the agent had said it.
+                local = local_model_chat(message, history, cfg)
+                if local:
+                    reply_json({"reply": local, "source": "local", "note": str(exc)})
+                else:
+                    self.send_json({"reply": str(exc), "source": "provisioning"})
             except SpendGuardError as exc:
                 # Breaker tripped: the turn was never sent, so tell the user
                 # plainly instead of surfacing it as an error.

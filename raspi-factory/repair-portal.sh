@@ -16,7 +16,7 @@ mkdir -p "$RECOVER"
 for d in sudo-dashboard wifi-setup sudo-pi; do
     [ -d "/opt/$d" ] && cp -r "/opt/$d" "$RECOVER/" 2>/dev/null
 done
-# The rendered agent files too — configure-picoclaw re-renders these from
+# The rendered agent files too — configure-agent re-renders these from
 # templates, so any personality the owner tuned by hand is otherwise lost.
 [ -d /opt/sudo/agent-workspace ] && cp -r /opt/sudo/agent-workspace "$RECOVER/" 2>/dev/null
 date > "$RECOVER/BACKED-UP-AT.txt"
@@ -28,18 +28,17 @@ systemctl restart NetworkManager
 sleep 5
 
 if [ -f /var/lib/wifi-setup-configured ]; then
-    # Refresh PicoClaw model list / config from new template
-    if [ -x /usr/local/bin/sudo-configure-picoclaw.sh ]; then
-        /usr/local/bin/sudo-configure-picoclaw.sh || true
+    # Re-apply the settings with the new templates
+    if [ -x /usr/local/bin/sudo-configure-agent.sh ]; then
+        /usr/local/bin/sudo-configure-agent.sh || true
     fi
     # Re-bind device secret + refresh OpenRouter key binding if needed
     if [ -x /usr/local/bin/sudo-cloud-init.sh ]; then
         rm -f /var/lib/sudo-cloud-registered 2>/dev/null || true
         /usr/local/bin/sudo-cloud-init.sh || true
-        /usr/local/bin/sudo-configure-picoclaw.sh || true
+        /usr/local/bin/sudo-configure-agent.sh || true
     fi
     systemctl restart sudo-dashboard.service
-    systemctl restart picoclaw-gateway.service 2>/dev/null || true
 else
     systemctl restart raspi-hotspot.service
     sleep 5

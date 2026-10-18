@@ -47,7 +47,7 @@ date > "$RECOVER/BACKED-UP-AT.txt"
 
 # 3) Stop the services that own Wi-Fi / portal
 systemctl stop sudo-dashboard.service sudo-remote-access.service \
-    wifi-setup.service raspi-hotspot.service picoclaw-gateway.service sudo-openclaw-gateway.service \
+    wifi-setup.service raspi-hotspot.service sudo-openclaw-gateway.service \
     2>/dev/null || true
 systemctl disable sudo-dashboard.service sudo-cloud-init.service \
     sudo-remote-access.service 2>/dev/null || true
@@ -106,7 +106,7 @@ PY
 # Agent identity/memory is regenerated from templates on next configure.
 rm -rf /opt/sudo/agent-workspace /var/lib/sudo-agent-files.json /opt/sudo/whatsapp-contacts.json
 mkdir -p /opt/sudo/agent-workspace
-rm -f /opt/sudo/picoclaw/config.json
+rm -rf /opt/sudo/picoclaw   # left by older versions
 rm -rf /opt/sudo/openclaw
 rm -f /opt/sudo/dashboard-chat.json
 rm -f /boot/firmware/forget-keys

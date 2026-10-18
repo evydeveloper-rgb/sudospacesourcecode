@@ -11,11 +11,11 @@ talks to a network, and keeps no cloud state — it just counts how many agent
 turns happened and refuses to start more when the owner's ceiling is reached.
 That is the whole point: the guard on a fully-owned box has to be on the box.
 
-Used by three callers, which all shell out to the same commands so there is a
+Used by these callers, which all shell out to the same commands so there is a
 single source of truth:
   * sudo-dashboard/server.py   (dashboard chat)
-  * whatsapp-bridge/bridge.js  (WhatsApp messages)
-  * sudo-pi/sudo-heartbeat.sh  (proactive nudges)
+  * whatsapp-bridge/bridge.js  (the old WhatsApp connection)
+  * sudo-spend-watch.timer     (dollar limits, `watch` below)
 
 Contract:
   spend-guard.py check   -> exit 0 allow, exit 3 blocked. JSON on stdout either way.

@@ -10,8 +10,6 @@ __pycache__/
 sudo-pi/cloudflare.conf
 
 # Vendored binaries — fetched on demand by scripts/download-*.sh
-picoclaw/picoclaw
-picoclaw/picoclaw-launcher
 cloudflared/cloudflared
 
 # Dev SSH keys stay local

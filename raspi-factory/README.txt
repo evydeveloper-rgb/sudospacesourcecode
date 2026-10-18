@@ -18,7 +18,7 @@ No domain. No API token. No cloudflare.conf.
 
   ./prepare-sd.sh
 
-(Downloads the OpenClaw bundle + PicoClaw fallback + cloudflared if missing.)
+(Downloads the OpenClaw bundle + cloudflared if missing.)
 
 See CLOUDFLARE-SETUP.txt for how remote links work.
 

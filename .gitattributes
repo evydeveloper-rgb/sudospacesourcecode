@@ -19,6 +19,4 @@
 *.template text eol=lf
 
 # Vendored binaries (gitignored, but never mangle them if that changes)
-raspi-factory/picoclaw/picoclaw           binary
-raspi-factory/picoclaw/picoclaw-launcher  binary
 raspi-factory/cloudflared/cloudflared     binary

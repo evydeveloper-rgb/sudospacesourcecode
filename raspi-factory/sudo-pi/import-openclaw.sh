@@ -266,7 +266,7 @@ if [ "$(read_p2 whatsapp)" = "True" ]; then
   # Installs the plugin at Sudo's pinned version, then runs configure.
   /usr/local/bin/sudo-install-openclaw-whatsapp.sh || echo "WARNING: WhatsApp plugin install reported a problem"
 else
-  /usr/local/bin/sudo-configure-picoclaw.sh || true
+  /usr/local/bin/sudo-configure-agent.sh || true
 fi
 
 rm -rf "$WORK"

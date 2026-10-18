@@ -230,6 +230,7 @@
           <span class="model-loading-dot" aria-hidden="true"></span>
           <div class="model-loading-body">
             <span id="model-loading-text"></span>
+            <button class="model-retry" type="button" id="agent-install-retry" hidden data-i18n="ready.retry">Retry</button>
             <div class="model-progress" id="model-progress" hidden role="progressbar"
                  aria-valuemin="0" aria-valuemax="100" aria-label="Setting up the on-device brain" data-i18n-attr="aria-label:chat.settingUpTheOn">
               <span class="model-progress-fill" id="model-progress-fill"></span>
@@ -6180,6 +6181,16 @@
       const bar = $('model-progress');
       const fill = $('model-progress-fill');
 
+      $('agent-install-retry').hidden = true;
+      // The install gave up (no network for long enough, a failed download).
+      // Say so and offer to try again; the on-device model answers meanwhile.
+      if (ready && where === 'cloud' && status.agent_backend === 'install_failed') {
+        if (bar) bar.hidden = true;
+        text.textContent = t('ready.installFailed');
+        $('agent-install-retry').hidden = false;
+        banner.hidden = false;
+        return;
+      }
       // The cloud agent is still being installed. Nothing else answers in the
       // meantime, so the banner says that rather than going quiet.
       if (ready && where === 'cloud' && status.agent_backend === 'provisioning') {
@@ -8007,6 +8018,19 @@
       if (where && where !== 'none') return true;
       return ((status.local_model && status.local_model.state) || 'absent') === 'failed';
     }
+
+    $('agent-install-retry').addEventListener('click', async () => {
+      const btn = $('agent-install-retry');
+      btn.disabled = true;
+      try {
+        await api('/api/agent/install/retry', { method: 'POST' });
+        $('model-loading-text').textContent = t('ready.provisioning');
+        btn.hidden = true;
+        refreshStatus();
+      } catch (error) {
+        $('model-loading-text').textContent = error.message;
+      } finally { btn.disabled = false; }
+    });
 
     async function refreshStatus() {
       // finishWelcome owns this exact transition already, including which

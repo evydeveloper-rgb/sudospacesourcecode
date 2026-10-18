@@ -22,7 +22,7 @@ import crypto from 'node:crypto';
 const AUTH_DIR = process.env.WA_AUTH_DIR || '/opt/sudo/whatsapp-auth';
 const STATUS_FILE = process.env.WA_STATUS_FILE || '/var/lib/sudo-whatsapp-status.json';
 const CHAT_URL = process.env.SUDO_CHAT_URL || 'http://127.0.0.1/api/agent/chat';
-// picoclaw keeps the WhatsApp thread under this key on the device, so a
+// the agent keeps the WhatsApp thread under this key on the device, so a
 // message sent from a phone in the kitchen and the next one after it share
 // context instead of each being answered cold.
 // Fallback session key, used only before we know who we're talking to. Once a
@@ -31,7 +31,7 @@ const CHAT_URL = process.env.SUDO_CHAT_URL || 'http://127.0.0.1/api/agent/chat';
 // heartbeat's context gate read a file nobody was writing to).
 const DEFAULT_SESSION = process.env.SUDO_SESSION || 'sudo-whatsapp:main';
 
-// Baileys JIDs look like `15551234567@s.whatsapp.net`; picoclaw uses the key
+// Baileys JIDs look like `15551234567@s.whatsapp.net`; the agent uses the key
 // as a filename for its session store, so strip anything path-unsafe. The
 // leading colon on a device JID is normalised to `_` rather than dropped, so
 // two different senders can never collapse onto the same file.
@@ -72,7 +72,7 @@ function writeStatus(patch) {
 
 // Ask the agent exactly the way the dashboard's own chat box does. We name
 // our own session key so this device's WhatsApp conversation keeps its thread
-// inside picoclaw's session store rather than starting fresh every message.
+// inside the agent's session store rather than starting fresh every message.
 // (The dashboard box uses its own key, so the two stay separate.)
 function askAgent(message, sessionKey) {
   return new Promise((resolve, reject) => {

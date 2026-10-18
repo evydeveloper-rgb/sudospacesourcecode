@@ -32,30 +32,21 @@ mkdir -p /opt/whatsapp-bridge /opt/sudo/whatsapp-auth /opt/sudo/whatsapp
 cp "${BOOT}/whatsapp-bridge/package.json" /opt/whatsapp-bridge/
 cp "${BOOT}/whatsapp-bridge/bridge.js" /opt/whatsapp-bridge/
 
-# ── PicoClaw (pre-bundled binary, no npm on Pi) ─────────────────────────────
-mkdir -p /opt/picoclaw /opt/sudo/picoclaw /opt/sudo/agent-workspace
-if [ -f "${BOOT}/picoclaw/picoclaw" ]; then
-    cp "${BOOT}/picoclaw/picoclaw" /usr/local/bin/picoclaw
-    chmod +x /usr/local/bin/picoclaw
-fi
-if [ -f "${BOOT}/picoclaw/config.template.json" ]; then
-    cp "${BOOT}/picoclaw/config.template.json" /opt/picoclaw/config.template.json
-fi
-# Agent workspace templates — configure-picoclaw.sh renders these into
-# /opt/sudo/agent-workspace with the user's agent/user name filled in.
-if [ -d "${BOOT}/picoclaw/workspace" ]; then
-    mkdir -p /opt/picoclaw/workspace
-    cp "${BOOT}/picoclaw/workspace/"*.md /opt/picoclaw/workspace/
-    # knowledge/ (people, projects, routines) sits in a subfolder.
-    [ -d "${BOOT}/picoclaw/workspace/knowledge" ] && cp -r "${BOOT}/picoclaw/workspace/knowledge" /opt/picoclaw/workspace/
-fi
+mkdir -p /opt/sudo/agent-workspace
 
-# ── OpenClaw (the brain once installed; picoclaw stays as the fallback) ─────
-# The package itself lands in /opt/openclaw via install-openclaw.sh; only
-# Sudo's own base settings ship here.
+# ── OpenClaw (the agent) ─────────────────────────────────────────────────────
+# The package itself lands in /opt/openclaw via install-openclaw.sh; Sudo's own
+# parts ship here: the base settings, the model list, the agent's workspace
+# templates (configure-agent.sh renders them into /opt/sudo/agent-workspace)
+# and Sudo's plugins.
 mkdir -p /opt/sudo-openclaw /opt/sudo/openclaw
 if [ -f "${BOOT}/openclaw/openclaw.base.json" ]; then
     cp "${BOOT}/openclaw/openclaw.base.json" /opt/sudo-openclaw/
+fi
+[ -f "${BOOT}/openclaw/models.json" ] && cp "${BOOT}/openclaw/models.json" /opt/sudo-openclaw/
+if [ -d "${BOOT}/openclaw/workspace" ]; then
+    rm -rf /opt/sudo-openclaw/workspace
+    cp -r "${BOOT}/openclaw/workspace" /opt/sudo-openclaw/
 fi
 # Sudo's own OpenClaw plugins (sudo-contacts: who the agent may message).
 if [ -d "${BOOT}/openclaw/plugins" ]; then
@@ -68,8 +59,8 @@ cp "${BOOT}/sudo-pi/composio-relay.py" /usr/local/bin/sudo-composio-relay.py
 chmod +x /usr/local/bin/sudo-configure-openclaw.sh /usr/local/bin/sudo-install-openclaw.sh /usr/local/bin/sudo-install-openclaw-whatsapp.sh /usr/local/bin/sudo-composio-relay.py
 
 # First boot with Wi-Fi: install OpenClaw from the bundle on the card (or npm
-# if the card has none) and hand the agent over to it. Until then picoclaw
-# answers. Stops running once OpenClaw is in place.
+# if the card has none). Until then the chat says the agent is setting up.
+# Stops running once OpenClaw is in place.
 cat > /etc/systemd/system/sudo-openclaw-install.service << 'EOF'
 [Unit]
 Description=Install OpenClaw (Sudo's agent brain)
@@ -139,33 +130,15 @@ User=root
 WantedBy=multi-user.target
 EOF
 
-# ── cloudflared (remote link, bundled like picoclaw) ────────────────────────
+# ── cloudflared (remote link, bundled on the card) ──────────────────────────
 if [ -f "${BOOT}/cloudflared/cloudflared" ]; then
     cp "${BOOT}/cloudflared/cloudflared" /usr/local/bin/cloudflared
     chmod +x /usr/local/bin/cloudflared
 fi
+cp "${BOOT}/sudo-pi/configure-agent.sh" /usr/local/bin/sudo-configure-agent.sh
+# The old name, for anything that still calls it (a shim to the new one).
 cp "${BOOT}/sudo-pi/configure-picoclaw.sh" /usr/local/bin/sudo-configure-picoclaw.sh
-chmod +x /usr/local/bin/sudo-configure-picoclaw.sh
-
-cat > /etc/systemd/system/picoclaw-gateway.service << 'EOF'
-[Unit]
-Description=PicoClaw Gateway
-After=network-online.target sudo-cloud-init.service
-Wants=network-online.target
-ConditionPathExists=/opt/sudo/picoclaw/config.json
-
-[Service]
-Type=simple
-Environment=HOME=/root
-Environment=PICOCLAW_CONFIG=/opt/sudo/picoclaw/config.json
-ExecStart=/usr/local/bin/picoclaw gateway
-Restart=on-failure
-RestartSec=5
-User=root
-
-[Install]
-WantedBy=multi-user.target
-EOF
+chmod +x /usr/local/bin/sudo-configure-agent.sh /usr/local/bin/sudo-configure-picoclaw.sh
 
 # ── Sudo cloud / device identity ─────────────────────────────────────────────
 mkdir -p /opt/sudo /etc/sudo /opt/sudo-pi
@@ -205,7 +178,6 @@ chmod +x /usr/local/bin/sudo-notify-owner.sh /usr/local/bin/sudo-install-adguard
 cp "${BOOT}/sudo-pi/wifi.sh" /usr/local/bin/sudo-wifi.sh
 cp "${BOOT}/sudo-pi/install-whatsapp-bridge.sh" /usr/local/bin/sudo-install-whatsapp-bridge.sh
 cp "${BOOT}/sudo-pi/unlink-whatsapp.sh" /usr/local/bin/sudo-unlink-whatsapp.sh
-cp "${BOOT}/sudo-pi/sudo-heartbeat.sh" /usr/local/bin/sudo-heartbeat.sh
 cp "${BOOT}/sudo-pi/sudo-curate.sh" /usr/local/bin/sudo-curate.sh
 cp "${BOOT}/sudo-pi/spend-guard.py" /usr/local/bin/sudo-spend-guard.py
 cp "${BOOT}/sudo-pi/sudo-update.sh" /usr/local/bin/sudo-update.sh
@@ -238,7 +210,7 @@ chmod +x /usr/local/bin/sudo-device-id.sh \
          /usr/local/bin/sudo-wifi.sh \
          /usr/local/bin/sudo-install-whatsapp-bridge.sh \
          /usr/local/bin/sudo-unlink-whatsapp.sh \
-         /usr/local/bin/sudo-heartbeat.sh \
+\
          /usr/local/bin/sudo-curate.sh \
          /usr/local/bin/sudo-spend-guard.py \
          /usr/local/bin/sudo-update.sh \
@@ -319,51 +291,9 @@ EOF
 # calls `systemctl enable` on this unit; whoever never ran that never has
 # it running, and whoever did keeps it running across a reset.
 
-# ── Proactive heartbeat (device speaks first, occasionally) ──────────────────
-# The timer wakes every 30 min; the script decides whether there is anything
-# worth saying and usually does nothing. It only reaches the owner's WhatsApp
-# once they have messaged the device, so the service is idle until the bridge
-# is paired and used -- same "costs nothing until asked for" shape as the
-# bridge itself.
-#
-# ON BY DEFAULT. Shipping this off would make the agent a thing that only ever
-# answers, never one that speaks first -- which is the whole point of the box.
-# The owner can switch it off in Settings -> What sudo can do (that toggle runs
-# `systemctl enable/disable --now sudo-heartbeat.timer`), so the default is a
-# starting point, not a cage. The timer is enabled at the end of this script.
-cat > /etc/systemd/system/sudo-heartbeat.service << 'EOF'
-[Unit]
-Description=Sudo Proactive Heartbeat
-After=network-online.target sudo-dashboard.service
-Wants=network-online.target
-
-[Service]
-Type=oneshot
-ExecStart=/usr/local/bin/sudo-heartbeat.sh
-User=root
-NoNewPrivileges=true
-ProtectSystem=full
-ProtectHome=true
-PrivateTmp=true
-ReadWritePaths=/opt/sudo /var/lib /var/log
-StandardOutput=journal
-StandardError=journal
-EOF
-
-cat > /etc/systemd/system/sudo-heartbeat.timer << 'EOF'
-[Unit]
-Description=Sudo Proactive Heartbeat Timer
-
-[Timer]
-OnBootSec=5min
-OnUnitActiveSec=30min
-
-[Install]
-WantedBy=timers.target
-EOF
-systemctl daemon-reload 2>/dev/null || true
-# Enabled by default -- see the note above. Settings can turn it back off.
-systemctl enable --now sudo-heartbeat.timer 2>/dev/null || true
+# Check-ins ("Speak up on its own") are OpenClaw's own heartbeat, switched by
+# checkins_enabled in config.json (on unless the owner turns it off) and set
+# up by configure-openclaw.sh. Nothing to install here.
 
 # ── Memory housekeeping (keep the agent's notes from silting up) ────────────
 # Runs daily. No model call: it rotates old daily notes to memory/archive/ and
@@ -840,7 +770,6 @@ if [ -f /var/lib/wifi-setup-configured ]; then
         systemctl disable sudo-cloud-init.service 2>/dev/null || true
     fi
     systemctl disable wifi-setup.service raspi-hotspot.service 2>/dev/null || true
-    systemctl enable picoclaw-gateway.service 2>/dev/null || true
 else
     systemctl enable wifi-setup.service raspi-hotspot.service
     systemctl disable sudo-dashboard.service sudo-cloud-init.service sudo-remote-access.service 2>/dev/null || true

@@ -19,7 +19,7 @@ different brain under the same UI.
 
 ## Phase A — build now
 
-### A1. Retire PicoClaw as a *chat* fallback
+### A1. Retire PicoClaw as a *chat* fallback — done; removed entirely in 1.0.36
 - Replace the "PicoClaw answers while OpenClaw installs" behaviour with an
   explicit **onboarding/progress state** in the chat UI: "Your agent is getting
   set up (~2–3 min). You can keep this page open; it'll switch over on its own."
@@ -32,7 +32,7 @@ different brain under the same UI.
 - Success = a new user never sees "I'm picoclaw…" in chat.
 
 ### A2. Open-loops file in the agent workspace
-- New template `picoclaw/workspace/PENDING.md` (rendered into
+- New template `openclaw/workspace/PENDING.md` (rendered into
   `/opt/sudo/agent-workspace/PENDING.md` like the other workspace files).
   One line per loop: `- [added YYYY-MM-DD] what's open → next action`.
 - AGENTS.md lines: read PENDING.md at session start; add a line the moment

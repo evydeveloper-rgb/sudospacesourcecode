@@ -1,7 +1,6 @@
 #!/bin/bash
-# Configure OpenClaw from Sudo device config. Called by configure-picoclaw.sh
-# after it has rendered the shared agent workspace, whenever OpenClaw is the
-# active brain (see agent_backend in server.py for the same rule).
+# Configure OpenClaw from Sudo device config. Called by configure-agent.sh
+# after it has rendered the agent workspace, once OpenClaw is installed.
 set -euo pipefail
 
 LOG="/var/log/sudo-openclaw-config.log"
@@ -146,9 +145,9 @@ cfg.get("channels", {}).pop("whatsapp", None)
 cfg.get("channels", {}).pop("telegram", None)
 token = open("/etc/sudo/openclaw_gateway_token", encoding="utf-8").read().strip()
 
-# Model aliases are shared with picoclaw's template so the Settings picker and
-# both brains agree on what "sudo-default" means.
-template = json.load(open("/opt/picoclaw/config.template.json", encoding="utf-8"))
+# Model aliases: what each name in the Settings picker (e.g. "sudo-default")
+# runs on. Shared with configure-agent.sh and the dashboard.
+template = json.load(open("/opt/sudo-openclaw/models.json", encoding="utf-8"))
 real = {m["model_name"]: m.get("model", "") for m in template.get("model_list", [])}
 alias = sudo.get("model") or "sudo-default"
 primary = real.get(alias) or real["sudo-default"]
@@ -600,15 +599,8 @@ if reach:
     ]
 
 # Check-ins: OpenClaw's own heartbeat, behind Settings -> What sudo can do ->
-# "Speak up on its own". That switch is the sudo-heartbeat timer (the dashboard
-# flips it, then runs this), so the timer's state is the one source of truth.
-# The timer's own script only served PicoClaw and steps aside under OpenClaw.
-import subprocess
-try:
-    hb_switch = subprocess.run(["systemctl", "is-enabled", "sudo-heartbeat.timer"],
-                               capture_output=True, text=True, timeout=5).stdout.strip() == "enabled"
-except Exception:
-    hb_switch = False
+# "Speak up on its own" (checkins_enabled, on unless switched off).
+hb_switch = bool(sudo.get("checkins_enabled", True))
 hb_path = "/opt/sudo/agent-workspace/HEARTBEAT.md"
 if reach and hb_switch:
     hb = {
@@ -896,7 +888,7 @@ else
   systemctl disable --now sudo-whatsapp-contacts.path 2>/dev/null || true
 fi
 
-# GitHub access for git under exec, same env file configure-picoclaw.sh keeps.
+# GitHub access for git under exec, the env file configure-agent.sh keeps.
 DROPIN="/etc/systemd/system/${UNIT}.d"
 if [ -f /etc/sudo/agent.env ]; then
   mkdir -p "$DROPIN"
@@ -913,7 +905,8 @@ if python3 -c 'import json,sys; c=json.load(open("/opt/sudo/config.json")); sys.
   systemctl disable --now sudo-whatsapp-bridge.service 2>/dev/null || true
 fi
 
-# One brain at a time: both would otherwise answer the same channels.
+# A device whose old PicoClaw files are still there (configure-agent.sh only
+# removes them once OpenClaw runs) must not have two agents on its channels.
 systemctl disable --now picoclaw-gateway.service 2>/dev/null || true
 systemctl enable "$UNIT" 2>/dev/null || true
 if ! systemctl is-active --quiet "$UNIT"; then

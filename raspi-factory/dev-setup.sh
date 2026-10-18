@@ -73,14 +73,14 @@ Open a NEW shell (or: source ~/.bashrc), then:
 The live files the agent actually uses are:
   /opt/sudo-dashboard      dashboard (server.py, index.html, app.css)
   /opt/wifi-setup          Wi-Fi captive portal
-  /opt/picoclaw            config template + workspace templates
+  /opt/sudo-openclaw       OpenClaw base config, model list, workspace templates
   /opt/sudo/config.json    this device's settings (0600)
   /opt/sudo/agent-workspace  rendered SOUL.md / AGENTS.md / memory
 
 Editing those changes THIS device only. To keep a change, copy it back
 into the sudosourcecode repo and commit — reflashing overwrites /opt.
 
-After editing dashboard or picoclaw files:
+After editing dashboard or agent template files:
   sudo systemctl restart sudo-dashboard
-  sudo /usr/local/bin/sudo-configure-picoclaw.sh
+  sudo /usr/local/bin/sudo-configure-agent.sh
 EOF

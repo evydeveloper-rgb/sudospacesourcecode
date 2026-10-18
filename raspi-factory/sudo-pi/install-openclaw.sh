@@ -23,7 +23,7 @@ if ! node_ok; then
   echo "Installing Node.js ${NODE_MAJOR}"
   # On the desktop image PackageKit refreshes apt for minutes after boot and
   # holds its lock. NodeSource's setup then failed its own apt update, apt
-  # installed Debian's Node 20 instead, and the device stayed on PicoClaw for
+  # installed Debian's Node 20 instead, and the device had no agent for
   # good. Pause PackageKit and retry rather than giving up on the first try.
   for attempt in 1 2 3 4 5 6 7 8 9 10; do
     systemctl stop packagekit.service 2>/dev/null || true
@@ -62,5 +62,5 @@ else
 fi
 "$OC_DIR/node_modules/.bin/openclaw" --version
 
-/usr/local/bin/sudo-configure-picoclaw.sh || true
+/usr/local/bin/sudo-configure-agent.sh || true
 echo "=== install-openclaw complete $(date) ==="

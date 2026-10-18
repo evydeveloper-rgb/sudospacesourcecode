@@ -15,9 +15,9 @@
 #   2. downloads the tarball and its checksum, and refuses to touch anything
 #      unless the bytes match
 #   3. copies the app directories into place -- /opt/sudo-dashboard,
-#      /opt/wifi-setup, /opt/picoclaw, the /usr/local/bin helper scripts
-#   4. re-runs configure-picoclaw.sh, which rebuilds the agent's config from
-#      the (updated) template + the owner's own saved choices
+#      /opt/wifi-setup, /opt/sudo-openclaw, the /usr/local/bin helper scripts
+#   4. re-runs configure-agent.sh, which rebuilds the agent's config from
+#      the (updated) templates + the owner's own saved choices
 #   5. restarts the services
 #
 # What it deliberately does NOT touch -- the owner's data:
@@ -65,7 +65,6 @@ BUNDLE_SHA="${BUNDLE_DIR}/sudo-factory.sha256"
 # either preserved user data or a system unit owned by install-factory.
 DASHBOARD_DIR=/opt/sudo-dashboard
 WIFI_DIR=/opt/wifi-setup
-PICOCLAW_DIR=/opt/picoclaw
 WHATSAPP_DIR=/opt/whatsapp-bridge
 BIN_DIR=/usr/local/bin
 
@@ -283,11 +282,10 @@ apply_dir() {
 
 apply_dir "sudo-dashboard" "$DASHBOARD_DIR"
 apply_dir "wifi-setup"     "$WIFI_DIR"
-apply_dir "picoclaw"       "$PICOCLAW_DIR"
 apply_dir "openclaw"       /opt/sudo-openclaw
 # App code belongs to root. A bundle built elsewhere can carry its builder's
 # user id, and OpenClaw will not load a plugin that is not root-owned.
-chown -R root:root "$DASHBOARD_DIR" "$WIFI_DIR" "$PICOCLAW_DIR" /opt/sudo-openclaw 2>>"$LOG" || true
+chown -R root:root "$DASHBOARD_DIR" "$WIFI_DIR" /opt/sudo-openclaw 2>>"$LOG" || true
 
 # Carry the owner's saved choices across versions before the configure step
 # reads them. App code changed; the person's settings must come with it.
@@ -351,11 +349,14 @@ if [ -d "$root/sudo-pi" ]; then
 fi
 
 # ── Rebuild agent config from template + preserved owner choices ────────────
-# configure-picoclaw.sh reads /opt/sudo/config.json (untouched by this script)
-# and regenerates /opt/sudo/picoclaw/config.json + Sudo's own workspace files
-# (AGENTS.md, RUNTIME.md...). The agent's own files (SOUL, IDENTITY, USER,
-# MEMORY), memory/ and sessions/ are left alone.
-if [ -x "$BIN_DIR/sudo-configure-picoclaw.sh" ]; then
+# configure-agent.sh reads /opt/sudo/config.json (untouched by this script)
+# and regenerates Sudo's own workspace files (AGENTS.md, RUNTIME.md...) and
+# OpenClaw's config. The agent's own files (SOUL, IDENTITY, USER, MEMORY),
+# memory/ and sessions/ are left alone. The picoclaw names are the script's
+# old ones, on devices this update has not renamed yet.
+if [ -x "$BIN_DIR/sudo-configure-agent.sh" ]; then
+  "$BIN_DIR/sudo-configure-agent.sh" >>"$LOG" 2>&1 || log "configure step reported an issue"
+elif [ -x "$BIN_DIR/sudo-configure-picoclaw.sh" ]; then
   "$BIN_DIR/sudo-configure-picoclaw.sh" >>"$LOG" 2>&1 || log "configure step reported an issue"
 elif [ -x "$BIN_DIR/configure-picoclaw.sh" ]; then
   "$BIN_DIR/configure-picoclaw.sh" >>"$LOG" 2>&1 || log "configure step reported an issue"
@@ -419,17 +420,14 @@ else
 fi
 
 systemctl restart sudo-dashboard.service >>"$LOG" 2>&1 || true
-# try-restart: the configure step above already started whichever brain is
-# active, and a plain restart would wake picoclaw on an OpenClaw device.
-systemctl try-restart picoclaw-gateway.service >>"$LOG" 2>&1 || true
 
 # Devices that predate automatic updates get them on their first update,
 # unless the owner already switched them off.
 [ -x "$BIN_DIR/sudo-autoupdate.sh" ] && "$BIN_DIR/sudo-autoupdate.sh" default >>"$LOG" 2>&1 || true
 
-# A first-boot OpenClaw install that failed (apt busy, network down) used to
-# leave the device on PicoClaw until someone rebooted it. The installer now
-# retries, so give it another go in the background, with the updated script.
+# A first-boot OpenClaw install that failed (apt busy, network down) leaves
+# the device without its agent. The installer retries, so give it another go
+# in the background, with the updated script.
 if [ ! -x /opt/openclaw/node_modules/.bin/openclaw ] && [ -f /var/lib/wifi-setup-configured ] \
    && systemctl cat sudo-openclaw-install.service >/dev/null 2>&1; then
   log "OpenClaw is not installed -- retrying the install in the background"

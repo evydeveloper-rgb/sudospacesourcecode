@@ -6017,3 +6017,21 @@ I18N.add('ar', {
   "usd.checked": "من OpenRouter، آخر فحص {time}. يحسب المحادثات وواتساب وتيليغرام والتذكيرات والرسائل.",
   "usd.firstCheck": "سيُفحص الإنفاق مع OpenRouter خلال دقائق."
 });
+
+// ---- Chat: agent install retry --------------------------------------------------
+I18N.add('en', {
+  "ready.installFailed": "Your agent didn't finish installing. It usually works on a second try.",
+  "ready.retry": "Retry"
+});
+I18N.add('es', {
+  "ready.installFailed": "Tu agente no terminó de instalarse. Suele funcionar al segundo intento.",
+  "ready.retry": "Reintentar"
+});
+I18N.add('zh', {
+  "ready.installFailed": "你的助手没有安装完成。通常再试一次就好了。",
+  "ready.retry": "重试"
+});
+I18N.add('ar', {
+  "ready.installFailed": "لم يكتمل تثبيت وكيلك. عادةً ما ينجح في المحاولة الثانية.",
+  "ready.retry": "إعادة المحاولة"
+});

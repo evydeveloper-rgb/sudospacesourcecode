@@ -57,7 +57,7 @@ PY
 
     rm -rf /opt/sudo/agent-workspace /var/lib/sudo-agent-files.json /opt/sudo/whatsapp-contacts.json
     mkdir -p /opt/sudo/agent-workspace
-    rm -f /opt/sudo/picoclaw/config.json
+    rm -rf /opt/sudo/picoclaw   # left by older versions
     rm -rf /opt/sudo/openclaw
     rm -f /opt/sudo/dashboard-chat.json
 
@@ -79,11 +79,10 @@ PY
 
     if [ -x /usr/local/bin/sudo-cloud-init.sh ]; then
         /usr/local/bin/sudo-cloud-init.sh || true
-        /usr/local/bin/sudo-configure-picoclaw.sh || true
+        /usr/local/bin/sudo-configure-agent.sh || true
     fi
 
     systemctl restart sudo-dashboard.service
-    systemctl try-restart picoclaw-gateway.service 2>/dev/null || true
 fi
 
 rm -f /boot/firmware/factory-retest.sh /boot/firmware/retest-portal.sh
