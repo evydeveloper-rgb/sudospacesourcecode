@@ -7,8 +7,8 @@ into a fresh Sudo on first boot:
 
     sudo python3 make-openclaw-import.py \\
         --root /mnt/old            # the old device's filesystem root
-        --home /home/rand          # the user whose ~/.openclaw this is
-        --agent-name Dandi --user-name Rand \\
+        --home /home/alex          # the user whose ~/.openclaw this is
+        --agent-name Juno --user-name Alex \\
         --out openclaw-import.tar.gz
 
 then: prepare-sd.sh --import openclaw-import.tar.gz /path/to/bootfs
@@ -46,7 +46,7 @@ def e164(value):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--root", required=True, help="old device's filesystem root")
-    ap.add_argument("--home", required=True, help="home dir on the old device, e.g. /home/rand")
+    ap.add_argument("--home", required=True, help="home dir on the old device, e.g. /home/alex")
     ap.add_argument("--agent-name", required=True)
     ap.add_argument("--user-name", required=True)
     ap.add_argument("--template", default=os.path.join(os.path.dirname(__file__), "..", "picoclaw", "config.template.json"))

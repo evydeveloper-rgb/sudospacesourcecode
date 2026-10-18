@@ -1,6 +1,6 @@
 # Sudo — Open Loops + Embedded Chat (spec)
 
-Status: proposed — Evy approved direction 2026-10-13, building Phase A.
+Status: proposed — direction approved 2026-10-13, building Phase A.
 Owner: Claudia (orchestrator); implementation via Claude Code.
 
 ## Why
@@ -75,6 +75,6 @@ different brain under the same UI.
 - No new auth scheme for the embedded widget — reuses the dashboard's existing
   session/local link.
 
-## Open questions for Evy
+## Open questions
 - Keep the picoclaw binary on the card at all, or drop it entirely?
 - Loop statuses: is Open / Started / Working / Done the right set, or fewer?

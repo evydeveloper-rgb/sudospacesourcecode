@@ -7556,7 +7556,7 @@
     }
 
     // {agent} in a translated string is the agent's own name, so the "what
-    // sudo can do" explanations read "chatita can message you first" rather
+    // sudo can do" explanations read "Robin can message you first" rather
     // than a generic "it". I18N re-translates only when the name changes.
     function applyAgentName(status) {
       I18N.setVars({ agent: status.agent_name || 'sudo' });
@@ -8249,7 +8249,7 @@
     //     is the reliable signal -- the old height comparison was not, because
     //     Android shrinks window.innerHeight *with* the keyboard, so
     //     "h < innerHeight - 120" never became true and the 72px lane stayed
-    //     put, leaving exactly the gap Evy hit.
+    //     put, leaving exactly the gap a tester hit.
     //   - the visual viewport height, as a fallback for the moment before
     //     focus settles or on browsers with no focus event timing we can trust.
     let composerFocused = false;
