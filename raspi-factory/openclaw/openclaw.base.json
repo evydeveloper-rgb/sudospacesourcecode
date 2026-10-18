@@ -11,6 +11,7 @@
   "session": { "dmScope": "per-channel-peer" },
   "tools": {
     "profile": "coding",
+    "loopDetection": { "enabled": true },
     "deny": [
       "music_generate",
       "video_generate",
