@@ -34,7 +34,7 @@ rm -f /var/lib/wifi-setup-configured /var/lib/wifi-setup-pending
 rm -f /var/lib/sudo-cloud-registered /var/lib/sudo-remote-enabled
 rm -f /etc/sudo/public_url
 # A new owner must not inherit the community account.
-rm -f /etc/sudo/community.json
+rm -f /etc/sudo/community.json /etc/sudo/reports.json /var/lib/sudo-report-last.json
 rm -f /etc/sudo/autoupdate
 
 rfkill unblock wifi 2>/dev/null || true
@@ -69,7 +69,7 @@ for key in (
     "exec_enabled", "ssh_enabled", "ssh_auth",
     "openrouter_key_source", "user_openrouter_key", "composio_api_key",
     # Added since: keys, linked numbers and choices a new owner must not inherit.
-    "provider_keys", "github_token", "github_username", "github_enabled", "telegram",
+    "provider_keys", "github_token", "github_username", "github_enabled", "telegram", "problem_reports",
     "whatsapp_mode", "whatsapp_numbers", "whatsapp_owner_number",
     "whatsapp_read_others", "whatsapp_in_summary",
     "full_access_enabled", "subagent_enabled", "skills_enabled",

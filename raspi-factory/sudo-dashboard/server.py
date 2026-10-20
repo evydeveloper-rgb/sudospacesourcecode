@@ -593,6 +593,8 @@ def gen_password(length=16):
 SSH_SETUP_SCRIPT = "/usr/local/bin/sudo-setup-ssh.sh"
 HOSTNAME_SCRIPT = "/usr/local/bin/sudo-set-hostname.sh"
 TIMEZONE_SCRIPT = "/usr/local/bin/sudo-set-timezone.sh"
+REPORT_SCRIPT = "/usr/local/bin/sudo-problem-report.py"
+REPORT_LAST = "/var/lib/sudo-report-last.json"
 TIMEZONE_RE = re.compile(r"^[A-Za-z]+(/[A-Za-z0-9_+-]+){0,2}$")
 
 
@@ -1111,7 +1113,7 @@ DEVICE_DENY_PATHS = {
     "/etc/sudo/dashboard_password.hash", "/etc/sudo/ssh_password",
     "/etc/sudo/openclaw_gateway_token", "/etc/sudo/api.url",
     "/opt/sudo/config.json", "/opt/sudo/openclaw/openclaw.json",
-    "/opt/sudo/agent.env", "/etc/sudo/community.json",
+    "/opt/sudo/agent.env", "/etc/sudo/community.json", "/etc/sudo/reports.json",
 }
 DEVICE_DENY_DIRS = {"/opt/sudo/openclaw/credentials", "/opt/sudo/openclaw/npm",
                     "/opt/sudo/whatsapp-auth"}
@@ -1396,6 +1398,8 @@ def setup_status(include_sensitive=False):
         "whatsapp_legacy": whatsapp_legacy(cfg),
         "telegram_connected": telegram_state(cfg)["state"] == "connected",
         "timezone": device_timezone(),
+        # Problem reports: True / False once the owner answered, None before.
+        "problem_reports": cfg.get("problem_reports"),
         "timezone_pinned": bool(cfg.get("timezone_pinned")),
         "prefer_local": bool(cfg.get("prefer_local")),
         "ui_language": cfg.get("ui_language") if cfg.get("ui_language") in UI_LANGUAGES else None,
@@ -4375,6 +4379,44 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
         # opens ("auto"), so a card set up in one country and used in another
         # follows its owner. Picking one in Settings pins it ("pin"); "follow"
         # goes back to the phone's.
+        # Problem reports (Settings -> Problem reports). The collector runs
+        # outside the sandbox: it reads the agent's journal and state.
+        if path == "/api/reports/preview" and self.command == "GET":
+            try:
+                r = subprocess.run(
+                    ["systemd-run", "--quiet", "--collect", "--wait", "--pipe",
+                     f"--unit=sudo-report-preview-{int(time.time())}",
+                     "/usr/bin/python3", REPORT_SCRIPT, "collect"],
+                    capture_output=True, text=True, timeout=90)
+                preview = json.loads(r.stdout or "{}")
+            except (OSError, subprocess.SubprocessError, ValueError):
+                preview = None
+            self.send_json({"preview": preview, "last": read_json_file(REPORT_LAST, None)})
+            return True
+
+        if path == "/api/reports/settings" and self.command == "POST":
+            try:
+                body = self.read_body_json()
+            except (ValueError, json.JSONDecodeError):
+                body = {}
+            cfg = read_json_file(CONFIG)
+            enabled = bool(body.get("enabled"))
+            cfg["problem_reports"] = enabled
+            write_json_file(CONFIG, cfg)
+            action = "send" if enabled else ("forget" if body.get("forget") else None)
+            if action:
+                # The first report goes now, so the owner sees it arrive; a
+                # deletion runs straight away too.
+                try:
+                    subprocess.Popen(["systemd-run", "--quiet", "--collect",
+                                      f"--unit=sudo-report-{action}-{int(time.time())}",
+                                      "/usr/bin/python3", REPORT_SCRIPT, action],
+                                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                except OSError:
+                    pass
+            self.send_json({"ok": True, "problem_reports": enabled})
+            return True
+
         if path == "/api/device/timezone" and self.command == "POST":
             try:
                 body = self.read_body_json()

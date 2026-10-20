@@ -458,6 +458,34 @@ UNIT
   systemctl daemon-reload 2>/dev/null || true
   systemctl enable --now sudo-spend-watch.timer 2>/dev/null || true
 fi
+# Daily problem report (Settings -> Problem reports). The timer always runs;
+# problem-report.py sends nothing unless the owner turned reports on.
+if [ ! -f /etc/systemd/system/sudo-problem-report.timer ]; then
+  cat > /etc/systemd/system/sudo-problem-report.service << 'UNIT'
+[Unit]
+Description=Sudo daily problem report (only when the owner opted in)
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /usr/local/bin/sudo-problem-report.py send
+TimeoutStartSec=180
+UNIT
+  cat > /etc/systemd/system/sudo-problem-report.timer << 'UNIT'
+[Unit]
+Description=Send the daily problem report
+
+[Timer]
+OnCalendar=daily
+RandomizedDelaySec=6h
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+UNIT
+  systemctl daemon-reload 2>/dev/null || true
+  systemctl enable --now sudo-problem-report.timer 2>/dev/null || true
+fi
 systemctl daemon-reload 2>/dev/null || true
 
 

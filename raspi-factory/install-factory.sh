@@ -171,6 +171,8 @@ cp "${BOOT}/sudo-pi/setup-ssh.sh" /usr/local/bin/sudo-setup-ssh.sh
 cp "${BOOT}/sudo-pi/install-local-model.sh" /usr/local/bin/sudo-install-local-model.sh
 cp "${BOOT}/sudo-pi/set-hostname.sh" /usr/local/bin/sudo-set-hostname.sh
 cp "${BOOT}/sudo-pi/set-timezone.sh" /usr/local/bin/sudo-set-timezone.sh
+cp "${BOOT}/sudo-pi/problem-report.py" /usr/local/bin/sudo-problem-report.py
+chmod +x /usr/local/bin/sudo-problem-report.py
 cp "${BOOT}/sudo-pi/notify-owner.sh" /usr/local/bin/sudo-notify-owner.sh
 cp "${BOOT}/sudo-pi/install-adguard.sh" /usr/local/bin/sudo-install-adguard.sh
 cp "${BOOT}/sudo-pi/home.py" /usr/local/bin/sudo-home.py

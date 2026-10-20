@@ -115,6 +115,17 @@
         <button class="legacy-wa-later" type="button" id="legacy-wa-later" data-i18n="legacyWa.later">Later</button>
       </div>
 
+      <div class="legacy-wa-banner reports-ask" id="reports-ask" role="status" hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 3 7v5c0 5 3.8 8.4 9 9 5.2-.6 9-4 9-9V7l-9-4Z"/><path d="m9 12 2 2 4-4"/></svg>
+        <div>
+          <strong data-i18n="reports.askTitle">Help us fix problems faster?</strong>
+          <small data-i18n="reports.askBody">You're on the beta. Let sudo send the team a short daily report when something breaks: versions and error counts, never your messages, names or keys.</small>
+        </div>
+        <button class="primary-button" type="button" id="reports-yes" data-i18n="reports.yes">Yes, send reports</button>
+        <button class="legacy-wa-later" type="button" id="reports-what" data-i18n="reports.what">What's sent?</button>
+        <button class="legacy-wa-later" type="button" id="reports-no" data-i18n="reports.no">No thanks</button>
+      </div>
+
       <section class="view welcome-view" id="view-welcome" aria-labelledby="welcome-title">
         <div class="welcome-inner">
           <label class="lang-pick">
@@ -2094,6 +2105,42 @@
               </label>
               <p class="icon-how" id="icon-how"></p>
               <p class="form-status" id="icon-status" role="status"></p>
+            </div>
+          </section>
+          <section class="setting-card" id="reports-setting">
+            <button class="setting-head" type="button" aria-expanded="false">
+              <span class="setting-icon">✚</span>
+              <span><strong data-i18n="reports.title">Problem reports</strong><small id="reports-summary"></small></span>
+              <span class="chevron">&rsaquo;</span>
+            </button>
+            <div class="setting-body">
+              <p class="section-intro" data-i18n="reports.intro">Once a day, sudo can tell the Sudo team what went wrong on this device, so a broken reminder or a crashing agent gets fixed without you having to report it. Off unless you turn it on.</p>
+              <div class="access-row">
+                <div>
+                  <strong data-i18n="reports.toggle">Send daily problem reports</strong>
+                  <small data-i18n="reports.toggleSmall">To the Sudo team only. You can turn it off any time.</small>
+                </div>
+                <label class="switch">
+                  <input id="reports-toggle" type="checkbox">
+                  <span aria-hidden="true"></span>
+                  <em class="sr-only" data-i18n="reports.toggle">Send daily problem reports</em>
+                </label>
+              </div>
+              <div class="reports-lists">
+                <div><p class="usd-head" data-i18n="reports.sentHead">What's in a report</p>
+                  <ul><li data-i18n="reports.sent1">Sudo and OpenClaw versions, the board, memory, temperature</li>
+                  <li data-i18n="reports.sent2">Which kinds of key and chat app are set up (never the keys or numbers)</li>
+                  <li data-i18n="reports.sent3">How many reminders ran, failed or didn't arrive, and the kind of error</li>
+                  <li data-i18n="reports.sent4">Error counts per part of the agent; crashes, failed updates</li></ul></div>
+                <div><p class="usd-head" data-i18n="reports.neverHead">Never in a report</p>
+                  <ul><li data-i18n="reports.never1">Your messages, reminders' text, contacts or files</li>
+                  <li data-i18n="reports.never2">Names, phone numbers, email addresses, links</li>
+                  <li data-i18n="reports.never3">API keys, passwords or your location</li></ul></div>
+              </div>
+              <button class="soft-button" type="button" id="reports-preview-btn" data-i18n="reports.preview">See this device's report</button>
+              <pre class="reports-preview" id="reports-preview" hidden></pre>
+              <p class="microcopy" id="reports-last"></p>
+              <p class="form-status" id="reports-status" role="status"></p>
             </div>
           </section>
           <section class="setting-card" id="timezone-setting">
@@ -7682,6 +7729,69 @@
       $('legacy-wa-banner').hidden = true;
     });
 
+    // --- Problem reports ----------------------------------------------------
+    // Asked once, in a banner, of every owner who hasn't answered; "Not now"
+    // only hides it for this visit. The choice lives in Settings afterwards.
+    function renderReports(status) {
+      if (!status) return;
+      const on = status.problem_reports === true;
+      $('reports-toggle').checked = on;
+      $('reports-summary').textContent = on ? t('reports.on') : t('common.off');
+      let later = false;
+      try { later = sessionStorage.getItem('sudo-reports-later') === '1'; } catch (_) {}
+      $('reports-ask').hidden = status.problem_reports === true || status.problem_reports === false
+        || !status.profile_done || later || state.tab === 'welcome';
+    }
+
+    async function setReports(enabled, forget) {
+      $('reports-status').textContent = t('common.saving');
+      try {
+        const r = await api('/api/reports/settings', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ enabled, forget: !!forget }),
+        });
+        if (state.status) state.status.problem_reports = r.problem_reports;
+        renderReports(state.status);
+        $('reports-status').textContent = enabled ? t('reports.thanks') : (forget ? t('reports.deleted') : t('common.saved'));
+      } catch (error) {
+        $('reports-status').textContent = error.message;
+        renderReports(state.status);
+      }
+    }
+
+    async function showReportPreview() {
+      const pre = $('reports-preview');
+      pre.hidden = false;
+      pre.textContent = t('reports.collecting');
+      try {
+        const r = await api('/api/reports/preview', {}, 100000);
+        pre.textContent = r.preview ? JSON.stringify(r.preview, null, 2) : t('reports.noPreview');
+        const last = r.last;
+        $('reports-last').textContent = last && last.at
+          ? t(last.sent ? 'reports.lastSent' : 'reports.lastFailed', { time: new Date(last.at * 1000).toLocaleString(I18N.htmlLang()) })
+          : t('reports.neverSent');
+      } catch (error) { pre.textContent = error.message; }
+    }
+
+    $('reports-yes').addEventListener('click', () => setReports(true));
+    $('reports-no').addEventListener('click', () => setReports(false));
+    $('reports-what').addEventListener('click', () => {
+      try { sessionStorage.setItem('sudo-reports-later', '1'); } catch (_) {}
+      $('reports-ask').hidden = true;
+      setTab('settings');
+      openSettingPage('reports-setting');
+      showReportPreview();
+    });
+    $('reports-toggle').addEventListener('change', () => {
+      const on = $('reports-toggle').checked;
+      if (!on && state.status && state.status.problem_reports === true) {
+        setReports(false, confirm(t('reports.forgetConfirm')));
+      } else {
+        setReports(on);
+      }
+    });
+    $('reports-preview-btn').addEventListener('click', showReportPreview);
+
     // --- Time zone ----------------------------------------------------------
     function phoneTimezone() {
       try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (_) { return ''; }
@@ -7748,6 +7858,7 @@
 
     function renderStatus(status) {
       renderLegacyWhatsapp(status);
+      renderReports(status);
       renderTimezone(status);
       syncTimezone(status);
       state.status = status;

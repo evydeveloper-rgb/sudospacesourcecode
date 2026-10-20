@@ -3089,3 +3089,12 @@ input[type="password"], input[type="tel"], input[type="number"], #ssh-key, #devi
 /* Chat banner: the agent install gave up -> Retry */
 .model-retry { margin-inline-start: 10px; padding: 4px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); font: 700 .74rem var(--font-sans); cursor: pointer; }
 .model-retry[hidden] { display: none; }
+
+/* Problem reports: the one-time ask and the Settings card */
+.reports-ask { border-inline-start-color: var(--primary); }
+.reports-ask > svg { stroke: var(--primary); }
+.reports-lists { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 6px 0 14px; }
+.reports-lists ul { margin: 0; padding-inline-start: 18px; color: var(--ink-2); font-size: .78rem; line-height: 1.5; }
+@media (max-width: 560px) { .reports-lists { grid-template-columns: 1fr; } }
+.reports-preview { max-height: 320px; overflow: auto; margin: 10px 0 0; padding: 12px; border-radius: var(--radius); background: var(--surface-low); font: 500 .7rem/1.45 var(--font-mono, ui-monospace, monospace); white-space: pre-wrap; word-break: break-word; }
+.reports-preview[hidden] { display: none; }
