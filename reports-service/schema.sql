@@ -15,3 +15,28 @@ create index if not exists problem_reports_received_idx on public.problem_report
 
 alter table public.problem_reports enable row level security;
 revoke all on public.problem_reports from anon, authenticated;
+
+-- The team's reader (Claudia's daily digest, problem_report_digest.py on the
+-- VPS): secret-guarded like signups_since, same secret. Devices are the first
+-- 8 characters of their key hash.
+create or replace function public.problem_reports_since(since timestamptz, secret text)
+returns table(id uuid, received_at timestamptz, device text, sudo_version text, report jsonb)
+language plpgsql
+security definer
+set search_path to 'public'
+as $function$
+begin
+  if encode(sha256(convert_to(coalesce(secret, ''), 'UTF8')), 'hex')
+       <> '2f16290122c6b2a81f57ad4dd8bc81974f7420345b41e726e81297d980bf5df3' then
+    raise exception 'forbidden' using errcode = '42501';
+  end if;
+  return query
+    select r.id, r.received_at, left(r.device_hash, 8), r.sudo_version, r.report
+    from public.problem_reports r
+    where r.received_at > since
+    order by r.received_at asc
+    limit 500;
+end;
+$function$;
+revoke all on function public.problem_reports_since(timestamptz, text) from public;
+grant execute on function public.problem_reports_since(timestamptz, text) to anon, authenticated;

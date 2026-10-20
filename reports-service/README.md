@@ -27,3 +27,6 @@ delete everything the device sent (`POST /forget`). Factory reset removes the ke
 
 **Routes.** `POST /report` (one report, ≤ 32 KB, 4 per device per day),
 `POST /forget`.
+
+**Reading them.** `problem_reports_since(since, secret)` (in `schema.sql`) is the
+only read path. A daily digest on the team side summarises the last 24 hours.

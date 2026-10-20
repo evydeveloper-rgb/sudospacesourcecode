@@ -131,23 +131,25 @@ def agent(cfg):
     }
 
 
-def reminders(since_ms):
-    """Scheduled-job runs in the last day: outcomes and error kinds. Jobs are
-    told apart by a hash of their id, never by their name."""
-    out = {"runs": 0, "ok": 0, "error": 0, "skipped": 0, "not_delivered": 0, "errors": []}
+def reminders(since_ms, window_h):
+    """Scheduled-job runs in the window: outcomes, error kinds and OpenClaw's
+    own diagnosis of each failure (scrubbed). Jobs are told apart by a hash
+    of their id, never by their name."""
+    out = {"window_h": window_h, "runs": 0, "ok": 0, "error": 0, "skipped": 0, "not_delivered": 0,
+           "errors": []}
     seen = {}
     if not os.path.isfile(STATE_DB):
         return out
     try:
         db = sqlite3.connect(f"file:{STATE_DB}?mode=ro", uri=True, timeout=5)
         rows = db.execute(
-            "SELECT job_id, status, error, delivery_status, delivery_error, delivered "
-            "FROM cron_run_logs WHERE ts >= ?", (since_ms,)).fetchall()
+            "SELECT job_id, status, error, delivery_status, delivery_error, delivered, "
+            "diagnostics_summary, duration_ms, ts FROM cron_run_logs WHERE ts >= ?", (since_ms,)).fetchall()
         db.close()
     except sqlite3.Error as exc:
         out["read_error"] = scrub(exc)
         return out
-    for job_id, status, error, dstatus, derror, delivered in rows:
+    for job_id, status, error, dstatus, derror, delivered, diag, duration_ms, ts in rows:
         out["runs"] += 1
         status = (status or "").lower()
         if status in ("ok", "error", "skipped"):
@@ -157,10 +159,20 @@ def reminders(since_ms):
         for kind, text in (("run", error), ("delivery", derror)):
             if text:
                 key = f"{kind}: {scrub(text, 100)}"
-                entry = seen.setdefault(key, {"count": 0, "jobs": set()})
+                entry = seen.setdefault(key, {"count": 0, "jobs": set(), "why": {}, "secs": [], "last": 0})
                 entry["count"] += 1
                 entry["jobs"].add(hashlib.sha256(str(job_id).encode()).hexdigest()[:8])
-    out["errors"] = [{"error": k, "count": v["count"], "jobs": len(v["jobs"])}
+                if diag:
+                    why = scrub(diag, 120)
+                    entry["why"][why] = entry["why"].get(why, 0) + 1
+                if duration_ms:
+                    entry["secs"].append(duration_ms / 1000)
+                entry["last"] = max(entry["last"], int((ts or 0) / 1000))
+    out["errors"] = [{"error": k, "count": v["count"], "jobs": len(v["jobs"]),
+                      # OpenClaw's own note on why, most common first.
+                      "why": [w for w, _ in sorted(v["why"].items(), key=lambda kv: -kv[1])[:3]],
+                      "avg_secs": round(sum(v["secs"]) / len(v["secs"])) if v["secs"] else None,
+                      "last_at": v["last"] or None}
                      for k, v in sorted(seen.items(), key=lambda kv: -kv[1]["count"])[:15]]
     return out
 
@@ -201,13 +213,16 @@ def system_events():
 def collect():
     cfg = read_json(CONFIG, {}) or {}
     now = time.time()
+    window = 24 if (read_json(LAST_FILE, {}) or {}).get("sent") else 14 * 24
     return {
         "schema": 1,
         "sent_at": int(now),
         "sudo": (open("/opt/sudo/version").read().strip() if os.path.isfile("/opt/sudo/version") else None),
         "device": device(),
         "agent": agent(cfg),
-        "reminders_24h": reminders(int((now - DAY) * 1000)),
+        # The first report after opting in looks back two weeks, so problems
+        # from before the owner said yes are in it too; then one day at a time.
+        "reminders": reminders(int((now - window * 3600) * 1000), window),
         "log_24h": gateway_log(),
         "system": system_events(),
     }
