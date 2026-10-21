@@ -90,7 +90,7 @@ tar -czf "$WORK/$ASSET" \
   --exclude='.git' \
   --exclude='node_modules' \
   --exclude='*.tar.gz' \
-  --exclude='.DS_Store' \
+  --exclude='.DS_Store'   --exclude='__pycache__'   --exclude='dev/authorized_keys' \
   -C "$(dirname "$ROOT")" "$BUNDLE_NAME"
 
 ( cd "$WORK" && sha256sum "$ASSET" > "$SHA_ASSET" )
