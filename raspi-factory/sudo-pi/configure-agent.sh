@@ -492,8 +492,9 @@ systemctl daemon-reload 2>/dev/null || true
 # Check-ins ("Speak up on its own") used to be the sudo-heartbeat timer, which
 # ran a PicoClaw script. The switch is a config value now (OpenClaw runs the
 # check-ins itself, configure-openclaw.sh); carry the timer's state over once,
-# then retire the timer.
-python3 - << 'PY'
+# then retire the timer. Never fatal: a problem here must not stop the
+# agent's own config from being written below.
+python3 - << 'PY' || echo "settings carry-over reported an issue"
 import json, subprocess, os
 path = "/opt/sudo/config.json"
 cfg = json.load(open(path, encoding="utf-8"))
@@ -508,7 +509,31 @@ if "checkins_enabled" not in cfg:
         json.dump(cfg, f, indent=2)
     os.chmod(path, 0o600)
     print(f"Check-ins switch carried over: {'on' if on else 'off'}")
+
+# Problem reports for the beta testers. Every device set up before reports
+# existed belongs to one of the beta testers, who agreed to them; their
+# reports go on once, and the dashboard tells them so (with a Turn off).
+# Devices installed or reset from now on have the marker from
+# install-factory.sh and are asked instead (opt-in).
+MARKER = "/var/lib/sudo-reports-beta-migration"
+if not os.path.exists(MARKER):
+    cfg = json.load(open(path, encoding="utf-8"))
+    if cfg.get("profile_done") and "problem_reports" not in cfg:
+        cfg["problem_reports"] = True
+        cfg["problem_reports_auto"] = True
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(cfg, f, indent=2)
+        os.chmod(path, 0o600)
+        open("/run/sudo-report-now", "w").close()
+        print("Problem reports: on for this beta device")
+    open(MARKER, "w").close()
 PY
+# Just switched on: the first report (two weeks of history) goes now, not
+# at tomorrow's timer.
+if [ -f /run/sudo-report-now ]; then
+  rm -f /run/sudo-report-now
+  systemctl start --no-block sudo-problem-report.service 2>/dev/null || true
+fi
 if [ -f /etc/systemd/system/sudo-heartbeat.timer ]; then
   systemctl disable --now sudo-heartbeat.timer 2>/dev/null || true
   rm -f /etc/systemd/system/sudo-heartbeat.timer /etc/systemd/system/sudo-heartbeat.service \

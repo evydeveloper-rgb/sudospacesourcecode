@@ -6157,3 +6157,29 @@ I18N.add('ar', {
   "reports.deleted": "تم الإيقاف. يجري حذف التقارير المرسلة.",
   "reports.forgetConfirm": "هل تحذف أيضًا التقارير التي أرسلها هذا الجهاز؟"
 });
+
+// ---- Problem reports: on for beta testers --------------------------------------
+I18N.add('en', {
+  "reports.noticeTitle": "Daily problem reports are on",
+  "reports.noticeBody": "As you agreed for the beta, sudo sends the team a short daily report so problems get fixed fast: versions and error counts, never your messages, names or keys.",
+  "reports.ok": "OK",
+  "reports.turnOff": "Turn off"
+});
+I18N.add('es', {
+  "reports.noticeTitle": "Los informes diarios de problemas están activados",
+  "reports.noticeBody": "Como acordaste para la beta, sudo envía al equipo un breve informe diario para arreglar problemas rápido: versiones y número de errores, nunca tus mensajes, nombres ni claves.",
+  "reports.ok": "De acuerdo",
+  "reports.turnOff": "Desactivar"
+});
+I18N.add('zh', {
+  "reports.noticeTitle": "每日问题报告已开启",
+  "reports.noticeBody": "按照你参加测试版时的同意，sudo 每天给团队发一份简短报告，方便尽快修复问题：版本和错误次数，绝不包含你的消息、名字或密钥。",
+  "reports.ok": "好的",
+  "reports.turnOff": "关闭"
+});
+I18N.add('ar', {
+  "reports.noticeTitle": "تقارير المشكلات اليومية مفعّلة",
+  "reports.noticeBody": "كما وافقت في النسخة التجريبية، يرسل sudo للفريق تقريرًا يوميًا قصيرًا لإصلاح المشكلات بسرعة: الإصدارات وعدد الأخطاء، ولا يتضمن أبدًا رسائلك أو الأسماء أو المفاتيح.",
+  "reports.ok": "حسنًا",
+  "reports.turnOff": "إيقاف"
+});

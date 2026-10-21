@@ -33,6 +33,10 @@ cp "${BOOT}/whatsapp-bridge/package.json" /opt/whatsapp-bridge/
 cp "${BOOT}/whatsapp-bridge/bridge.js" /opt/whatsapp-bridge/
 
 mkdir -p /opt/sudo/agent-workspace
+# A fresh install or reset is asked about problem reports (opt-in); only
+# devices updated from before reports existed -- the beta testers -- get
+# them on by default (configure-agent.sh).
+mkdir -p /var/lib && touch /var/lib/sudo-reports-beta-migration
 
 # ── OpenClaw (the agent) ─────────────────────────────────────────────────────
 # The package itself lands in /opt/openclaw via install-openclaw.sh; Sudo's own

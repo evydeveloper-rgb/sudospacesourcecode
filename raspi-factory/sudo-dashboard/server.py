@@ -1400,6 +1400,9 @@ def setup_status(include_sensitive=False):
         "timezone": device_timezone(),
         # Problem reports: True / False once the owner answered, None before.
         "problem_reports": cfg.get("problem_reports"),
+        # Switched on for a beta tester by the update: say so until they've seen it.
+        "problem_reports_notice": bool(cfg.get("problem_reports_auto")
+                                       and not cfg.get("problem_reports_notice_seen")),
         "timezone_pinned": bool(cfg.get("timezone_pinned")),
         "prefer_local": bool(cfg.get("prefer_local")),
         "ui_language": cfg.get("ui_language") if cfg.get("ui_language") in UI_LANGUAGES else None,
@@ -4400,6 +4403,11 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             except (ValueError, json.JSONDecodeError):
                 body = {}
             cfg = read_json_file(CONFIG)
+            cfg["problem_reports_notice_seen"] = True
+            if body.get("ack"):
+                write_json_file(CONFIG, cfg)
+                self.send_json({"ok": True, "problem_reports": cfg.get("problem_reports")})
+                return True
             enabled = bool(body.get("enabled"))
             cfg["problem_reports"] = enabled
             write_json_file(CONFIG, cfg)

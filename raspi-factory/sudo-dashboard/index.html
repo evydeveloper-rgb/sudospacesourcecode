@@ -118,10 +118,12 @@
       <div class="legacy-wa-banner reports-ask" id="reports-ask" role="status" hidden>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 3 7v5c0 5 3.8 8.4 9 9 5.2-.6 9-4 9-9V7l-9-4Z"/><path d="m9 12 2 2 4-4"/></svg>
         <div>
-          <strong data-i18n="reports.askTitle">Help us fix problems faster?</strong>
-          <small data-i18n="reports.askBody">You're on the beta. Let sudo send the team a short daily report when something breaks: versions and error counts, never your messages, names or keys.</small>
+          <strong>Help us fix problems faster?</strong>
+          <small>You're on the beta. Let sudo send the team a short daily report when something breaks: versions and error counts, never your messages, names or keys.</small>
         </div>
         <button class="primary-button" type="button" id="reports-yes" data-i18n="reports.yes">Yes, send reports</button>
+        <button class="primary-button" type="button" id="reports-ok" data-i18n="reports.ok" hidden>OK</button>
+        <button class="legacy-wa-later" type="button" id="reports-off" data-i18n="reports.turnOff" hidden>Turn off</button>
         <button class="legacy-wa-later" type="button" id="reports-what" data-i18n="reports.what">What's sent?</button>
         <button class="legacy-wa-later" type="button" id="reports-no" data-i18n="reports.no">No thanks</button>
       </div>
@@ -7739,8 +7741,26 @@
       $('reports-summary').textContent = on ? t('reports.on') : t('common.off');
       let later = false;
       try { later = sessionStorage.getItem('sudo-reports-later') === '1'; } catch (_) {}
-      $('reports-ask').hidden = status.problem_reports === true || status.problem_reports === false
-        || !status.profile_done || later || state.tab === 'welcome';
+      const notice = !!status.problem_reports_notice;
+      $('reports-ask').hidden = notice ? (later || state.tab === 'welcome')
+        : (status.problem_reports === true || status.problem_reports === false
+           || !status.profile_done || later || state.tab === 'welcome');
+      // On already for a beta tester: the same banner says so instead of asking.
+      const ask = $('reports-ask');
+      ask.querySelector('strong').textContent = t(notice ? 'reports.noticeTitle' : 'reports.askTitle');
+      ask.querySelector('small').textContent = t(notice ? 'reports.noticeBody' : 'reports.askBody');
+      $('reports-yes').hidden = $('reports-no').hidden = notice;
+      $('reports-ok').hidden = $('reports-off').hidden = !notice;
+    }
+
+    async function ackReports() {
+      try {
+        await api('/api/reports/settings', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ack: true }),
+        });
+      } catch (_) {}
+      if (state.status) state.status.problem_reports_notice = false;
+      renderReports(state.status);
     }
 
     async function setReports(enabled, forget) {
@@ -7750,7 +7770,7 @@
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ enabled, forget: !!forget }),
         });
-        if (state.status) state.status.problem_reports = r.problem_reports;
+        if (state.status) Object.assign(state.status, { problem_reports: r.problem_reports, problem_reports_notice: false });
         renderReports(state.status);
         $('reports-status').textContent = enabled ? t('reports.thanks') : (forget ? t('reports.deleted') : t('common.saved'));
       } catch (error) {
@@ -7774,6 +7794,12 @@
     }
 
     $('reports-yes').addEventListener('click', () => setReports(true));
+    $('reports-ok').addEventListener('click', ackReports);
+    $('reports-off').addEventListener('click', async () => {
+      await setReports(false, confirm(t('reports.forgetConfirm')));
+      if (state.status) state.status.problem_reports_notice = false;
+      renderReports(state.status);
+    });
     $('reports-no').addEventListener('click', () => setReports(false));
     $('reports-what').addEventListener('click', () => {
       try { sessionStorage.setItem('sudo-reports-later', '1'); } catch (_) {}

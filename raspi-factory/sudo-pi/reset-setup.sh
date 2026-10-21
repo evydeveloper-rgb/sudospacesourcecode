@@ -92,7 +92,7 @@ for key in (
     "openrouter_key_source", "user_openrouter_key", "composio_api_key",
     "composio_enabled", "routing_mode", "prefer_local",
     # Added since: keys, linked numbers and choices a new owner must not inherit.
-    "provider_keys", "github_token", "github_username", "github_enabled", "telegram", "problem_reports",
+    "provider_keys", "github_token", "github_username", "github_enabled", "telegram", "problem_reports", "problem_reports_auto", "problem_reports_notice_seen",
     "whatsapp_mode", "whatsapp_numbers", "whatsapp_owner_number",
     "whatsapp_read_others", "whatsapp_in_summary",
     "full_access_enabled", "subagent_enabled", "skills_enabled",
