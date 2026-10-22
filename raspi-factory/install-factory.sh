@@ -1,8 +1,13 @@
 #!/bin/bash
-# Factory install — called from firstrun.sh, repair-portal.sh, factory-reset.sh
+# Factory install — called from firstrun.sh, repair-portal.sh, factory-reset.sh,
+# and by install.sh on a machine that already runs Linux (SUDO_SRC = a folder
+# laid out like the card's boot partition, from prepare-sd.sh --stage).
 
 AP_IP="192.168.4.1"
-BOOT="/boot/firmware"
+BOOT="${SUDO_SRC:-/boot/firmware}"
+# "linux" when install.sh put sudo on a machine that was already online (a PC,
+# a Jetson, a server); empty on a Sudo card. Kept across reinstalls.
+INSTALL_KIND="$(cat /etc/sudo/install-kind 2>/dev/null || true)"
 
 echo "=== install-factory $(date) ==="
 
@@ -175,6 +180,8 @@ cp "${BOOT}/sudo-pi/setup-ssh.sh" /usr/local/bin/sudo-setup-ssh.sh
 cp "${BOOT}/sudo-pi/install-local-model.sh" /usr/local/bin/sudo-install-local-model.sh
 cp "${BOOT}/sudo-pi/set-hostname.sh" /usr/local/bin/sudo-set-hostname.sh
 cp "${BOOT}/sudo-pi/set-timezone.sh" /usr/local/bin/sudo-set-timezone.sh
+cp "${BOOT}/sudo-pi/hardware-profile.py" /usr/local/bin/sudo-hardware-profile.py
+chmod +x /usr/local/bin/sudo-hardware-profile.py
 cp "${BOOT}/sudo-pi/problem-report.py" /usr/local/bin/sudo-problem-report.py
 chmod +x /usr/local/bin/sudo-problem-report.py
 cp "${BOOT}/sudo-pi/notify-owner.sh" /usr/local/bin/sudo-notify-owner.sh
@@ -239,10 +246,17 @@ rm -f /etc/sudo/cloudflare.conf "${BOOT}/sudo-pi/cloudflare.conf" 2>/dev/null ||
 echo "Remote access: Quick Tunnel (trycloudflare.com) — no domain required"
 
 # ── Captive portal DNS (hotspot only) ───────────────────────────────────────
-mkdir -p /etc/NetworkManager/dnsmasq-shared.d
-cat > /etc/NetworkManager/dnsmasq-shared.d/raspi-captive.conf << EOF
+# Points every name at the setup page, for every NetworkManager shared
+# connection -- right on a Sudo box, wrong on someone's PC, where it would
+# break their own connection sharing. Not written there (and removed).
+if [ "$INSTALL_KIND" = "linux" ]; then
+    rm -f /etc/NetworkManager/dnsmasq-shared.d/raspi-captive.conf
+else
+    mkdir -p /etc/NetworkManager/dnsmasq-shared.d
+    cat > /etc/NetworkManager/dnsmasq-shared.d/raspi-captive.conf << EOF
 address=/#/${AP_IP}
 EOF
+fi
 
 # ── WiFi setup service (only before first WiFi config) ───────────────────────
 cat > /etc/systemd/system/wifi-setup.service << 'EOF'
@@ -786,7 +800,14 @@ fi
 
 # Always on: it is the only thing that can recover a device whose saved
 # network has gone away, and it is a no-op before first setup.
-systemctl enable sudo-netwatch.service 2>/dev/null || true
+# Not on machines installed by install.sh: they are set up on a network that
+# is theirs to manage, often without a radio that can host a hotspot, and
+# reopening setup there would switch the dashboard off.
+if [ "$INSTALL_KIND" = "linux" ]; then
+    systemctl disable sudo-netwatch.service 2>/dev/null || true
+else
+    systemctl enable sudo-netwatch.service 2>/dev/null || true
+fi
 systemctl enable sudo-local-model.service 2>/dev/null || true
 
 echo "=== install-factory complete ==="

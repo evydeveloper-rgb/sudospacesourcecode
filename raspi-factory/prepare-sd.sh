@@ -371,9 +371,19 @@ while [ $# -gt 0 ]; do
         --dev)    DEV=1; shift ;;
         --forget-keys) FORGET_KEYS=1; shift ;;
         --import) IMPORT_PKG="$2"; shift 2 ;;
+        # Lay the files out exactly as on a card, in a plain folder, and stop:
+        # install.sh installs from there on a machine that is already running.
+        --stage) MODE="stage"; BOOT="$2"; shift 2 ;;
         *) BOOT="$1"; shift ;;
     esac
 done
+
+if [ "$MODE" = "stage" ]; then
+    mkdir -p "$BOOT"
+    copy_factory_files "$BOOT"
+    echo "Staged sudo $(tr -d ' \t\r\n' < "$SCRIPT_DIR/VERSION") in $BOOT"
+    exit 0
+fi
 
 if [ -z "$BOOT" ]; then
     BOOT="$(find_boot_volume)" || {

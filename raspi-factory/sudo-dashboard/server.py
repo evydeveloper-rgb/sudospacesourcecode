@@ -1805,9 +1805,38 @@ def local_model_need_gb(size_bytes):
 def local_speed_estimate(size_bytes, board):
     """Tokens per second, roughly. Writing each token reads every weight once,
     so speed is memory bandwidth over model size: about 9 GB/s in practice on
-    a Pi 5, about 4 on a Pi 4."""
-    bandwidth = 9.0 if "Pi 5" in board else 4.0 if "Pi 4" in board else 6.0
-    return round(min(40.0, bandwidth / max(size_bytes / GB, 0.05)), 1)
+    a Pi 5, about 4 on a Pi 4, about 20 on an ordinary PC, far more on a GPU
+    (when the model fits in its memory)."""
+    hw = hardware_profile()
+    gpu = hw.get("gpu") or {}
+    size_gb = max(size_bytes / GB, 0.05)
+    if gpu.get("memory_gb") and local_model_need_gb(size_bytes) <= gpu["memory_gb"]:
+        bandwidth = 60.0 if gpu.get("shared") else 200.0
+        return round(min(120.0, bandwidth / size_gb), 1)
+    bandwidth = (9.0 if "Pi 5" in board else 4.0 if "Pi 4" in board
+                 else 20.0 if hw.get("kind") == "x86" else 6.0)
+    return round(min(40.0, bandwidth / size_gb), 1)
+
+
+_hw_cache = {}
+
+
+def hardware_profile():
+    """What this machine is (sudo-pi/hardware-profile.py): board, processor,
+    and any GPU. Read once; the hardware does not change while we run."""
+    if "p" not in _hw_cache:
+        prof = {}
+        path = "/usr/local/bin/sudo-hardware-profile.py"
+        if os.path.isfile(path):
+            try:
+                spec = importlib.util.spec_from_file_location("sudo_hardware_profile", path)
+                mod = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(mod)
+                prof = mod.profile()
+            except Exception:  # noqa: BLE001 - a missing reading is not worth failing over
+                prof = {}
+        _hw_cache["p"] = prof
+    return _hw_cache["p"]
 
 
 def device_specs():
@@ -1821,7 +1850,9 @@ def device_specs():
                     avail_kb = int(line.split()[1])
     except OSError:
         pass
-    board = (read_text("/proc/device-tree/model") or "").replace("\x00", "").strip() or "This device"
+    hw = hardware_profile()
+    board = (read_text("/proc/device-tree/model") or "").replace("\x00", "").strip() \
+        or hw.get("board") or "This device"
     # "Raspberry Pi 5 Model B Rev 1.1" -> "Raspberry Pi 5"
     board = re.sub(r"\s+Model\s.*$", "", board)
     total_gb = total_kb / 1024 / 1024
@@ -1832,11 +1863,18 @@ def device_specs():
         disk_free, disk_total = disk.free / GB, disk.total / GB
     except OSError:
         disk_free = disk_total = 0
-    cpu = "Arm Cortex-A76 · 2.4 GHz" if "Pi 5" in board else "Arm Cortex-A72 · 1.8 GHz" if "Pi 4" in board else ""
+    cpu = ("Arm Cortex-A76 · 2.4 GHz" if "Pi 5" in board else "Arm Cortex-A72 · 1.8 GHz" if "Pi 4" in board
+           else (hw.get("cpu") or ""))
+    gpu = hw.get("gpu")
+    room = max(0.0, total_gb - LOCAL_RESERVE_GB)
+    if gpu and gpu.get("memory_gb"):
+        # A model that fits in the GPU's memory runs there.
+        room = max(room, gpu["memory_gb"] - (0 if gpu.get("shared") else 0.5))
     return {
         "board": board, "ram_gb": round(total_gb, 2), "ram_nominal": nominal,
         "ram_free_gb": round(avail_kb / 1024 / 1024, 2),
-        "reserve_gb": LOCAL_RESERVE_GB, "room_gb": round(max(0.0, total_gb - LOCAL_RESERVE_GB), 2),
+        "reserve_gb": LOCAL_RESERVE_GB, "room_gb": round(room, 2),
+        "gpu": gpu, "kind": hw.get("kind") or "",
         "disk_free_gb": round(disk_free, 1), "disk_total_gb": round(disk_total, 1),
         "cores": os.cpu_count() or 0, "cpu": cpu,
     }

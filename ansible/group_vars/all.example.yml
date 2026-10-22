@@ -1,0 +1,9 @@
+# Copy to all.yml. Every setting is optional.
+sudo_version: latest      # or a release, e.g. "1.0.36"
+sudo_model: auto          # or a model id from the dashboard's catalogue, e.g. qwen3:8b
+sudo_port: ""             # empty: 80, or 8080 when 80 is taken
+sudo_force: false         # true reinstalls even when the version matches
+
+# An OpenRouter key, so the agent works from the start. Keep it in a vault:
+#   ansible-vault create group_vars/vault.yml     (put: sudo_openrouter_key: sk-or-...)
+# and run the playbook with --ask-vault-pass.

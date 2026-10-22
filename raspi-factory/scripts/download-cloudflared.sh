@@ -5,7 +5,8 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 VERSION="${CLOUDFLARED_VERSION:-2024.12.2}"
 DEST="$ROOT/cloudflared"
-ARCH="arm64"
+# arm64 for the Pi and Jetson; install.sh asks for amd64 on a PC.
+ARCH="${CLOUDFLARED_ARCH:-arm64}"
 OS="linux"
 
 mkdir -p "$DEST"

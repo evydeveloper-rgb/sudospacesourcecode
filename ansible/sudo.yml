@@ -1,0 +1,115 @@
+---
+# Install or update sudo on Linux machines you manage (Debian/Ubuntu, arm64 or
+# x86_64, systemd). Drives the same install.sh a person would run by hand, so
+# both paths install exactly the same thing. Safe to run again: machines
+# already on the wanted version are left alone (sudo_force: true reinstalls).
+#
+#   ansible-playbook -i inventory.ini sudo.yml
+#   ansible-playbook -i inventory.ini sudo.yml --ask-vault-pass   # with keys in a vault
+#
+# Settings: group_vars/all.yml (copy all.example.yml), or per host in the inventory.
+- name: Sudo
+  hosts: "{{ sudo_hosts | default('sudo') }}"
+  become: true
+  # Defaults live in the `default()` filters below, not in play vars: play
+  # vars would outrank group_vars and the inventory, and those are where the
+  # settings go. See README.md for the list.
+  vars:
+    s_repo: "{{ sudo_repo | default('evydeveloper-rgb/sudospacesourcecode') }}"
+    s_version: "{{ sudo_version | default('latest') | string }}"
+    s_model: "{{ sudo_model | default('auto') }}"
+    s_hostname: "{{ sudo_hostname | default('') }}"
+    s_port: "{{ sudo_port | default('') | string }}"
+    s_force: "{{ sudo_force | default(false) | bool }}"
+
+  tasks:
+    - name: Check the machine can run sudo
+      ansible.builtin.assert:
+        that:
+          - ansible_facts.os_family == "Debian"
+          - ansible_facts.architecture in ["x86_64", "aarch64"]
+          - ansible_facts.service_mgr == "systemd"
+        fail_msg: >-
+          sudo needs Debian or Ubuntu with systemd on arm64 or x86_64
+          (this host: {{ ansible_facts.distribution }} {{ ansible_facts.architecture }},
+          {{ ansible_facts.service_mgr }}).
+
+    - name: Find the latest release
+      ansible.builtin.uri:
+        url: "https://api.github.com/repos/{{ s_repo }}/releases/latest"
+        return_content: true
+      register: latest
+      when: s_version == "latest"
+      run_once: true
+      delegate_to: localhost
+      become: false
+
+    - name: Work out the version to install
+      ansible.builtin.set_fact:
+        sudo_target: >-
+          {{ (latest.json.tag_name | regex_replace('^raspi-factory-v', ''))
+             if s_version == 'latest' else s_version }}
+
+    - name: Read the installed version
+      ansible.builtin.slurp:
+        src: /opt/sudo/version
+      register: installed
+      failed_when: false
+
+    - name: Note what is installed
+      ansible.builtin.set_fact:
+        sudo_installed: "{{ (installed.content | b64decode | trim) if installed.content is defined else 'none' }}"
+
+    - name: Put the installer on the machine
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../install.sh"
+        dest: /usr/local/sbin/sudo-install.sh
+        mode: "0755"
+
+    - name: Install or update sudo {{ sudo_target }} (was {{ sudo_installed }})
+      ansible.builtin.command:
+        argv: >-
+          {{ ['/usr/local/sbin/sudo-install.sh', '--version', sudo_target, '--model', s_model]
+             + (['--hostname', s_hostname] if s_hostname else [])
+             + (['--port', s_port] if s_port else []) }}
+      environment:
+        SUDO_REPO: "{{ s_repo }}"
+      when: s_force | bool or sudo_installed != sudo_target
+      register: install
+      changed_when: true
+
+    - name: Save the OpenRouter key (from the vault)
+      ansible.builtin.script:
+        cmd: files/set-key.py openrouter
+        executable: /usr/bin/python3
+      environment:
+        SUDO_KEY: "{{ sudo_openrouter_key }}"
+      when: sudo_openrouter_key is defined and sudo_openrouter_key | length > 0
+      register: key
+      changed_when: "'changed' in key.stdout"
+      no_log: true
+
+    - name: Read the dashboard port
+      ansible.builtin.slurp:
+        src: /etc/systemd/system/sudo-dashboard.service.d/20-port.conf
+      register: port_conf
+      failed_when: false
+
+    - name: Wait for the dashboard
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ dash_port }}/api/auth/status"
+        status_code: 200
+      vars:
+        dash_port: "{{ (port_conf.content | b64decode | regex_search('SUDO_DASH_PORT=(\\d+)', '\\1') | first)
+                       if port_conf.content is defined else 80 }}"
+      register: dash
+      retries: 20
+      delay: 3
+      until: dash.status == 200
+
+    - name: Where to find it
+      ansible.builtin.debug:
+        msg: >-
+          sudo {{ sudo_target }} is running on {{ inventory_hostname }}:
+          http://{{ s_hostname or ansible_facts.hostname }}.local
+          (the agent and the on-device model finish downloading in the background).
