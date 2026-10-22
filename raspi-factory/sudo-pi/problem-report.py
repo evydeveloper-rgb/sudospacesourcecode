@@ -64,6 +64,9 @@ def scrub(text, limit=160):
     numbers, ids)."""
     text = str(text or "")
     text = re.sub(r"[\"“”'‘’«»][^\"“”'‘’«»]{0,400}[\"“”'‘’«»]", "<…>", text)
+    # OpenClaw names a failed reminder without quotes: "Cron: <its name> failed".
+    # The name is the owner's own words (people's names, errands).
+    text = re.sub(r"(Cron(?: job)?:?)\s+.*?\s+failed", r"\1 <reminder> failed", text)
     text = re.sub(r"\S+@\S+", "<email>", text)
     text = re.sub(r"https?://\S+", "<link>", text)
     text = re.sub(r"\+?\d[\d\s().-]{5,}\d", "<number>", text)

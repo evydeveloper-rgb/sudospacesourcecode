@@ -62,6 +62,10 @@ Deno.serve(async (req) => {
   const { count } = await db.from("problem_reports").select("id", { count: "exact", head: true })
     .eq("device_hash", device).gte("received_at", since);
   if ((count ?? 0) >= PER_DAY) return json({ error: "Enough reports from this device today" }, 429);
+  // Defence in depth: the device scrubs before sending, but a reminder's name
+  // is the owner's own words and OpenClaw writes it unquoted
+  // ("Cron: <name> failed"), which older devices let through.
+  report = JSON.parse(JSON.stringify(report).replace(/(Cron(?: job)?:?)\s+[^"\\]*?\s+failed/g, "$1 <reminder> failed"));
   const version = typeof report.sudo === "string" ? report.sudo.slice(0, 20) : null;
   const { error } = await db.from("problem_reports").insert({ device_hash: device, sudo_version: version, report });
   if (error) return json({ error: "Could not save the report" }, 500);
