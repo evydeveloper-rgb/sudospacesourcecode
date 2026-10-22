@@ -1,6 +1,13 @@
 #!/usr/bin/env python3
 """problem-report.py — the daily problem report beta owners can opt in to.
 
+Schema 2 adds how the agent is used, still never what is said: messages per
+chat app, tool use and failures, why website tasks fail (with the site's name,
+only for failures), check-ins, tokens and cost, reply times, settings, and
+signs of a bad experience counted on the device (the person repeating
+themselves, "that's wrong", the agent saying it couldn't). The conversations
+are read here; only the counts leave.
+
 What went wrong on this sudo in the last day, sent to the Sudo team so a
 broken reminder, a crashing agent or a failed update gets fixed without the
 owner having to notice and describe it. Opt-in (Settings -> Problem reports),
@@ -16,11 +23,16 @@ Settings before and after it is sent.
   problem-report.py collect   print the report this device would send now
   problem-report.py send      collect and send it (only when opted in)
   problem-report.py forget    ask the service to delete this device's reports
+  problem-report.py feedback  "Report this": send one exchange the owner chose,
+                              read as JSON from stdin ({source, note, exchange}).
+                              Sent whatever the daily-report setting: the owner
+                              asked for this one.
 
 Run as root (sudo-problem-report.timer, daily): the gateway journal and the
 OpenClaw state database need it.
 """
 
+import glob
 import hashlib
 import json
 import os
@@ -160,7 +172,9 @@ def reminders(since_ms, window_h):
         if dstatus and dstatus not in ("delivered", "ok", "not-requested", "skipped") and not delivered:
             out["not_delivered"] += 1
         for kind, text in (("run", error), ("delivery", derror)):
-            if text:
+            # A switched-off job is logged as skipped with error "disabled":
+            # not a failure, just a job the agent turned off.
+            if text and not (status == "skipped" and str(text).strip().lower() == "disabled"):
                 key = f"{kind}: {scrub(text, 100)}"
                 entry = seen.setdefault(key, {"count": 0, "jobs": set(), "why": {}, "secs": [], "last": 0})
                 entry["count"] += 1
@@ -202,15 +216,266 @@ def system_events():
         install_log = open("/var/log/sudo-openclaw-install.log", encoding="utf-8", errors="ignore").read()[-4000:]
     except OSError:
         pass
-    local = (open("/var/lib/sudo-localmodel-status").read().strip()
-             if os.path.isfile("/var/lib/sudo-localmodel-status") else "")
+    local = read_json("/var/lib/sudo-localmodel-status", {}) or {}
     return {
         "update": {"state": update.get("state"), "message": scrub(update.get("message"))} if update else None,
         "openclaw_installed": os.path.isfile("/opt/openclaw/node_modules/.bin/openclaw"),
         "openclaw_install_failed": (not os.path.isfile("/opt/openclaw/node_modules/.bin/openclaw")
                                     and "=== install-openclaw" in install_log),
-        "local_model": scrub(local, 60) or None,
+        "local_model": {"state": local.get("state"), "model": local.get("model")} if local else None,
     }
+
+
+def sudo_version():
+    update = read_json("/var/lib/sudo-update-status.json", {}) or {}
+    m = re.search(r"Installing (\d+\.\d+\.\d+)", str(update.get("message") or ""))
+    if update.get("state") == "applying" and m:
+        return m.group(1)
+    try:
+        return open("/opt/sudo/version").read().strip()
+    except OSError:
+        return None
+
+
+# ── How it is used (schema 2) ──────────────────────────────────────────────────
+OC_STATE = "/opt/sudo/openclaw"
+FRUSTRATED = re.compile(
+    r"\b(wrong|not what i|that'?s not|no,? that|stop|useless|doesn'?t work|didn'?t work|not working|"
+    r"you didn'?t|why did you|i said|i told you|again\?|ugh|wtf|frustrat|"
+    r"mal|no es eso|no funciona|no sirve|te dije|otra vez|para ya|equivocad|in[uú]til)\b"
+    r"|不对|错了|没用|不行|我说了|خطأ|غلط|لا يعمل|قلت لك|لا فائدة", re.I)
+COULDNT = re.compile(
+    r"\b(i can'?t|i cannot|i'?m unable|i wasn'?t able|i couldn'?t|sorry|unfortunately|"
+    r"no puedo|no pude|lo siento|lamentablemente|perd[oó]n)\b|抱歉|无法|不能|عذرا|آسف|لا أستطيع", re.I)
+WEB_TOOLS = ("browser", "web_fetch", "fetch", "web")
+FAIL_CLASSES = (
+    ("blocked", r"\b(403|401|access denied|forbidden|blocked|not allowed|bot)\b"),
+    ("captcha", r"captcha|are you a robot|verify you are human|challenge"),
+    ("rate_limited", r"\b429\b|rate.?limit|too many requests"),
+    ("timeout", r"time(d)?.?out|timeout"),
+    ("not_found", r"\b404\b|not found"),
+    ("server_error", r"\b50[0-4]\b|server error|maintenance|unavailable"),
+    ("network", r"net::err|enotfound|econnre|dns|connection (refused|reset)"),
+)
+
+
+def channel_of(key):
+    key = (key or "").lower()
+    for name in ("telegram", "whatsapp", "discord", "imessage", "slack"):
+        if f":{name}:" in key or key.startswith(name):
+            return name
+    if "heartbeat" in key:
+        return "checkin"
+    if key.startswith("cron") or ":cron:" in key:
+        return "reminder"
+    if "dashboard" in key or "openai" in key or key.endswith(":main"):
+        return "dashboard"
+    return "other"
+
+
+def site_of(args):
+    """The site a web tool was pointed at: example.com, nothing else of the URL."""
+    url = ""
+    if isinstance(args, dict):
+        url = str(args.get("url") or args.get("targetUrl") or args.get("href") or "")
+    m = re.match(r"https?://([^/:?#]+)", url)
+    if not m:
+        return None
+    host = m.group(1).lower()
+    parts = host.split(".")
+    two = {"co", "com", "org", "net", "gov", "ac", "edu"}
+    return ".".join(parts[-3:] if len(parts) > 2 and parts[-2] in two else parts[-2:])
+
+
+def text_of(message):
+    out = []
+    for item in message.get("content") or []:
+        if isinstance(item, dict) and item.get("type") == "text":
+            out.append(str(item.get("text") or ""))
+        elif isinstance(item, str):
+            out.append(item)
+    return " ".join(out)
+
+
+def words(text):
+    return set(re.findall(r"\w+", text.lower()))
+
+
+def conversations(since_ms):
+    """Counts from the agent's own transcripts. Text is looked at here, to
+    count, and goes nowhere."""
+    out = {"messages": {}, "replies": 0, "tools": {}, "web_failures": {}, "models": {},
+           "tokens_in": 0, "tokens_out": 0, "cost_usd": 0.0, "reply_secs": [], "slow_replies": 0,
+           "stop_reasons": {}, "empty_replies": 0, "checkins": {"runs": 0, "sent": 0},
+           "bad_experience": {"repeated": 0, "frustrated": 0, "agent_couldnt": 0, "error_shown": 0,
+                              "ended_after_error": 0, "loop_stopped": 0}}
+    for sessions_dir in glob.glob(os.path.join(OC_STATE, "agents", "*", "sessions")):
+        store = read_json(os.path.join(sessions_dir, "sessions.json"), {}) or {}
+        key_of = {}
+        for k, v in (store.items() if isinstance(store, dict) else []):
+            if isinstance(v, dict) and v.get("sessionId"):
+                key_of[v["sessionId"]] = k
+        for path in glob.glob(os.path.join(sessions_dir, "*.jsonl")):
+            try:
+                if os.path.getmtime(path) * 1000 < since_ms:
+                    continue
+            except OSError:
+                continue
+            sid = os.path.basename(path)[:-6]
+            chan = channel_of(key_of.get(sid, ""))
+            calls = {}
+            last_user = None   # (ts, words)
+            pending_user_ts = None
+            last_kind = None
+            heartbeat_text = []
+            try:
+                lines = open(path, encoding="utf-8", errors="ignore").read().splitlines()
+            except OSError:
+                continue
+            for line in lines:
+                try:
+                    d = json.loads(line)
+                except ValueError:
+                    continue
+                if d.get("type") != "message":
+                    continue
+                m = d.get("message") or {}
+                ts = m.get("timestamp") or 0
+                if not isinstance(ts, (int, float)) or ts < since_ms:
+                    continue
+                role = m.get("role")
+                if role == "user":
+                    text = text_of(m)
+                    out["messages"][chan] = out["messages"].get(chan, 0) + 1
+                    w = words(text)
+                    if last_user and ts - last_user[0] < 10 * 60 * 1000 and w and last_user[1]:
+                        if len(w & last_user[1]) / max(1, len(w | last_user[1])) >= 0.6:
+                            out["bad_experience"]["repeated"] += 1
+                    if FRUSTRATED.search(text):
+                        out["bad_experience"]["frustrated"] += 1
+                    last_user, pending_user_ts, last_kind = (ts, w), ts, "user"
+                elif role == "assistant":
+                    usage = m.get("usage") or {}
+                    out["tokens_in"] += int(usage.get("input") or 0) + int(usage.get("cacheRead") or 0)
+                    out["tokens_out"] += int(usage.get("output") or 0)
+                    out["cost_usd"] += float(((usage.get("cost") or {}).get("total")) or 0)
+                    model = m.get("model") or "?"
+                    out["models"][model] = out["models"].get(model, 0) + 1
+                    stop = m.get("stopReason") or "?"
+                    out["stop_reasons"][stop] = out["stop_reasons"].get(stop, 0) + 1
+                    text = text_of(m)
+                    tool_calls = [c for c in (m.get("content") or [])
+                                  if isinstance(c, dict) and c.get("type") in ("toolCall", "tool_use")]
+                    for c in tool_calls:
+                        calls[c.get("id")] = (c.get("name") or "?", c.get("arguments") or c.get("input") or {})
+                        name = c.get("name") or "?"
+                        t = out["tools"].setdefault(name, {"calls": 0, "errors": 0})
+                        t["calls"] += 1
+                    if text.strip():
+                        out["replies"] += 1
+                        if chan == "checkin":
+                            heartbeat_text.append(text)
+                        if COULDNT.search(text):
+                            out["bad_experience"]["agent_couldnt"] += 1
+                        if pending_user_ts:
+                            secs = (ts - pending_user_ts) / 1000
+                            if secs >= 0:
+                                out["reply_secs"].append(secs)
+                                if secs > 60:
+                                    out["slow_replies"] += 1
+                            pending_user_ts = None
+                    elif not tool_calls:
+                        out["empty_replies"] += 1
+                    if stop in ("error", "aborted"):
+                        out["bad_experience"]["error_shown"] += 1
+                    last_kind = "error" if stop in ("error", "aborted") else "assistant"
+                elif role == "toolResult":
+                    name = m.get("toolName") or calls.get(m.get("toolCallId"), ("?", {}))[0]
+                    result = text_of(m)
+                    if "loop detect" in result.lower() or "loopdetection" in result.lower():
+                        out["bad_experience"]["loop_stopped"] += 1
+                    if m.get("isError"):
+                        t = out["tools"].setdefault(name, {"calls": 0, "errors": 0})
+                        t["errors"] += 1
+                        if any(w_ in name.lower() for w_ in WEB_TOOLS):
+                            site = site_of(calls.get(m.get("toolCallId"), ("", {}))[1]) or "unknown"
+                            why = next((c for c, rx in FAIL_CLASSES if re.search(rx, result, re.I)), "other")
+                            key = f"{site} ({why})"
+                            out["web_failures"][key] = out["web_failures"].get(key, 0) + 1
+            if chan == "checkin" and (heartbeat_text or last_kind):
+                out["checkins"]["runs"] += 1
+                if heartbeat_text and "HEARTBEAT_OK" not in heartbeat_text[-1]:
+                    out["checkins"]["sent"] += 1
+            if last_kind == "error":
+                out["bad_experience"]["ended_after_error"] += 1
+    secs = sorted(out.pop("reply_secs"))
+    out["reply_secs_median"] = round(secs[len(secs) // 2], 1) if secs else None
+    out["reply_secs_p90"] = round(secs[int(len(secs) * 0.9)], 1) if secs else None
+    out["cost_usd"] = round(out["cost_usd"], 4)
+    out["tools"] = dict(sorted(out["tools"].items(), key=lambda kv: -kv[1]["calls"])[:20])
+    return out
+
+
+def setup_and_settings(cfg):
+    oc = read_json(os.path.join(OC_STATE, "openclaw.json"), {}) or {}
+    tg = (oc.get("channels") or {}).get("telegram") or {}
+    agents = ((oc.get("agents") or {}).get("list") or [])
+    spend = read_json("/opt/sudo/spend-usd.json", {}) or {}
+    return {
+        "agents": max(1, len(agents)),
+        "telegram_bots": len(tg.get("accounts") or {}) or (1 if tg.get("botToken") else 0),
+        "whatsapp_accounts": len(cfg.get("whatsapp_numbers") or {}),
+        "settings": {
+            "shell": bool(cfg.get("exec_enabled", True)), "helpers": bool(cfg.get("subagent_enabled")),
+            "skills": bool(cfg.get("skills_enabled")), "full_access": bool(cfg.get("full_access_enabled")),
+            "spend_guard": bool(cfg.get("spend_enabled", True)),
+            "dollar_limits": bool(cfg.get("spend_usd_day") or cfg.get("spend_usd_month")),
+            "checkins": bool(cfg.get("checkins_enabled", True)), "prefer_local": bool(cfg.get("prefer_local")),
+            "personality": cfg.get("personality"), "ui_language": cfg.get("ui_language"),
+            "agent_language": cfg.get("agent_language"), "theme": cfg.get("theme"),
+            "timezone_pinned": bool(cfg.get("timezone_pinned")),
+            "remote_link": bool(cfg.get("remote_access")),
+        },
+        "spend_usd_today": spend.get("spent_day") if spend.get("day") == time.strftime("%Y-%m-%d") else None,
+        "setup_done": {"profile": bool(cfg.get("profile_done")),
+                       "cloud_key": bool((cfg.get("provider_keys") or {}) or cfg.get("user_openrouter_key")),
+                       "channel": bool(cfg.get("whatsapp_numbers") or (cfg.get("telegram") or {}).get("owner_id")),
+                       "apps": bool((cfg.get("composio_api_key") or "").strip())},
+    }
+
+
+def dashboard_use(window_h):
+    """The dashboard's own counters (server.py count_usage): tabs opened and
+    thumbs-down on replies, per day; summed over the report's window."""
+    days = (read_json("/var/lib/sudo-usage.json", {}) or {}).get("days") or {}
+    since = time.strftime("%Y-%m-%d", time.localtime(time.time() - window_h * 3600))
+    out = {"tabs": {}, "thumbs_down": 0, "reports_sent": 0}
+    for day, counts in days.items():
+        if day < since or not isinstance(counts, dict):
+            continue
+        for tab, n in (counts.get("tabs") or {}).items():
+            out["tabs"][tab] = out["tabs"].get(tab, 0) + int(n or 0)
+        out["thumbs_down"] += int(counts.get("thumbs_down") or 0)
+        out["reports_sent"] += int(counts.get("reports_sent") or 0)
+    return out
+
+
+def channel_health():
+    """Is each linked chat app actually connected right now?"""
+    env = dict(os.environ, HOME="/root", OPENCLAW_STATE_DIR=OC_STATE,
+               OPENCLAW_CONFIG_PATH=os.path.join(OC_STATE, "openclaw.json"))
+    try:
+        out = subprocess.run(["/opt/openclaw/node_modules/.bin/openclaw", "channels", "status", "--json"],
+                             capture_output=True, text=True, timeout=60, env=env).stdout
+        data = json.loads(out[out.find("{"):]) if "{" in out else {}
+    except (OSError, subprocess.SubprocessError, ValueError):
+        return None
+    health = {}
+    for chan, accounts in (data.get("channelAccounts") or {}).items():
+        for a in accounts or []:
+            health[f"{chan}:{a.get('accountId') or 'default'}"] = {
+                "linked": a.get("linked"), "connected": a.get("connected"), "running": a.get("running")}
+    return health
 
 
 def collect():
@@ -218,9 +483,9 @@ def collect():
     now = time.time()
     window = 24 if (read_json(LAST_FILE, {}) or {}).get("sent") else 14 * 24
     return {
-        "schema": 1,
+        "schema": 2,
         "sent_at": int(now),
-        "sudo": (open("/opt/sudo/version").read().strip() if os.path.isfile("/opt/sudo/version") else None),
+        "sudo": sudo_version(),
         "device": device(),
         "agent": agent(cfg),
         # The first report after opting in looks back two weeks, so problems
@@ -228,6 +493,10 @@ def collect():
         "reminders": reminders(int((now - window * 3600) * 1000), window),
         "log_24h": gateway_log(),
         "system": system_events(),
+        "usage": conversations(int((now - window * 3600) * 1000)),
+        "setup": setup_and_settings(cfg),
+        "channel_health": channel_health(),
+        "dashboard": dashboard_use(window),
     }
 
 
@@ -279,6 +548,21 @@ def main():
         save_last({"sent": ok, "at": int(time.time()), "reply": reply, "report": report})
         print(json.dumps({"sent": ok, "reply": reply}))
         return 0 if ok else 1
+    if cmd == "feedback":
+        try:
+            body = json.load(sys.stdin)
+        except ValueError:
+            print(json.dumps({"sent": False, "error": "not JSON"}))
+            return 2
+        body = {"sudo": sudo_version(), "source": str(body.get("source") or "dashboard")[:20],
+                "note": str(body.get("note") or "")[:2000], "exchange": body.get("exchange") or {}}
+        try:
+            status, reply = post("/feedback", body)
+        except Exception as exc:  # noqa: BLE001
+            print(json.dumps({"sent": False, "error": scrub(exc)}))
+            return 1
+        print(json.dumps({"sent": status == 200, "reply": reply}))
+        return 0 if status == 200 else 1
     if cmd == "forget":
         try:
             status, reply = post("/forget", {})

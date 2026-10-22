@@ -128,6 +128,33 @@
         <button class="legacy-wa-later" type="button" id="reports-no" data-i18n="reports.no">No thanks</button>
       </div>
 
+      <div class="legacy-wa-banner" id="channel-alert" role="status" hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.3-.6L3 21l1.9-5a8.3 8.3 0 0 1-1-4A8.4 8.4 0 0 1 12 3a8.4 8.4 0 0 1 9 8.5Z"/><path d="M12 8v4M12 15h.01"/></svg>
+        <div>
+          <strong data-i18n="chalert.title">WhatsApp got disconnected</strong>
+          <small data-i18n="chalert.body">Reminders can't reach you there until it's linked again. It takes a minute.</small>
+        </div>
+        <button class="primary-button" type="button" id="channel-alert-go" data-i18n="chalert.go">Link again</button>
+      </div>
+
+      <div class="fb-modal" id="fb-modal" hidden>
+        <div class="fb-card" role="dialog" aria-modal="true" aria-labelledby="fb-title">
+          <h3 id="fb-title" data-i18n="fb.title">Report this reply?</h3>
+          <p class="fb-intro" data-i18n="fb.intro">This sends the question and reply below to the Sudo team, so we can see what went wrong and fix it. Nothing else from your chats is sent.</p>
+          <p class="fb-label" data-i18n="fb.you">You asked</p>
+          <div class="fb-box" id="fb-question"></div>
+          <p class="fb-label" data-i18n="fb.agent">The reply</p>
+          <div class="fb-box" id="fb-answer"></div>
+          <label class="fb-label" for="fb-note" data-i18n="fb.noteLabel">What went wrong? (optional)</label>
+          <textarea id="fb-note" rows="3" maxlength="2000" dir="auto"></textarea>
+          <p class="form-status" id="fb-status" role="status"></p>
+          <div class="fb-actions">
+            <button class="ghost-button" type="button" id="fb-cancel" data-i18n="fb.cancel">Don't send</button>
+            <button class="primary-button" type="button" id="fb-send" data-i18n="fb.send">Send to the Sudo team</button>
+          </div>
+        </div>
+      </div>
+
       <section class="view welcome-view" id="view-welcome" aria-labelledby="welcome-title">
         <div class="welcome-inner">
           <label class="lang-pick">
@@ -2133,7 +2160,9 @@
                   <ul><li data-i18n="reports.sent1">Sudo and OpenClaw versions, the board, memory, temperature</li>
                   <li data-i18n="reports.sent2">Which kinds of key and chat app are set up (never the keys or numbers)</li>
                   <li data-i18n="reports.sent3">How many reminders ran, failed or didn't arrive, and the kind of error</li>
-                  <li data-i18n="reports.sent4">Error counts per part of the agent; crashes, failed updates</li></ul></div>
+                  <li data-i18n="reports.sent4">Error counts per part of the agent; crashes, failed updates</li>
+                  <li data-i18n="reports.sent5">How it's used: messages per chat app, tools, check-ins, tokens and cost, reply times, settings, dashboard tabs</li>
+                  <li data-i18n="reports.sent6">Signs a reply went badly (counted here, not the words), and the name of a website when a task on it fails</li></ul></div>
                 <div><p class="usd-head" data-i18n="reports.neverHead">Never in a report</p>
                   <ul><li data-i18n="reports.never1">Your messages, reminders' text, contacts or files</li>
                   <li data-i18n="reports.never2">Names, phone numbers, email addresses, links</li>
@@ -2446,6 +2475,11 @@
     }
 
     function setTab(tab, silent) {
+      if (tab !== state.tab && state.status && state.status.profile_done) {
+        // For the daily report: which parts of the dashboard get used.
+        fetch('/api/usage/tab', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ tab }), keepalive: true }).catch(() => {});
+      }
       state.tab = tab;
       // The Contacts app is a site of its own that happens to live on the
       // dashboard's URL, so it drops the dashboard chrome (rail, top bar,
@@ -2637,10 +2671,57 @@
         bubble.textContent = text;
       }
       item.append(avatar, bubble);
+      if (role === 'agent') {
+        // "This reply was wrong or unhelpful": counted, and the owner can send
+        // the exchange to the Sudo team (they see exactly what goes).
+        const flag = document.createElement('button');
+        flag.type = 'button';
+        flag.className = 'message-flag';
+        flag.title = t('fb.flag');
+        flag.setAttribute('aria-label', t('fb.flag'));
+        flag.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 14V4h11l-2 5 2 5H7Zm0 0v7"/></svg>';
+        flag.addEventListener('click', () => openReportModal(item, text));
+        item.append(flag);
+      }
       $('messages').appendChild(item);
       scrollChat(role === 'agent' ? 'smooth' : 'auto');
       return item;
     }
+
+    // --- "Report this" -----------------------------------------------------------
+    function openReportModal(item, answer) {
+      let question = '';
+      for (let prev = item.previousElementSibling; prev; prev = prev.previousElementSibling) {
+        if (prev.classList.contains('user')) { question = prev.lastElementChild.textContent; break; }
+      }
+      api('/api/reports/thumbs-down', { method: 'POST' }).catch(() => {});
+      item.classList.add('flagged');
+      $('fb-question').textContent = question || '—';
+      $('fb-answer').textContent = answer;
+      $('fb-note').value = '';
+      $('fb-status').textContent = '';
+      $('fb-send').disabled = false;
+      $('fb-modal').hidden = false;
+      $('fb-note').focus();
+      state.reportDraft = { question, answer };
+    }
+    $('fb-cancel').addEventListener('click', () => { $('fb-modal').hidden = true; });
+    $('fb-modal').addEventListener('click', event => { if (event.target === $('fb-modal')) $('fb-modal').hidden = true; });
+    $('fb-send').addEventListener('click', async () => {
+      $('fb-send').disabled = true;
+      $('fb-status').textContent = t('fb.sending');
+      try {
+        await api('/api/reports/feedback', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...state.reportDraft, note: $('fb-note').value.trim() }),
+        }, 70000);
+        $('fb-status').textContent = t('fb.sent');
+        setTimeout(() => { $('fb-modal').hidden = true; }, 1400);
+      } catch (error) {
+        $('fb-status').textContent = error.message;
+        $('fb-send').disabled = false;
+      }
+    });
 
     async function sendMessage(event) {
       event.preventDefault();
@@ -7794,6 +7875,7 @@
     }
 
     $('reports-yes').addEventListener('click', () => setReports(true));
+    $('channel-alert-go').addEventListener('click', () => SETUP_DESTINATIONS.whatsapp());
     $('reports-ok').addEventListener('click', ackReports);
     $('reports-off').addEventListener('click', async () => {
       await setReports(false, confirm(t('reports.forgetConfirm')));
@@ -7884,6 +7966,7 @@
 
     function renderStatus(status) {
       renderLegacyWhatsapp(status);
+      $('channel-alert').hidden = !(status && status.channel_alert) || state.tab === 'welcome';
       renderReports(status);
       renderTimezone(status);
       syncTimezone(status);

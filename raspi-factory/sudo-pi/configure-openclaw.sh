@@ -569,6 +569,33 @@ if not wa_linked and not tg_ready:
         "",
     ]
 
+# Tasks on websites. A booking site that works once can start refusing
+# automated browsers (bot protection), and the agent kept scheduling "retry in
+# an hour" jobs that each ran for a quarter of an hour and failed -- for days,
+# on a beta device. Two attempts, then hand it back plainly.
+_who = sudo.get("user_name") or "your owner"
+tools_md += [
+    "## Tasks on websites (bookings, forms, sign-ups)",
+    "",
+    "- Many sites block automated browsers, sometimes only after a few visits, and some show a "
+    "\"maintenance\" page to bots. A site that worked last week can refuse today.",
+    f"- Try a website task at most twice. If it fails both times, stop: tell {_who} plainly what you "
+    "tried, what the site did, and give them the link to do it themselves. Do not schedule another retry, "
+    "and remove any retry jobs you already set for it.",
+    "- Never promise a website task will be done. Say you'll try and let them know either way.",
+    "",
+    "## Reporting a problem to the Sudo team",
+    "",
+    f"- If {_who} asks you to report a problem or a bad answer to the Sudo team, first show them exactly "
+    "what you would send: their question, your reply, and their note in their words. Send only after "
+    "they clearly say yes, and only that exchange -- nothing else from your conversations or files.",
+    "- To send it, pipe JSON to `sudo-problem-report.py feedback` with the `exec` tool, e.g. "
+    "`echo '{\"source\":\"agent\",\"note\":\"...\",\"exchange\":{\"question\":\"...\",\"answer\":\"...\"}}' "
+    "| sudo-problem-report.py feedback`. It prints `\"sent\": true` when it went through.",
+    "- If shell commands are switched off, tell them to tap the flag under your reply in the dashboard chat instead.",
+    "",
+]
+
 SUDO_BEGIN_HB, SUDO_END_HB = "<!-- sudo:begin -->", "<!-- sudo:end -->"
 # Reaching the owner first: reminders (cron) and check-ins (heartbeat).
 # Where to: WhatsApp when it is linked and the owner's number is known, else

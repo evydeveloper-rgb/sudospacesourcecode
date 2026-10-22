@@ -594,6 +594,71 @@ SSH_SETUP_SCRIPT = "/usr/local/bin/sudo-setup-ssh.sh"
 HOSTNAME_SCRIPT = "/usr/local/bin/sudo-set-hostname.sh"
 TIMEZONE_SCRIPT = "/usr/local/bin/sudo-set-timezone.sh"
 REPORT_SCRIPT = "/usr/local/bin/sudo-problem-report.py"
+USAGE_FILE = "/var/lib/sudo-usage.json"
+CHANNEL_ALERT = "/var/lib/sudo-channel-alert.json"
+_usage_lock = threading.Lock()
+
+
+def count_usage(kind, name=None):
+    """Dashboard counters for the daily report: tabs opened, thumbs-down,
+    exchanges reported. Per day, last 15 days; counts only."""
+    with _usage_lock:
+        data = read_json_file(USAGE_FILE, {}) or {}
+        days = data.setdefault("days", {})
+        today = time.strftime("%Y-%m-%d")
+        day = days.setdefault(today, {})
+        if kind == "tab":
+            tabs = day.setdefault("tabs", {})
+            tabs[name] = tabs.get(name, 0) + 1
+        else:
+            day[kind] = day.get(kind, 0) + 1
+        for old in sorted(days)[:-15]:
+            days.pop(old, None)
+        try:
+            write_json_file(USAGE_FILE, data)
+        except OSError:
+            pass
+
+
+def channel_watch_loop():
+    """Tell the owner when a linked WhatsApp drops. A linked device can be
+    logged out from the phone, or lose its session, and reminders then fail
+    silently (seen on a beta device). Two checks in a row ten minutes apart,
+    then one notice -- over Telegram when WhatsApp itself is what is down --
+    and a dashboard banner until it is linked again."""
+    down_since = {}
+    while True:
+        time.sleep(600)
+        try:
+            cfg = read_json_file(CONFIG)
+            numbers = cfg.get("whatsapp_numbers") or {}
+            if agent_backend(cfg) != "openclaw" or not numbers or not openclaw_whatsapp_installed():
+                continue
+            payload = openclaw_rpc("channels.status", timeout=20)
+            down = []
+            for account in (payload.get("channelAccounts") or {}).get("whatsapp", []):
+                aid = account.get("accountId")
+                if aid in numbers and not (account.get("linked") and account.get("connected")):
+                    down.append(aid)
+            alert = read_json_file(CHANNEL_ALERT, {}) or {}
+            for aid in list(down_since):
+                if aid not in down:
+                    down_since.pop(aid)
+            if not down:
+                if alert:
+                    os.remove(CHANNEL_ALERT)
+                continue
+            now = time.time()
+            for aid in down:
+                down_since.setdefault(aid, now)
+            confirmed = [aid for aid in down if now - down_since[aid] >= 590]
+            if confirmed and not alert:
+                write_json_file(CHANNEL_ALERT, {"channel": "whatsapp", "accounts": confirmed, "since": int(now)})
+                who = "your agent's own WhatsApp number" if confirmed == ["agent"] else "WhatsApp"
+                notify_owner(f"Heads up: {who} got disconnected from sudo, so reminders can't reach you "
+                             f"there. Open the dashboard, Channels -> WhatsApp, to link it again.")
+        except Exception:  # noqa: BLE001 - gateway restarting or offline: look again later
+            continue
 REPORT_LAST = "/var/lib/sudo-report-last.json"
 TIMEZONE_RE = re.compile(r"^[A-Za-z]+(/[A-Za-z0-9_+-]+){0,2}$")
 
@@ -1396,6 +1461,7 @@ def setup_status(include_sensitive=False):
         # polls whatsapp_state() directly for the real thing while it is open.
         "whatsapp_connected": whatsapp_state()["state"] == "connected",
         "whatsapp_legacy": whatsapp_legacy(cfg),
+        "channel_alert": read_json_file(CHANNEL_ALERT, None),
         "telegram_connected": telegram_state(cfg)["state"] == "connected",
         "timezone": device_timezone(),
         # Problem reports: True / False once the owner answered, None before.
@@ -4435,6 +4501,49 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             self.send_json({"preview": preview, "last": read_json_file(REPORT_LAST, None)})
             return True
 
+        if path == "/api/usage/tab" and self.command == "POST":
+            try:
+                tab = str((self.read_body_json() or {}).get("tab") or "")[:30]
+            except (ValueError, json.JSONDecodeError):
+                tab = ""
+            if re.fullmatch(r"[a-z-]{2,30}", tab):
+                count_usage("tab", tab)
+            self.send_json({"ok": True})
+            return True
+
+        if path == "/api/reports/thumbs-down" and self.command == "POST":
+            count_usage("thumbs_down")
+            self.send_json({"ok": True})
+            return True
+
+        # "Report this": the owner chose to send this exchange, with a note.
+        if path == "/api/reports/feedback" and self.command == "POST":
+            try:
+                body = self.read_body_json()
+            except (ValueError, json.JSONDecodeError):
+                body = {}
+            exchange = {"question": str(body.get("question") or "")[:4000],
+                        "answer": str(body.get("answer") or "")[:8000]}
+            if not (exchange["question"] or exchange["answer"]):
+                self.send_json({"error": "Nothing to send"}, code=400)
+                return True
+            payload = json.dumps({"source": "dashboard", "note": str(body.get("note") or "")[:2000],
+                                  "exchange": exchange})
+            try:
+                r = subprocess.run(["systemd-run", "--quiet", "--collect", "--wait", "--pipe",
+                                    f"--unit=sudo-report-feedback-{int(time.time() * 1000)}",
+                                    "/usr/bin/python3", REPORT_SCRIPT, "feedback"],
+                                   input=payload, capture_output=True, text=True, timeout=60)
+                sent = json.loads(r.stdout or "{}").get("sent")
+            except (OSError, subprocess.SubprocessError, ValueError):
+                sent = False
+            if not sent:
+                self.send_json({"error": "Couldn't send it right now. Try again in a minute."}, code=502)
+                return True
+            count_usage("reports_sent")
+            self.send_json({"ok": True})
+            return True
+
         if path == "/api/reports/settings" and self.command == "POST":
             try:
                 body = self.read_body_json()
@@ -5044,6 +5153,7 @@ if __name__ == "__main__":
         server = Fallback((BIND, PORT), DashboardHandler)
 
     threading.Thread(target=telegram_local_loop, name="telegram-local", daemon=True).start()
+    threading.Thread(target=channel_watch_loop, name="channel-watch", daemon=True).start()
 
     print(f"Sudo Dashboard listening on {BIND}:{PORT} remote={remote_enabled()}")
     server.serve_forever()

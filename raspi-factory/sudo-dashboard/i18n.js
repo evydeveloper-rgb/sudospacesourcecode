@@ -6183,3 +6183,73 @@ I18N.add('ar', {
   "reports.ok": "حسنًا",
   "reports.turnOff": "إيقاف"
 });
+
+// ---- Report this; WhatsApp dropped; fuller reports -----------------------------
+I18N.add('en', {
+  "fb.flag": "This reply was wrong or unhelpful",
+  "fb.title": "Report this reply?",
+  "fb.intro": "This sends the question and reply below to the Sudo team, so we can see what went wrong and fix it. Nothing else from your chats is sent.",
+  "fb.you": "You asked",
+  "fb.agent": "The reply",
+  "fb.noteLabel": "What went wrong? (optional)",
+  "fb.cancel": "Don't send",
+  "fb.send": "Send to the Sudo team",
+  "fb.sending": "Sending…",
+  "fb.sent": "Sent. Thank you, this helps a lot.",
+  "chalert.title": "WhatsApp got disconnected",
+  "chalert.body": "Reminders can't reach you there until it's linked again. It takes a minute.",
+  "chalert.go": "Link again",
+  "reports.sent5": "How it's used: messages per chat app, tools, check-ins, tokens and cost, reply times, settings, dashboard tabs",
+  "reports.sent6": "Signs a reply went badly (counted here, not the words), and the name of a website when a task on it fails"
+});
+I18N.add('es', {
+  "fb.flag": "Esta respuesta estuvo mal o no sirvió",
+  "fb.title": "¿Reportar esta respuesta?",
+  "fb.intro": "Esto envía la pregunta y la respuesta de abajo al equipo de Sudo, para ver qué falló y arreglarlo. No se envía nada más de tus chats.",
+  "fb.you": "Preguntaste",
+  "fb.agent": "La respuesta",
+  "fb.noteLabel": "¿Qué salió mal? (opcional)",
+  "fb.cancel": "No enviar",
+  "fb.send": "Enviar al equipo de Sudo",
+  "fb.sending": "Enviando…",
+  "fb.sent": "Enviado. Gracias, nos ayuda mucho.",
+  "chalert.title": "WhatsApp se desconectó",
+  "chalert.body": "Los recordatorios no te llegarán por ahí hasta que lo vincules otra vez. Toma un minuto.",
+  "chalert.go": "Vincular otra vez",
+  "reports.sent5": "Cómo se usa: mensajes por app de chat, herramientas, avisos, tokens y costo, tiempos de respuesta, ajustes, pestañas del panel",
+  "reports.sent6": "Señales de que una respuesta salió mal (contadas aquí, sin las palabras) y el nombre del sitio web cuando falla una tarea en él"
+});
+I18N.add('zh', {
+  "fb.flag": "这个回复不对或没帮上忙",
+  "fb.title": "报告这个回复？",
+  "fb.intro": "这会把下面的问题和回复发给 Sudo 团队，方便我们看清哪里出错并修好。不会发送你聊天里的其他内容。",
+  "fb.you": "你问的",
+  "fb.agent": "回复",
+  "fb.noteLabel": "哪里不对？（可选）",
+  "fb.cancel": "不发送",
+  "fb.send": "发给 Sudo 团队",
+  "fb.sending": "正在发送…",
+  "fb.sent": "已发送。谢谢，这对我们很有帮助。",
+  "chalert.title": "WhatsApp 断开了",
+  "chalert.body": "重新关联之前，提醒无法通过 WhatsApp 发给你。只需一分钟。",
+  "chalert.go": "重新关联",
+  "reports.sent5": "使用情况：各聊天应用的消息数、工具、主动问候、token 和费用、回复时间、设置、面板标签页",
+  "reports.sent6": "回复效果不好的迹象（只在本机计数，不含内容），以及网站任务失败时的网站名称"
+});
+I18N.add('ar', {
+  "fb.flag": "هذا الرد كان خاطئًا أو غير مفيد",
+  "fb.title": "الإبلاغ عن هذا الرد؟",
+  "fb.intro": "يرسل هذا السؤال والرد أدناه إلى فريق Sudo لنعرف ما الخطأ ونصلحه. لا يُرسل أي شيء آخر من محادثاتك.",
+  "fb.you": "سألت",
+  "fb.agent": "الرد",
+  "fb.noteLabel": "ما الذي حدث خطأ؟ (اختياري)",
+  "fb.cancel": "لا ترسل",
+  "fb.send": "أرسل إلى فريق Sudo",
+  "fb.sending": "جارٍ الإرسال…",
+  "fb.sent": "تم الإرسال. شكرًا لك، هذا يساعد كثيرًا.",
+  "chalert.title": "انقطع اتصال واتساب",
+  "chalert.body": "لن تصلك التذكيرات هناك حتى تعيد الربط. يستغرق دقيقة.",
+  "chalert.go": "أعد الربط",
+  "reports.sent5": "طريقة الاستخدام: الرسائل لكل تطبيق دردشة، الأدوات، الرسائل التلقائية، الرموز والتكلفة، أزمنة الرد، الإعدادات، تبويبات اللوحة",
+  "reports.sent6": "علامات على أن ردًا لم يكن جيدًا (تُعد هنا دون الكلمات)، واسم الموقع عندما تفشل مهمة عليه"
+});

@@ -44,6 +44,9 @@ if [ "$owner" = "-" ] || [ "$account" = "-" ]; then
 fi
 if "$OC_BIN" message send --channel whatsapp --account "$account" --target "$owner" --message "$text" >/dev/null; then
   echo "$(date -Is) sent via $account"
+elif [ "$tg_owner" != "-" ] && "$OC_BIN" message send --channel telegram --target "$tg_owner" --message "$text" >/dev/null; then
+  # WhatsApp is down (often the very thing being reported): Telegram instead.
+  echo "$(date -Is) WhatsApp failed, sent via telegram"
 else
   echo "$(date -Is) send failed via $account"
 fi
