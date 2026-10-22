@@ -12,6 +12,8 @@ LOG=/var/log/sudo-openclaw-install.log
 # from any computer the card is plugged into.
 BOOT_LOG=/boot/firmware/openclaw-install.log
 
+# The boot-partition copy only on a Sudo card; other machines have no /boot/firmware.
+[ -d /boot/firmware ] || BOOT_LOG=/dev/null
 exec > >(tee -a "$BOOT_LOG" >> "$LOG") 2>&1
 echo "=== install-openclaw $OPENCLAW_VERSION $(date) ==="
 

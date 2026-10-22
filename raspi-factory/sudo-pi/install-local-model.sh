@@ -41,7 +41,8 @@ BOOTLOG=/boot/firmware/localmodel.log
 # read it from another machine. Copied on exit, never piped -- a pipe here
 # would take the script down with SIGPIPE if the FAT write failed.
 exec >> "$LOG" 2>&1
-trap 'tail -c 12000 "$LOG" > "$BOOTLOG" 2>/dev/null || true' EXIT
+# Only where there is a boot partition (a Sudo card), not on other machines.
+trap '[ -d /boot/firmware ] && tail -c 12000 "$LOG" > "$BOOTLOG" 2>/dev/null || true' EXIT
 echo "=== install-local-model $(date) — ${MODEL} ==="
 echo "free memory:"; free -m 2>/dev/null | head -2
 echo "network check:"
@@ -77,6 +78,16 @@ fi
 
 if ! command -v ollama >/dev/null 2>&1; then
   set_status installing "Installing the local model runtime…" 5
+  # Ollama's installer unpacks a .tar.zst and stops with "requires zstd"
+  # when the tool is missing, which it is on minimal Ubuntu and Debian
+  # images. Put it there first.
+  if ! command -v zstd >/dev/null 2>&1; then
+    echo "installing zstd (Ollama's installer needs it)"
+    DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=300 install -y -qq zstd \
+      || { DEBIAN_FRONTEND=noninteractive apt-get update -qq && \
+           DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=300 install -y -qq zstd; } \
+      || echo "zstd install failed"
+  fi
   echo "installing ollama"
   # Progress bars are carriage-return spam: they filled 12KB of log with
   # "####" and pushed the lines that matter out of the tail we keep.

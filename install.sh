@@ -66,7 +66,7 @@ fi
 say "Getting the basics (python3, curl, avahi)…"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -qq
-apt-get install -y -qq --no-install-recommends python3 curl ca-certificates tar rsync avahi-daemon >/dev/null
+apt-get install -y -qq --no-install-recommends python3 curl ca-certificates tar rsync zstd avahi-daemon >/dev/null
 
 # ── The app ────────────────────────────────────────────────────────────────────
 if [ -n "$FROM" ]; then
