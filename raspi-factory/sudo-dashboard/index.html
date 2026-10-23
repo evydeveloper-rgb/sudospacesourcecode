@@ -7966,7 +7966,7 @@
 
     function renderStatus(status) {
       renderLegacyWhatsapp(status);
-      $('channel-alert').hidden = !(status && status.channel_alert) || state.tab === 'welcome';
+      $('channel-alert').hidden = !(status && status.channel_alert && status.channel_alert.channel) || state.tab === 'welcome';
       renderReports(status);
       renderTimezone(status);
       syncTimezone(status);

@@ -1462,7 +1462,9 @@ def setup_status(include_sensitive=False):
         # polls whatsapp_state() directly for the real thing while it is open.
         "whatsapp_connected": whatsapp_state()["state"] == "connected",
         "whatsapp_legacy": whatsapp_legacy(cfg),
-        "channel_alert": read_json_file(CHANNEL_ALERT, None),
+        # None, not {}: an empty object is truthy in the page and showed the
+        # "WhatsApp got disconnected" banner on every device.
+        "channel_alert": read_json_file(CHANNEL_ALERT) or None,
         "telegram_connected": telegram_state(cfg)["state"] == "connected",
         "timezone": device_timezone(),
         # Problem reports: True / False once the owner answered, None before.
