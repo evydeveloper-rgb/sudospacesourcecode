@@ -63,6 +63,17 @@ fi
 cp "${BOOT}/sudo-pi/configure-openclaw.sh" /usr/local/bin/sudo-configure-openclaw.sh
 cp "${BOOT}/sudo-pi/install-openclaw.sh" /usr/local/bin/sudo-install-openclaw.sh
 cp "${BOOT}/sudo-pi/install-openclaw-whatsapp.sh" /usr/local/bin/sudo-install-openclaw-whatsapp.sh
+# Voice calls: the bridge and persona live in /opt/sudo-voice; the two helpers
+# the dashboard launches go on PATH like every other sudo-* script. The 35 MB
+# sidecar binary is NOT shipped -- it is downloaded once, on demand, because it
+# is per-architecture and most devices never turn this on.
+mkdir -p /opt/sudo-voice/bin
+cp "${BOOT}/sudo-voice/voice-bridge.py" /opt/sudo-voice/ 2>/dev/null || true
+cp "${BOOT}/sudo-voice/voice-briefing.md" /opt/sudo-voice/ 2>/dev/null || true
+cp "${BOOT}/sudo-voice/sudo-voice-call" /opt/sudo-voice/ 2>/dev/null || true
+cp "${BOOT}/sudo-voice/install-sudo-voice.sh" /usr/local/bin/sudo-install-voice.sh 2>/dev/null || true
+cp "${BOOT}/sudo-voice/sudo-voice-pair.sh" /usr/local/bin/sudo-voice-pair.sh 2>/dev/null || true
+chmod +x /usr/local/bin/sudo-install-voice.sh /usr/local/bin/sudo-voice-pair.sh /opt/sudo-voice/sudo-voice-call 2>/dev/null || true
 cp "${BOOT}/sudo-pi/composio-relay.py" /usr/local/bin/sudo-composio-relay.py
 chmod +x /usr/local/bin/sudo-configure-openclaw.sh /usr/local/bin/sudo-install-openclaw.sh /usr/local/bin/sudo-install-openclaw-whatsapp.sh /usr/local/bin/sudo-composio-relay.py
 

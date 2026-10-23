@@ -212,6 +212,10 @@ copy_factory_files() {
     # Same glob sudo-update.sh uses for helpers. Naming one .py here is how
     # spend-guard.py went missing: install-factory.sh expects it on the card.
     cp "$SUDO_PI/"*.py "$boot/sudo-pi/"
+    # Voice calls: bridge, persona and two helpers. The sidecar binary is
+    # downloaded on the device (per-arch), never baked into the card.
+    mkdir -p "$boot/sudo-voice"
+    cp "$SCRIPT_DIR/sudo-voice/"* "$boot/sudo-voice/" 2>/dev/null || true
     cp "$WHATSAPP_BRIDGE/package.json" "$boot/whatsapp-bridge/"
     cp "$WHATSAPP_BRIDGE/bridge.js" "$boot/whatsapp-bridge/"
     # Do NOT copy cloudflare.conf — Quick Tunnel needs no API token / domain

@@ -1121,6 +1121,15 @@
                   <span class="channel-copy"><strong>WeChat</strong><small data-i18n="set.channels.comingSoon">Coming soon</small></span>
                   <span class="channel-soon" data-i18n="set.channels.comingSoon">Coming soon</span>
                 </div>
+                <div class="channel-row">
+                  <span class="channel-logo" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" width="16" height="16"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M4.5 4.5h3l1.5 4-2 1.2a12 12 0 0 0 6.3 6.3l1.2-2 4 1.5v3a2 2 0 0 1-2 2A16.5 16.5 0 0 1 2.5 4.5a2 2 0 0 1 2-2z"/></svg>
+                  </span>
+                  <span class="channel-copy"><strong>Voice calls</strong><small id="voice-summary">not set up</small></span>
+                  <span class="channel-actions">
+                    <button class="channel-connect" type="button" id="voice-connect">Set up</button>
+                  </span>
+                </div>
               </div>
 
               <div class="channel-tip" data-i18n-html="set.channels.wantToGiveYour">
@@ -1136,6 +1145,11 @@
               <div class="whatsapp-panel" id="whatsapp-panel" hidden>
                 <div class="whatsapp-panel-body" id="whatsapp-panel-body"></div>
                 <button class="whatsapp-panel-close" type="button" id="whatsapp-panel-close" data-i18n="set.channels.close">Close</button>
+              </div>
+
+              <div class="whatsapp-panel" id="voice-panel" hidden>
+                <div class="whatsapp-panel-body" id="voice-panel-body"></div>
+                <button class="whatsapp-panel-close" type="button" id="voice-panel-close" data-i18n="set.channels.close">Close</button>
               </div>
 
               <div class="whatsapp-settings-panel" id="whatsapp-settings-panel" hidden>
@@ -3996,6 +4010,186 @@
       const linked = !!status.whatsapp_connected
         || Object.values((state.waInfo && state.waInfo.accounts) || {}).some(a => a.linked);
       $('whatsapp-summary').textContent = linked ? t('wa.connected') : t('wa.notConnected');
+    }
+
+    // --- Voice calls ---------------------------------------------------
+    //
+    // Ringing the owner over WhatsApp needs a second WhatsApp account: the
+    // sidecar links as its own device and a phone cannot call itself. So this
+    // panel asks for both numbers up front and refuses to pair without them,
+    // instead of installing something that could never work.
+    let voicePollTimer = null;
+
+    function stopVoicePoll() {
+      clearTimeout(voicePollTimer);
+      voicePollTimer = null;
+    }
+
+    function voicePanelMessage(text, isError) {
+      const p = document.createElement('p');
+      if (isError) p.className = 'whatsapp-error';
+      p.textContent = text;
+      $('voice-panel-body').replaceChildren(p);
+    }
+
+    function renderVoiceSummary(info) {
+      const el = $('voice-summary');
+      const btn = $('voice-connect');
+      if (!el) return;
+      const labels = {
+        absent: 'not set up', installing: 'setting up…', needs_pairing: 'waiting for pairing',
+        running: 'live', error: 'needs attention'
+      };
+      el.textContent = labels[info.state] || info.state;
+      if (btn) btn.textContent = info.state === 'running' ? 'Manage' : 'Set up';
+    }
+
+    async function loadVoiceSummary() {
+      try {
+        const r = await fetch('/api/agent/voice');
+        if (!r.ok) return;
+        renderVoiceSummary(await r.json());
+      } catch (_) { /* the poll in the panel reports the real problem */ }
+    }
+
+    function voiceField(label, id, type, value, hint) {
+      const wrap = document.createElement('label');
+      const strong = document.createElement('strong');
+      strong.textContent = label;
+      const input = document.createElement('input');
+      input.id = id;
+      input.type = type;
+      input.value = value || '';
+      input.autocomplete = 'off';
+      if (hint) input.placeholder = hint;
+      wrap.append(strong, input);
+      return wrap;
+    }
+
+    function renderVoicePanel(info) {
+      const body = $('voice-panel-body');
+      body.replaceChildren();
+
+      if (info.state === 'installing') {
+        voicePanelMessage('Setting up. This downloads the voice engine — a few minutes on a slow connection.');
+        scheduleVoicePoll();
+        return;
+      }
+
+      if (info.state === 'needs_pairing') {
+        const title = document.createElement('p');
+        title.textContent = 'Voice calls are installed. Now link the bot\'s WhatsApp account.';
+        body.append(title);
+        if (info.qr) {
+          const img = document.createElement('img');
+          img.src = info.qr;
+          img.alt = 'WhatsApp pairing code';
+          img.style.maxWidth = '240px';
+          body.append(img);
+        }
+        const steps = document.createElement('p');
+        steps.textContent = 'On the BOT\'s phone: WhatsApp > Linked devices > Link a device, then scan this. Run the bot number in a phone you keep on.';
+        body.append(steps);
+        const pair = document.createElement('button');
+        pair.className = 'primary-button';
+        pair.textContent = 'Show a fresh QR';
+        pair.addEventListener('click', async () => {
+          voicePanelMessage('Preparing a QR code…');
+          await fetch('/api/agent/voice/pair', { method: 'POST' });
+          scheduleVoicePoll();
+        });
+        body.append(pair);
+        scheduleVoicePoll();
+        return;
+      }
+
+      if (info.state === 'running') {
+        const title = document.createElement('p');
+        title.textContent = 'Voice calls are live. The agent can call ' + (info.owner_number || 'you') + ', and you can call it.';
+        body.append(title);
+        const call = document.createElement('button');
+        call.className = 'primary-button';
+        call.textContent = 'Call me now';
+        call.addEventListener('click', async () => {
+          voicePanelMessage('Ringing…');
+          const r = await fetch('/api/agent/voice/call', { method: 'POST' });
+          const data = await r.json().catch(() => ({}));
+          if (!r.ok) return voicePanelMessage(data.error || 'Could not place the call', true);
+          voicePanelMessage('Calling you now — pick up.');
+        });
+        body.append(call);
+        const unlink = document.createElement('button');
+        unlink.className = 'info-link';
+        unlink.textContent = 'Unlink WhatsApp from voice calls';
+        unlink.addEventListener('click', async () => {
+          if (!confirm('Unlink? Voice calls stop until you pair again.')) return;
+          await fetch('/api/agent/voice/unlink', { method: 'POST' });
+          openVoicePanel();
+        });
+        body.append(unlink);
+        return;
+      }
+
+      // absent or error: the setup form.
+      if (!info.arch_supported) {
+        voicePanelMessage('Voice calls need a 64-bit device (Raspberry Pi 4/5 or an x86 mini PC). This device cannot run them.', true);
+        return;
+      }
+      if (info.message && info.state === 'error') {
+        const err = document.createElement('p');
+        err.className = 'whatsapp-error';
+        err.textContent = info.message;
+        body.append(err);
+      }
+      const intro = document.createElement('p');
+      intro.textContent = 'Your agent can ring you over WhatsApp and you can ring it. This needs two things: its own phone number, and a Gemini API key for its voice.';
+      body.append(intro);
+
+      body.append(voiceField('Your number (the one it calls)', 'voice-owner', 'tel', info.owner_number, '+15551234567'));
+      body.append(voiceField('The bot\'s own number', 'voice-bot', 'tel', info.bot_number, '+15551234567'));
+      body.append(voiceField('Gemini API key', 'voice-key', 'password', '', info.has_key ? 'already saved — leave blank to keep' : 'from aistudio.google.com/apikey'));
+
+      const note = document.createElement('p');
+      note.className = 'form-note';
+      note.textContent = 'The bot number must be a second WhatsApp account — a spare SIM or eSIM works. It cannot be the same number on your own phone.';
+      body.append(note);
+
+      const save = document.createElement('button');
+      save.className = 'primary-button';
+      save.textContent = 'Set up voice calls';
+      save.addEventListener('click', async () => {
+        save.disabled = true;
+        voicePanelMessage('Saving…');
+        const r = await fetch('/api/agent/voice/setup', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            owner_number: $('voice-owner').value.trim(),
+            bot_number: $('voice-bot').value.trim(),
+            gemini_key: $('voice-key').value.trim()
+          })
+        });
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok) { save.disabled = false; return voicePanelMessage(data.error || 'Could not start setup', true); }
+        renderVoicePanel(data);
+      });
+      body.append(save);
+    }
+
+    function scheduleVoicePoll() {
+      stopVoicePoll();
+      voicePollTimer = setTimeout(openVoicePanel, 4000);
+    }
+
+    async function openVoicePanel() {
+      $('voice-panel').hidden = false;
+      try {
+        const r = await fetch('/api/agent/voice');
+        const info = await r.json();
+        renderVoiceSummary(info);
+        renderVoicePanel(info);
+      } catch (err) {
+        voicePanelMessage('Could not read the voice status: ' + err.message, true);
+      }
     }
 
     // One line of text in the panel, built as a node so nothing the device
@@ -7268,6 +7462,7 @@
       renderCloudNudge(status);
       renderUpdate(status.update);
       renderWhatsappSummary(status);
+      loadVoiceSummary();
       renderSetupGuide();
       $('exec-toggle').checked = !!status.exec_enabled;
       $('subagent-toggle').checked = !!status.subagent_enabled;
@@ -7810,6 +8005,11 @@
     $('copy-remote').addEventListener('click', event => copyText(state.publicUrl, event.currentTarget));
     $('copy-public-link').addEventListener('click', event => copyText(state.publicUrl, event.currentTarget));
     $('whatsapp-connect').addEventListener('click', connectWhatsapp);
+    $('voice-connect').addEventListener('click', openVoicePanel);
+    $('voice-panel-close').addEventListener('click', () => {
+      $('voice-panel').hidden = true;
+      stopVoicePoll();
+    });
     $('whatsapp-settings-btn').addEventListener('click', openWhatsappSettings);
     $('whatsapp-panel-close').addEventListener('click', () => {
       $('whatsapp-panel').hidden = true;

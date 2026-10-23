@@ -315,6 +315,28 @@ if [ -d "$root/whatsapp-bridge" ]; then
   fi
 fi
 
+# Voice calls: the bridge and persona are app code, but the sidecar binary in
+# /opt/sudo-voice/bin is downloaded per-architecture and must survive an
+# update (it is ~35 MB and its version is pinned on purpose). So copy the
+# files, never the directory.
+VOICE_DIR=/opt/sudo-voice
+if [ -d "$root/sudo-voice" ]; then
+  mkdir -p "$VOICE_DIR/bin"
+  for f in voice-bridge.py voice-briefing.md sudo-voice-call; do
+    [ -f "$root/sudo-voice/$f" ] || continue
+    install -m 0755 "$root/sudo-voice/$f" "$VOICE_DIR/$f" 2>>"$LOG" || true
+  done
+  # The installed copies under /opt/sudo-voice keep their own permissions; the
+  # bridge is read by systemd, the CLI is run by the agent.
+  chmod 0644 "$VOICE_DIR/voice-bridge.py" "$VOICE_DIR/voice-briefing.md" 2>/dev/null || true
+  chmod 0755 "$VOICE_DIR/sudo-voice-call" 2>/dev/null || true
+  [ -f "$root/sudo-voice/install-sudo-voice.sh" ] && install -m 0755 "$root/sudo-voice/install-sudo-voice.sh" "$BIN_DIR/sudo-install-voice.sh" 2>>"$LOG"
+  [ -f "$root/sudo-voice/sudo-voice-pair.sh" ] && install -m 0755 "$root/sudo-voice/sudo-voice-pair.sh" "$BIN_DIR/sudo-voice-pair.sh" 2>>"$LOG"
+  # Only restart what is already installed; a device that never enabled voice
+  # calls should not gain a running service from an update.
+  systemctl try-restart sudo-voice-bridge.service >>"$LOG" 2>&1 || true
+fi
+
 # Helper scripts are flat files in sudo-pi/. Install each under the name
 # install-factory.sh gives it -- the one the dashboard and the other scripts
 # actually run. Copying them under their repo names instead (as this used

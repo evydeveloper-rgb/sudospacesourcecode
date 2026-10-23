@@ -1,0 +1,110 @@
+#!/usr/bin/env python3
+"""sudo-voice-call — let the agent ring the owner, and see how the call went.
+
+The agent uses this to turn "text me" into "call me" for anything that deserves
+a voice: an urgent alert, a decision it cannot make alone, or a check-in the
+owner asked for. The owner can always call in without this.
+
+The reason string is not a log label — the voice agent is briefed with it and
+treats it as the purpose of the call. Write it as an instruction.
+
+Usage:
+  sudo-voice-call "Ask how the interview went and whether she wants the notes"
+  sudo-voice-call --list
+  sudo-voice-call --status
+  sudo-voice-call --dry-run "reason"
+
+Exit codes: 0 placed/ok, 1 refused (busy, unpaired, unsupported), 2 transport error.
+"""
+import argparse
+import json
+import os
+import sys
+import urllib.error
+import urllib.request
+
+BASE = os.environ.get("SUDO_VOICE_BASE", "http://127.0.0.1:8796")
+STATE_DIR = os.environ.get("SUDO_VOICE_STATE", "/var/lib/sudo-voice")
+TOKEN_FILE = os.environ.get("HWV_TOKEN_FILE", os.path.join(STATE_DIR, "hwv.token"))
+
+
+def token():
+    try:
+        with open(TOKEN_FILE, encoding="utf-8") as fh:
+            return fh.read().strip()
+    except OSError:
+        return ""
+
+
+def call(method, path, body=None, timeout=15):
+    tok = token()
+    if not tok:
+        print("voice calls are not set up on this device yet", file=sys.stderr)
+        sys.exit(1)
+    req = urllib.request.Request(
+        BASE + path,
+        data=json.dumps(body).encode() if body is not None else None,
+        headers={"Authorization": f"Bearer {tok}", "Content-Type": "application/json"},
+        method=method)
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        return json.loads(resp.read().decode() or "{}")
+
+
+def main():
+    ap = argparse.ArgumentParser(description="Ring the owner over WhatsApp.")
+    ap.add_argument("reason", nargs="?", help="what the call is for, as an instruction")
+    ap.add_argument("--list", action="store_true", help="recent calls")
+    ap.add_argument("--status", action="store_true", help="is the line usable?")
+    ap.add_argument("--dry-run", action="store_true", help="check everything, do not dial")
+    args = ap.parse_args()
+
+    try:
+        health = call("GET", "/health")
+    except urllib.error.URLError as exc:
+        print(f"the voice line is not running on this device ({exc.reason})", file=sys.stderr)
+        return 2
+
+    if args.status:
+        print(json.dumps(health, indent=2))
+        return 0
+
+    if args.list:
+        for c in (call("GET", "/calls").get("calls") or [])[:10]:
+            print(f"{c.get('id')}  {c.get('direction'):8} {c.get('status'):12} "
+                  f"{(c.get('end_reason') or '-')[:24]:24} {(c.get('reason') or '')[:60]}")
+        return 0
+
+    reason = (args.reason or "").strip()
+    if not reason:
+        print("tell me what the call is for, as an instruction", file=sys.stderr)
+        return 1
+
+    # Same pre-flight the developer machine uses: never dial into a dead line or
+    # interrupt a call already in progress.
+    if not health.get("logged_in"):
+        print("WhatsApp is not linked on this device — pair it in the dashboard first",
+              file=sys.stderr)
+        return 1
+    if health.get("active_call"):
+        print(f"already on a call ({health['active_call']}) — not dialing", file=sys.stderr)
+        return 1
+
+    if args.dry_run:
+        print(f"would call the owner. Reason: {reason}")
+        return 0
+
+    try:
+        out = call("POST", "/calls", {"reason": reason}, timeout=40)
+    except urllib.error.HTTPError as exc:
+        print(f"the call was refused: {exc.code} {exc.read().decode()[:200]}", file=sys.stderr)
+        return 1
+    except urllib.error.URLError as exc:
+        print(f"could not reach the voice line: {exc.reason}", file=sys.stderr)
+        return 2
+
+    print(json.dumps({"id": out.get("id"), "status": out.get("status", "dialing")}))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

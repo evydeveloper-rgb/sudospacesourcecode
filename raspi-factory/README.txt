@@ -53,6 +53,20 @@ Do NOT keep running --repair/--retest on a blinking card.
 If repair fails: re-flash Raspberry Pi OS with Imager, then ./prepare-sd.sh
 
 ═══════════════════════════════════════════════
+VOICE CALLS (optional)
+──────────────────────
+The agent can ring the owner over WhatsApp, and be rung back.
+Turned on per device: Settings → Channels → Voice calls.
+
+Needs two things the agent cannot supply itself:
+  • a SECOND phone number as the agent's own WhatsApp account
+    (a phone cannot call the number it already runs on)
+  • a Gemini API key, from aistudio.google.com/apikey
+
+Only that number can call in, and the agent only calls it.
+64-bit devices only. See VOICE-CALLS.md for the full picture.
+
+═══════════════════════════════════════════════
 SECURITY
 ──────────────────────
   Dashboard is passwordless; only expose it on networks you trust

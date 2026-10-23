@@ -7,12 +7,14 @@ Public mode (optional): bind 127.0.0.1:8080 behind Caddy HTTPS.
 
 from __future__ import annotations
 
+import base64
 import hashlib
 import hmac
 import http.server
 import importlib.util
 import json
 import os
+import platform
 import re
 import secrets
 import shutil
@@ -124,6 +126,17 @@ EMBED_MODEL = "text-embedding-3-small"
 WHATSAPP_STATUS = "/var/lib/sudo-whatsapp-status.json"
 WHATSAPP_INSTALL_SCRIPT = "/usr/local/bin/sudo-install-whatsapp-bridge.sh"
 WHATSAPP_UNLINK_SCRIPT = "/usr/local/bin/sudo-unlink-whatsapp.sh"
+# Voice calls (WhatsApp calls via the hermes-wa-voice sidecar). Separate status
+# file from messaging: one can be connected while the other is not, and the two
+# have completely different failure modes.
+VOICE_STATUS = "/var/lib/sudo-voice-status.json"
+VOICE_DIR = "/var/lib/sudo-voice"
+VOICE_QR = os.path.join(VOICE_DIR, "pair-qr.svg")
+VOICE_ENV = "/opt/sudo/voice.env"
+VOICE_INSTALL_SCRIPT = "/usr/local/bin/sudo-install-voice.sh"
+VOICE_PAIR_SCRIPT = "/usr/local/bin/sudo-voice-pair.sh"
+VOICE_CALL_BIN = "/usr/local/bin/sudo-voice-call"
+VOICE_SIDECAR_UNIT = "sudo-voice-sidecar.service"
 UPDATE_SCRIPT = "/usr/local/bin/sudo-update.sh"
 UPDATE_STATUS = "/var/lib/sudo-update-status.json"
 AUTOUPDATE_SCRIPT = "/usr/local/bin/sudo-autoupdate.sh"
@@ -1106,7 +1119,7 @@ def resolve_model(value):
 # What each alias actually is, for telling the owner plainly which model
 # answered. Must stay in step with picoclaw/config.template.json.
 MODEL_LABELS = {
-    "sudo-default": "DeepSeek V4 Flash",
+    "sudo-default": "DeepSeek V4.1 Flash",
     "sudo-fast": "GPT-4o mini",
     "sudo-budget": "Claude Haiku 4.5",
     "sudo-smart": "Claude Sonnet 4.5",
@@ -1556,6 +1569,111 @@ def whatsapp_install_stale() -> bool:
     if not stamps:
         return True
     return (now_ms - max(stamps)) > WHATSAPP_INSTALL_STALE_SECS * 1000
+
+
+# ── Voice calls ─────────────────────────────────────────────────────────────
+
+def voice_env():
+    """The owner-entered settings for voice calls, as a dict.
+
+    Read-only on purpose: the API key lives in this file and must never travel
+    back to a browser. Callers get `has_key`, never the key.
+    """
+    out = {}
+    try:
+        with open(VOICE_ENV, encoding="utf-8") as fh:
+            for line in fh:
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                k, v = line.split("=", 1)
+                out[k.strip()] = v.strip().strip('"').strip("'")
+    except OSError:
+        pass
+    return out
+
+
+def voice_arch_supported():
+    return platform.machine().lower() in ("aarch64", "arm64", "x86_64", "amd64")
+
+
+def voice_state():
+    """Where voice calls stand, from the sidecar's own status file plus the
+    facts only the device can answer (paired? key present?). Read, not compute
+    -- the installer and the sidecar own the truth.
+    """
+    data = read_json_file(VOICE_STATUS, {}) or {}
+    env = voice_env()
+    paired = os.path.isfile(os.path.join(VOICE_DIR, "whatsapp.db"))
+    qr = None
+    if not paired and os.path.isfile(VOICE_QR):
+        # The UI shows the QR inline; a data URI keeps it a one-field payload
+        # rather than a second authenticated image route.
+        try:
+            with open(VOICE_QR, "rb") as fh:
+                qr = "data:image/svg+xml;base64," + base64.b64encode(fh.read()).decode()
+        except OSError:
+            qr = None
+    state = data.get("state", "absent")
+    if state == "running" and not paired:
+        # A status file that claims running after the session was removed is a
+        # lie the owner will act on; trust the session file instead.
+        state = "needs_pairing"
+    return {
+        "state": state,
+        "message": data.get("message", ""),
+        "qr": qr,
+        "paired": paired,
+        "has_key": bool(env.get("GEMINI_API_KEY")),
+        "owner_number": env.get("SUDO_VOICE_OWNER_NUMBER", ""),
+        "bot_number": env.get("SUDO_VOICE_BOT_NUMBER", ""),
+        "arch_supported": voice_arch_supported(),
+        "platform": platform.machine(),
+    }
+
+
+# A 35 MB download on a slow line is minutes, not seconds, so this window is
+# wider than the messaging bridge's — but a status file nobody has touched in
+# that long is still a dead install, and the panel must still be able to retry.
+VOICE_INSTALL_STALE_SECS = 900
+
+
+def voice_install_stale() -> bool:
+    data = read_json_file(VOICE_STATUS, {}) or {}
+    if data.get("state") != "installing":
+        return False
+    stamps = []
+    updated = data.get("updated")
+    if isinstance(updated, (int, float)):
+        stamps.append(float(updated))
+    try:
+        stamps.append(os.path.getmtime(VOICE_STATUS) * 1000)
+    except OSError:
+        pass
+    if not stamps:
+        return True
+    return (time.time() * 1000 - max(stamps)) > VOICE_INSTALL_STALE_SECS * 1000
+
+
+def write_voice_env(values):
+    """Merge owner settings into /opt/sudo/voice.env (0600).
+
+    Merge, not replace: a blank field means "leave what is there", so the
+    owner can change their number without re-typing a key they cannot see.
+    """
+    env = voice_env()
+    for key, val in values.items():
+        if val:
+            env[key] = val
+    lines = [f"{k}={v}" for k, v in env.items() if v]
+    os.makedirs(os.path.dirname(VOICE_ENV), exist_ok=True)
+    tmp = VOICE_ENV + ".tmp"
+    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w", encoding="utf-8") as fh:
+        fh.write("\n".join(lines) + "\n")
+    os.replace(tmp, VOICE_ENV)
+    os.chmod(VOICE_ENV, 0o600)
+    return env
 
 
 def update_state():
@@ -3161,6 +3279,135 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
         # ── WhatsApp through OpenClaw (owner's account, agent's own number) ──
         if path == "/api/agent/whatsapp" and self.command == "GET":
             self.send_json({"backend": agent_backend(), **openclaw_whatsapp_state()})
+            return True
+
+        # ── Voice calls (WhatsApp calls, via the hermes-wa-voice sidecar) ────
+        if path == "/api/agent/voice" and self.command == "GET":
+            info = voice_state()
+            if info["state"] == "installing" and voice_install_stale():
+                info["state"] = "error"
+                info["message"] = ("Setup stopped before it finished — no progress for a "
+                                   "while. Tap Set up to try again.")
+            self.send_json(info)
+            return True
+
+        if path == "/api/agent/voice/setup" and self.command == "POST":
+            try:
+                body = self.read_body_json()
+            except (ValueError, json.JSONDecodeError):
+                self.send_json({"error": "Invalid JSON"}, code=400)
+                return True
+            if not voice_arch_supported():
+                self.send_json({"error": "Voice calls need a 64-bit device. This one cannot run them."},
+                               code=400)
+                return True
+            owner = re.sub(r"[\s()-]", "", str(body.get("owner_number") or ""))
+            bot = re.sub(r"[\s()-]", "", str(body.get("bot_number") or ""))
+            key = str(body.get("gemini_key") or "").strip()
+            for label, num in (("your own number", owner), ("the bot's number", bot)):
+                if num and not E164.match(num):
+                    self.send_json({"error": f"Use {label} in international format, like +15551234567"},
+                                   code=400)
+                    return True
+            if owner and bot and owner == bot:
+                # The single most common misunderstanding: nobody can call
+                # themselves, so this pair can never work.
+                self.send_json({"error": "The bot needs its own number — it cannot call the same "
+                                          "number a phone is already using."}, code=400)
+                return True
+            try:
+                write_voice_env({"SUDO_VOICE_OWNER_NUMBER": owner,
+                                 "SUDO_VOICE_BOT_NUMBER": bot,
+                                 "GEMINI_API_KEY": key})
+            except OSError as exc:
+                self.send_json({"error": f"Could not save those settings: {exc}"}, code=500)
+                return True
+            if not os.path.isfile(VOICE_INSTALL_SCRIPT):
+                self.send_json({"error": "Installer missing — update this device to get it"}, code=500)
+                return True
+            current = voice_state()
+            if current["state"] == "installing" and not voice_install_stale():
+                self.send_json({"ok": True, **current})
+                return True
+            try:
+                write_json_file(VOICE_STATUS, {"state": "installing", "message": "Starting…",
+                                               "updated": int(time.time() * 1000)})
+                result = run_privileged("sudo-voice-install", VOICE_INSTALL_SCRIPT,
+                                        wait=False, timeout=20)
+                if result.returncode != 0:
+                    detail = (result.stderr or result.stdout or "").strip()[:300]
+                    write_json_file(VOICE_STATUS, {
+                        "state": "error",
+                        "message": "Could not start the installer."
+                                   + (f" {detail}" if detail else " See /var/log/sudo-voice-install.log"),
+                        "updated": int(time.time() * 1000),
+                    })
+                    self.send_json({"error": "Could not start the installer"}, code=500)
+                    return True
+            except Exception as exc:  # noqa: BLE001
+                write_json_file(VOICE_STATUS, {"state": "error", "message": str(exc),
+                                               "updated": int(time.time() * 1000)})
+                self.send_json({"error": str(exc)}, code=500)
+                return True
+            self.send_json(voice_state())
+            return True
+
+        if path == "/api/agent/voice/pair" and self.command == "POST":
+            if not voice_state()["has_key"]:
+                self.send_json({"error": "Add a Gemini API key first — voice calls cannot talk without one"},
+                               code=400)
+                return True
+            if not os.path.isfile(VOICE_PAIR_SCRIPT):
+                self.send_json({"error": "Pairing helper missing — update this device"}, code=500)
+                return True
+            try:
+                run_privileged("sudo-voice-pair", VOICE_PAIR_SCRIPT, wait=False, timeout=20)
+            except Exception as exc:  # noqa: BLE001
+                self.send_json({"error": str(exc)}, code=500)
+                return True
+            self.send_json(voice_state())
+            return True
+
+        if path == "/api/agent/voice/call" and self.command == "POST":
+            # "Call me now": the owner proving the line to themselves. The same
+            # binary the agent uses, so what they hear is what it will sound
+            # like when the agent rings on its own.
+            if not os.path.isfile(VOICE_CALL_BIN):
+                self.send_json({"error": "Voice calls are not installed yet"}, code=400)
+                return True
+            reason = ("This is a test call from the dashboard. Greet the owner briefly, ask if "
+                      "they can hear you, and hang up after their answer.")
+            try:
+                proc = subprocess.run([VOICE_CALL_BIN, reason], capture_output=True,
+                                      text=True, timeout=45)
+            except subprocess.TimeoutExpired:
+                self.send_json({"error": "The voice line did not respond"}, code=504)
+                return True
+            if proc.returncode != 0:
+                self.send_json({"error": (proc.stderr or "Could not place the call").strip()[:300]},
+                               code=502)
+                return True
+            self.send_json({"ok": True, "detail": proc.stdout.strip()})
+            return True
+
+        if path == "/api/agent/voice/unlink" and self.command == "POST":
+            # Removes the linked-device session: the only way to stop the
+            # sidecar acting as that WhatsApp account from this device.
+            try:
+                subprocess.run(["systemctl", "disable", "--now", VOICE_SIDECAR_UNIT],
+                               capture_output=True, text=True, timeout=30)
+                for name in ("whatsapp.db", "whatsapp.db-wal", "whatsapp.db-shm"):
+                    try:
+                        os.remove(os.path.join(VOICE_DIR, name))
+                    except OSError:
+                        pass
+                write_json_file(VOICE_STATUS, {"state": "needs_pairing",
+                                               "message": "WhatsApp unlinked. Link it again to use calls.",
+                                               "updated": int(time.time() * 1000)})
+            except Exception as exc:  # noqa: BLE001
+                self.send_json({"error": str(exc)}, code=500)
+                return True
+            self.send_json(voice_state())
             return True
 
         # Home app.
