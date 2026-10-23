@@ -805,6 +805,41 @@ try:
 except (OSError, ValueError):
     previous = {}
 
+# OpenClaw pins each conversation to the model it started on
+# (sessions.json: modelProvider + model) and ignores later config changes, so
+# a new default would only reach new conversations. Move the ones still on
+# the old default, and drop fallback pins it set by itself; a model the owner
+# chose for a conversation stays. Backed up first.
+old_primary = (((previous.get("agents") or {}).get("defaults") or {}).get("model") or {}).get("primary") or ""
+new_primary = ((cfg.get("agents") or {}).get("defaults") or {}).get("model", {}).get("primary") or ""
+if old_primary and new_primary and old_primary != new_primary:
+    oprov, _, omodel = old_primary.partition("/")
+    nprov, _, nmodel = new_primary.partition("/")
+    for store_path in glob.glob("/opt/sudo/openclaw/agents/*/sessions/sessions.json"):
+        try:
+            store = json.load(open(store_path, encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        moved = 0
+        for entry in (store.values() if isinstance(store, dict) else []):
+            if not isinstance(entry, dict):
+                continue
+            if entry.get("model") == omodel and entry.get("modelProvider") in (oprov, None):
+                entry["model"], entry["modelProvider"] = nmodel, nprov
+                moved += 1
+            if entry.get("modelOverrideSource") == "auto":
+                for k in ("modelOverride", "providerOverride", "modelOverrideSource", "fallbackNoticeReason"):
+                    entry.pop(k, None)
+                moved += 1
+        if moved:
+            import shutil as _sh
+            _sh.copy2(store_path, store_path + ".bak-model-switch")
+            tmp_store = store_path + ".tmp"
+            with open(tmp_store, "w", encoding="utf-8") as fh:
+                json.dump(store, fh, indent=2)
+            os.replace(tmp_store, store_path)
+            print(f"Conversations moved to {nmodel}: {moved} ({store_path})")
+
 # Restart only when something actually changed. Do not lean on the gateway's
 # hot reload for this: on 2026.6.11 it logs "config change detected
 # (tools.deny)" and keeps running exec anyway -- measured on a Pi, the Shell

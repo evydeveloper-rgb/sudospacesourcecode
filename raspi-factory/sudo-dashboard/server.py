@@ -1266,7 +1266,7 @@ def resolve_model(value):
 # What each alias actually is, for telling the owner plainly which model
 # answered. Must stay in step with openclaw/models.json.
 MODEL_LABELS = {
-    "sudo-default": "DeepSeek V4 Flash",
+    "sudo-default": "DeepSeek V4.1 Flash",
     "sudo-fast": "GPT-4o mini",
     "sudo-budget": "Claude Haiku 4.5",
     "sudo-smart": "Claude Sonnet 4.5",
@@ -1340,10 +1340,11 @@ def model_map(cfg):
     }
 
 
-# Which of the picker's aliases can take an image directly. DeepSeek V4 Flash
-# (the default) cannot, which is the whole reason the vision model exists.
+# Which of the picker's aliases can take an image directly. DeepSeek V4.1
+# Flash (the default since 1.0.39) can; the vision model is for the ones that
+# cannot, and for direct provider keys whose models are text-only.
 MODEL_SEES_IMAGES = {
-    "sudo-default": False, "sudo-fast": True, "sudo-budget": True, "sudo-smart": True,
+    "sudo-default": True, "sudo-fast": True, "sudo-budget": True, "sudo-smart": True,
 }
 
 

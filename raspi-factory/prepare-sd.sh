@@ -158,6 +158,21 @@ patch_cmdline() {
     fi
 }
 
+warn_old_os() {
+    # issue.txt: "Raspberry Pi reference 2026-10-06". Older images have been
+    # seen to raise a setup hotspot that current phones cannot join.
+    local d
+    d="$(sed -n 's/^Raspberry Pi reference \([0-9-]*\).*/\1/p' "$1/issue.txt" 2>/dev/null | head -1)"
+    [ -n "$d" ] || return 0
+    if [ "${d:0:4}" -lt 2025 ] 2>/dev/null; then
+        echo ""
+        echo "WARNING: this card has Raspberry Pi OS from $d."
+        echo "  Phones may not be able to join the setup hotspot on images that old."
+        echo "  Flash the current Raspberry Pi OS (64-bit) with Raspberry Pi Imager first."
+        echo ""
+    fi
+}
+
 copy_factory_files() {
     local boot="$1"
 
@@ -289,6 +304,7 @@ prepare_boot() {
     echo "Mode: $MODE"
 
     assert_boot_firmware "$boot"
+    warn_old_os "$boot"
 
     for f in "$INSTALL" "$WIFI_SETUP/app.py" "$SUDO_DASH/index.html" "$SUDO_DASH/server.py" "$SUDO_PI/device-secrets.sh" "$SUDO_PI/setup-remote-access.sh" \
              "$OPENCLAW_SRC/models.json" "$OPENCLAW_SRC/workspace/SOUL.md" "$OPENCLAW_SRC/workspace/AGENTS.md"; do

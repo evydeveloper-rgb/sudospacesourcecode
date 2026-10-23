@@ -527,6 +527,16 @@ if not os.path.exists(MARKER):
         open("/run/sudo-report-now", "w").close()
         print("Problem reports: on for this beta device")
     open(MARKER, "w").close()
+
+# A device that has not sent the fuller report's two-week look-back yet
+# sends it now (after an update), instead of at tomorrow's timer.
+cfg = json.load(open(path, encoding="utf-8"))
+try:
+    last = json.load(open("/var/lib/sudo-report-last.json", encoding="utf-8"))
+except (OSError, ValueError):
+    last = {}
+if cfg.get("problem_reports") is True and last.get("sent") and not (last.get("report") or {}).get("lookback_v2"):
+    open("/run/sudo-report-now", "w").close()
 PY
 # Just switched on: the first report (two weeks of history) goes now, not
 # at tomorrow's timer.

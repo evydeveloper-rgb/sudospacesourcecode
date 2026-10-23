@@ -481,9 +481,13 @@ def channel_health():
 def collect():
     cfg = read_json(CONFIG, {}) or {}
     now = time.time()
-    window = 24 if (read_json(LAST_FILE, {}) or {}).get("sent") else 14 * 24
+    # Two weeks the first time this version of the report goes out (the
+    # schema-1 reports before it had no usage), then one day at a time.
+    last = read_json(LAST_FILE, {}) or {}
+    window = 24 if last.get("sent") and (last.get("report") or {}).get("lookback_v2") else 14 * 24
     return {
         "schema": 2,
+        "lookback_v2": True,
         "sent_at": int(now),
         "sudo": sudo_version(),
         "device": device(),
