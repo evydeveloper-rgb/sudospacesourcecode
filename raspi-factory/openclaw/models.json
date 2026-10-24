@@ -3,7 +3,9 @@
   "model_list": [
     {
       "model_name": "sudo-default",
-      "model": "openrouter/deepseek/deepseek-v4.1-flash-1017"
+      "model": "openrouter/deepseek/deepseek-v4.1-flash-1017",
+      "_params": "Sent to OpenRouter with each request: the cheapest of the providers serving the model (its default pick cost ~2x more, measured Oct 2026).",
+      "params": { "provider": { "sort": "price" } }
     },
     {
       "model_name": "sudo-fast",

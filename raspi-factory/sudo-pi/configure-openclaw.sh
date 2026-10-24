@@ -149,6 +149,9 @@ token = open("/etc/sudo/openclaw_gateway_token", encoding="utf-8").read().strip(
 # runs on. Shared with configure-agent.sh and the dashboard.
 template = json.load(open("/opt/sudo-openclaw/models.json", encoding="utf-8"))
 real = {m["model_name"]: m.get("model", "") for m in template.get("model_list", [])}
+# Per-model request settings (models.json "params"), e.g. OpenRouter's
+# provider routing; OpenClaw reads them from the allowlist entry.
+model_params = {m.get("model", ""): m["params"] for m in template.get("model_list", []) if m.get("params")}
 alias = sudo.get("model") or "sudo-default"
 primary = real.get(alias) or real["sudo-default"]
 
@@ -174,7 +177,8 @@ defaults["imageModel"] = {"primary": image_model, "fallbacks": [image_fallback]}
 # agents.defaults.models is an allowlist once set, so every model that can be
 # picked -- the aliases, plus the two vision models above -- has to be in it or
 # selecting it silently does nothing.
-allowlist = {m: {} for m in real.values() if m.startswith("openrouter/")}
+allowlist = {m: ({"params": model_params[m]} if m in model_params else {})
+             for m in real.values() if m.startswith("openrouter/")}
 allowlist[image_model] = {}
 allowlist[image_fallback] = {}
 # The owner's own models stay in the allowlist too (merge, not rebuild).
