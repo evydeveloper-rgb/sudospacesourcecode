@@ -57,6 +57,30 @@
 .state.show { display: block; }
 .state.bad { background: #ffdad6; color: var(--error); }
 .retry { display: none; width: 100%; height: 48px; margin-top: 10px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); font-weight: 700; cursor: pointer; }
+
+/* Shown when "Done" is pressed before the address was copied: once this
+   network goes away, the address is the only way back to sudo. */
+.first-copy {
+  position: fixed; inset: 0; z-index: 10; display: none; align-items: flex-end; justify-content: center;
+  padding: 16px; background: rgba(20, 20, 30, .45);
+}
+.first-copy.show { display: flex; }
+.first-copy-card {
+  width: 100%; max-width: 460px; padding: 22px 18px 18px; border-radius: 24px;
+  background: var(--surface); box-shadow: var(--shadow-hi);
+}
+.first-copy-card h2 { margin: 0 0 6px; font-size: 1.2rem; }
+.first-copy-card p { margin: 0 0 16px; color: var(--ink-2); font-size: .9rem; line-height: 1.45; }
+.first-copy-card code {
+  display: block; margin: 0 0 14px; padding: 14px; border-radius: 12px; background: var(--surface-low);
+  font: 700 1.05rem/1.2 var(--font-mono); color: var(--primary); word-break: break-all;
+  -webkit-user-select: all; user-select: all;
+}
+.first-copy-card .done { margin: 0; }
+.skip {
+  display: block; width: 100%; margin-top: 10px; padding: 10px; border: 0; background: none;
+  color: var(--ink-3); font-size: .85rem; font-weight: 600; cursor: pointer;
+}
 </style>
 </head>
 <body>
@@ -94,6 +118,16 @@
   <button type="button" class="retry" id="retry">Try a different network</button>
 </main>
 
+<div class="first-copy" id="first-copy" role="dialog" aria-modal="true" aria-labelledby="first-copy-title">
+  <div class="first-copy-card">
+    <h2 id="first-copy-title">Copy your address first</h2>
+    <p id="first-copy-note">Once sudo moves to {{SSID}}, this page closes and the address is how you get back to it.</p>
+    <code id="first-copy-url">{{DASHBOARD_URL}}</code>
+    <button type="button" class="done" id="first-copy-go">Copy address</button>
+    <button type="button" class="skip" id="first-copy-skip">I took a screenshot, connect</button>
+  </div>
+</div>
+
 <script>
   // Plain http, so navigator.clipboard is usually missing (it needs a secure
   // context). Fall back to execCommand, then to selecting the text.
@@ -111,10 +145,12 @@
       if (ok) { resolve(); } else { reject(); }
     });
   }
+  var copied = false;
   Array.prototype.forEach.call(document.querySelectorAll('.copy'), function (button) {
     button.addEventListener('click', function () {
       var code = document.getElementById(button.dataset.target);
       copyText(code.textContent.trim()).then(function () {
+        copied = true;
         button.textContent = 'Copied';
         setTimeout(function () { button.textContent = 'Copy'; }, 1800);
       }).catch(function () {
@@ -139,9 +175,41 @@
 
   // "Done" is what starts the move. The hotspot drops a couple of seconds
   // later, so the reply may never arrive -- that is the expected outcome.
+  var firstCopy = document.getElementById('first-copy');
+  var firstCopyGo = document.getElementById('first-copy-go');
+  var ssidName = document.getElementById('ssid').textContent;
+  // Not copied yet: ask for that first. The first press copies; once it has,
+  // the same button connects. If copying is blocked, the address is selected
+  // so it can be held and copied by hand.
+  firstCopyGo.addEventListener('click', function () {
+    if (copied) { firstCopy.className = 'first-copy'; connect(); return; }
+    var code = document.getElementById('first-copy-url');
+    copyText(code.textContent.trim()).then(function () {
+      copied = true;
+      firstCopyGo.textContent = 'Copied. Connect to ' + ssidName;
+    }).catch(function () {
+      var range = document.createRange();
+      range.selectNodeContents(code);
+      var sel = window.getSelection();
+      sel.removeAllRanges(); sel.addRange(range);
+      document.getElementById('first-copy-note').textContent =
+        'This phone would not let sudo copy it. Hold the address above and choose Copy.';
+      copied = true;
+      firstCopyGo.textContent = 'Copied it? Connect to ' + ssidName;
+    });
+  });
+  document.getElementById('first-copy-skip').addEventListener('click', function () {
+    firstCopy.className = 'first-copy';
+    connect();
+  });
   doneBtn.addEventListener('click', function () {
+    if (!copied) { firstCopy.className = 'first-copy show'; return; }
+    connect();
+  });
+
+  function connect() {
     doneBtn.disabled = true;
-    var ssid = document.getElementById('ssid').textContent;
+    var ssid = ssidName;
     say('Connecting to ' + ssid + '. You can switch your phone back to it now.');
     after.innerHTML = '<span class="wait">Give it about a minute before you open the address. sudo needs a moment to connect.</span>';
     var xhr = new XMLHttpRequest();
@@ -149,7 +217,7 @@
     xhr.timeout = 5000;
     xhr.send('');
     startPolling();
-  });
+  }
   retryBtn.addEventListener('click', function () { window.location.href = '/setup'; });
 
   // Only a failed join brings the hotspot back; then this page can say so.

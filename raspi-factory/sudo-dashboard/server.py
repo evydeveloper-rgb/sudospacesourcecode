@@ -1729,8 +1729,16 @@ def local_system_prompt(cfg):
 def local_model_state():
     """Whether the on-device model is installed and answering."""
     data = read_json_file(LOCALMODEL_STATUS, {}) or {}
+    state = data.get("state", "absent")
+    # The status file is the installer's word, and it has said "failed" for a
+    # model that finished downloading and answers fine (seen on a new 8GB
+    # Pi). Ollama is the truth: the active model there means it is ready.
+    if state in ("failed", "absent") and any(
+            m.get("name") == active_local_model() for m in (ollama_installed() or [])):
+        state = "done"
+        data = {**data, "message": "", "percent": 100}
     return {
-        "state": data.get("state", "absent"),
+        "state": state,
         "message": data.get("message", ""),
         # 0-100 while installing; the chat shows a bar from it. Absent on
         # older installs, so the UI treats a missing value as "unknown" and

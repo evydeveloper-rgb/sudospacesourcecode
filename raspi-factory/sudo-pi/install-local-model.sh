@@ -172,10 +172,22 @@ echo "pulling ${MODEL}"
 # that is mapped onto 12-90% of the overall setup and written to the status
 # file, so the person watching sees the download actually move instead of a
 # bar that sits still and then jumps to done.
-if ! ollama pull "$MODEL" 2>&1 \
+#
+# Whether it worked is ollama's exit code alone, never the filter's: a new
+# 8GB Pi had the model downloaded and answering while this said "Could not
+# download". Three tries (a pull resumes where it stopped), then ask Ollama
+# whether the model is there before calling it a failure.
+have_model() {
+  curl -sf --max-time 5 http://127.0.0.1:11434/api/tags 2>/dev/null \
+    | python3 -c 'import json,sys; m=sys.argv[1]; sys.exit(0 if any(x.get("name") in (m, m+":latest") for x in json.load(sys.stdin).get("models", [])) else 1)' "$MODEL"
+}
+pull_once() {
+  set +o pipefail
+  ollama pull "$MODEL" 2>&1 \
      | tr '\r' '\n' \
      | python3 -c '
 import json, re, sys, time
+sys.stdout.reconfigure(errors="replace")
 state_path, model = sys.argv[1], sys.argv[2]
 bar = re.compile(r"^(pulling [0-9a-f]+:|pulling manifest|verifying|writing manifest|success)")
 ansi = re.compile(r"\x1b\[[0-9;?]*[a-zA-Z]")
@@ -200,7 +212,18 @@ for raw in sys.stdin:
     if stripped and not bar.match(stripped):
         sys.stdout.write(stripped + "\n")
 ' "$STATUS" "$MODEL"
-  then
+  local rc=${PIPESTATUS[0]}
+  set -o pipefail
+  return "$rc"
+}
+pulled=""
+for attempt in 1 2 3; do
+  if pull_once; then pulled=1; break; fi
+  echo "pull attempt ${attempt} failed"
+  have_model && { echo "but ${MODEL} is installed"; pulled=1; break; }
+  sleep $((attempt * 10))
+done
+if [ -z "$pulled" ]; then
   fallback_to_greeter "download failed"
   set_status failed "Could not download ${MODEL}" 0
   echo "pull failed"
