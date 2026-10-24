@@ -2046,7 +2046,10 @@ def local_models_overview():
         "active_speed": local_speed_estimate(active_info.get("bytes") or 0, specs["board"]) if active_info else None,
         "catalog": catalog,
         "custom": extra,
-        "recommended": LOCAL_RECOMMENDED.get(specs["ram_nominal"], "qwen3:1.7b"),
+        # The same pick a new device installs (hardware-profile.py and its
+        # table), so Settings does not recommend something else.
+        "recommended": hardware_profile().get("model")
+                       or LOCAL_RECOMMENDED.get(specs["ram_nominal"], "qwen3:1.7b"),
         "install": local_model_state(),
         "prefer_local": bool(cfg.get("prefer_local")),
         "measured": cfg.get("local_speed_test") if (cfg.get("local_speed_test") or {}).get("model") == active else None,
