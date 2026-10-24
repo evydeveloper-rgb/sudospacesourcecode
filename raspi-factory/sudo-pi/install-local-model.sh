@@ -91,7 +91,9 @@ echo "MemAvailable: ${avail_mb}MB"
 if [ -n "$PICKED" ] && [ "${avail_mb:-0}" -lt 2500 ]; then
   fallback_to_greeter "only ${avail_mb}MB free"
 fi
-if [ "${avail_mb:-0}" -lt 900 ]; then
+# Not on a boot run where the model is already installed: there is nothing
+# to add, and a busy moment at boot must not mark a working model as failed.
+if [ "${avail_mb:-0}" -lt 900 ] && ! { [ -z "$SWITCH" ] && [ -s "$ACTIVE" ] && command -v ollama >/dev/null 2>&1; }; then
   set_status failed "Not enough free memory (${avail_mb}MB) to run a local model safely" 0
   echo "aborting: only ${avail_mb}MB available"
   exit 1
@@ -153,13 +155,31 @@ OLLAMAUNIT
 fi
 
 systemctl enable ollama 2>/dev/null || true
-systemctl restart ollama 2>/dev/null || true
+# start, not restart: this runs on every boot, and a restart drops the model
+# out of memory while the owner may already be chatting with it.
+systemctl start ollama 2>/dev/null || true
 
 # Give the daemon a moment to bind before asking it for anything.
 for _ in $(seq 1 15); do
   curl -sf --max-time 2 http://127.0.0.1:11434/api/tags >/dev/null 2>&1 && break
   sleep 2
 done
+
+have_model() {
+  curl -sf --max-time 5 http://127.0.0.1:11434/api/tags 2>/dev/null \
+    | python3 -c 'import json,sys; m=sys.argv[1]; sys.exit(0 if any(x.get("name") in (m, m+":latest") for x in json.load(sys.stdin).get("models", [])) else 1)' "$MODEL"
+}
+
+# The boot run with the model already on the device: nothing to download.
+# Pulling it again anyway is what turned a working model into "Could not
+# download" -- a Pi that had just been moved booted before its internet was
+# up, the re-pull failed, and the dashboard showed the install as broken.
+if [ -z "$SWITCH" ] && have_model; then
+  echo "$MODEL" > "$ACTIVE"
+  set_status done "${MODEL} ready" 100
+  echo "${MODEL} already installed -- nothing to download"
+  exit 0
+fi
 
 set_status installing "Downloading ${MODEL}…" 12
 echo "pulling ${MODEL}"
@@ -177,10 +197,6 @@ echo "pulling ${MODEL}"
 # 8GB Pi had the model downloaded and answering while this said "Could not
 # download". Three tries (a pull resumes where it stopped), then ask Ollama
 # whether the model is there before calling it a failure.
-have_model() {
-  curl -sf --max-time 5 http://127.0.0.1:11434/api/tags 2>/dev/null \
-    | python3 -c 'import json,sys; m=sys.argv[1]; sys.exit(0 if any(x.get("name") in (m, m+":latest") for x in json.load(sys.stdin).get("models", [])) else 1)' "$MODEL"
-}
 pull_once() {
   set +o pipefail
   ollama pull "$MODEL" 2>&1 \
