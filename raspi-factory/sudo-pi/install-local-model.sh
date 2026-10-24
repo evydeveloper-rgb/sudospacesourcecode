@@ -208,18 +208,36 @@ state_path, model = sys.argv[1], sys.argv[2]
 bar = re.compile(r"^(pulling [0-9a-f]+:|pulling manifest|verifying|writing manifest|success)")
 ansi = re.compile(r"\x1b\[[0-9;?]*[a-zA-Z]")
 pct = re.compile(r"(\d{1,3})%")
+# A model can come as several files (Qwen3.5: the weights and the part that
+# reads images), each with its own 0-100%. Following one number read 100% for
+# ten minutes while the rest downloaded, so add the files up by size:
+#   pulling 8eeb52dfb3bb:  45% ... 904 MB/2.0 GB  25 MB/s
+layer = re.compile(r"pulling ([0-9a-f]{6,}):\s*(\d{1,3})%.*?([\d.]+)\s*([KMG]?B)(?:/([\d.]+)\s*([KMG]?B))?")
+unit = {"B": 1, "KB": 1e3, "MB": 1e6, "GB": 1e9}
+sizes, done = {}, {}
 last = -1
 for raw in sys.stdin:
     line = ansi.sub("", raw).replace("[", "")
     m = pct.search(line)
     if m:
         p = min(100, int(m.group(1)))
-        if p > last:
+        lm = layer.search(line)
+        if lm:
+            total = float(lm.group(5) or lm.group(3)) * unit.get(lm.group(6) or lm.group(4), 1)
+            sizes[lm.group(1)] = max(total, sizes.get(lm.group(1), 0))
+            done[lm.group(1)] = sizes[lm.group(1)] * min(100, int(lm.group(2))) / 100
+            if sum(sizes.values()) > 0:
+                # Ollama starts the next file only when one is finished, so
+                # the total grows and the bar can step back: honest, where a
+                # bar held at 100% looked stuck. 99 until the pull is over.
+                p = min(99, int(100 * sum(done.values()) / sum(sizes.values())))
+        parts = sum(1 for s in sizes.values() if s > 50e6)
+        if p != last:
             last = p
             try:
                 with open(state_path, "w", encoding="utf-8") as f:
                     json.dump({"state": "installing",
-                               "message": "Downloading %s… %d%%" % (model, p),
+                               "message": "Downloading %s… %d%%%s" % (model, p, " (part %d)" % parts if parts > 1 else ""),
                                "percent": 12 + int(p * 0.78),
                                "model": model, "at": time.time()}, f)
             except OSError:
