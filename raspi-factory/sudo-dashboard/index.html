@@ -1206,6 +1206,12 @@
             <p class="lede" data-i18n="conn.letSudoUseYour">Let sudo use your other apps — sending email, adding calendar events, filing issues — instead of only talking about them.</p>
           </div>
         </div>
+        <div class="home-tabs conn-tabs" role="tablist" aria-label="Connector types" data-i18n-attr="aria-label:conn.tabGroup">
+          <button type="button" role="tab" class="home-tab conn-tab active" data-conn="api" aria-selected="true" data-i18n="conn.tabApi">API connections</button>
+          <button type="button" role="tab" class="home-tab conn-tab" data-conn="browser" aria-selected="false" data-i18n="conn.tabBrowser">Browser logins</button>
+        </div>
+
+        <div class="conn-panel" id="conn-panel-api">
         <div class="settings-list connectors-panel">
           <section class="setting-card open" id="connectors-setting">
             <div class="setting-body">
@@ -1256,6 +1262,50 @@
               </div>
             </div>
           </section>
+        </div>
+        </div><!-- /conn-panel-api -->
+
+        <!-- Browser logins: the sibling of API connectors. A real Chromium on
+             this device, for sites that have nothing to grant -- only a session
+             to keep. Same promise as the API side: your login stays on the box,
+             and the dashboard only reports whether it still works. -->
+        <div class="conn-panel" id="conn-panel-browser" hidden>
+          <div class="settings-list connectors-panel">
+            <section class="setting-card open" id="browser-setting">
+              <div class="setting-body">
+                <p class="section-intro" data-i18n="browser.intro">Some sites have no app to connect — a parcel tracker, a personal social account, a council portal. For those, sudo uses a real browser on this device: you sign in once, the session stays here, and sudo reuses it.</p>
+
+                <div class="browser-install" id="browser-install" hidden>
+                  <strong data-i18n="browser.setupTitle">The browser is not set up yet</strong>
+                  <p class="microcopy" data-i18n="browser.setupBody">It adds roughly 450 MB to this device and takes a few minutes. Nothing is installed until you tap.</p>
+                  <button class="primary-button" id="browser-install-btn" type="button" data-i18n="browser.setupCta">Set up the browser</button>
+                  <p class="form-status" id="browser-install-status" role="status"></p>
+                </div>
+
+                <div id="browser-main" hidden>
+                  <div class="browser-add">
+                    <label for="browser-site" data-i18n="browser.addLabel">Add a site</label>
+                    <div class="browser-add-row">
+                      <select id="browser-site"></select>
+                      <button class="soft-button" id="browser-add-btn" type="button" data-i18n="browser.addCta">Add</button>
+                    </div>
+                    <input id="browser-url" type="url" autocomplete="off" spellcheck="false" placeholder="https://example.com" hidden data-i18n-attr="placeholder:browser.urlPlaceholder">
+                  </div>
+
+                  <div class="browser-list" id="browser-list" role="list"></div>
+                  <p class="browser-empty" id="browser-empty" data-i18n="browser.empty">No sites yet. Add one above and sudo will tell you whether it is signed in.</p>
+                  <p class="form-status" id="browser-status" role="status"></p>
+
+                  <button class="info-link info-link-strong" type="button" aria-expanded="false" aria-controls="browser-info" data-i18n="browser.aboutTitle">What stays on this device ⓘ</button>
+                  <div class="info-bubble" id="browser-info" data-i18n-html="browser.aboutBody">
+                    <strong>Your password.</strong> If you type it here, it is stored on this device only — encrypted when the device can, and readable by its owner account either way. sudo never sends it anywhere, and never writes it to a log.<br><br>
+                    <strong>The session.</strong> After a sign-in, the browser keeps its cookies in a private profile on this device. That is what lets sudo act for you later; delete the site here and the profile goes with it.<br><br>
+                    <strong>What it cannot do.</strong> Sites that ask for a captcha or a code stop here — sudo reports “needs you” instead of trying to get around it. And some sites simply forbid automation; if one of them locks you out, that is the site's rule, not a bug.
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
         </div>
       </section>
 
@@ -6522,6 +6572,219 @@
       }
     }
 
+    // --- Browser logins: a real browser for sites with no API -------------
+    // The worker owns the truth; this only asks it and draws the answer. The
+    // states are deliberately few, and "unknown" is a legitimate answer --
+    // better than claiming a session works when the site changed its markup.
+    const BROWSER_STATES = {
+      connected: 'browser.stateConnected',
+      needs_login: 'browser.stateNeedsLogin',
+      needs_you: 'browser.stateNeedsYou',
+      unknown: 'browser.stateUnknown',
+      error: 'browser.stateError',
+      busy: 'browser.stateBusy',
+    };
+
+    async function loadBrowser(quiet) {
+      try {
+        const data = await api('/api/agent/browser-logins', {}, 20000);
+        state.browser = data;
+        renderBrowser();
+      } catch (error) {
+        // Never leave the panel blank when the worker cannot answer: an empty
+        // card reads as "this feature does not exist", which is the one message
+        // we must not send. Show the setup block with the real reason instead.
+        $('browser-install').hidden = false;
+        $('browser-main').hidden = true;
+        $('browser-install-status').textContent = error.message;
+      }
+    }
+
+    function renderBrowser() {
+      const data = state.browser || {};
+      const install = data.install || {};
+      const ready = !!data.installed;
+      $('browser-install').hidden = ready;
+      $('browser-main').hidden = !ready;
+      $('browser-install-status').textContent = ready ? '' : (install.message || '');
+
+      if (!ready) return;
+
+      const select = $('browser-site');
+      const recipes = (data.recipes || []).filter(r => r.id !== 'generic');
+      const generic = (data.recipes || []).find(r => r.id === 'generic');
+      const known = new Set((data.sites || []).map(s => s.id));
+      const options = recipes.filter(r => !known.has(r.id));
+      const previous = select.value;
+      select.replaceChildren(...options.map(r => {
+        const opt = document.createElement('option');
+        opt.value = r.id;
+        opt.textContent = r.label;
+        return opt;
+      }));
+      if (generic) {
+        const opt = document.createElement('option');
+        opt.value = generic.id;
+        opt.textContent = t('browser.otherSite');
+        select.append(opt);
+      }
+      select.hidden = select.options.length === 0;
+      $('browser-add-btn').hidden = select.options.length === 0;
+      if (previous && [...select.options].some(o => o.value === previous)) select.value = previous;
+      $('browser-url').hidden = select.value !== 'generic';
+
+      const sites = data.sites || [];
+      $('browser-empty').hidden = sites.length > 0;
+      $('browser-list').replaceChildren(...sites.map(browserRow));
+    }
+
+    function browserRow(site) {
+      const row = document.createElement('div');
+      row.className = 'browser-row';
+      row.dataset.state = site.state;
+
+      const head = document.createElement('div');
+      head.className = 'browser-row-head';
+      const name = document.createElement('strong');
+      name.textContent = site.label || site.id;
+      const badge = document.createElement('span');
+      badge.className = 'browser-badge';
+      badge.textContent = t(BROWSER_STATES[site.state] || 'browser.stateUnknown');
+      head.append(name, badge);
+
+      const body = document.createElement('div');
+      body.className = 'browser-row-body';
+      if (site.url) {
+        const link = document.createElement('a');
+        link.href = site.url;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.textContent = site.url.replace(/^https?:\/\//, '');
+        body.append(link);
+      }
+      if (site.note) {
+        const note = document.createElement('p');
+        note.className = 'browser-note';
+        note.textContent = site.note;
+        body.append(note);
+      }
+
+      const actions = document.createElement('div');
+      actions.className = 'browser-actions';
+
+      const check = document.createElement('button');
+      check.type = 'button';
+      check.className = 'soft-button';
+      check.textContent = t('browser.check');
+      check.addEventListener('click', () => browserAction(['probe'], { site: site.id }, check));
+      actions.append(check);
+
+      const signin = document.createElement('button');
+      signin.type = 'button';
+      signin.className = 'soft-button';
+      signin.textContent = t('browser.signIn');
+      const form = browserLoginForm(site);
+      form.hidden = true;
+      signin.addEventListener('click', () => { form.hidden = !form.hidden; });
+      actions.append(signin);
+
+      if (site.has_credentials) {
+        const forget = document.createElement('button');
+        forget.type = 'button';
+        forget.className = 'ghost-button';
+        forget.textContent = t('browser.forget');
+        forget.addEventListener('click', () => browserAction(['forget'], { site: site.id }, forget));
+        actions.append(forget);
+      }
+
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'ghost-button';
+      remove.textContent = t('browser.remove');
+      remove.addEventListener('click', () => browserAction(['remove'], { site: site.id }, remove, true));
+      actions.append(remove);
+
+      row.append(head, body, form, actions);
+      return row;
+    }
+
+    function browserLoginForm(site) {
+      const form = document.createElement('div');
+      form.className = 'browser-login-form';
+      const user = document.createElement('input');
+      user.type = 'text';
+      user.autocomplete = 'username';
+      user.spellcheck = false;
+      user.placeholder = t('browser.username');
+      const pass = document.createElement('input');
+      pass.type = 'password';
+      pass.autocomplete = 'current-password';
+      pass.placeholder = t('browser.password');
+      const go = document.createElement('button');
+      go.type = 'button';
+      go.className = 'primary-button';
+      go.textContent = t('browser.signInCta');
+      go.addEventListener('click', () => {
+        if (!user.value.trim() || !pass.value) {
+          $('browser-status').textContent = t('browser.needBoth');
+          return;
+        }
+        browserAction(['login'], { site: site.id, username: user.value.trim(), password: pass.value }, go);
+        pass.value = '';
+      });
+      form.append(user, pass, go);
+      return form;
+    }
+
+    async function browserAction(parts, body, button, confirmFirst) {
+      const status = $('browser-status');
+      const label = (parts[0] === 'remove') ? t('browser.removing')
+        : (parts[0] === 'forget') ? t('browser.forgetting')
+          : (parts[0] === 'login') ? t('browser.signingIn') : t('browser.checking');
+      if (confirmFirst && !window.confirm(t('browser.confirmRemove'))) return;
+      button.disabled = true;
+      status.textContent = label;
+      try {
+        const data = await api('/api/agent/browser-logins/' + parts[0], {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        }, 240000);
+        state.browser = data;
+        renderBrowser();
+        status.textContent = data.note || '';
+      } catch (error) {
+        status.textContent = error.message;
+        button.disabled = false;
+      }
+    }
+
+    async function installBrowser() {
+      const status = $('browser-install-status');
+      const btn = $('browser-install-btn');
+      btn.disabled = true;
+      status.textContent = t('browser.installing');
+      try {
+        const data = await api('/api/agent/browser-logins/install', { method: 'POST' }, 30000);
+        state.browser = data;
+        renderBrowser();
+        // The install runs outside this request; poll until it lands or fails.
+        let tries = 0;
+        const timer = setInterval(async () => {
+          tries += 1;
+          await loadBrowser(true);
+          const install = (state.browser || {}).install || {};
+          if ((state.browser || {}).installed || install.state === 'error' || tries > 120) {
+            clearInterval(timer);
+            btn.disabled = false;
+          }
+        }, 5000);
+      } catch (error) {
+        status.textContent = error.message;
+        btn.disabled = false;
+      }
+    }
+
     async function saveGithub() {
       const status = $('github-status');
       const token = $('github-token').value.trim();
@@ -7971,6 +8234,45 @@
     document.querySelectorAll('#routing-options button').forEach(b =>
       b.addEventListener('click', () => setRouting(b.dataset.value, true)));
     $('model').addEventListener('change', () => setRouting(state.routing, true));
+    document.querySelectorAll('.conn-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.conn-tab').forEach(t => {
+          const on = t === tab;
+          t.classList.toggle('active', on);
+          t.setAttribute('aria-selected', String(on));
+        });
+        $('conn-panel-api').hidden = tab.dataset.conn !== 'api';
+        $('conn-panel-browser').hidden = tab.dataset.conn !== 'browser';
+        if (tab.dataset.conn === 'browser' && !state.browser) loadBrowser();
+      });
+    });
+    $('browser-install-btn').addEventListener('click', installBrowser);
+    $('browser-site').addEventListener('change', () => {
+      $('browser-url').hidden = $('browser-site').value !== 'generic';
+    });
+    $('browser-add-btn').addEventListener('click', async () => {
+      const site = $('browser-site').value;
+      if (!site) return;
+      const url = site === 'generic' ? $('browser-url').value.trim() : '';
+      if (site === 'generic' && !url) {
+        $('browser-status').textContent = t('browser.urlNeeded');
+        return;
+      }
+      $('browser-status').textContent = t('browser.adding');
+      try {
+        const data = await api('/api/agent/browser-logins/add', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ site, url }),
+        }, 60000);
+        state.browser = data;
+        renderBrowser();
+        $('browser-url').value = '';
+        $('browser-status').textContent = '';
+      } catch (error) {
+        $('browser-status').textContent = error.message;
+      }
+    });
     $('save-composio').addEventListener('click', saveComposio);
     $('save-github').addEventListener('click', saveGithub);
     $('github-toggle').addEventListener('change', toggleGithub);

@@ -1619,6 +1619,40 @@ body.site-mode .crm-site-body { max-width: 880px; margin: 0 auto; padding: 20px 
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .connector-note { margin: 10px 1px 0; color: var(--muted); font-size: .74rem; line-height: 1.45; }
+
+/* Connectors: sub-tabs and the browser-login list. The tabs reuse .home-tabs so
+   the two "views inside a view" feel like one pattern, not two inventions. */
+.conn-tabs { margin: 0 0 14px; }
+.browser-install { display: grid; gap: 8px; padding: 14px; border: 1px dashed var(--line-2); border-radius: 14px; }
+.browser-install strong { font-size: .88rem; }
+.browser-add { display: grid; gap: 6px; margin: 14px 0 0; }
+.browser-add-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.browser-add-row select { flex: 1 1 180px; min-width: 0; }
+.browser-list { display: grid; gap: 10px; margin-top: 14px; }
+.browser-row { border: 1px solid var(--line); border-radius: 14px; padding: 12px 13px; background: var(--surface); }
+.browser-row-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.browser-row-head strong { font-size: .86rem; font-weight: 700; }
+.browser-row-body { margin-top: 4px; font-size: .74rem; color: var(--muted); line-height: 1.45; }
+.browser-row-body a { color: var(--primary); font-weight: 650; word-break: break-all; }
+.browser-note { margin: 4px 0 0; }
+.browser-badge {
+  font: 700 .64rem/1 var(--font-mono); letter-spacing: .04em; text-transform: uppercase;
+  padding: 5px 8px; border-radius: 999px; background: var(--surface-low); color: var(--muted);
+  white-space: nowrap;
+}
+.browser-row[data-state="connected"] .browser-badge { background: #e7f5ec; color: #2f7d52; }
+.browser-row[data-state="needs_login"] .browser-badge,
+.browser-row[data-state="needs_you"] .browser-badge { background: #fdf1e3; color: #8a5a1c; }
+.browser-row[data-state="error"] .browser-badge { background: #fdeceb; color: #9b3227; }
+.browser-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+/* ghost-button is a full-width block by default (it belongs at the bottom of a
+   settings card); inside a row of actions it must size to its label. */
+.browser-actions .ghost-button,
+.browser-actions .soft-button,
+.browser-actions .primary-button { width: auto; min-height: 38px; margin-top: 0; padding: 8px 14px; }
+.browser-login-form { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.browser-login-form input { flex: 1 1 150px; min-width: 0; }
+.browser-empty { margin: 14px 1px 0; color: var(--muted); font-size: .76rem; }
 .connector-note a { color: var(--primary); font-weight: 650; }
 .info-bubble a { color: var(--primary); font-weight: 650; }
 .update-links { margin: 12px 0 0; font-size: .8rem; color: var(--muted); }

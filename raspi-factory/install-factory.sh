@@ -74,6 +74,18 @@ cp "${BOOT}/sudo-voice/sudo-voice-call" /opt/sudo-voice/ 2>/dev/null || true
 cp "${BOOT}/sudo-voice/install-sudo-voice.sh" /usr/local/bin/sudo-install-voice.sh 2>/dev/null || true
 cp "${BOOT}/sudo-voice/sudo-voice-pair.sh" /usr/local/bin/sudo-voice-pair.sh 2>/dev/null || true
 chmod +x /usr/local/bin/sudo-install-voice.sh /usr/local/bin/sudo-voice-pair.sh /opt/sudo-voice/sudo-voice-call 2>/dev/null || true
+# Browser logins: worker + recipes in /opt/sudo-browser, installer on PATH.
+# Same rule as the voice sidecar: the Chromium (450 MB) is downloaded on demand
+# from the dashboard, never baked into the card, and /opt/sudo-browser/venv is
+# created on the device so a rebuilt card does not ship a broken interpreter.
+mkdir -p /opt/sudo-browser
+cp "${BOOT}/sudo-browser/browser-worker.py" /opt/sudo-browser/ 2>/dev/null || true
+cp "${BOOT}/sudo-browser/sites.json" /opt/sudo-browser/ 2>/dev/null || true
+cp "${BOOT}/sudo-browser/sudo-browser" /usr/local/bin/sudo-browser 2>/dev/null || true
+cp "${BOOT}/sudo-browser/install-sudo-browser.sh" /usr/local/bin/sudo-install-browser.sh 2>/dev/null || true
+chmod +x /usr/local/bin/sudo-browser /usr/local/bin/sudo-install-browser.sh 2>/dev/null || true
+mkdir -p /var/lib/sudo-browser/profiles
+chmod 700 /var/lib/sudo-browser /var/lib/sudo-browser/profiles
 cp "${BOOT}/sudo-pi/composio-relay.py" /usr/local/bin/sudo-composio-relay.py
 chmod +x /usr/local/bin/sudo-configure-openclaw.sh /usr/local/bin/sudo-install-openclaw.sh /usr/local/bin/sudo-install-openclaw-whatsapp.sh /usr/local/bin/sudo-composio-relay.py
 

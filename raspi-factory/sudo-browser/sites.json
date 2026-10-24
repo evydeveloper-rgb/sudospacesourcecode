@@ -1,0 +1,50 @@
+{
+  "_comment": [
+    "Browser logins: sites that have no API to grant, so sudo drives a real browser instead.",
+    "Each recipe is a hint set, not a promise. detection is tried in order: logged_in first,",
+    "then logged_out, otherwise unknown -- 'unknown' is the honest answer when a site changes.",
+    "Selectors are deliberately few: one reliable marker beats five clever ones that rot.",
+    "Only add sites the owner actually asked for. Automating a login can break a site's terms;",
+    "banks, government ID portals and anything with money movement are out of scope on purpose."
+  ],
+  "sites": {
+    "usps": {
+      "label": "USPS",
+      "category": "shipping",
+      "home_url": "https://www.usps.com/",
+      "login_url": "https://reg.usps.com/login",
+      "logged_in": {"any": [{"selector": "a[href*='logout']"}, {"text": "Sign Out"}, {"text": "My USPS"}]},
+      "logged_out": {"any": [{"text": "Sign In"}, {"url_contains": "reg.usps.com/login"}]},
+      "login_fields": {
+        "username": "input[name='username'], #username",
+        "password": "input[name='password'], #password",
+        "submit": "button[type='submit'], #btn-submit"
+      },
+      "note": "Blocked from datacenter IPs; works from a home connection."
+    },
+    "instagram": {
+      "label": "Instagram",
+      "category": "social",
+      "home_url": "https://www.instagram.com/",
+      "login_url": "https://www.instagram.com/accounts/login/",
+      "logged_in": {"any": [{"selector": "svg[aria-label='Home']"}, {"selector": "a[href*='/direct/inbox/']"}]},
+      "logged_out": {"any": [{"url_contains": "/accounts/login"}, {"text": "Log In"}]},
+      "login_fields": {
+        "username": "input[name='username']",
+        "password": "input[name='password']",
+        "submit": "button[type='submit']"
+      },
+      "note": "Hostile to automation: expect a challenge. Manual login is the reliable path."
+    },
+    "generic": {
+      "label": "Another site",
+      "category": "custom",
+      "home_url": "",
+      "login_url": "",
+      "logged_in": {"any": []},
+      "logged_out": {"any": []},
+      "login_fields": {},
+      "note": "Owner supplies the URL; state stays 'unknown' until a marker is configured."
+    }
+  }
+}

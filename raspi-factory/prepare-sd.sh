@@ -216,6 +216,13 @@ copy_factory_files() {
     # downloaded on the device (per-arch), never baked into the card.
     mkdir -p "$boot/sudo-voice"
     cp "$SCRIPT_DIR/sudo-voice/"* "$boot/sudo-voice/" 2>/dev/null || true
+    # Browser logins: code and recipes only. Playwright + Chromium are pulled
+    # on the device when the owner turns this on -- they are ~450 MB and most
+    # devices never need them.
+    mkdir -p "$boot/sudo-browser"
+    for f in browser-worker.py sites.json sudo-browser install-sudo-browser.sh; do
+      cp "$SCRIPT_DIR/sudo-browser/$f" "$boot/sudo-browser/" 2>/dev/null || true
+    done
     cp "$WHATSAPP_BRIDGE/package.json" "$boot/whatsapp-bridge/"
     cp "$WHATSAPP_BRIDGE/bridge.js" "$boot/whatsapp-bridge/"
     # Do NOT copy cloudflare.conf — Quick Tunnel needs no API token / domain

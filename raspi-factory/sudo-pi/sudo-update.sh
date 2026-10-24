@@ -337,6 +337,22 @@ if [ -d "$root/sudo-voice" ]; then
   systemctl try-restart sudo-voice-bridge.service >>"$LOG" 2>&1 || true
 fi
 
+# Browser logins: same treatment as voice -- copy files, never the directory.
+# /opt/sudo-browser/venv and /var/lib/sudo-browser are device state: an update
+# that replaces them would uninstall the browser and log the owner out of every
+# site, so they are explicitly left alone.
+BROWSER_DIR=/opt/sudo-browser
+if [ -d "$root/sudo-browser" ]; then
+  mkdir -p "$BROWSER_DIR" /var/lib/sudo-browser/profiles
+  for f in browser-worker.py sites.json; do
+    [ -f "$root/sudo-browser/$f" ] || continue
+    install -m 0644 "$root/sudo-browser/$f" "$BROWSER_DIR/$f" 2>>"$LOG" || true
+  done
+  [ -f "$root/sudo-browser/sudo-browser" ] && install -m 0755 "$root/sudo-browser/sudo-browser" "$BIN_DIR/sudo-browser" 2>>"$LOG"
+  [ -f "$root/sudo-browser/install-sudo-browser.sh" ] && install -m 0755 "$root/sudo-browser/install-sudo-browser.sh" "$BIN_DIR/sudo-install-browser.sh" 2>>"$LOG"
+  chmod 700 /var/lib/sudo-browser /var/lib/sudo-browser/profiles 2>/dev/null || true
+fi
+
 # Helper scripts are flat files in sudo-pi/. Install each under the name
 # install-factory.sh gives it -- the one the dashboard and the other scripts
 # actually run. Copying them under their repo names instead (as this used

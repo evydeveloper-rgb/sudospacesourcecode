@@ -137,6 +137,16 @@ VOICE_INSTALL_SCRIPT = "/usr/local/bin/sudo-install-voice.sh"
 VOICE_PAIR_SCRIPT = "/usr/local/bin/sudo-voice-pair.sh"
 VOICE_CALL_BIN = "/usr/local/bin/sudo-voice-call"
 VOICE_SIDECAR_UNIT = "sudo-voice-sidecar.service"
+
+# Browser logins: a real Chromium on the device for sites with no API to grant.
+# The worker owns the state file; this dashboard reads it and shells out for
+# actions. Same rule as voice: read where you can, run where you must.
+BROWSER_HOME = "/var/lib/sudo-browser"
+BROWSER_STATE = os.path.join(BROWSER_HOME, "logins.json")
+BROWSER_STATUS = os.path.join(BROWSER_HOME, "install-status.json")
+BROWSER_BIN = "/usr/local/bin/sudo-browser"
+BROWSER_INSTALL_SCRIPT = "/usr/local/bin/sudo-install-browser.sh"
+BROWSER_RECIPES = "/opt/sudo-browser/sites.json"
 UPDATE_SCRIPT = "/usr/local/bin/sudo-update.sh"
 UPDATE_STATUS = "/var/lib/sudo-update-status.json"
 AUTOUPDATE_SCRIPT = "/usr/local/bin/sudo-autoupdate.sh"
@@ -1674,6 +1684,97 @@ def write_voice_env(values):
     os.replace(tmp, VOICE_ENV)
     os.chmod(VOICE_ENV, 0o600)
     return env
+
+
+def browser_install():
+    """Where the optional browser worker's install stands, from its own file."""
+    data = read_json_file(BROWSER_STATUS, {}) or {}
+    return {
+        "state": data.get("state", "absent"),
+        "message": data.get("message", ""),
+        "installed": os.path.isfile(BROWSER_BIN),
+    }
+
+
+def browser_recipes():
+    """The sites we know how to detect. Read from the worker's own recipe file so
+    there is one list, not two that drift."""
+    data = read_json_file(BROWSER_RECIPES, {}) or {}
+    sites = data.get("sites") or {}
+    return [{"id": k, "label": v.get("label", k), "category": v.get("category", ""),
+             "note": v.get("note", ""), "has_url": bool(v.get("home_url") or v.get("login_url"))}
+            for k, v in sites.items()]
+
+
+def browser_sites():
+    """Configured logins, newest first. The worker writes this; we only read it."""
+    data = read_json_file(BROWSER_STATE, {}) or {}
+    sites = data.get("sites") or {}
+    # Which sites have a stored credential? The secrets file stays JSON at the
+    # top level even when each value is encrypted, so the site *names* are
+    # readable without decrypting anything. Never open the values here.
+    have_secrets = set()
+    try:
+        with open(os.path.join(BROWSER_HOME, "secrets.enc"), encoding="utf-8") as fh:
+            have_secrets = set((json.load(fh) or {}).get("sites", {}).keys())
+    except (OSError, ValueError):
+        pass
+    out = []
+    for site in sites.values():
+        if not isinstance(site, dict):
+            continue
+        out.append({
+            "id": site.get("id", ""),
+            "label": site.get("label") or site.get("id", ""),
+            "url": site.get("url", ""),
+            "state": site.get("state", "needs_login"),
+            "note": site.get("note", ""),
+            "checked": site.get("checked"),
+            "added": site.get("added"),
+            # The UI must never claim credentials exist when they don't -- so
+            # answer per site, not "is there a secrets file somewhere".
+            "has_credentials": site.get("id", "") in have_secrets,
+        })
+    out.sort(key=lambda x: (x.get("label") or "").lower())
+    return out
+
+
+def browser_state():
+    info = browser_install()
+    state = read_json_file(BROWSER_STATE, {}) or {}
+    return {
+        "installed": info["installed"],
+        "install": info,
+        "encrypted": bool(state.get("encrypted")),
+        "recipes": browser_recipes(),
+        "sites": browser_sites(),
+    }
+
+
+def browser_run(args, payload=None, timeout=120):
+    """Run the worker and return its JSON answer.
+
+    The password travels on stdin, never argv: `ps` is world-readable, and a
+    process list is exactly the sort of place a password should never appear.
+    """
+    if not os.path.isfile(BROWSER_BIN):
+        return {"ok": False, "error": "Browser logins are not installed on this device yet."}
+    cmd = [BROWSER_BIN, *args]
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout,
+                              input=json.dumps(payload) if payload is not None else None)
+    except subprocess.TimeoutExpired:
+        return {"ok": False, "error": "The browser took too long to answer. Try again."}
+    out = (proc.stdout or "").strip()
+    try:
+        data = json.loads(out)
+    except json.JSONDecodeError:
+        detail = (proc.stderr or out or "").strip().splitlines()
+        return {"ok": False,
+                "error": (detail[-1] if detail else "The browser worker produced no answer.")[:300]}
+    if proc.returncode != 0 and data.get("ok") is not False:
+        data["ok"] = False
+    return data
 
 
 def update_state():
@@ -3408,6 +3509,117 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                 self.send_json({"error": str(exc)}, code=500)
                 return True
             self.send_json(voice_state())
+            return True
+
+            self.send_json(voice_state())
+            return True
+
+        # ---------------------------------------------------------------- browser logins
+        # The sibling of API connectors: sites with no API to grant get a real
+        # Chromium on this device instead. Every action is the worker's call --
+        # this handler never touches a password beyond passing it through.
+        if path == "/api/agent/browser-logins" and self.command == "GET":
+            self.send_json(browser_state())
+            return True
+
+        if path == "/api/agent/browser-logins/install" and self.command == "POST":
+            if not os.path.isfile(BROWSER_INSTALL_SCRIPT):
+                self.send_json({"error": "Installer missing — update this device to get it"}, code=500)
+                return True
+            try:
+                write_json_file(BROWSER_STATUS, {"state": "installing",
+                                                 "message": "Installing the browser…",
+                                                 "updated": int(time.time() * 1000)})
+                result = run_privileged("sudo-browser-install", BROWSER_INSTALL_SCRIPT,
+                                        wait=False, timeout=20)
+                if result.returncode != 0:
+                    detail = (result.stderr or result.stdout or "").strip()[:300]
+                    write_json_file(BROWSER_STATUS, {
+                        "state": "error",
+                        "message": "Could not start the installer."
+                                   + (f" {detail}" if detail else " See the journal for sudo-browser-install."),
+                        "updated": int(time.time() * 1000)})
+                    self.send_json({"error": "Could not start the installer"}, code=500)
+                    return True
+            except Exception as exc:  # noqa: BLE001
+                write_json_file(BROWSER_STATUS, {"state": "error", "message": str(exc),
+                                                 "updated": int(time.time() * 1000)})
+                self.send_json({"error": str(exc)}, code=500)
+                return True
+            self.send_json(browser_state())
+            return True
+
+        if path == "/api/agent/browser-logins/add" and self.command == "POST":
+            try:
+                body = self.read_body_json()
+            except (ValueError, json.JSONDecodeError):
+                self.send_json({"error": "Invalid JSON"}, code=400)
+                return True
+            site = str(body.get("site") or "").strip()
+            url = str(body.get("url") or "").strip()
+            known = {r["id"] for r in browser_recipes()}
+            if site not in known:
+                self.send_json({"error": "That site is not one sudo knows how to check yet."}, code=400)
+                return True
+            if site == "generic" and not url.startswith(("http://", "https://")):
+                self.send_json({"error": "For another site, enter its address first — "
+                                          "like https://example.com"}, code=400)
+                return True
+            args = ["add", site] + (["--url", url] if url else [])
+            result = browser_run(args, timeout=60)
+            if not result.get("ok"):
+                self.send_json({"error": result.get("error") or "Could not add that site"}, code=502)
+                return True
+            self.send_json(browser_state())
+            return True
+
+        if path in ("/api/agent/browser-logins/probe",
+                    "/api/agent/browser-logins/login") and self.command == "POST":
+            try:
+                body = self.read_body_json()
+            except (ValueError, json.JSONDecodeError):
+                self.send_json({"error": "Invalid JSON"}, code=400)
+                return True
+            site = str(body.get("site") or "").strip()
+            if not site:
+                self.send_json({"error": "Which site?"}, code=400)
+                return True
+            if path.endswith("/probe"):
+                result = browser_run(["probe", site], timeout=180)
+            else:
+                username = str(body.get("username") or "").strip()
+                password = str(body.get("password") or "")
+                if not username or not password:
+                    self.send_json({"error": "Enter the username and password for that site."},
+                                   code=400)
+                    return True
+                result = browser_run(["login", site, "--json", "-"],
+                                     payload={"username": username, "password": password},
+                                     timeout=240)
+            if not result.get("ok"):
+                self.send_json({"error": result.get("error") or "The site did not answer"}, code=502)
+                return True
+            self.send_json({"ok": True, "state": result.get("state", ""),
+                            "note": result.get("note", ""), **browser_state()})
+            return True
+
+        if path in ("/api/agent/browser-logins/remove",
+                    "/api/agent/browser-logins/forget") and self.command == "POST":
+            try:
+                body = self.read_body_json()
+            except (ValueError, json.JSONDecodeError):
+                self.send_json({"error": "Invalid JSON"}, code=400)
+                return True
+            site = str(body.get("site") or "").strip()
+            if not site:
+                self.send_json({"error": "Which site?"}, code=400)
+                return True
+            action = "remove" if path.endswith("/remove") else "forget"
+            result = browser_run([action, site], timeout=60)
+            if not result.get("ok"):
+                self.send_json({"error": result.get("error") or "Could not do that"}, code=502)
+                return True
+            self.send_json(browser_state())
             return True
 
         # Home app.

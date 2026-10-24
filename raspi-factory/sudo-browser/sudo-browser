@@ -1,0 +1,22 @@
+#!/bin/sh
+# sudo-browser -- thin shim so the dashboard (and the owner, if they ever look)
+# can call the browser worker without knowing where it lives or which Python.
+#
+# Rebuild-safe: the installer drops the real code in /opt/sudo-browser and puts
+# this file in /usr/local/bin. Nothing here holds state.
+
+set -eu
+
+ROOT="${SUDO_BROWSER_ROOT:-/opt/sudo-browser}"
+PY="$ROOT/venv/bin/python3"
+WORKER="$ROOT/browser-worker.py"
+
+# Fall back to the workspace copy when running from a source checkout (dev).
+if [ ! -f "$WORKER" ]; then
+  WORKER="$(cd "$(dirname "$0")/.." && pwd)/browser-worker.py"
+fi
+if [ ! -x "$PY" ]; then
+  PY="$(command -v python3)"
+fi
+
+exec "$PY" "$WORKER" "$@"
