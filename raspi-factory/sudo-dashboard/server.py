@@ -1655,7 +1655,7 @@ def telegram_local_loop():
                     except ValueError:
                         pass
                     reply = local_model_chat(text[:MAX_CHAT_LEN], history, cfg) or \
-                        "My on-device model isn't answering right now. Try again in a minute."
+                        no_brain_reply()["reply"]
                     history = (history + [{"role": "user", "text": text},
                                           {"role": "agent", "text": reply}])[-2 * LOCAL_HISTORY_TURNS:]
                 telegram_call(token, "sendMessage", {"chat_id": chat["id"], "text": reply[:4000]})
@@ -2159,13 +2159,53 @@ def local_model_chat(message, history=None, cfg=None):
         f"{OLLAMA_URL}/api/chat", data=payload,
         headers={"Content-Type": "application/json"}, method="POST",
     )
-    try:
-        with urllib.request.urlopen(request, timeout=90 if model == LOCAL_MODEL else 240) as response:
-            data = json.loads(response.read().decode("utf-8"))
-        reply = ((data.get("message") or {}).get("content") or "").strip()
-        return reply or None
-    except Exception:
-        return None
+    # The page waits 130s, so a slow first load (the model going into memory)
+    # gets one long try. A quick failure -- Ollama not running, a reply that
+    # came back empty -- gets a second try, after starting Ollama if it was
+    # down. Why it failed goes to the log, which is the only way to tell
+    # "not installed" from "installed but not answering" afterwards.
+    started = time.time()
+    for attempt in (1, 2):
+        try:
+            with urllib.request.urlopen(request, timeout=110 if attempt == 1 else 60) as response:
+                data = json.loads(response.read().decode("utf-8"))
+            reply = ((data.get("message") or {}).get("content") or "").strip()
+            if reply:
+                return reply
+            why = "empty reply"
+        except Exception as exc:  # noqa: BLE001 - logged, then the caller says it could not answer
+            why = f"{type(exc).__name__}: {exc}"
+            if "refused" in why.lower():
+                subprocess.run(["systemctl", "start", "ollama"], capture_output=True, timeout=30)
+                time.sleep(5)
+        print(f"on-device model {model} did not answer (try {attempt}): {why}", flush=True)
+        if attempt == 2 or time.time() - started > 30:
+            return None
+    return None
+
+
+def no_brain_reply():
+    """What the chat says when there is no cloud key and the on-device model
+    gave no answer: the actual reason, so nobody is told to add a key while
+    the model they are waiting for is still downloading. "why" lets the page
+    say it in its own language; "reply" is the English for everything else
+    (Telegram, older pages)."""
+    state = local_model_state()
+    pct = state.get("percent")
+    if state["state"] == "installing":
+        progress = f" ({pct}%)" if isinstance(pct, int) and 0 < pct < 100 else ""
+        return {"why": "downloading", "percent": pct if progress else None,
+                "reply": f"My on-device brain is still downloading{progress}. Give it a few minutes, "
+                         "or add an API key in Settings to chat now."}
+    if state["state"] == "done":
+        return {"why": "not_answering",
+                "reply": "My on-device brain is installed but didn't answer just now. Try again in a "
+                         "minute, or add an API key in Settings to chat now."}
+    if state["state"] == "failed":
+        return {"why": "failed",
+                "reply": "My on-device brain didn't install. Add an API key in Settings so we can "
+                         "chat."}
+    return {"why": "no_key", "reply": "I can't reply yet — add an API key in Settings and I'll wake up properly."}
 
 
 # Openers picoclaw uses when it starts narrating instead of answering.
@@ -4875,11 +4915,9 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                     reply_json({"reply": reply, "source": "cloud",
                                 "note": "on-device model unavailable"})
                     return True
-                reply_json({
-                    "reply": "I can't reply yet — add an API key in "
-                             "Settings and I'll wake up properly.",
-                    "source": "none",
-                })
+                # Not written into the transcript: it is a status, not
+                # something the agent said.
+                self.send_json({**no_brain_reply(), "source": "none"})
                 return True
             try:
                 reply = agent_chat(message, session_key)

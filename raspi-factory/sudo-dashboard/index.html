@@ -2785,6 +2785,12 @@
           // and keep watching, so the banner clears the moment it lands.
           addMessage('system', t('ready.provisioning'));
           refreshStatus();
+        } else if (data.source === 'none') {
+          // No key and no answer from the on-device model: why, in the
+          // dashboard's language (still downloading, installed but quiet...).
+          const pct = data.percent ? ` (${data.percent}%)` : '';
+          addMessage('system', data.why ? t(`chat.noBrain.${data.why}`, { pct }) : data.reply);
+          refreshStatus();
         } else {
           addMessage('agent', data.reply || t('chat.noResponse'));
         }
@@ -3118,7 +3124,7 @@
         const reply = (data.reply || '').trim();
         // isConnected: a reply arriving after the thread was cleared -- a reset,
         // a re-run of setup -- must not put a stray line back into it.
-        if (reply && looksLikeGreeting(reply) && node.isConnected) {
+        if (reply && data.source !== 'none' && looksLikeGreeting(reply) && node.isConnected) {
           node.querySelector('div').replaceChildren(renderRich(reply));
           scrollChat();
         }

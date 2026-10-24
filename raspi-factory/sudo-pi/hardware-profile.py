@@ -15,14 +15,17 @@ apart, so the installer and the dashboard agree:
   hardware-profile.py          JSON
   hardware-profile.py --model  just the model id
 
-How the default model is picked. On the Raspberry Pi it stays the tiny
-greeter: it answers in about a second and leaves the agent its memory. With a
-GPU the biggest model that fits in the GPU's memory, because there it runs
-fast. On other machines without one, a model small enough to answer at a
-readable speed on the processor (memory bandwidth decides that, roughly
-20 GB/s on an ordinary PC) that still leaves the agent room.
+How the default model is picked. First from the table in
+local-model-picks.py (beside this file): hardware someone has tried, or
+decided on, gets that model. A machine the table does not cover gets one
+worked out here: with a GPU the biggest model that fits in the GPU's memory,
+because there it runs fast; without one, a model small enough to answer at a
+readable speed on the processor (memory bandwidth decides that: about 9 GB/s
+on a Pi 5, 4 on a Pi 4, 20 on an ordinary PC) that still leaves the agent
+room.
 """
 
+import importlib.util
 import json
 import os
 import re
@@ -37,7 +40,7 @@ MODELS = [
     ("qwen3:8b", 5.23), ("gemma3:12b", 8.16), ("qwen3:14b", 9.28),
 ]
 AGENT_RESERVE_GB = 1.6      # what the agent, dashboard and OS keep (server.py LOCAL_RESERVE_GB)
-CPU_BANDWIDTH_GBS = 20.0    # an ordinary PC without a GPU
+CPU_BANDWIDTH_GBS = 20.0    # an ordinary PC without a GPU (server.py local_speed_estimate)
 CPU_MIN_TOKENS_S = 8.0      # readable
 
 
@@ -99,26 +102,72 @@ def profile():
     else:
         kind, board = "arm", dt_model or "Arm computer"
         gpu = nvidia_gpu()
+    model, why = pick_model(kind, ram, gpu, board)
     return {"kind": kind, "board": board, "arch": arch, "ram_gb": ram, "cores": os.cpu_count() or 0,
-            "cpu": cpu_name(), "gpu": gpu, "model": pick_model(kind, ram, gpu)}
+            "cpu": cpu_name(), "gpu": gpu, "model": model, "model_why": why}
 
 
 def fits(size_gb, room_gb):
     return size_gb * 1.1 + 0.3 <= room_gb
 
 
-def pick_model(kind, ram, gpu):
-    if kind == "raspberry-pi":
-        return "gemma3:270m"
+def load_picks():
+    """The table from local-model-picks.py: beside this file in the repo, and
+    as sudo-local-model-picks.py beside sudo-hardware-profile.py on a device.
+    Missing or broken means no table, never a failed install."""
+    here = os.path.dirname(os.path.abspath(__file__))
+    for name in ("sudo-local-model-picks.py", "local-model-picks.py"):
+        path = os.path.join(here, name)
+        if not os.path.isfile(path):
+            continue
+        try:
+            spec = importlib.util.spec_from_file_location("sudo_local_model_picks", path)
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+            return list(getattr(mod, "PICKS", []))
+        except Exception:  # noqa: BLE001 - fall back to working it out
+            return []
+    return []
+
+
+def rule_matches(rule, kind, ram, gpu, board):
+    if rule.get("kind") and rule["kind"] != kind:
+        return False
+    if rule.get("board") and rule["board"].lower() not in (board or "").lower():
+        return False
+    if "ram_min" in rule and ram < rule["ram_min"]:
+        return False
+    if "ram_max" in rule and ram >= rule["ram_max"]:
+        return False
+    if "gpu_min" in rule and ((gpu or {}).get("memory_gb") or 0) < rule["gpu_min"]:
+        return False
+    return True
+
+
+def pick_model(kind, ram, gpu, board=""):
+    """(model, why). The table first; then the biggest model that fits and
+    still answers at a readable speed."""
+    sizes = dict(MODELS)
+    for rule in load_picks():
+        model = rule.get("model")
+        if not model or not rule_matches(rule, kind, ram, gpu, board):
+            continue
+        # A table entry that cannot fit this particular machine is skipped,
+        # not obeyed: a model that will not load is worse than a smaller one.
+        if model in sizes and not fits(sizes[model], ram - AGENT_RESERVE_GB) and not (gpu or {}).get("memory_gb"):
+            continue
+        return model, "table" + ("" if rule.get("tested") else " (untested)")
     if gpu and gpu.get("memory_gb"):
         room = gpu["memory_gb"] - (0 if gpu.get("shared") else 0.5)
         best = [m for m, size in MODELS if fits(size, room)]
         if best:
-            return best[-1]
+            return best[-1], "fits the GPU"
+    bandwidth = (9.0 if "Pi 5" in board else 4.0 if "Pi 4" in board
+                 else CPU_BANDWIDTH_GBS if kind == "x86" else 6.0)
     room = ram - AGENT_RESERVE_GB
-    max_size = CPU_BANDWIDTH_GBS / CPU_MIN_TOKENS_S
+    max_size = bandwidth / CPU_MIN_TOKENS_S
     best = [m for m, size in MODELS if fits(size, room) and size <= max_size]
-    return best[-1] if best else "gemma3:270m"
+    return (best[-1], "fits memory and speed") if best else ("gemma3:270m", "smallest")
 
 
 if __name__ == "__main__":

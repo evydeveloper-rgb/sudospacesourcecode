@@ -1,10 +1,11 @@
 #!/bin/bash
 # install-local-model.sh — put a small model on the device for first contact.
 #
-# Gemma 3 270M via Ollama. Chosen for a 4GB Pi 5: roughly 200MB on disk and
-# well under 1GB resident, so it answers in about a second and still leaves
-# the agent room. It is not smart, and it is not meant to be -- it greets,
-# acknowledges, and keeps the box useful when the cloud key is missing or the
+# Which model a new device starts with comes from sudo-hardware-profile.py
+# (its table is local-model-picks.py): Gemma 3 270M on a 4GB Pi 5, roughly
+# 200MB on disk and well under 1GB resident, so it answers in about a second
+# and still leaves the agent room; something bigger where there is memory and
+# speed for it. It keeps the box useful when the cloud key is missing or the
 # internet is down. Real questions go to the cloud model.
 #
 # Runs after the Wi-Fi join, never at boot: this needs a network and at boot
@@ -23,8 +24,25 @@ LOG="/var/log/sudo-local-model.log"
 # boot run): make sure the active model -- the greeter on a new device -- is
 # in place.
 SWITCH="${1:-}"
+GREETER=gemma3:270m
 MODEL="${SWITCH:-$(cat "$ACTIVE" 2>/dev/null || true)}"
-MODEL="${MODEL:-${SUDO_LOCAL_MODEL:-gemma3:270m}}"
+MODEL="${MODEL:-${SUDO_LOCAL_MODEL:-}}"
+# A first model picked for this hardware. If it will not download or answer,
+# the greeter goes on instead, so a new device always ends up with one.
+PICKED=""
+if [ -z "$MODEL" ]; then
+  MODEL="$(python3 /usr/local/bin/sudo-hardware-profile.py --model 2>/dev/null || true)"
+  MODEL="${MODEL:-$GREETER}"
+  [ "$MODEL" != "$GREETER" ] && PICKED=1
+fi
+fallback_to_greeter() {
+  # $1: why. Only for a model picked here, never for one the owner chose.
+  [ -n "$PICKED" ] || return 0
+  echo "$MODEL: $1 -- installing $GREETER instead"
+  # As the boot run, not as a switch: the greeter is kept even if its first
+  # reply is slow, the same as on any new device.
+  SUDO_LOCAL_MODEL="$GREETER" exec "$0"
+}
 
 # systemd gives a service almost no environment, and the ollama CLI reads
 # $HOME to find its model directory. Without it, `ollama pull` does not fail
@@ -70,6 +88,9 @@ PY
 # the RAM, installing a resident model makes the device worse, not better.
 avail_mb="$(awk '/MemAvailable/ {print int($2/1024)}' /proc/meminfo)"
 echo "MemAvailable: ${avail_mb}MB"
+if [ -n "$PICKED" ] && [ "${avail_mb:-0}" -lt 2500 ]; then
+  fallback_to_greeter "only ${avail_mb}MB free"
+fi
 if [ "${avail_mb:-0}" -lt 900 ]; then
   set_status failed "Not enough free memory (${avail_mb}MB) to run a local model safely" 0
   echo "aborting: only ${avail_mb}MB available"
@@ -180,6 +201,7 @@ for raw in sys.stdin:
         sys.stdout.write(stripped + "\n")
 ' "$STATUS" "$MODEL"
   then
+  fallback_to_greeter "download failed"
   set_status failed "Could not download ${MODEL}" 0
   echo "pull failed"
   exit 1
@@ -212,7 +234,7 @@ fi
 
 smoke() {
   curl -sf --max-time 240 http://127.0.0.1:11434/api/generate \
-    -d "{\"model\":\"${MODEL}\",\"prompt\":\"Say hello in five words.\",\"stream\":false${THINK}}" \
+    -d "{\"model\":\"${MODEL}\",\"prompt\":\"Say hello in five words.\",\"stream\":false,\"keep_alive\":\"30m\"${THINK}}" \
     2>/dev/null | python3 -c 'import json,sys; print(json.load(sys.stdin).get("response","").strip())' 2>/dev/null
 }
 
@@ -229,6 +251,11 @@ for attempt in 1 2 3 4 5; do
   sleep $((attempt * 5))
 done
 
+# The test leaves the model loaded (keep_alive above), so the owner's first
+# message does not wait for it to load into memory again.
+if [ -z "$reply" ]; then
+  fallback_to_greeter "no reply after retries"
+fi
 if [ -z "$reply" ] && [ -n "$SWITCH" ]; then
   # A model the owner chose that will not answer stays on disk but does not
   # take over: the one that was working keeps answering.

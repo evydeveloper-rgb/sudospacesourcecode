@@ -182,6 +182,8 @@ cp "${BOOT}/sudo-pi/set-hostname.sh" /usr/local/bin/sudo-set-hostname.sh
 cp "${BOOT}/sudo-pi/set-timezone.sh" /usr/local/bin/sudo-set-timezone.sh
 cp "${BOOT}/sudo-pi/hardware-profile.py" /usr/local/bin/sudo-hardware-profile.py
 chmod +x /usr/local/bin/sudo-hardware-profile.py
+# Its table of which model goes on which hardware (local-model-picks.py).
+cp "${BOOT}/sudo-pi/local-model-picks.py" /usr/local/bin/sudo-local-model-picks.py
 cp "${BOOT}/sudo-pi/problem-report.py" /usr/local/bin/sudo-problem-report.py
 chmod +x /usr/local/bin/sudo-problem-report.py
 cp "${BOOT}/sudo-pi/notify-owner.sh" /usr/local/bin/sudo-notify-owner.sh

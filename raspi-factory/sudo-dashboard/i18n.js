@@ -6253,3 +6253,29 @@ I18N.add('ar', {
   "reports.sent5": "طريقة الاستخدام: الرسائل لكل تطبيق دردشة، الأدوات، الرسائل التلقائية، الرموز والتكلفة، أزمنة الرد، الإعدادات، تبويبات اللوحة",
   "reports.sent6": "علامات على أن ردًا لم يكن جيدًا (تُعد هنا دون الكلمات)، واسم الموقع عندما تفشل مهمة عليه"
 });
+
+// ---- Chat: no key, and the on-device model did not answer ----------------------
+I18N.add('en', {
+  "chat.noBrain.downloading": "My on-device brain is still downloading{pct}. Give it a few minutes, or add an API key in Settings to chat now.",
+  "chat.noBrain.not_answering": "My on-device brain is installed but didn't answer just now. Try again in a minute, or add an API key in Settings to chat now.",
+  "chat.noBrain.failed": "My on-device brain didn't install. Add an API key in Settings so we can chat.",
+  "chat.noBrain.no_key": "I can't reply yet. Add an API key in Settings and I'll wake up properly."
+});
+I18N.add('es', {
+  "chat.noBrain.downloading": "Mi cerebro del dispositivo todavía se está descargando{pct}. Dale unos minutos, o agrega una clave API en Ajustes para conversar ya.",
+  "chat.noBrain.not_answering": "Mi cerebro del dispositivo está instalado pero no respondió esta vez. Inténtalo de nuevo en un minuto, o agrega una clave API en Ajustes para conversar ya.",
+  "chat.noBrain.failed": "Mi cerebro del dispositivo no se instaló. Agrega una clave API en Ajustes para que podamos conversar.",
+  "chat.noBrain.no_key": "Todavía no puedo responder. Agrega una clave API en Ajustes y despertaré de verdad."
+});
+I18N.add('zh', {
+  "chat.noBrain.downloading": "我的本机大脑还在下载{pct}。请稍等几分钟，或者在“设置”里添加 API 密钥，现在就能聊天。",
+  "chat.noBrain.not_answering": "我的本机大脑已经装好，但刚才没有回答。请一分钟后再试，或者在“设置”里添加 API 密钥，现在就能聊天。",
+  "chat.noBrain.failed": "我的本机大脑没有装好。请在“设置”里添加 API 密钥，这样我们就能聊天。",
+  "chat.noBrain.no_key": "我还不能回复。请在“设置”里添加 API 密钥，我就能正常工作了。"
+});
+I18N.add('ar', {
+  "chat.noBrain.downloading": "ما زال عقلي المحلي قيد التنزيل{pct}. امنحه بضع دقائق، أو أضف مفتاح API في الإعدادات لنتحدث الآن.",
+  "chat.noBrain.not_answering": "عقلي المحلي مثبّت لكنه لم يرد هذه المرة. حاول مجددًا بعد دقيقة، أو أضف مفتاح API في الإعدادات لنتحدث الآن.",
+  "chat.noBrain.failed": "لم يكتمل تثبيت عقلي المحلي. أضف مفتاح API في الإعدادات لنتمكن من الدردشة.",
+  "chat.noBrain.no_key": "لا يمكنني الرد بعد. أضف مفتاح API في الإعدادات وسأعمل كما يجب."
+});
