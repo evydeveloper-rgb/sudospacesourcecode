@@ -1696,7 +1696,21 @@ def local_system_prompt(cfg):
     agent = (cfg.get("agent_name") or "sudo").strip()[:32]
     user = (cfg.get("user_name") or "").strip()[:64]
     tone = PERSONALITY_TONE.get(cfg.get("personality"), PERSONALITY_TONE["friendly"])
-    whose = f"{user}'s home" if user else "someone's home"
+    # Said here rather than in BOOTSTRAP.md so it is true on every device:
+    # which model this is (so "what model are you" gets a straight answer),
+    # and the cloud as an option it may mention, never something to ask for.
+    # BOOTSTRAP.md is written once per device, and older copies told the
+    # model to "warmly suggest" a cloud key; with a 4B model that turned into
+    # "I'm still waiting for that API key" in every other reply.
+    # The name is for talking to them, not for describing where it runs:
+    # "a small assistant running on <name>'s computer" read as if sudo knew
+    # them from somewhere else.
+    if user.lower() in ("friend", "someone"):     # the defaults when no name was given
+        user = ""
+    named = f" Their name is {user}." if user else ""
+    tail = (f"You are the {active_local_model()} model, running privately on this device. "
+            "A cloud model can be added for bigger jobs; mention that only if they ask what "
+            "you can do or ask for something beyond you, and never ask them to set it up.")
 
     # BOOTSTRAP.md is the source when it is there. Editing the agent's own
     # files should change how it behaves, including the small model.
@@ -1706,24 +1720,33 @@ def local_system_prompt(cfg):
         if match:
             block = " ".join(match.group(1).split())
             if block:
+                block = OLD_CLOUD_PUSH.sub("", block)
+                block = OLD_WHOSE_HOME.sub("on a small computer in their home." + named, block)
                 block = block.replace("{{AGENT_NAME}}", agent)
                 block = block.replace("{{USER_NAME}}", user or "someone")
-                return block + "\nBe " + tone + "."
+                block = NO_NAME.sub("", block)
+                return block.strip() + "\n" + tail + "\nBe " + tone + "."
     except OSError:
         pass
 
     # Fallback for a device whose workspace has not been rendered yet.
     return (
-        f"You are {agent}, just set up on a small computer in {whose}. "
+        f"You are {agent}, just set up on a small computer in their home.{named} "
         f"You are meeting for the first time. Be {tone}.\n"
         "Keep every reply to one or two short sentences, like a text message.\n"
         "Take an interest in them: what they do, what they are working on, "
         "what they would like a hand with. Ask one thing at a time.\n"
         "Answer whatever they ask simply and directly, then keep the "
-        "conversation going.\n"
-        "When it fits, warmly suggest they connect you to a cloud model for "
-        "real work."
+        "conversation going.\n" + tail
     )
+
+
+# Lines from BOOTSTRAP.md copies written before 1.0.41, taken out of the
+# on-device model's brief (the file itself is the agent's and stays).
+OLD_CLOUD_PUSH = re.compile(r"When it fits, warmly suggest they connect you to a cloud model for real work\.\s*")
+OLD_WHOSE_HOME = re.compile(r"on a small computer in [^.]{1,64}?'s home\.")
+NO_NAME = re.compile(r"\s*Their name is (?:someone|friend)\.", re.I)
+STATUS_NOTICE = re.compile(r"I can't reply yet|on-device (brain|model) (is still|isn't|is installed|didn't)", re.I)
 
 
 def local_model_state():
@@ -2146,6 +2169,11 @@ def local_model_chat(message, history=None, cfg=None):
     for turn in (history or [])[-LOCAL_HISTORY_TURNS:]:
         role = "assistant" if turn.get("role") == "agent" else "user"
         text = str(turn.get("text") or "").strip()[:MAX_CHAT_LEN]
+        # Status notices that older versions saved into the chat as if the
+        # agent had said them ("I can't reply yet -- add an API key..."). Left
+        # in, the model picks the theme up and keeps asking for a key.
+        if role == "assistant" and STATUS_NOTICE.search(text):
+            continue
         if text:
             messages.append({"role": role, "content": text})
     messages.append({"role": "user", "content": message})
