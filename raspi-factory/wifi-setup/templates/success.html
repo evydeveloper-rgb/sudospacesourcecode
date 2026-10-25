@@ -178,15 +178,18 @@
   var firstCopy = document.getElementById('first-copy');
   var firstCopyGo = document.getElementById('first-copy-go');
   var ssidName = document.getElementById('ssid').textContent;
-  // Not copied yet: ask for that first. The first press copies; once it has,
-  // the same button connects. If copying is blocked, the address is selected
-  // so it can be held and copied by hand.
+  // Not copied yet: ask for that first. One press copies and then connects:
+  // a version that needed a second press left a Pi waiting in setup, because
+  // "Copied" read as the end. If copying is blocked, the address is selected
+  // so it can be held and copied by hand, and the next press connects.
   firstCopyGo.addEventListener('click', function () {
     if (copied) { firstCopy.className = 'first-copy'; connect(); return; }
     var code = document.getElementById('first-copy-url');
     copyText(code.textContent.trim()).then(function () {
       copied = true;
-      firstCopyGo.textContent = 'Copied. Connect to ' + ssidName;
+      firstCopyGo.disabled = true;
+      firstCopyGo.textContent = 'Copied. Connecting to ' + ssidName + '…';
+      setTimeout(function () { firstCopy.className = 'first-copy'; connect(); }, 1200);
     }).catch(function () {
       var range = document.createRange();
       range.selectNodeContents(code);
