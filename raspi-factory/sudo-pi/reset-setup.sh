@@ -99,6 +99,10 @@ for key in (
     "agent_language", "ui_language", "dashboard_session",
     "spend_enabled", "spend_max_per_day", "spend_max_per_minute", "spend_cooldown_min",
     "remote_password_enabled", "balance_usd", "subscription_status",
+    # Missing until 1.0.42: the owner's time zone, check-ins switch, app
+    # layout and the welcome's place.
+    "timezone", "timezone_pinned", "checkins_enabled", "apps_archived", "welcome_pending",
+    "spend_usd_day", "spend_usd_month",
 ):
     data.pop(key, None)
 os.makedirs("/opt/sudo", exist_ok=True)
@@ -116,9 +120,29 @@ rm -rf /opt/sudo/picoclaw   # left by older versions
 rm -rf /opt/sudo/openclaw
 rm -f /etc/sudo/agent.env
 rm -f /opt/sudo/dashboard-chat.json
+# The rest of what belonged to the last owner: their dashboard password (a
+# new random one is made when the dashboard next starts), home-screen icon and
+# theme, the old WhatsApp bridge's login, spending and usage counters, and
+# channel state. The on-device models stay: a new owner should not wait for
+# a download the last one already sat through.
+rm -f /etc/sudo/dashboard_password /etc/sudo/dashboard_password.hash /etc/sudo/dashboard_credentials.txt
+rm -f /opt/sudo/app-icon.json /opt/sudo/app-icon.png /opt/sudo/theme.css /opt/sudo/overlay.js
+rm -rf /opt/sudo/whatsapp-auth
+rm -f /opt/sudo/whatsapp-activity.json /opt/sudo/whatsapp-observer.json /opt/sudo/background-runs.json
+rm -f /opt/sudo/spend.json /opt/sudo/spend-usd.json /opt/sudo/spend-paused.json
+rm -f /var/lib/sudo-usage.json /var/lib/sudo-channel-alert.json /var/lib/sudo-telegram-offset \
+      /var/lib/sudo-openclaw-whatsapp-status.json /var/lib/sudo-whatsapp-status.json
 
-# NOTE: no SSH teardown here on purpose — see the header. factory-reset.sh
-# owns that, and only for a device that is truly leaving.
+# Terminal access the owner turned on in Settings (a password, or a key they
+# added) goes too. A developer key installed from the card (--dev) is not
+# touched -- see the header -- since that one is how this reset gets tested.
+if [ -f /etc/sudo/ssh_password ] || [ -f /etc/ssh/sshd_config.d/05-sudo-user.conf ]; then
+    /usr/local/bin/sudo-setup-ssh.sh disable 2>/dev/null || true
+fi
+rm -f /etc/sudo/ssh_password /etc/sudo/ssh_key_pending
+
+# NOTE: no dev-key SSH teardown here on purpose — see the header.
+# factory-reset.sh owns that, and only for a device that is truly leaving.
 
 # 6) Bring the first-run services back the way install-factory.sh arranges
 #    them for an unconfigured device: hotspot + portal on, dashboard off.
