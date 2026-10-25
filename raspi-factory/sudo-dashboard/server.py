@@ -1763,6 +1763,8 @@ NEEDS_CLOUD = re.compile(
     r"news|weather|remind|reminders?|book (a|me)|spotify|notion|slack|google drive|"
     r"whatsapp|telegram|connect (to )?(my|your)|correo|calendario|busca|recu[eé]rdame|"
     r"بريد|تقويم|ابحث|ذكرني)\b|邮件|日历|搜索|提醒|查一下|上网", re.I)
+ASKS_WHICH_MODEL = re.compile(r"\b(what|which)\b.{0,20}\b(model|llm|ai)\b|\bwho (made|built|trained) you\b|"
+                              r"qu[eé] modelo|什么模型|哪个模型|أي نموذج|ما النموذج", re.I)
 NO_NAME = re.compile(r"\s*Their name is (?:someone|friend)\.", re.I)
 STATUS_NOTICE = re.compile(r"I can't reply yet|on-device (brain|model) (is still|isn't|is installed|didn't)", re.I)
 
@@ -2206,6 +2208,21 @@ def local_model_chat(message, history=None, cfg=None):
             continue
         if text:
             messages.append({"role": role, "content": text})
+    # Two questions small models get wrong from the brief alone: tested on a
+    # Pi, Llama 3.2 3B answered "what model are you" with "a private model"
+    # and Gmail with a plain no. A note right beside the question works where
+    # the same words at the top of the brief did not.
+    model = active_local_model()
+    note = ""
+    if ASKS_WHICH_MODEL.search(message):
+        name = next((m["name"] for m in LOCAL_CATALOG if m["id"] == model), model)
+        note = f"If this asks what model you are: you are {name}, running on this device."
+    elif NEEDS_CLOUD.search(message) and not agent_brain(cfg):
+        note = ("This asks for something you can't do from this device (apps, the web, "
+                "reminders). Say so in a sentence, and say a cloud model can do it: they can "
+                "connect one in Settings. Don't give another reason.")
+    if note and model != LOCAL_MODEL:   # the 270M greeter would read the note out
+        messages.append({"role": "system", "content": note})
     messages.append({"role": "user", "content": message})
 
     model = active_local_model()
