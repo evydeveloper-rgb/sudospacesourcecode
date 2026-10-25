@@ -1297,7 +1297,7 @@ def model_map(cfg):
     its own (seeing a photo, drawing one, transcribing a voice note, packing
     a long conversation down, or thinking harder).
     """
-    local_ready = (local_model_state() or {}).get("state") == "done"
+    local_ready = local_model_ready()
     chat_alias = resolve_model(cfg.get("model"))
     entries = [
         {"key": "chat", "label": "Answers your messages",
@@ -1372,7 +1372,7 @@ def answering_with(cfg):
     guesses, and guessed wrong. This is the answer taken from configuration
     rather than from the agent.
     """
-    local_ready = (local_model_state() or {}).get("state") == "done"
+    local_ready = local_model_ready()
     # An explicit choice to stay on-device outranks having a key, but only
     # when there is actually something on the device to answer with.
     if cfg.get("prefer_local") and local_ready:
@@ -1771,6 +1771,18 @@ def local_model_state():
         # What is downloading right now, when that is not the active one.
         "target": data.get("model"),
     }
+
+
+def local_model_ready():
+    """Whether an on-device model can answer right now. "done", or another
+    model downloading while the active one is installed: during a switch
+    the old model keeps answering, and treating the download as "no model"
+    hid the chat's cloud banner and labelled the brain "No model yet"."""
+    state = local_model_state()
+    if state.get("state") == "done":
+        return True
+    return (state.get("state") == "installing" and state.get("target") != state.get("model")
+            and any(m.get("name") == state.get("model") for m in (ollama_installed() or [])))
 
 
 def whatsapp_legacy(cfg=None):
