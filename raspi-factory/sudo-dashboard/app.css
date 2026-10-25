@@ -3115,3 +3115,13 @@ input[type="password"], input[type="tel"], input[type="number"], #ssh-key, #devi
 .fb-card textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); color: var(--ink); font: .84rem var(--font-sans); resize: vertical; }
 .fb-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
 .fb-actions .primary-button, .fb-actions .ghost-button { width: auto; margin: 0; padding-inline: 16px; }
+
+/* Under an on-device reply that needs the cloud agent (addCloudHint). */
+.message-hint {
+  margin: 10px 0 0; padding-top: 9px; border-top: 1px solid var(--line);
+  color: var(--ink-3); font-size: .82rem; line-height: 1.45;
+}
+.message-hint button {
+  padding: 0; border: 0; background: none; color: var(--primary);
+  font: inherit; font-weight: 700; cursor: pointer; text-decoration: underline; text-underline-offset: 2px;
+}

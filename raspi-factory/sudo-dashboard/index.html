@@ -2688,6 +2688,22 @@
       return item;
     }
 
+    // Under an on-device reply to something only the cloud agent can do (an
+    // app, the web, a reminder): one quiet line and a way to set it up, so
+    // the answer is never just "no".
+    function addCloudHint(item) {
+      const hint = document.createElement('p');
+      hint.className = 'message-hint';
+      hint.textContent = t('chat.needsCloud') + ' ';
+      const go = document.createElement('button');
+      go.type = 'button';
+      go.textContent = t('chat.needsCloudGo');
+      go.addEventListener('click', () => SETUP_DESTINATIONS.providers());
+      hint.append(go);
+      // Inside the bubble: the message row is a flex row (avatar, bubble, flag).
+      item.querySelector('div').append(hint);
+    }
+
     // --- "Report this" -----------------------------------------------------------
     function openReportModal(item, answer) {
       let question = '';
@@ -2792,7 +2808,8 @@
           addMessage('system', data.why ? t(`chat.noBrain.${data.why}`, { pct }) : data.reply);
           refreshStatus();
         } else {
-          addMessage('agent', data.reply || t('chat.noResponse'));
+          const item = addMessage('agent', data.reply || t('chat.noResponse'));
+          if (data.needs_cloud) addCloudHint(item);
         }
       } catch (error) {
         addMessage('system', error.message);

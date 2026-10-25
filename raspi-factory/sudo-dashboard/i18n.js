@@ -6279,3 +6279,21 @@ I18N.add('ar', {
   "chat.noBrain.failed": "لم يكتمل تثبيت عقلي المحلي. أضف مفتاح API في الإعدادات لنتمكن من الدردشة.",
   "chat.noBrain.no_key": "لا يمكنني الرد بعد. أضف مفتاح API في الإعدادات وسأعمل كما يجب."
 });
+
+// ---- Chat: a request only the cloud agent can carry out ----------------------
+I18N.add('en', {
+  "chat.needsCloud": "Apps, the web and reminders need a cloud model.",
+  "chat.needsCloudGo": "Connect one"
+});
+I18N.add('es', {
+  "chat.needsCloud": "Las apps, la web y los recordatorios necesitan un modelo en la nube.",
+  "chat.needsCloudGo": "Conectar uno"
+});
+I18N.add('zh', {
+  "chat.needsCloud": "使用应用、上网和提醒需要云端模型。",
+  "chat.needsCloudGo": "去连接"
+});
+I18N.add('ar', {
+  "chat.needsCloud": "التطبيقات والويب والتذكيرات تحتاج إلى نموذج سحابي.",
+  "chat.needsCloudGo": "اربط واحدًا"
+});

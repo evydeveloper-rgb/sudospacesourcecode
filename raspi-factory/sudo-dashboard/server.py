@@ -1708,9 +1708,20 @@ def local_system_prompt(cfg):
     if user.lower() in ("friend", "someone"):     # the defaults when no name was given
         user = ""
     named = f" Their name is {user}." if user else ""
-    tail = (f"You are the {active_local_model()} model, running privately on this device. "
-            "A cloud model can be added for bigger jobs; mention that only if they ask what "
-            "you can do or ask for something beyond you, and never ask them to set it up.")
+    model = active_local_model()
+    tail = f"You are the {model} model, running privately on this device."
+    if model == LOCAL_MODEL:
+        # The 270M greeter recites anything it is told it cannot do (see the
+        # docstring); for it the chat page says what needs the cloud instead.
+        tail += " A cloud model can be added for bigger jobs."
+    else:
+        # Asked to connect Gmail, a 4B model said it "can't make requests
+        # that could compromise user security" -- an invented reason. Say the
+        # real one, and point to the cloud model as the way to get it done.
+        tail += (" From here you can't reach the internet, email, calendars or other apps,"
+                 " and you can't set reminders. When they ask for one of those, say you can't"
+                 " do it on this device and that a cloud model can, which they can connect in"
+                 " Settings. Don't give any other reason, and otherwise don't bring the cloud up.")
 
     # BOOTSTRAP.md is the source when it is there. Editing the agent's own
     # files should change how it behaves, including the small model.
@@ -1745,6 +1756,13 @@ def local_system_prompt(cfg):
 # on-device model's brief (the file itself is the agent's and stays).
 OLD_CLOUD_PUSH = re.compile(r"When it fits, warmly suggest they connect you to a cloud model for real work\.\s*")
 OLD_WHOSE_HOME = re.compile(r"on a small computer in [^.]{1,64}?'s home\.")
+# Requests the on-device model cannot carry out: apps, accounts, the web,
+# reminders and messages to other people. In the dashboard's four languages.
+NEEDS_CLOUD = re.compile(
+    r"\b(g-?mail|e-?mails?|inbox|calendar|google|search|look (it )?up|internet|online|website|"
+    r"news|weather|remind|reminders?|book (a|me)|spotify|notion|slack|google drive|"
+    r"whatsapp|telegram|connect (to )?(my|your)|correo|calendario|busca|recu[eé]rdame|"
+    r"بريد|تقويم|ابحث|ذكرني)\b|邮件|日历|搜索|提醒|查一下|上网", re.I)
 NO_NAME = re.compile(r"\s*Their name is (?:someone|friend)\.", re.I)
 STATUS_NOTICE = re.compile(r"I can't reply yet|on-device (brain|model) (is still|isn't|is installed|didn't)", re.I)
 
@@ -4955,7 +4973,12 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             if cfg.get("prefer_local") or not agent_brain(cfg):
                 reply = local_model_chat(message, history, cfg)
                 if reply:
-                    reply_json({"reply": reply, "source": "local"})
+                    # Asked for something only the cloud agent can do (an
+                    # app, the web, a reminder): the page adds a quiet line
+                    # under the reply pointing to a cloud model, whatever the
+                    # small model itself managed to say about it.
+                    reply_json({"reply": reply, "source": "local",
+                                "needs_cloud": bool(not agent_brain(cfg) and NEEDS_CLOUD.search(message))})
                     return True
                 if agent_brain(cfg):
                     try:
