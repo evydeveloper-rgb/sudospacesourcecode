@@ -273,6 +273,28 @@ def channel_of(key):
     return "other"
 
 
+def key_in_transcript(lines):
+    """Newer transcripts name their session in a session.started line."""
+    for line in lines[:8]:
+        if '"sessionKey"' in line:
+            try:
+                return str(json.loads(line).get("sessionKey") or "")
+            except ValueError:
+                pass
+    return ""
+
+
+def channel_of_prompt(text):
+    """A transcript with no session name: check-ins and reminders start with
+    OpenClaw's own prompts, which no person types."""
+    text = (text or "").lstrip()
+    if text.startswith("Read HEARTBEAT.md"):
+        return "checkin"
+    if text.startswith("[cron:"):
+        return "reminder"
+    return "other"
+
+
 def site_of(args):
     """The site a web tool was pointed at: example.com, nothing else of the URL."""
     url = ""
@@ -322,7 +344,6 @@ def conversations(since_ms):
             except OSError:
                 continue
             sid = os.path.basename(path)[:-6]
-            chan = channel_of(key_of.get(sid, ""))
             calls = {}
             last_user = None   # (ts, words)
             pending_user_ts = None
@@ -332,6 +353,12 @@ def conversations(since_ms):
                 lines = open(path, encoding="utf-8", errors="ignore").read().splitlines()
             except OSError:
                 continue
+            # sessions.json only maps each session to its latest transcript, so
+            # every earlier check-in or reminder run (and any chat from before
+            # a session reset) came out as "other" -- 13 a day on beta devices,
+            # which read as people chatting. The transcript's own header names
+            # its session when it has one; otherwise the first prompt says.
+            chan = channel_of(key_of.get(sid) or key_in_transcript(lines))
             for line in lines:
                 try:
                     d = json.loads(line)
@@ -346,6 +373,8 @@ def conversations(since_ms):
                 role = m.get("role")
                 if role == "user":
                     text = text_of(m)
+                    if chan == "other":
+                        chan = channel_of_prompt(text)
                     out["messages"][chan] = out["messages"].get(chan, 0) + 1
                     w = words(text)
                     if last_user and ts - last_user[0] < 10 * 60 * 1000 and w and last_user[1]:
