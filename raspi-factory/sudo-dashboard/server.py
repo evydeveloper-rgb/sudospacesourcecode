@@ -1407,6 +1407,19 @@ def public_url():
     return read_text(PUBLIC_URL_FILE)
 
 
+REMOTE_LINK_STATE = "/var/lib/sudo-remote-link.json"
+
+
+def anywhere_link():
+    """The link that does not change (sudospace.tech/go/..., remote-link.py),
+    once the device has published its current address to it. The tunnel's own
+    address changes on every restart, so this is the one to bookmark or add to
+    a home screen."""
+    if not remote_enabled():
+        return None
+    return (read_json_file(REMOTE_LINK_STATE, {}) or {}).get("link") or None
+
+
 def setup_status(include_sensitive=False):
     cfg = read_json_file(CONFIG)
     url = public_url()
@@ -1505,6 +1518,7 @@ def setup_status(include_sensitive=False):
         "remote_access": bool(cfg.get("remote_access", False)),
         "remote_enabled": remote_enabled(),
         "public_url": url,
+        "anywhere_link": anywhere_link(),
         "remote_starting": remote_enabled() and not url,
         "auth_required": False,
     }
@@ -3282,6 +3296,7 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                         "enabled": remote_enabled(),
                         "wanted": bool(read_json_file(CONFIG).get("remote_access", False)),
                         "public_url": public_url(),
+                        "anywhere_link": anywhere_link(),
                         "starting": remote_enabled() and not public_url(),
                     }
                 )

@@ -3125,3 +3125,10 @@ input[type="password"], input[type="tel"], input[type="number"], #ssh-key, #devi
   padding: 0; border: 0; background: none; color: var(--primary);
   font: inherit; font-weight: 700; cursor: pointer; text-decoration: underline; text-underline-offset: 2px;
 }
+
+/* "Open my link" in the home-screen banner: the link that does not change. */
+.install-hint-anywhere {
+  display: inline-block; margin-top: 6px; color: var(--primary, #340075);
+  font-size: .74rem; font-weight: 700; text-decoration: underline; text-underline-offset: 2px;
+}
+.install-hint-anywhere[hidden] { display: none; }

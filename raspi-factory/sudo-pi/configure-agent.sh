@@ -579,6 +579,18 @@ if [ -f /run/sudo-configure-nokey ]; then
   exit 0
 fi
 
+# The link that does not change (sudospace.tech/go/, remote-link.py): a device
+# that already had remote access on publishes its current address now, after
+# the update that brings it, instead of at the next tunnel restart.
+if [ -f /var/lib/sudo-remote-enabled ] && [ -s /etc/sudo/public_url ] && [ -x /usr/local/bin/sudo-remote-link.py ]; then
+  cur="$(cat /etc/sudo/public_url)"
+  pub="$(python3 -c 'import json; print(json.load(open("/var/lib/sudo-remote-link.json")).get("url", ""))' 2>/dev/null || true)"
+  if [ "$cur" != "$pub" ]; then
+    /usr/local/bin/sudo-remote-link.py publish "$cur" >/dev/null 2>&1 \
+      && echo "Remote link published" || echo "Remote link: not published yet (tried again when the tunnel restarts)"
+  fi
+fi
+
 # Web search through the owner's OpenRouter key needs OpenClaw's Perplexity
 # plugin (26 KB, pinned to the core version like the WhatsApp one). Without a
 # search provider every search failed. configure-openclaw.sh turns it on once

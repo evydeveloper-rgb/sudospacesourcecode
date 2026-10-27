@@ -185,6 +185,8 @@ chmod +x /usr/local/bin/sudo-hardware-profile.py
 # Its table of which model goes on which hardware (local-model-picks.py).
 cp "${BOOT}/sudo-pi/local-model-picks.py" /usr/local/bin/sudo-local-model-picks.py
 cp "${BOOT}/sudo-pi/problem-report.py" /usr/local/bin/sudo-problem-report.py
+cp "${BOOT}/sudo-pi/remote-link.py" /usr/local/bin/sudo-remote-link.py
+chmod +x /usr/local/bin/sudo-remote-link.py
 chmod +x /usr/local/bin/sudo-problem-report.py
 cp "${BOOT}/sudo-pi/notify-owner.sh" /usr/local/bin/sudo-notify-owner.sh
 cp "${BOOT}/sudo-pi/install-adguard.sh" /usr/local/bin/sudo-install-adguard.sh
