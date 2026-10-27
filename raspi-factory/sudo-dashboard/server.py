@@ -1780,6 +1780,12 @@ def local_model_state():
             m.get("name") == active_local_model() for m in (ollama_installed() or [])):
         state = "done"
         data = {**data, "message": "", "percent": 100}
+    # "installing" from a run that is no longer running (killed before 1.0.46
+    # could say so): a beta device in China showed it for three days.
+    elif (state == "installing" and time.time() - float(data.get("at") or 0) > 45 * 60
+          and subprocess.run(["pgrep", "-f", "install-local-model"], capture_output=True).returncode != 0):
+        state = "failed"
+        data = {**data, "message": "The download stopped before it finished. It tries again when sudo restarts."}
     return {
         "state": state,
         "message": data.get("message", ""),

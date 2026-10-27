@@ -263,6 +263,35 @@ full_access = bool(sudo.get("full_access_enabled", False))
 tools["fs"] = {"workspaceOnly": not full_access}
 print(f"Full device access: {'on' if full_access else 'off (file tools workspace-only)'}")
 
+# Web search had no provider, so every search failed with "No web search
+# providers are currently available under this plugin policy" -- 6 of 6 on a
+# beta device in two days, looking up flights. It now goes through the
+# owner's OpenRouter key to Perplexity's Sonar (about $0.006 a search), using
+# OpenClaw's Perplexity plugin, which configure-agent.sh installs. DuckDuckGo,
+# the key-free provider, challenged nearly every search from a home
+# connection in testing. A provider the owner set up themselves is kept.
+import glob as _glob
+search_cfg = tools.setdefault("web", {}).setdefault("search", {})
+pplx_installed = bool(_glob.glob("/opt/sudo/openclaw/npm/projects/openclaw-perplexity-plugin-*"))
+pl_web = cfg.setdefault("plugins", {})
+if pplx_installed and or_key and search_cfg.get("provider") in (None, "perplexity"):
+    search_cfg["provider"] = "perplexity"
+    if "perplexity" not in pl_web.setdefault("allow", []):
+        pl_web["allow"].append("perplexity")
+    pl_web.setdefault("entries", {})["perplexity"] = {"enabled": True, "config": {"webSearch": {
+        "apiKey": or_key, "baseUrl": "https://openrouter.ai/api/v1", "model": "perplexity/sonar"}}}
+elif search_cfg.get("provider") == "perplexity":
+    # The OpenRouter key was removed: no stale key left behind.
+    search_cfg.pop("provider")
+    pl_web.get("entries", {}).pop("perplexity", None)
+    pl_web["allow"] = [p for p in pl_web.get("allow", []) if p != "perplexity"]
+search_ready = bool(search_cfg.get("provider"))
+if not search_cfg:
+    tools["web"].pop("search")
+    if not tools["web"]:
+        tools.pop("web")
+print(f"Web search: {search_cfg.get('provider') or 'none'}")
+
 if not sudo.get("subagent_enabled", False):
     deny |= {"sessions_spawn", "subagents"}
 print(f"Helpers (sub-agents): {'on' if sudo.get('subagent_enabled') else 'off'}")
@@ -587,6 +616,15 @@ tools_md += [
     "tried, what the site did, and give them the link to do it themselves. Do not schedule another retry, "
     "and remove any retry jobs you already set for it.",
     "- Never promise a website task will be done. Say you'll try and let them know either way.",
+] + ([
+    "- To find something, use `web_search` first; it is quicker and less often blocked than opening sites.",
+] if search_ready else []) + [
+    "",
+    "## Earlier conversations",
+    "",
+    "- `sessions_history` only reaches this conversation, not the others (check-ins, reminders, other "
+    "chats); asked for anything else it fails. To recall something said earlier, use `memory_search`, "
+    f"and if it is not there, say you don't have it and ask {_who}, rather than calling it again.",
     "",
     "## Reporting a problem to the Sudo team",
     "",

@@ -287,12 +287,30 @@ def key_in_transcript(lines):
 def channel_of_prompt(text):
     """A transcript with no session name: check-ins and reminders start with
     OpenClaw's own prompts, which no person types."""
-    text = (text or "").lstrip()
-    if text.startswith("Read HEARTBEAT.md"):
+    # Near the start, not at it: OpenClaw puts a timestamp in front of the
+    # prompt, which kept 13 check-ins a day labelled "other" in 1.0.45.
+    head = (text or "")[:240]
+    if "Read HEARTBEAT.md" in head:
         return "checkin"
-    if text.startswith("[cron:"):
+    if "[cron:" in head:
         return "reminder"
     return "other"
+
+
+# What kind of error a tool returned, by pattern only: the report carries the
+# kind and a count, never the error text (it can name people or places).
+TOOL_ERROR_CLASSES = (
+    ("not_configured", r"not configured|no .{0,30}provider|currently available|needs? an? .{0,20}(api )?key"),
+    ("blocked", r"not on (the|their) list|blocked|not allowed|forbidden|denied|not permitted|cancel"),
+    ("not_visible", r"visibilit|not visible|outside (the|this|your) (scope|tree)"),
+    ("not_connected", r"not (connected|linked|running|logged in)|disconnected|no active|offline"),
+    ("bad_target", r"invalid (target|number|recipient|chat|jid)|unknown (target|recipient|channel|account)"),
+    ("timeout", r"time(d)?.?out|timeout"),
+    ("not_found", r"\b404\b|not found|no such|does not exist|enoent"),
+    ("rate_limited", r"\b429\b|rate.?limit|too many requests"),
+    ("network", r"net::err|enotfound|econnre|dns|connection (refused|reset)|fetch failed"),
+)
+AUTOMATED = ("checkin", "reminder")
 
 
 def site_of(args):
@@ -376,6 +394,11 @@ def conversations(since_ms):
                     if chan == "other":
                         chan = channel_of_prompt(text)
                     out["messages"][chan] = out["messages"].get(chan, 0) + 1
+                    if chan in AUTOMATED:
+                        # The device prompting itself: not a person, so no
+                        # repeats, frustration or reply time to count.
+                        last_kind = "user"
+                        continue
                     w = words(text)
                     if last_user and ts - last_user[0] < 10 * 60 * 1000 and w and last_user[1]:
                         if len(w & last_user[1]) / max(1, len(w | last_user[1])) >= 0.6:
@@ -404,7 +427,7 @@ def conversations(since_ms):
                         out["replies"] += 1
                         if chan == "checkin":
                             heartbeat_text.append(text)
-                        if COULDNT.search(text):
+                        if COULDNT.search(text) and chan not in AUTOMATED:
                             out["bad_experience"]["agent_couldnt"] += 1
                         if pending_user_ts:
                             secs = (ts - pending_user_ts) / 1000
@@ -426,6 +449,8 @@ def conversations(since_ms):
                     if m.get("isError"):
                         t = out["tools"].setdefault(name, {"calls": 0, "errors": 0})
                         t["errors"] += 1
+                        kind = next((c for c, rx in TOOL_ERROR_CLASSES if re.search(rx, result, re.I)), "other")
+                        t.setdefault("why", {})[kind] = t.get("why", {}).get(kind, 0) + 1
                         if any(w_ in name.lower() for w_ in WEB_TOOLS):
                             site = site_of(calls.get(m.get("toolCallId"), ("", {}))[1]) or "unknown"
                             why = next((c for c, rx in FAIL_CLASSES if re.search(rx, result, re.I)), "other")

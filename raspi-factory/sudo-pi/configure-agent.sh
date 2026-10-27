@@ -579,6 +579,24 @@ if [ -f /run/sudo-configure-nokey ]; then
   exit 0
 fi
 
+# Web search through the owner's OpenRouter key needs OpenClaw's Perplexity
+# plugin (26 KB, pinned to the core version like the WhatsApp one). Without a
+# search provider every search failed. configure-openclaw.sh turns it on once
+# it is here; a failed download is tried again on the next configure.
+if [ -x "$OC_BIN" ] && ! ls -d /opt/sudo/openclaw/npm/projects/openclaw-perplexity-plugin-* >/dev/null 2>&1 \
+   && python3 -c 'import json, sys
+c = json.load(open("/opt/sudo/config.json"))
+k = (c.get("provider_keys") or {}).get("openrouter") or c.get("openrouter_key") or (
+    c.get("user_openrouter_key") if c.get("openrouter_key_source", "sudo") == "own" else "")
+sys.exit(0 if k else 1)' 2>/dev/null; then
+  if OPENCLAW_STATE_DIR=/opt/sudo/openclaw OPENCLAW_CONFIG_PATH=/opt/sudo/openclaw/openclaw.json HOME=/root \
+     timeout 180 "$OC_BIN" plugins install "@openclaw/perplexity-plugin@2026.6.11" >/dev/null 2>&1; then
+    echo "Web search plugin installed"
+  else
+    echo "Web search plugin: download failed (tried again next time)"
+  fi
+fi
+
 # The installer names helpers sudo-*.sh; the OTA updater installs them by
 # their repo name. Accept either until those agree.
 oc_configure=""

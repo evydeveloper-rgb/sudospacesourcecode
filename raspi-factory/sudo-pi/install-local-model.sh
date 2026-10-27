@@ -83,6 +83,11 @@ with open(path, "w", encoding="utf-8") as f:
                "model": model, "at": time.time()}, f)
 PY
 }
+# Stopped before the end -- the boot unit's 30-minute limit on a slow link
+# (seen in China), a shutdown -- would otherwise leave "installing" in the
+# status file for good, and the dashboard showing a download that is not
+# happening. Say it stopped; the next boot tries again.
+trap 'set_status failed "The download stopped before it finished. It tries again when sudo restarts." 0; exit 1' TERM INT
 
 # A 4GB board cannot afford to be wrong about this. If something already ate
 # the RAM, installing a resident model makes the device worse, not better.
