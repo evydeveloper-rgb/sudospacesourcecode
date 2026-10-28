@@ -57,7 +57,6 @@ enable_remote() {
 disable_remote() {
   [ "$(id -u)" -eq 0 ] || { echo "run as root"; exit 1; }
   rm -f "$REMOTE_MARKER" "$PUBLIC_URL_FILE"
-  /usr/local/bin/sudo-remote-link.py clear 2>/dev/null || true
   systemctl disable --now sudo-remote-access.service 2>/dev/null || true
   log "remote access disabled"
 }
@@ -82,9 +81,6 @@ run_tunnel() {
       printf '%s\n' "$url" > "$PUBLIC_URL_FILE"
       chmod 644 "$PUBLIC_URL_FILE"
       log "public URL saved: $url"
-      # The fixed sudospace.tech/go/ link forwards here; tell it (in the
-      # background, so the tunnel's own output keeps being read).
-      [ -x /usr/local/bin/sudo-remote-link.py ] && /usr/local/bin/sudo-remote-link.py publish "$url" >>"$LOG" 2>&1 &
     fi
   done
 

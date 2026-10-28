@@ -100,7 +100,6 @@
       <div>
         <strong data-i18n="hint.keepSudoOneTap">Keep sudo one tap away</strong>
         <small id="install-hint-how">Add this page to your home screen.</small>
-        <a class="install-hint-anywhere" id="install-hint-anywhere" href="#" target="_blank" rel="noopener" hidden data-i18n="hint.anywhereGo">Open my link</a>
       </div>
       <button id="install-hint-dismiss" type="button" aria-label="Dismiss" data-i18n-attr="aria-label:hint.dismiss">×</button>
     </div>
@@ -1753,7 +1752,9 @@
 
               <button class="info-btn" type="button" data-info="remote-info" aria-expanded="false" aria-label="About access from anywhere" data-i18n-attr="aria-label:set.access.aboutAccessFromAnywhere">i</button>
               <div class="info-bubble" id="remote-info" data-i18n-html="set.access.normallyYourDashboardOnly">
-                Normally your dashboard only works on your home Wi‑Fi. Turn this on and sudo gets a link that reaches it from anywhere: sudospace.tech/go/ followed by a code only your device has. The link stays the same, so you can bookmark it or add it to your home screen.<br><br>Away from home it asks for your dashboard password, unless you switch that off below. Even so, don't post the link or share it with people you don't trust.<br><br>Turn this off when you don't need it.
+                Normally your dashboard only works on your home Wi‑Fi. Turn this on and sudo creates a public web address that reaches your device from anywhere — useful on the go.<br><br>
+                <strong>Treat that link like a password.</strong> There's no login screen: anyone who has it can chat with your agent and change these settings. Don't post it or send it to anyone you wouldn't hand your unlocked phone to.<br><br>
+                The link changes when your device restarts. Turn this off when you don't need it.
               </div>
               <div class="remote-box" id="remote-box" hidden>
                 <a id="remote-url" href="#" target="_blank" rel="noopener"></a>
@@ -7731,31 +7732,13 @@
       }
     }
 
-    // link: the sudospace.tech/go/ address that does not change. Shown and
-    // copied instead of the tunnel's own, which changes on every restart.
-    function showRemote(url, link) {
-      const shown = link || url || '';
-      state.publicUrl = shown;
-      $('remote-box').hidden = !shown;
-      $('public-link-strip').hidden = !shown;
-      if (shown) {
-        $('remote-url').href = shown;
-        $('remote-url').textContent = shown;
-      }
-      renderAnywhereHint(link);
-    }
-
-    // The home-screen app has to be added from the link that does not change,
-    // or it goes white after a restart (or away from home, for sudo.local).
-    function renderAnywhereHint(link) {
-      const go = $('install-hint-anywhere');
-      if (!go) return;
-      go.hidden = !link;
-      if (link) {
-        go.href = link;
-        $('install-hint-how').textContent = t('hint.anywhere');
-      } else {
-        renderInstallHint();
+    function showRemote(url) {
+      state.publicUrl = url || '';
+      $('remote-box').hidden = !url;
+      $('public-link-strip').hidden = !url;
+      if (url) {
+        $('remote-url').href = url;
+        $('remote-url').textContent = url;
       }
     }
 
@@ -7785,7 +7768,7 @@
         try {
           const data = await api('/api/remote-access');
           if (data.public_url) {
-            showRemote(data.public_url, data.anywhere_link);
+            showRemote(data.public_url);
             $('access-summary').textContent = t('access.ready');
             return;
           }
@@ -8053,7 +8036,7 @@
       renderProfileSummary(status);
       renderLanguageCard();
       selectPersonality(status.personality || 'friendly');
-      showRemote(status.public_url, status.anywhere_link);
+      showRemote(status.public_url);
       if (status.remote_starting && !status.public_url) pollRemote();
       ensureGreeting();
       // Not while already in the flow: a refresh mid-setup would throw the
