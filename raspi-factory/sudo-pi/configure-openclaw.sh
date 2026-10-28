@@ -142,7 +142,12 @@ if also_allow:
     cfg["tools"]["alsoAllow"] = also_allow
 # WhatsApp is Sudo's to set (below), and only while its plugin is installed.
 cfg.get("channels", {}).pop("whatsapp", None)
-cfg.get("channels", {}).pop("telegram", None)
+# Telegram too -- unless the owner runs more than one bot (accounts), set up
+# by them or their agent. That setup is theirs: it is left exactly as it is
+# (an update used to rebuild it with only Sudo's own bot, wiping the rest).
+tg_owner_managed = bool(((current.get("channels") or {}).get("telegram") or {}).get("accounts"))
+if not tg_owner_managed:
+    cfg.get("channels", {}).pop("telegram", None)
 token = open("/etc/sudo/openclaw_gateway_token", encoding="utf-8").read().strip()
 
 # Model aliases: what each name in the Settings picker (e.g. "sudo-default")
@@ -562,32 +567,16 @@ if tg_ready:
         plugins["allow"].append("telegram")
     plugins.setdefault("entries", {})["telegram"] = {"enabled": True}
     owner_tg = str(tg["owner_id"]).strip()
-    tg_cfg = {
-        "enabled": True,
-        "botToken": tg["token"],
-        "dmPolicy": "allowlist",
-        "allowFrom": [owner_tg],
-        "groupPolicy": "disabled",
-    }
-    # Bots the owner added beyond Sudo's own (a beta owner keeps one for work
-    # and one personal) were wiped by every update, because this section is
-    # rebuilt each run; her agent put the work bot back, and the two kept
-    # flip-flopping. Keep them, under Sudo's same owner-only policy unless
-    # they set their own. Drop one that reuses Sudo's own bot token: two
-    # listeners on one bot get every message twice.
-    tg_now = ((current.get("channels") or {}).get("telegram") or {})
-    extra_bots = {k: v for k, v in (tg_now.get("accounts") or {}).items()
-                  if k != "default" and isinstance(v, dict) and v.get("botToken")
-                  and v.get("botToken") != tg["token"]}
-    if extra_bots:
-        tg_cfg.pop("botToken")
-        tg_cfg["accounts"] = {"default": {"botToken": tg["token"]}, **extra_bots}
-        tg_cfg["defaultAccount"] = "default"
-        # One conversation per bot, so work and personal chats do not run
-        # together in a single session.
-        cfg.setdefault("session", {})["dmScope"] = "per-account-channel-peer"
-        print(f"Telegram: keeping {len(extra_bots)} more bot(s) the owner added")
-    cfg.setdefault("channels", {})["telegram"] = tg_cfg
+    if tg_owner_managed:
+        print("Telegram: the owner's own multi-bot setup, left as it is")
+    else:
+        cfg.setdefault("channels", {})["telegram"] = {
+            "enabled": True,
+            "botToken": tg["token"],
+            "dmPolicy": "allowlist",
+            "allowFrom": [owner_tg],
+            "groupPolicy": "disabled",
+        }
     also = cfg.setdefault("tools", {}).setdefault("alsoAllow", [])
     if "message" not in also:
         also.append("message")
@@ -602,6 +591,13 @@ if tg_ready:
         "",
     ]
     print(f"Telegram: @{bot}, answers the owner only")
+elif tg_owner_managed:
+    # The owner's own bots, without Sudo's: keep the plugin they run on.
+    plugins = cfg.setdefault("plugins", {})
+    if "telegram" not in plugins.setdefault("allow", []):
+        plugins["allow"].append("telegram")
+    plugins.setdefault("entries", {})["telegram"] = {"enabled": True}
+    print("Telegram: the owner's own bots, left as they are")
 else:
     print("Telegram: not set up")
 
