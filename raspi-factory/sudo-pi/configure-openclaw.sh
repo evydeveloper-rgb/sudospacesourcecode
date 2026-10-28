@@ -562,13 +562,32 @@ if tg_ready:
         plugins["allow"].append("telegram")
     plugins.setdefault("entries", {})["telegram"] = {"enabled": True}
     owner_tg = str(tg["owner_id"]).strip()
-    cfg.setdefault("channels", {})["telegram"] = {
+    tg_cfg = {
         "enabled": True,
         "botToken": tg["token"],
         "dmPolicy": "allowlist",
         "allowFrom": [owner_tg],
         "groupPolicy": "disabled",
     }
+    # Bots the owner added beyond Sudo's own (a beta owner keeps one for work
+    # and one personal) were wiped by every update, because this section is
+    # rebuilt each run; her agent put the work bot back, and the two kept
+    # flip-flopping. Keep them, under Sudo's same owner-only policy unless
+    # they set their own. Drop one that reuses Sudo's own bot token: two
+    # listeners on one bot get every message twice.
+    tg_now = ((current.get("channels") or {}).get("telegram") or {})
+    extra_bots = {k: v for k, v in (tg_now.get("accounts") or {}).items()
+                  if k != "default" and isinstance(v, dict) and v.get("botToken")
+                  and v.get("botToken") != tg["token"]}
+    if extra_bots:
+        tg_cfg.pop("botToken")
+        tg_cfg["accounts"] = {"default": {"botToken": tg["token"]}, **extra_bots}
+        tg_cfg["defaultAccount"] = "default"
+        # One conversation per bot, so work and personal chats do not run
+        # together in a single session.
+        cfg.setdefault("session", {})["dmScope"] = "per-account-channel-peer"
+        print(f"Telegram: keeping {len(extra_bots)} more bot(s) the owner added")
+    cfg.setdefault("channels", {})["telegram"] = tg_cfg
     also = cfg.setdefault("tools", {}).setdefault("alsoAllow", [])
     if "message" not in also:
         also.append("message")
@@ -702,6 +721,9 @@ if reach and hb_switch:
         "   - an open loop in `PENDING.md` that is due, overdue or waiting on them;",
         f"   - something {user} said they would do today (`memory_search`);",
         "   - an event in the next two hours, if their calendar is connected.",
+        f"   Before asking how something went, `memory_search` it: if {user} already told you, "
+        f"or `check-ins.md` shows you asked about it before, do not ask again. (A beta owner "
+        f"was asked twice how her appointment went: check-ins do not see your chats with her.)",
         "3. Reminders they asked for are already scheduled with cron. Do not repeat those.",
         "4. If nothing clears that bar, reply exactly HEARTBEAT_OK and nothing else.",
         f"5. If something does: first add one line to `check-ins.md` (date, time, what it was "
@@ -711,6 +733,18 @@ if reach and hb_switch:
         f"Read `USER.md` if you need to know more about {user}. Never invent anything.",
         "",
     ])
+    # Check-ins run in a fresh session each time, so they only know what the
+    # chat has written down. Without this, an answered question stayed open
+    # and was asked again.
+    tools_md += [
+        "## Check-ins",
+        "",
+        f"- Now and then you message {user} on your own (a check-in), from a separate session that "
+        "cannot see this chat. When they answer something a check-in asked (how an appointment went, "
+        "whether a task is done), save the answer with the memory tools and update or remove the item "
+        "in `PENDING.md`, so no check-in asks it again.",
+        "",
+    ]
     print(f"Check-ins: on, hourly 08-22, to {reach['channel']}")
 else:
     defaults["heartbeat"] = {"every": "0m"}
