@@ -1307,6 +1307,34 @@
                     </div>
                     <p class="form-status" role="status"></p>
                   </div>
+                  <div class="wa-voice" id="wa-voice">
+                    <div class="settings-subgroup" data-i18n="voice.title">Voice calls</div>
+                    <p class="microcopy" data-i18n="voice.intro">Call your agent on WhatsApp and talk to it, or let it call you. The voice uses Google's Gemini Live, so it needs a Gemini API key. Gemini has a free tier; on the paid plan a call costs about 3 to 5 cents a minute.</p>
+                    <p class="microcopy voice-warn" id="voice-need-agent" hidden data-i18n="voice.needAgent">Calls need your agent's own WhatsApp number (a second number). You can't call your own number.</p>
+                    <div id="voice-key-row" hidden>
+                      <label for="voice-gemini-key" data-i18n="voice.keyLabel">Gemini API key</label>
+                      <input id="voice-gemini-key" type="password" autocomplete="off" spellcheck="false" placeholder="AIza…">
+                      <p class="microcopy" data-i18n-html="voice.keyHow">Get one at <strong>aistudio.google.com</strong> → Get API key. It is kept on this device only.</p>
+                    </div>
+                    <button class="primary-button" id="voice-setup" type="button" data-i18n="voice.setup">Set up calls</button>
+                    <div class="voice-pair" id="voice-pair" hidden>
+                      <p data-i18n="voice.scan">On your agent's phone: WhatsApp → Linked devices → Link a device, then scan this code.</p>
+                      <img id="voice-qr" alt="" width="220" height="220">
+                    </div>
+                    <div class="access-row" id="voice-on-row" hidden>
+                      <div>
+                        <strong data-i18n="voice.on">Voice calls on</strong>
+                        <small id="voice-on-note" data-i18n="voice.onNote">Call your agent's WhatsApp number to talk to it. It can call you too, when you ask it to.</small>
+                      </div>
+                      <label class="switch">
+                        <input id="voice-toggle" type="checkbox">
+                        <span aria-hidden="true"></span>
+                        <em class="sr-only" data-i18n="voice.on">Voice calls on</em>
+                      </label>
+                    </div>
+                    <button class="ghost-button" id="voice-test" type="button" hidden data-i18n="voice.test">Call me now</button>
+                    <p class="form-status" id="voice-status" role="status"></p>
+                  </div>
                   <div id="wa-settings-contacts"></div>
                 </div>
                 <button class="whatsapp-panel-close" type="button" id="whatsapp-settings-close" data-i18n="set.channels.close">Close</button>
@@ -5871,7 +5899,57 @@
       } catch (_) { showToast(t('crm.saveFailed')); }
     }
 
+    // --- Voice calls (WhatsApp + Gemini Live; voice-calls.sh on the device) ------
+    let voicePoll = null;
+    function stopVoicePoll() { if (voicePoll) { clearInterval(voicePoll); voicePoll = null; } }
+
+    function renderVoice(v) {
+      const pairing = v.state === 'pairing' || v.state === 'installing';
+      $('voice-need-agent').hidden = v.available;
+      $('voice-key-row').hidden = !v.available || v.gemini_key || v.running;
+      $('voice-setup').hidden = !v.available || v.running || pairing;
+      $('voice-pair').hidden = !(pairing && v.qr);
+      if (pairing && v.qr) $('voice-qr').src = '/api/voice/qr?t=' + Date.now();
+      const set = v.running || v.state === 'stopped';
+      $('voice-on-row').hidden = !set;
+      $('voice-toggle').checked = v.running;
+      $('voice-test').hidden = !(v.running && v.linked);
+      $('voice-on-note').textContent = v.on_call ? t('voice.onCall')
+        : (v.running && !v.linked ? t('voice.connecting') : t('voice.onNote'));
+      $('voice-status').textContent = v.state === 'failed' ? v.message
+        : (v.state === 'installing' ? t('voice.downloading') : (pairing && !v.qr ? t('voice.preparing') : ''));
+      if (pairing) {
+        if (!voicePoll) voicePoll = setInterval(loadVoice, 3000);
+      } else {
+        stopVoicePoll();
+      }
+    }
+
+    async function loadVoice() {
+      try { renderVoice(await api('/api/voice', {}, 15000)); } catch (_) { stopVoicePoll(); }
+    }
+
+    async function voiceAction(body, button) {
+      if (button) button.disabled = true;
+      $('voice-status').textContent = '';
+      try {
+        const r = await api('/api/voice', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        }, 60000);
+        if (body.action === 'test_call') $('voice-status').textContent = t('voice.ringing');
+        await loadVoice();
+        return r;
+      } catch (error) {
+        $('voice-status').textContent = error.message;
+      } finally {
+        if (button) button.disabled = false;
+      }
+    }
+
     async function openWhatsappSettings() {
+      loadVoice();
       $('whatsapp-panel').hidden = true;
       stopWhatsappPoll();
       $('whatsapp-settings-panel').hidden = false;
@@ -8593,7 +8671,13 @@
       $('whatsapp-panel').hidden = true;
       stopWhatsappPoll();
     });
+    $('voice-setup').addEventListener('click', event => voiceAction(
+      { action: 'setup', gemini_key: $('voice-gemini-key').value.trim() }, event.currentTarget)
+      .then(() => { $('voice-gemini-key').value = ''; }));
+    $('voice-toggle').addEventListener('change', event => voiceAction({ action: event.currentTarget.checked ? 'on' : 'off' }));
+    $('voice-test').addEventListener('click', event => voiceAction({ action: 'test_call' }, event.currentTarget));
     $('whatsapp-settings-close').addEventListener('click', () => {
+      stopVoicePoll();
       $('whatsapp-settings-panel').hidden = true;
     });
     $('crm-open').addEventListener('click', openCrm);

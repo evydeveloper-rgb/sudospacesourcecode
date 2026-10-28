@@ -75,7 +75,7 @@ for key in (
     "full_access_enabled", "subagent_enabled", "skills_enabled",
     "agent_language", "ui_language", "dashboard_session",
     "spend_enabled", "spend_max_per_day", "spend_max_per_minute", "spend_cooldown_min",
-    "remote_password_enabled", "balance_usd", "subscription_status",
+    "remote_password_enabled", "balance_usd", "subscription_status", "voice_gemini_key",
 ):
     data.pop(key, None)
 os.makedirs("/opt/sudo", exist_ok=True)
@@ -85,6 +85,9 @@ os.chmod(path, 0o600)
 PY
 
 rm -rf /opt/sudo/agent-workspace /var/lib/sudo-agent-files.json /opt/sudo/whatsapp-contacts.json /opt/sudo/home
+# Voice calls: the sidecar is a linked device on the agent's WhatsApp; a new
+# owner must not inherit it (or the last owner's number it answers).
+/usr/local/bin/sudo-voice-calls.sh remove 2>/dev/null || true
 mkdir -p /opt/sudo/agent-workspace
 rm -rf /opt/sudo/picoclaw   # left by older versions
 rm -rf /opt/sudo/openclaw

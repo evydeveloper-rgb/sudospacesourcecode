@@ -6297,3 +6297,73 @@ I18N.add('ar', {
   "chat.needsCloud": "التطبيقات والويب والتذكيرات تحتاج إلى نموذج سحابي.",
   "chat.needsCloudGo": "اربط واحدًا"
 });
+
+// ---- WhatsApp voice calls (voice-calls.sh) -------------------------------------
+I18N.add('en', {
+  "voice.title": "Voice calls",
+  "voice.intro": "Call your agent on WhatsApp and talk to it, or let it call you. The voice uses Google's Gemini Live, so it needs a Gemini API key. Gemini has a free tier; on the paid plan a call costs about 3 to 5 cents a minute.",
+  "voice.needAgent": "Calls need your agent's own WhatsApp number (a second number). You can't call your own number.",
+  "voice.keyLabel": "Gemini API key",
+  "voice.keyHow": "Get one at <strong>aistudio.google.com</strong> → Get API key. It is kept on this device only.",
+  "voice.setup": "Set up calls",
+  "voice.scan": "On your agent's phone: WhatsApp → Linked devices → Link a device, then scan this code.",
+  "voice.on": "Voice calls on",
+  "voice.onNote": "Call your agent's WhatsApp number to talk to it. It can call you too, when you ask it to.",
+  "voice.onCall": "On a call right now.",
+  "voice.connecting": "Connecting to WhatsApp…",
+  "voice.downloading": "Downloading voice calls (about 35 MB)…",
+  "voice.preparing": "Getting the code ready…",
+  "voice.test": "Call me now",
+  "voice.ringing": "Calling you now. Pick up on WhatsApp."
+});
+I18N.add('es', {
+  "voice.title": "Llamadas de voz",
+  "voice.intro": "Llama a tu asistente por WhatsApp y habla con él, o deja que te llame. La voz usa Gemini Live de Google, así que necesita una clave API de Gemini. Gemini tiene un plan gratuito; en el de pago una llamada cuesta unos 3 a 5 centavos por minuto.",
+  "voice.needAgent": "Las llamadas necesitan el número de WhatsApp propio de tu asistente (un segundo número). No puedes llamar a tu propio número.",
+  "voice.keyLabel": "Clave API de Gemini",
+  "voice.keyHow": "Consíguela en <strong>aistudio.google.com</strong> → Get API key. Se guarda solo en este dispositivo.",
+  "voice.setup": "Configurar llamadas",
+  "voice.scan": "En el teléfono de tu asistente: WhatsApp → Dispositivos vinculados → Vincular un dispositivo, y escanea este código.",
+  "voice.on": "Llamadas de voz activadas",
+  "voice.onNote": "Llama al número de WhatsApp de tu asistente para hablar con él. También puede llamarte cuando se lo pidas.",
+  "voice.onCall": "En una llamada ahora mismo.",
+  "voice.connecting": "Conectando con WhatsApp…",
+  "voice.downloading": "Descargando las llamadas de voz (unos 35 MB)…",
+  "voice.preparing": "Preparando el código…",
+  "voice.test": "Llámame ahora",
+  "voice.ringing": "Te está llamando. Contesta en WhatsApp."
+});
+I18N.add('zh', {
+  "voice.title": "语音通话",
+  "voice.intro": "在 WhatsApp 上给你的助手打电话和它说话，或者让它给你打电话。语音使用 Google 的 Gemini Live，所以需要一个 Gemini API 密钥。Gemini 有免费额度；付费计划下每分钟大约 3 到 5 美分。",
+  "voice.needAgent": "通话需要助手自己的 WhatsApp 号码（第二个号码）。你不能给自己的号码打电话。",
+  "voice.keyLabel": "Gemini API 密钥",
+  "voice.keyHow": "在 <strong>aistudio.google.com</strong> → Get API key 获取。只保存在这台设备上。",
+  "voice.setup": "设置通话",
+  "voice.scan": "在助手的手机上：WhatsApp → 已关联的设备 → 关联新设备，然后扫描这个码。",
+  "voice.on": "语音通话已开启",
+  "voice.onNote": "拨打助手的 WhatsApp 号码就能和它说话。你让它打给你时，它也可以打给你。",
+  "voice.onCall": "正在通话中。",
+  "voice.connecting": "正在连接 WhatsApp…",
+  "voice.downloading": "正在下载语音通话（约 35 MB）…",
+  "voice.preparing": "正在准备二维码…",
+  "voice.test": "现在打给我",
+  "voice.ringing": "正在给你打电话，请在 WhatsApp 上接听。"
+});
+I18N.add('ar', {
+  "voice.title": "المكالمات الصوتية",
+  "voice.intro": "اتصل بمساعدك على WhatsApp وتحدث معه، أو دعه يتصل بك. يستخدم الصوت Gemini Live من Google، لذا يحتاج إلى مفتاح Gemini API. لدى Gemini خطة مجانية؛ وفي الخطة المدفوعة تكلف المكالمة نحو 3 إلى 5 سنتات في الدقيقة.",
+  "voice.needAgent": "تحتاج المكالمات إلى رقم WhatsApp الخاص بمساعدك (رقم ثانٍ). لا يمكنك الاتصال برقمك أنت.",
+  "voice.keyLabel": "مفتاح Gemini API",
+  "voice.keyHow": "احصل عليه من <strong>aistudio.google.com</strong> ← Get API key. يُحفظ على هذا الجهاز فقط.",
+  "voice.setup": "إعداد المكالمات",
+  "voice.scan": "على هاتف مساعدك: WhatsApp ← الأجهزة المرتبطة ← ربط جهاز، ثم امسح هذا الرمز.",
+  "voice.on": "المكالمات الصوتية مفعّلة",
+  "voice.onNote": "اتصل برقم WhatsApp الخاص بمساعدك لتتحدث معه. ويمكنه أن يتصل بك حين تطلب ذلك.",
+  "voice.onCall": "في مكالمة الآن.",
+  "voice.connecting": "جارٍ الاتصال بـ WhatsApp…",
+  "voice.downloading": "جارٍ تنزيل المكالمات الصوتية (نحو 35 ميغابايت)…",
+  "voice.preparing": "جارٍ تجهيز الرمز…",
+  "voice.test": "اتصل بي الآن",
+  "voice.ringing": "يتصل بك الآن. أجب على WhatsApp."
+});

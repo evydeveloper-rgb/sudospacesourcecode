@@ -3125,3 +3125,11 @@ input[type="password"], input[type="tel"], input[type="number"], #ssh-key, #devi
   padding: 0; border: 0; background: none; color: var(--primary);
   font: inherit; font-weight: 700; cursor: pointer; text-decoration: underline; text-underline-offset: 2px;
 }
+
+/* Voice calls, in WhatsApp settings (renderVoice). */
+.wa-voice { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
+.wa-voice .primary-button, .wa-voice .ghost-button { margin-top: 10px; }
+.voice-warn { color: var(--danger); }
+.voice-pair { margin-top: 12px; text-align: center; }
+.voice-pair p { margin: 0 0 10px; font-size: .86rem; }
+.voice-pair img { width: 220px; height: 220px; padding: 10px; border-radius: 14px; background: #fff; border: 1px solid var(--line); }

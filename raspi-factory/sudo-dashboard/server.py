@@ -128,6 +128,12 @@ EMBED_MODEL = "text-embedding-3-small"
 WHATSAPP_STATUS = "/var/lib/sudo-whatsapp-status.json"
 WHATSAPP_INSTALL_SCRIPT = "/usr/local/bin/sudo-install-whatsapp-bridge.sh"
 WHATSAPP_UNLINK_SCRIPT = "/usr/local/bin/sudo-unlink-whatsapp.sh"
+# Voice calls (sudo-pi/voice-calls.sh): the owner calls the agent on WhatsApp,
+# or the agent calls them.
+VOICE_SCRIPT = "/usr/local/bin/sudo-voice-calls.sh"
+VOICE_CALL = "/usr/local/bin/sudo-voice-call.py"
+VOICE_STATUS = "/var/lib/sudo-voice-status.json"
+VOICE_QR = "/var/lib/private/sudo-voice/pair-qr.svg"
 UPDATE_SCRIPT = "/usr/local/bin/sudo-update.sh"
 UPDATE_STATUS = "/var/lib/sudo-update-status.json"
 AUTOUPDATE_SCRIPT = "/usr/local/bin/sudo-autoupdate.sh"
@@ -1809,6 +1815,33 @@ def local_model_ready():
         return True
     return (state.get("state") == "installing" and state.get("target") != state.get("model")
             and any(m.get("name") == state.get("model") for m in (ollama_installed() or [])))
+
+
+def voice_state():
+    """Where WhatsApp voice calls stand (voice-calls.sh). They need the agent's
+    own WhatsApp number (you cannot call your own number) and a Gemini key."""
+    cfg = read_json_file(CONFIG)
+    numbers = cfg.get("whatsapp_numbers") or {}
+    status = read_json_file(VOICE_STATUS, {}) or {}
+    running = subprocess.run(["systemctl", "is-active", "--quiet", "sudo-voice.service"]).returncode == 0
+    health = {}
+    if running:
+        try:
+            r = subprocess.run(["/usr/bin/python3", VOICE_CALL, "--status"], capture_output=True, text=True, timeout=10)
+            health = json.loads(r.stdout or "{}")
+        except (subprocess.SubprocessError, ValueError, OSError):
+            health = {}
+    return {
+        "available": bool(numbers.get("agent")) and agent_backend(cfg) == "openclaw",
+        "agent_number": numbers.get("agent") or "",
+        "gemini_key": bool((cfg.get("provider_keys") or {}).get("gemini") or cfg.get("voice_gemini_key")),
+        "state": status.get("state") or ("ready" if running else "off"),
+        "message": status.get("message") or "",
+        "running": running,
+        "linked": bool(health.get("logged_in")),
+        "on_call": bool(health.get("active_call")),
+        "qr": os.path.isfile(VOICE_QR),
+    }
 
 
 def whatsapp_legacy(cfg=None):
@@ -4106,6 +4139,67 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
 
         if path == "/api/agent/reset" and self.command == "GET":
             self.send_json(read_json_file(RESET_STATUS, {"state": "idle", "message": ""}) or {})
+            return True
+
+        if path == "/api/voice" and self.command == "GET":
+            self.send_json(voice_state())
+            return True
+
+        if path == "/api/voice/qr" and self.command == "GET":
+            try:
+                data = open(VOICE_QR, "rb").read()
+            except OSError:
+                self.send_json({"error": "No code yet"}, code=404)
+                return True
+            self.send_bytes(data, content_type="image/svg+xml", extra_headers=[("Cache-Control", "no-store")])
+            return True
+
+        if path == "/api/voice" and self.command == "POST":
+            try:
+                body = self.read_body_json()
+            except (ValueError, json.JSONDecodeError):
+                body = {}
+            action = body.get("action")
+            if action == "setup":
+                key = str(body.get("gemini_key") or "").strip()
+                cfg = read_json_file(CONFIG)
+                if key:
+                    if not re.fullmatch(r"AIza[0-9A-Za-z_\-]{30,}", key):
+                        self.send_json({"error": "That doesn't look like a Gemini key (it starts with AIza)."}, code=400)
+                        return True
+                    cfg["voice_gemini_key"] = key
+                    write_json_file(CONFIG, cfg)
+                state = voice_state()
+                if not state["gemini_key"]:
+                    self.send_json({"error": "Add a Gemini API key first."}, code=400)
+                    return True
+                if not state["available"]:
+                    self.send_json({"error": "Link your agent's own WhatsApp number first."}, code=400)
+                    return True
+                phone = str(body.get("phone") or "").strip()
+                if phone and not re.fullmatch(r"\+[1-9]\d{6,14}", phone):
+                    phone = ""
+                # Detached: pairing waits for the phone for up to five minutes.
+                run_privileged("sudo-voice-setup", VOICE_SCRIPT, "pair", *([phone] if phone else []), wait=False)
+                self.send_json({"ok": True})
+                return True
+            if action in ("on", "off", "remove"):
+                run_privileged("sudo-voice-" + action, VOICE_SCRIPT,
+                               {"on": "start", "off": "stop", "remove": "remove"}[action], timeout=60)
+                self.send_json(voice_state())
+                return True
+            if action == "test_call":
+                r = subprocess.run(["/usr/bin/python3", VOICE_CALL, "--reason",
+                                    "This is a test call the owner started from the dashboard. Say hello, "
+                                    "say the call is working, and ask if there is anything they need."],
+                                   capture_output=True, text=True, timeout=30)
+                try:
+                    out = json.loads(r.stdout or "{}")
+                except ValueError:
+                    out = {"ok": False, "error": (r.stderr or "no answer")[:200]}
+                self.send_json(out, code=200 if out.get("ok") else 409)
+                return True
+            self.send_json({"error": "Unknown action"}, code=400)
             return True
 
         if path == "/api/agent/channels/whatsapp/unlink" and self.command == "POST":

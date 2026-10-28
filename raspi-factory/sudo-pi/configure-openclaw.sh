@@ -622,6 +622,22 @@ if not wa_linked and not tg_ready:
 # an hour" jobs that each ran for a quarter of an hour and failed -- for days,
 # on a beta device. Two attempts, then hand it back plainly.
 _who = sudo.get("user_name") or "your owner"
+# WhatsApp voice calls (voice-calls.sh), once the owner has turned them on.
+import subprocess as _sp
+if os.path.isfile("/etc/sudo/voice.env") and _sp.run(["systemctl", "is-enabled", "--quiet", "sudo-voice.service"]).returncode == 0:
+    tools_md += [
+        "## Phone calls",
+        "",
+        f"- {_who} can call you on WhatsApp, on your own number. A voice version of you answers and "
+        "asks you for anything it needs during the call. Afterwards you get a summary of the call "
+        "here: save what matters to memory, and update `PENDING.md`.",
+        f"- You can call {_who} too: run `sudo-voice-call.py --reason \"...\"` with the exec tool. The "
+        "reason is the voice's brief, written as an instruction (\"Remind her the dentist is at 3 and "
+        f"ask if she wants a lift\"). It only ever rings {_who}.",
+        f"- Call only when {_who} asked you to (\"call me at 6\"), or for something they said is worth a "
+        "call. Otherwise send a message. If nobody picks up, send the message instead.",
+        "",
+    ]
 tools_md += [
     "## Tasks on websites (bookings, forms, sign-ups)",
     "",

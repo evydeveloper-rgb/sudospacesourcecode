@@ -185,6 +185,11 @@ chmod +x /usr/local/bin/sudo-hardware-profile.py
 # Its table of which model goes on which hardware (local-model-picks.py).
 cp "${BOOT}/sudo-pi/local-model-picks.py" /usr/local/bin/sudo-local-model-picks.py
 cp "${BOOT}/sudo-pi/problem-report.py" /usr/local/bin/sudo-problem-report.py
+# WhatsApp voice calls: set up only when the owner turns them on (Channels).
+cp "${BOOT}/sudo-pi/voice-calls.sh" /usr/local/bin/sudo-voice-calls.sh
+cp "${BOOT}/sudo-pi/voice-bridge.py" /usr/local/bin/sudo-voice-bridge.py
+cp "${BOOT}/sudo-pi/voice-call.py" /usr/local/bin/sudo-voice-call.py
+chmod +x /usr/local/bin/sudo-voice-calls.sh /usr/local/bin/sudo-voice-bridge.py /usr/local/bin/sudo-voice-call.py
 chmod +x /usr/local/bin/sudo-problem-report.py
 cp "${BOOT}/sudo-pi/notify-owner.sh" /usr/local/bin/sudo-notify-owner.sh
 cp "${BOOT}/sudo-pi/install-adguard.sh" /usr/local/bin/sudo-install-adguard.sh
