@@ -118,6 +118,8 @@ rm -rf /opt/sudo/agent-workspace /var/lib/sudo-agent-files.json /opt/sudo/whatsa
 # Voice calls: the sidecar is a linked device on the agent's WhatsApp; a new
 # owner must not inherit it (or the last owner's number it answers).
 /usr/local/bin/sudo-voice-calls.sh remove 2>/dev/null || true
+# The last owner's Tailscale: sign the device out of their network.
+/usr/local/bin/sudo-tailscale.sh disconnect 2>/dev/null || true
 mkdir -p /opt/sudo/agent-workspace
 rm -rf /opt/sudo/picoclaw   # left by older versions
 rm -rf /opt/sudo/openclaw

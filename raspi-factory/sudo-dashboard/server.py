@@ -134,6 +134,9 @@ VOICE_SCRIPT = "/usr/local/bin/sudo-voice-calls.sh"
 VOICE_CALL = "/usr/local/bin/sudo-voice-call.py"
 VOICE_STATUS = "/var/lib/sudo-voice-status.json"
 VOICE_QR = "/var/lib/private/sudo-voice/pair-qr.svg"
+# Access through the owner's own Tailscale (sudo-pi/tailscale.sh).
+TAILSCALE_SCRIPT = "/usr/local/bin/sudo-tailscale.sh"
+TAILSCALE_STATUS = "/var/lib/sudo-tailscale-status.json"
 UPDATE_SCRIPT = "/usr/local/bin/sudo-update.sh"
 UPDATE_STATUS = "/var/lib/sudo-update-status.json"
 AUTOUPDATE_SCRIPT = "/usr/local/bin/sudo-autoupdate.sh"
@@ -1815,6 +1818,36 @@ def local_model_ready():
         return True
     return (state.get("state") == "installing" and state.get("target") != state.get("model")
             and any(m.get("name") == state.get("model") for m in (ollama_installed() or [])))
+
+
+def tailscale_state():
+    """Where the owner's own Tailscale stands: signing in, connected (with the
+    address that does not change), Funnel on or off."""
+    status = read_json_file(TAILSCALE_STATUS, {}) or {}
+    out = {"installed": bool(shutil.which("tailscale")), "state": status.get("state") or "off",
+           "message": status.get("message") or "", "link": status.get("link") or "",
+           "auth_url": "", "address": "", "funnel": False}
+    if not out["installed"]:
+        return out
+    try:
+        st = json.loads(subprocess.run(["tailscale", "status", "--json"], capture_output=True,
+                                       text=True, timeout=8).stdout or "{}")
+    except (subprocess.SubprocessError, ValueError, OSError):
+        st = {}
+    backend = st.get("BackendState") or ""
+    out["auth_url"] = st.get("AuthURL") or ""
+    name = ((st.get("Self") or {}).get("DNSName") or "").rstrip(".")
+    if backend == "Running" and name:
+        out["address"] = "https://" + name
+    try:
+        serve = json.loads(subprocess.run(["tailscale", "serve", "status", "--json"], capture_output=True,
+                                          text=True, timeout=8).stdout or "{}")
+        out["funnel"] = any(serve.get("AllowFunnel", {}).values())
+    except (subprocess.SubprocessError, ValueError, OSError):
+        pass
+    if out["state"] in ("signin", "installing") and backend == "Running" and not out["address"]:
+        out["state"] = "signin"
+    return out
 
 
 def voice_state():
@@ -4139,6 +4172,30 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
 
         if path == "/api/agent/reset" and self.command == "GET":
             self.send_json(read_json_file(RESET_STATUS, {"state": "idle", "message": ""}) or {})
+            return True
+
+        if path == "/api/tailscale" and self.command == "GET":
+            self.send_json(tailscale_state())
+            return True
+
+        if path == "/api/tailscale" and self.command == "POST":
+            try:
+                body = self.read_body_json()
+            except (ValueError, json.JSONDecodeError):
+                body = {}
+            action = body.get("action")
+            args = {"connect": ["connect"], "retry": ["serve"], "funnel_on": ["funnel", "on"],
+                    "funnel_off": ["funnel", "off"], "disconnect": ["disconnect"]}.get(action)
+            if not args:
+                self.send_json({"error": "Unknown action"}, code=400)
+                return True
+            if action == "connect":
+                # Detached: it waits for the owner to sign in, up to ten minutes.
+                write_json_file(TAILSCALE_STATUS, {"state": "installing", "message": "", "link": "", "at": int(time.time())})
+                run_privileged("sudo-tailscale-connect", TAILSCALE_SCRIPT, *args, wait=False)
+            else:
+                run_privileged("sudo-tailscale-" + action.replace("_", "-"), TAILSCALE_SCRIPT, *args, timeout=90)
+            self.send_json(tailscale_state())
             return True
 
         if path == "/api/voice" and self.command == "GET":

@@ -1786,6 +1786,32 @@
                 <a id="remote-url" href="#" target="_blank" rel="noopener"></a>
                 <button id="copy-remote" type="button" data-i18n="set.access.copy">Copy</button>
               </div>
+
+              <div class="ts-block" id="ts-block">
+                <div class="settings-subgroup" data-i18n="ts.title">Your own Tailscale</div>
+                <p class="microcopy" data-i18n="ts.intro">Gives sudo an address that never changes, on your own private network. Install the free Tailscale app on your phone and sign in with the same account; your home-screen icon then works anywhere. You sign in with your own Tailscale account: Sudo runs nothing in between.</p>
+                <button class="primary-button" id="ts-connect" type="button" data-i18n="ts.connect">Connect Tailscale</button>
+                <a class="primary-button ts-link" id="ts-signin" href="#" target="_blank" rel="noopener" hidden data-i18n="ts.signin">Sign in to Tailscale</a>
+                <div class="remote-box" id="ts-box" hidden>
+                  <a id="ts-url" href="#" target="_blank" rel="noopener"></a>
+                  <button id="ts-copy" type="button" data-i18n="set.access.copy">Copy</button>
+                </div>
+                <a class="ghost-button ts-link" id="ts-admin" href="#" target="_blank" rel="noopener" hidden data-i18n="ts.openAdmin">Open Tailscale settings</a>
+                <button class="ghost-button" id="ts-retry" type="button" hidden data-i18n="ts.retry">Try again</button>
+                <div class="access-row" id="ts-funnel-row" hidden>
+                  <div>
+                    <strong data-i18n="ts.funnel">Reachable without the Tailscale app</strong>
+                    <small data-i18n="ts.funnelNote">Off by default. The same address then opens from any phone or computer, like the public link, and still asks for your password.</small>
+                  </div>
+                  <label class="switch">
+                    <input id="ts-funnel" type="checkbox">
+                    <span aria-hidden="true"></span>
+                    <em class="sr-only" data-i18n="ts.funnel">Reachable without the Tailscale app</em>
+                  </label>
+                </div>
+                <button class="ghost-button" id="ts-disconnect" type="button" hidden data-i18n="ts.disconnect">Disconnect Tailscale</button>
+                <p class="form-status" id="ts-status" role="status"></p>
+              </div>
               <div class="settings-subgroup" data-i18n="set.access.passwordForThePublic">password for the public link</div>
 
               <div class="access-row">
@@ -4327,10 +4353,59 @@
       window.scrollTo({ top: 0 });
       // Wi-Fi scans the moment its page opens — no extra tap to see networks.
       if (id === 'wifi-setting') openWifi();
+      if (id === 'ssh-setting') loadTailscale();
+    }
+
+    // --- The owner's own Tailscale (tailscale.sh on the device) ------------------
+    let tsPoll = null;
+    function stopTsPoll() { if (tsPoll) { clearInterval(tsPoll); tsPoll = null; } }
+
+    function renderTailscale(ts) {
+      const connected = !!ts.address;
+      const waiting = !connected && (ts.state === 'installing' || ts.state === 'signin');
+      $('ts-connect').hidden = connected || waiting || ts.state === 'needs_https';
+      $('ts-signin').hidden = !(waiting && ts.auth_url);
+      if (ts.auth_url) $('ts-signin').href = ts.auth_url;
+      $('ts-box').hidden = !connected || ts.state === 'needs_https';
+      if (connected) { $('ts-url').href = ts.address; $('ts-url').textContent = ts.address; }
+      const needs = ts.state === 'needs_https' || ts.state === 'needs_funnel';
+      $('ts-admin').hidden = !(needs && ts.link);
+      if (ts.link) $('ts-admin').href = ts.link;
+      $('ts-retry').hidden = ts.state !== 'needs_https';
+      $('ts-funnel-row').hidden = !connected || ts.state === 'needs_https';
+      $('ts-funnel').checked = ts.funnel;
+      $('ts-disconnect').hidden = !(connected || needs || ts.state === 'failed');
+      $('ts-status').textContent = needs || ts.state === 'failed' ? ts.message
+        : (ts.state === 'installing' ? t('ts.installing') : (waiting ? t('ts.waiting') : ''));
+      if (waiting) {
+        if (!tsPoll) tsPoll = setInterval(loadTailscale, 3000);
+      } else {
+        stopTsPoll();
+      }
+    }
+
+    async function loadTailscale() {
+      try { renderTailscale(await api('/api/tailscale', {}, 20000)); } catch (_) { stopTsPoll(); }
+    }
+
+    async function tailscaleAction(action, button) {
+      if (button) button.disabled = true;
+      try {
+        renderTailscale(await api('/api/tailscale', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action }),
+        }, 100000));
+      } catch (error) {
+        $('ts-status').textContent = error.message;
+      } finally {
+        if (button) button.disabled = false;
+      }
     }
 
     function closeSettingPage(silent) {
       stopWhatsappPoll();
+      stopTsPoll();
       state.settingPage = null;
       document.querySelector('#view-settings .settings-list').classList.remove('detail-open');
       document.querySelectorAll('.setting-card').forEach(c => c.classList.remove('active-page'));
@@ -8671,6 +8746,11 @@
       $('whatsapp-panel').hidden = true;
       stopWhatsappPoll();
     });
+    $('ts-connect').addEventListener('click', event => tailscaleAction('connect', event.currentTarget));
+    $('ts-retry').addEventListener('click', event => tailscaleAction('retry', event.currentTarget));
+    $('ts-disconnect').addEventListener('click', event => tailscaleAction('disconnect', event.currentTarget));
+    $('ts-funnel').addEventListener('change', event => tailscaleAction(event.currentTarget.checked ? 'funnel_on' : 'funnel_off'));
+    $('ts-copy').addEventListener('click', event => copyText($('ts-url').textContent, event.currentTarget));
     $('voice-setup').addEventListener('click', event => voiceAction(
       { action: 'setup', gemini_key: $('voice-gemini-key').value.trim() }, event.currentTarget)
       .then(() => { $('voice-gemini-key').value = ''; }));

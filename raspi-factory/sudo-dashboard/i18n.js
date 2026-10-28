@@ -6367,3 +6367,57 @@ I18N.add('ar', {
   "voice.test": "اتصل بي الآن",
   "voice.ringing": "يتصل بك الآن. أجب على WhatsApp."
 });
+
+// ---- The owner's own Tailscale (tailscale.sh) ----------------------------------
+I18N.add('en', {
+  "ts.title": "Your own Tailscale",
+  "ts.intro": "Gives sudo an address that never changes, on your own private network. Install the free Tailscale app on your phone and sign in with the same account; your home-screen icon then works anywhere. You sign in with your own Tailscale account: Sudo runs nothing in between.",
+  "ts.connect": "Connect Tailscale",
+  "ts.signin": "Sign in to Tailscale",
+  "ts.openAdmin": "Open Tailscale settings",
+  "ts.retry": "Try again",
+  "ts.funnel": "Reachable without the Tailscale app",
+  "ts.funnelNote": "Off by default. The same address then opens from any phone or computer, like the public link, and still asks for your password.",
+  "ts.disconnect": "Disconnect Tailscale",
+  "ts.installing": "Installing Tailscale…",
+  "ts.waiting": "Sign in with the button above, then come back here."
+});
+I18N.add('es', {
+  "ts.title": "Tu propio Tailscale",
+  "ts.intro": "Le da a sudo una dirección que nunca cambia, en tu propia red privada. Instala la app gratuita de Tailscale en tu teléfono e inicia sesión con la misma cuenta; así el icono de tu pantalla de inicio funciona en cualquier lugar. Inicias sesión con tu propia cuenta de Tailscale: Sudo no pone nada en medio.",
+  "ts.connect": "Conectar Tailscale",
+  "ts.signin": "Iniciar sesión en Tailscale",
+  "ts.openAdmin": "Abrir ajustes de Tailscale",
+  "ts.retry": "Intentar de nuevo",
+  "ts.funnel": "Accesible sin la app de Tailscale",
+  "ts.funnelNote": "Desactivado por defecto. La misma dirección se abre entonces desde cualquier teléfono u ordenador, como el enlace público, y sigue pidiendo tu contraseña.",
+  "ts.disconnect": "Desconectar Tailscale",
+  "ts.installing": "Instalando Tailscale…",
+  "ts.waiting": "Inicia sesión con el botón de arriba y vuelve aquí."
+});
+I18N.add('zh', {
+  "ts.title": "你自己的 Tailscale",
+  "ts.intro": "给 sudo 一个永远不变的地址，在你自己的私人网络里。在手机上安装免费的 Tailscale 应用并用同一个账号登录，主屏幕图标在哪里都能用。你用自己的 Tailscale 账号登录：中间没有 Sudo 的任何服务器。",
+  "ts.connect": "连接 Tailscale",
+  "ts.signin": "登录 Tailscale",
+  "ts.openAdmin": "打开 Tailscale 设置",
+  "ts.retry": "重试",
+  "ts.funnel": "不装 Tailscale 应用也能打开",
+  "ts.funnelNote": "默认关闭。打开后，同一个地址在任何手机或电脑上都能打开，就像公开链接一样，仍然需要输入密码。",
+  "ts.disconnect": "断开 Tailscale",
+  "ts.installing": "正在安装 Tailscale…",
+  "ts.waiting": "用上面的按钮登录，然后回到这里。"
+});
+I18N.add('ar', {
+  "ts.title": "Tailscale الخاص بك",
+  "ts.intro": "يمنح sudo عنوانًا لا يتغير أبدًا، على شبكتك الخاصة. ثبّت تطبيق Tailscale المجاني على هاتفك وسجّل الدخول بالحساب نفسه؛ عندها يعمل رمز شاشتك الرئيسية في أي مكان. تسجّل الدخول بحسابك أنت في Tailscale: لا يشغّل Sudo أي شيء في المنتصف.",
+  "ts.connect": "ربط Tailscale",
+  "ts.signin": "تسجيل الدخول إلى Tailscale",
+  "ts.openAdmin": "فتح إعدادات Tailscale",
+  "ts.retry": "حاول مجددًا",
+  "ts.funnel": "متاح بدون تطبيق Tailscale",
+  "ts.funnelNote": "متوقف افتراضيًا. يُفتح العنوان نفسه عندها من أي هاتف أو حاسوب، مثل الرابط العام، ويظل يطلب كلمة المرور.",
+  "ts.disconnect": "فصل Tailscale",
+  "ts.installing": "جارٍ تثبيت Tailscale…",
+  "ts.waiting": "سجّل الدخول بالزر أعلاه ثم عد إلى هنا."
+});

@@ -3133,3 +3133,9 @@ input[type="password"], input[type="tel"], input[type="number"], #ssh-key, #devi
 .voice-pair { margin-top: 12px; text-align: center; }
 .voice-pair p { margin: 0 0 10px; font-size: .86rem; }
 .voice-pair img { width: 220px; height: 220px; padding: 10px; border-radius: 14px; background: #fff; border: 1px solid var(--line); }
+
+/* The owner's own Tailscale, in Access from anywhere (renderTailscale). */
+.ts-block { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
+.ts-block .primary-button, .ts-block .ghost-button { margin-top: 10px; }
+.ts-link { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+.ts-link[hidden] { display: none; }

@@ -189,6 +189,9 @@ cp "${BOOT}/sudo-pi/problem-report.py" /usr/local/bin/sudo-problem-report.py
 cp "${BOOT}/sudo-pi/voice-calls.sh" /usr/local/bin/sudo-voice-calls.sh
 cp "${BOOT}/sudo-pi/voice-bridge.py" /usr/local/bin/sudo-voice-bridge.py
 cp "${BOOT}/sudo-pi/voice-call.py" /usr/local/bin/sudo-voice-call.py
+# The owner's own Tailscale, when they connect it (Settings).
+cp "${BOOT}/sudo-pi/tailscale.sh" /usr/local/bin/sudo-tailscale.sh
+chmod +x /usr/local/bin/sudo-tailscale.sh
 chmod +x /usr/local/bin/sudo-voice-calls.sh /usr/local/bin/sudo-voice-bridge.py /usr/local/bin/sudo-voice-call.py
 chmod +x /usr/local/bin/sudo-problem-report.py
 cp "${BOOT}/sudo-pi/notify-owner.sh" /usr/local/bin/sudo-notify-owner.sh
