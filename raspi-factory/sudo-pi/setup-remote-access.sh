@@ -12,6 +12,8 @@ set -euo pipefail
 LOG="/var/log/sudo-remote.log"
 PUBLIC_URL_FILE="/etc/sudo/public_url"
 REMOTE_MARKER="/var/lib/sudo-remote-enabled"
+# The last address the owner was given, to tell them when it changes.
+LAST_URL_FILE="/var/lib/sudo-remote-last-url"
 CLOUDFLARED="/usr/local/bin/cloudflared"
 DASHBOARD_PORT="${SUDO_DASH_PORT:-80}"
 # Quick tunnels fail if a named-tunnel config.yml is present in ~/.cloudflared
@@ -81,6 +83,17 @@ run_tunnel() {
       printf '%s\n' "$url" > "$PUBLIC_URL_FILE"
       chmod 644 "$PUBLIC_URL_FILE"
       log "public URL saved: $url"
+      # A quick tunnel gets a new address every time it restarts, which left
+      # a saved link or home-screen icon opening nothing. Tell the owner the
+      # new one where they already are (WhatsApp or Telegram). Only that
+      # message leaves the device; there is no Sudo server in between.
+      last="$(cat "$LAST_URL_FILE" 2>/dev/null || true)"
+      if [ "$url" != "$last" ]; then
+        echo "$url" > "$LAST_URL_FILE"
+        if [ -n "$last" ] && [ -x /usr/local/bin/sudo-notify-owner.sh ]; then
+          /usr/local/bin/sudo-notify-owner.sh "Your sudo has a new link for when you're away from home: $url (the old one no longer works)." >/dev/null 2>&1 &
+        fi
+      fi
     fi
   done
 

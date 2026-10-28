@@ -579,6 +579,11 @@ if [ -f /run/sudo-configure-nokey ]; then
   exit 0
 fi
 
+# 1.0.47 tried a fixed sudospace.tech/go/ link, which kept each device's
+# address on a Sudo server. Retired in 1.0.48 (the device messages its owner
+# the new address instead); remove what it left behind.
+rm -f /etc/sudo/link.json /var/lib/sudo-remote-link.json /usr/local/bin/sudo-remote-link.py /usr/local/bin/remote-link.py
+
 # Web search through the owner's OpenRouter key needs OpenClaw's Perplexity
 # plugin (26 KB, pinned to the core version like the WhatsApp one). Without a
 # search provider every search failed. configure-openclaw.sh turns it on once
