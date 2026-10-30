@@ -16,6 +16,14 @@ BOOT_LOG=/boot/firmware/openclaw-install.log
 [ -d /boot/firmware ] || BOOT_LOG=/dev/null
 exec > >(tee -a "$BOOT_LOG" >> "$LOG") 2>&1
 echo "=== install-openclaw $OPENCLAW_VERSION $(date) ==="
+# No clock battery: right after joining Wi-Fi the clock can read the image's
+# build date, and HTTPS downloads fail ("certificate is not yet valid") until
+# the network time arrives. Wait for it, up to two minutes (as
+# install-local-model.sh does); set -e must not stop the script here.
+for _ in $(seq 1 60); do
+  [ "$(timedatectl show -p NTPSynchronized --value 2>/dev/null || true)" = yes ] && break
+  sleep 2
+done
 
 node_ok() {
   command -v node >/dev/null 2>&1 || return 1

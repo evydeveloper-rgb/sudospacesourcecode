@@ -62,6 +62,22 @@ exec >> "$LOG" 2>&1
 # Only where there is a boot partition (a Sudo card), not on other machines.
 trap '[ -d /boot/firmware ] && tail -c 12000 "$LOG" > "$BOOTLOG" 2>/dev/null || true' EXIT
 echo "=== install-local-model $(date) — ${MODEL} ==="
+# The Pi has no clock battery. Right after it joins Wi-Fi the clock can still
+# read the OS image's build date, and HTTPS then refuses any certificate
+# issued after it ("certificate is not yet valid"): a new device's download
+# failed exactly so, and the dashboard said the on-device brain had trouble
+# installing. Wait for the network time, up to two minutes; failing that,
+# take the date from a web server's reply, which needs no certificate.
+for _ in $(seq 1 60); do
+  [ "$(timedatectl show -p NTPSynchronized --value 2>/dev/null)" = yes ] && break
+  sleep 2
+done
+if [ "$(timedatectl show -p NTPSynchronized --value 2>/dev/null)" != yes ]; then
+  web_date="$(curl -sI --max-time 10 http://deb.debian.org/ 2>/dev/null | sed -n 's/^[Dd]ate: *//p' | tr -d '\r')"
+  if [ -n "$web_date" ] && [ "$(date -d "$web_date" +%s 2>/dev/null || echo 0)" -gt "$(date +%s)" ]; then
+    date -s "$web_date" >/dev/null && echo "clock set from the web: $(date)"
+  fi
+fi
 echo "free memory:"; free -m 2>/dev/null | head -2
 echo "network check:"
 if curl -sf --max-time 8 -o /dev/null https://ollama.com/install.sh; then
