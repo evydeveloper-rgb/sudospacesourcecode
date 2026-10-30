@@ -2789,13 +2789,10 @@ def crm_people() -> dict:
 def read_wa_observer(cfg: dict | None = None) -> dict:
     """What the sudo-observer plugin is allowed to read. The plugin's own file
     is authoritative once it exists; config.json seeds it on a fresh device."""
-    data = read_json_file(WA_OBSERVER, None)
-    if isinstance(data, dict) and "read_others" in data:
-        read_others = data.get("read_others") is True
-    else:
-        seed = cfg if cfg is not None else (read_json_file(CONFIG, {}) or {})
-        read_others = bool(seed.get("whatsapp_read_others", False))
-    return {"read_others": read_others}
+    # Paused: reading other chats needs the owner's account open to everyone,
+    # and that let the agent answer other people as the owner (see
+    # configure-openclaw.sh). Always off until it is rebuilt.
+    return {"read_others": False}
 
 
 def openclaw_whatsapp_state() -> dict:
@@ -3793,7 +3790,7 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             cfg = read_json_file(CONFIG)
             # Partial updates: a toggle sends only its own field.
             if "read_others" in body:
-                read_others = bool(body.get("read_others"))
+                read_others = False  # paused, see read_wa_observer
                 cfg["whatsapp_read_others"] = read_others
                 # The observer plugin reads its own file live, so this takes
                 # effect on the very next message -- no gateway restart.

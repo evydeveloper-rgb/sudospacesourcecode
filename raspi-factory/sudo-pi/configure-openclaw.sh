@@ -386,26 +386,15 @@ if whatsapp_installed:
     # the one with other chats to read. Scoped to that account so the agent's
     # own number broadcasts nothing.
     observer_installed = os.path.isfile("/opt/sudo-openclaw/plugins/sudo-observer/index.js")
-    read_others = False
-    if observer_installed:
-        try:
-            read_others = json.load(open("/opt/sudo/whatsapp-observer.json", encoding="utf-8")).get("read_others") is True
-        except (OSError, ValueError):
-            read_others = bool(sudo.get("whatsapp_read_others", False))
+    # The owner's own account only ever lets the owner in, enforced by
+    # WhatsApp's own allowlist. "Read my other chats" used to open it to
+    # everyone and rely on a plugin to keep the agent from answering; on a
+    # real device the agent answered the owner's family as the owner, and its
+    # own number reached it and it talked to itself all night. Reading other
+    # chats stays off until it can be done without opening the account.
     owner_account = {"selfChatMode": True, "dmPolicy": "allowlist", "allowFrom": allow}
     if observer_installed:
         owner_account["pluginHooks"] = {"messageReceived": True}
-        if read_others:
-            # Reading the owner's other chats needs their account to *accept*
-            # messages from people other than the owner -- stock WhatsApp drops
-            # unauthorised senders before any hook fires, so there would be
-            # nothing to read. With dmPolicy open, the sudo-observer plugin
-            # claims and consumes every non-owner DM before agent routing, so
-            # those people can be seen but can never give the agent orders.
-            # Flip the switch off and the next configure reverts this to
-            # allowlist, so strangers are dropped again.
-            owner_account["dmPolicy"] = "open"
-            owner_account["allowFrom"] = ["*"]
     cfg.setdefault("channels", {})["whatsapp"] = {
         "enabled": True,
         "dmPolicy": "allowlist",
@@ -531,9 +520,9 @@ if whatsapp_installed:
             plugins["allow"].append("sudo-observer")
         plugins["entries"]["sudo-observer"] = {"enabled": True, "config": {
             "ownerNumber": owner_number, "ownerName": user}}
-        if not os.path.exists("/opt/sudo/whatsapp-observer.json"):
-            with open("/opt/sudo/whatsapp-observer.json", "w", encoding="utf-8") as fh:
-                json.dump({"read_others": bool(sudo.get("whatsapp_read_others", False))}, fh)
+        # Reading other chats is paused (see the owner account above).
+        with open("/opt/sudo/whatsapp-observer.json", "w", encoding="utf-8") as fh:
+            json.dump({"read_others": False}, fh)
         also = tools.setdefault("alsoAllow", [])
         for tool in ("whatsapp_chats", "whatsapp_new_numbers"):
             if tool not in also:
@@ -955,10 +944,11 @@ restart = without_allow(previous) != without_allow(cfg)
 import hashlib
 plugin_hash = hashlib.sha256()
 for p in sorted(SUDO_LOAD_PATHS):
-    try:
-        plugin_hash.update(open(os.path.join(p, "index.js"), "rb").read())
-    except OSError:
-        pass
+    for name in ("index.js", "openclaw.plugin.json"):
+        try:
+            plugin_hash.update(open(os.path.join(p, name), "rb").read())
+        except OSError:
+            pass
 plugin_hash = plugin_hash.hexdigest()
 hash_file = "/opt/sudo/openclaw/.plugins-hash"
 try:
