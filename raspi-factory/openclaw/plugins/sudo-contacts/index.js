@@ -67,6 +67,7 @@ const configSchema = {
     additionalProperties: false,
     properties: {
       ownerNumber: { type: "string" },
+      agentNumber: { type: "string" },
       ownerName: { type: "string" },
     },
   },
@@ -82,6 +83,7 @@ export default {
   register(api) {
     const cfg = api.pluginConfig || {};
     const owner = digits(cfg.ownerNumber);
+    const agentNumber = digits(cfg.agentNumber);
     const ownerName = cfg.ownerName || "your owner";
     const defaultAccount = api.config?.channels?.whatsapp?.defaultAccount || "agent";
 
@@ -101,16 +103,55 @@ export default {
       };
     }, { priority: 100 });
 
+    // The agent must never answer itself. In the owner's "Message yourself"
+    // chat the agent's own reply comes back as a message from the owner, and
+    // WhatsApp's echo filter misses it when the echo arrives under the chat's
+    // @lid address instead of the phone number it was sent to -- the agent
+    // then answers its own reply, forever. So remember what was just sent (as
+    // letters and digits only, since WhatsApp rewrites the formatting and
+    // splits long replies) and drop an inbound message that is one of those.
+    // Echoes arrive within seconds; the short window keeps the owner's own
+    // "ok" from being taken for the agent's.
+    const ECHO_MS = 2 * 60 * 1000;
+    const sent = [];
+    const squash = (value) => String(value ?? "").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "");
+    function rememberSent(value) {
+      const s = squash(value);
+      if (!s) return;
+      const now = Date.now();
+      sent.push({ s, at: now });
+      while (sent.length && (sent.length > 100 || now - sent[0].at > ECHO_MS)) sent.shift();
+    }
+    function isEcho(value) {
+      const s = squash(value);
+      if (!s) return false;
+      const now = Date.now();
+      return sent.some((m) => now - m.at <= ECHO_MS && (m.s === s || (s.length >= 16 && m.s.includes(s))));
+    }
+    api.on("reply_payload_sending", async (event) => {
+      rememberSent(event?.payload?.text);
+    }, { priority: 10 });
+    api.on("message_sending", async (event) => {
+      rememberSent(event?.content);
+    }, { priority: 10 });
+
     // A message arriving from someone other than the owner. On the owner's
     // own account the agent never answers -- those are the owner's real
     // conversations, and replying would be speaking as the owner. On the
     // agent's own number, a person the owner has marked "Sudo can reply to
     // them" is answered; everyone else is silenced. (before_dispatch runs
-    // after the model, so this decides whether the reply is delivered.)
+    // before the model; handled means the agent never sees the message.)
     api.on("before_dispatch", async (event, ctx) => {
       const channel = event?.channel || ctx?.channelId;
-      if (channel !== "whatsapp" || !owner) return;
+      if (channel !== "whatsapp") return;
       const sender = digits(event?.senderId ?? ctx?.senderId);
+      // The agent's own number writing in (to the owner's account): that is
+      // the agent talking to itself across its two accounts.
+      if ((agentNumber && sender === agentNumber) || isEcho(event?.content || event?.body)) {
+        api.logger.warn(`sudo-contacts: dropped the agent's own message coming back in (account ${ctx?.accountId || "?"})`);
+        return { handled: true };
+      }
+      if (!owner) return;
       if (sender === owner && !event?.isGroup) return;
       const account = ctx?.accountId || event?.accountId;
       if (account !== "owner") {

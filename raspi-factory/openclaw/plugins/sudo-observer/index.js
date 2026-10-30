@@ -150,10 +150,12 @@ export default {
     // non-owner DM on the owner's account before agent routing, so the agent
     // can read them (via whatsapp_chats) but can never act on them or reply.
     // It mirrors the owner-only gate in sudo-contacts; kept here too so the
-    // safety does not depend on a second plugin being installed.
-    api.on("inbound_claim", async (event, ctx) => {
-      if (event?.channel !== "whatsapp") return;
-      const account = event?.accountId || ctx?.accountId;
+    // safety does not depend on a second plugin being installed. (On 2026.6.11
+    // inbound_claim only runs for conversations bound to a plugin, so it never
+    // saw these messages; before_dispatch runs for every one.)
+    api.on("before_dispatch", async (event, ctx) => {
+      if ((event?.channel || ctx?.channelId) !== "whatsapp") return;
+      const account = ctx?.accountId || event?.accountId;
       if (account && account !== "owner") return;
       if (event?.isGroup) return;
       const sender = digits(event?.senderId);

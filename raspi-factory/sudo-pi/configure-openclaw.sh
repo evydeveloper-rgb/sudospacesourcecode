@@ -451,7 +451,8 @@ if whatsapp_installed:
         if "sudo-contacts" not in plugins["allow"]:
             plugins["allow"].append("sudo-contacts")
         plugins["entries"]["sudo-contacts"] = {"enabled": True, "config": {
-            "ownerNumber": owner_number, "ownerName": user}}
+            "ownerNumber": owner_number, "agentNumber": (numbers.get("agent") or "").strip(),
+            "ownerName": user}}
         also = tools.setdefault("alsoAllow", [])
         for tool in ("message", "whatsapp_contacts"):
             if tool not in also:
@@ -949,6 +950,24 @@ def without_allow(c):
     c.pop("plugins", None)
     return c
 restart = without_allow(previous) != without_allow(cfg)
+# New plugin code, though, only loads on a restart -- the gateway keeps the
+# old module in memory. An update that changes our plugins restarts once.
+import hashlib
+plugin_hash = hashlib.sha256()
+for p in sorted(SUDO_LOAD_PATHS):
+    try:
+        plugin_hash.update(open(os.path.join(p, "index.js"), "rb").read())
+    except OSError:
+        pass
+plugin_hash = plugin_hash.hexdigest()
+hash_file = "/opt/sudo/openclaw/.plugins-hash"
+try:
+    old_hash = open(hash_file, encoding="utf-8").read().strip()
+except OSError:
+    old_hash = ""
+if old_hash != plugin_hash:
+    restart = True
+    open(hash_file, "w", encoding="utf-8").write(plugin_hash)
 open("/opt/sudo/openclaw/.restart-needed", "w").write("1" if restart else "0")
 tmp = out + ".tmp"
 with open(tmp, "w", encoding="utf-8") as f:
