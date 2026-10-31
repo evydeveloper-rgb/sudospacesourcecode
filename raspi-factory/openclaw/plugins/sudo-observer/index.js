@@ -87,6 +87,7 @@ const configSchema = {
     additionalProperties: false,
     properties: {
       ownerNumber: { type: "string" },
+      agentNumber: { type: "string" },
       ownerName: { type: "string" },
     },
   },
@@ -131,6 +132,9 @@ export default {
       const sender = digits(event?.senderId ?? event?.from);
       if (!sender) return;
       if (owner && sender === owner) return;
+      // The agent's own number writing to the owner is the agent, not one of
+      // "the owner's other chats" -- it would read back as someone waiting.
+      if (digits(cfg.agentNumber) && sender === digits(cfg.agentNumber)) return;
       if (!readOthers()) {
         api.logger.info("sudo-observer: read_others is off, ignoring an inbound WhatsApp message");
         return;
@@ -163,6 +167,67 @@ export default {
       api.logger.info("sudo-observer: a non-owner message on the owner's account is read-only, not acted on");
       return { handled: true };
     }, { priority: 90 });
+
+    // The two locks that actually hold, the same ones that keep a long-running
+    // OpenClaw agent read-only on its owner's real WhatsApp:
+    //
+    //   1. before_agent_run blocks the agent run itself on the owner's account
+    //      (before the model is called, so it costs nothing) unless it is the
+    //      owner in their own "Message yourself" chat. When the agent has its
+    //      own number the owner talks to it there, and this account is
+    //      watch-only: every run on it is blocked.
+    //   2. message_sending cancels anything sent from the owner's account
+    //      except, when it is not watch-only, to the owner's own chat. It also
+    //      cancels core's "Your message could not be sent" notice, which a
+    //      block produces and addresses to the chat the message came from --
+    //      that would be the owner's family, as the owner.
+    //
+    // Both fail closed. before_agent_run is a conversation hook: it only runs
+    // because configure-openclaw.sh sets hooks.allowConversationAccess.
+    const agentNumber = digits(cfg.agentNumber);
+    const watchOnly = () => Boolean(agentNumber) && readOthers();
+    const defaultAccount = api.config?.channels?.whatsapp?.defaultAccount || "agent";
+    const BLOCK_NOTICE = "Your message could not be sent";
+    // In before_agent_run, channelId is the peer's chat id, not the channel
+    // name; the channel lives in ctx.channel / ctx.messageProvider.
+    const runChannel = (event, ctx) =>
+      [ctx?.channel, ctx?.messageProvider, ctx?.channelId, event?.channelId].includes("whatsapp")
+        || String(ctx?.sessionKey || "").includes(":whatsapp:") ? "whatsapp" : undefined;
+    const block = (reason) => ({ outcome: "block", reason: `sudo-observer: ${reason}`, category: "read_only_account" });
+
+    api.on("before_agent_run", async (event, ctx) => {
+      try {
+        if (runChannel(event, ctx) !== "whatsapp") return;
+        if ((event?.accountId ?? ctx?.accountId) !== "owner") return;
+        const sender = digits(event?.senderId ?? ctx?.senderId);
+        if (!watchOnly() && owner && sender === owner) return;
+        api.logger.warn("sudo-observer: blocked an agent run on the owner's own WhatsApp (read-only)");
+        return block("the owner's own WhatsApp is read-only");
+      } catch (err) {
+        api.logger.warn(`sudo-observer: gate error, blocking anyway: ${String(err)}`);
+        return block("gate error, failing closed");
+      }
+    }, { priority: 100 });
+
+    api.on("message_sending", async (event, ctx) => {
+      try {
+        const content = typeof event?.content === "string" ? event.content : "";
+        if (content.startsWith(BLOCK_NOTICE) && content.includes("sudo-observer")) {
+          api.logger.warn("sudo-observer: cancelled a block notice");
+          return { cancel: true };
+        }
+        const channel = ctx?.channelId || event?.metadata?.channel;
+        if (channel !== "whatsapp") return;
+        const account = ctx?.accountId || event?.metadata?.accountId || defaultAccount;
+        if (account !== "owner") return;
+        const to = String(event?.to ?? "");
+        if (!watchOnly() && owner && digits(to) === owner && !to.includes("@g.us")) return;
+        api.logger.warn("sudo-observer: cancelled a send from the owner's own WhatsApp (read-only)");
+        return { cancel: true, cancelReason: `${ownerName}'s own WhatsApp is read-only for the agent.` };
+      } catch {
+        return { cancel: true };
+      }
+    }, { priority: 100 });
 
     // The agent's own reply to a contact. Recorded regardless of the read
     // switch -- it is the agent's own action, not someone's private message --

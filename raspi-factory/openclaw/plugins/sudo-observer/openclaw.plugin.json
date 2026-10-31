@@ -8,6 +8,7 @@
     "additionalProperties": false,
     "properties": {
       "ownerNumber": { "type": "string" },
+      "agentNumber": { "type": "string" },
       "ownerName": { "type": "string" }
     }
   }

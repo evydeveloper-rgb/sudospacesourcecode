@@ -217,7 +217,11 @@ def system_events():
     except OSError:
         pass
     local = read_json("/var/lib/sudo-localmodel-status", {}) or {}
+    config_status = read_json("/var/lib/sudo-openclaw-config-status.json", {}) or {}
     return {
+        # False means the agent is running older settings than Sudo wrote.
+        "config_accepted": config_status.get("ok") if config_status else None,
+        "config_error": scrub(config_status.get("error")) if config_status.get("ok") is False else None,
         "update": {"state": update.get("state"), "message": scrub(update.get("message"))} if update else None,
         "openclaw_installed": os.path.isfile("/opt/openclaw/node_modules/.bin/openclaw"),
         "openclaw_install_failed": (not os.path.isfile("/opt/openclaw/node_modules/.bin/openclaw")

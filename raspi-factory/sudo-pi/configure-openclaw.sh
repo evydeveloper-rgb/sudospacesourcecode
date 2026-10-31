@@ -386,15 +386,32 @@ if whatsapp_installed:
     # the one with other chats to read. Scoped to that account so the agent's
     # own number broadcasts nothing.
     observer_installed = os.path.isfile("/opt/sudo-openclaw/plugins/sudo-observer/index.js")
-    # The owner's own account only ever lets the owner in, enforced by
-    # WhatsApp's own allowlist. "Read my other chats" used to open it to
-    # everyone and rely on a plugin to keep the agent from answering; on a
-    # real device the agent answered the owner's family as the owner, and its
-    # own number reached it and it talked to itself all night. Reading other
-    # chats stays off until it can be done without opening the account.
+    read_others = False
+    if observer_installed:
+        try:
+            read_others = json.load(open("/opt/sudo/whatsapp-observer.json", encoding="utf-8")).get("read_others") is True
+        except (OSError, ValueError):
+            read_others = bool(sudo.get("whatsapp_read_others", False))
     owner_account = {"selfChatMode": True, "dmPolicy": "allowlist", "allowFrom": allow}
     if observer_installed:
         owner_account["pluginHooks"] = {"messageReceived": True}
+        if read_others and owner_number:
+            # Reading the owner's other chats needs their account to accept
+            # messages from other people -- WhatsApp drops unlisted senders
+            # before any plugin sees them. The agent must never answer those
+            # people, and the lock for that is sudo-observer's before_agent_run
+            # gate: it blocks the agent run itself on this account (before the
+            # model, so it costs nothing) for anyone but the owner, and cancels
+            # anything sent from it. That is the mechanism proven on a real
+            # WhatsApp in long use; the earlier inbound_claim/before_dispatch
+            # gates were not, and on one device the agent answered the owner's
+            # family and its own number in a loop. With the agent's own number
+            # linked, the owner talks to it there, so this account becomes
+            # watch-only: no runs and no sends on it at all.
+            owner_account["dmPolicy"] = "open"
+            owner_account["allowFrom"] = ["*"]
+            if numbers.get("agent"):
+                owner_account["selfChatMode"] = False
     cfg.setdefault("channels", {})["whatsapp"] = {
         "enabled": True,
         "dmPolicy": "allowlist",
@@ -413,7 +430,12 @@ if whatsapp_installed:
     # owner's account and one through the agent's own number look the same.
     user = sudo.get("user_name") or "your owner"
     lines = ["## WhatsApp — who is who", ""]
-    if numbers.get("owner"):
+    if numbers.get("owner") and read_others and numbers.get("agent"):
+        lines.append(f"- **{user}'s own WhatsApp** (account `owner`) is linked so you can read "
+                     f"{user}'s other chats (`whatsapp_chats`). It is watch-only: you never speak "
+                     f"on it, not even in {user}'s \"Message yourself\" chat. You talk to {user} "
+                     f"from your own number.")
+    elif numbers.get("owner"):
         lines.append(f"- **{user}'s own WhatsApp** (account `owner`) is linked. You only ever speak "
                      f"in {user}'s \"Message yourself\" chat there — anything in that chat is {user} "
                      f"talking to you. Never message {user}'s contacts from this account.")
@@ -518,11 +540,16 @@ if whatsapp_installed:
             load.append(observer_plugin)
         if "sudo-observer" not in plugins["allow"]:
             plugins["allow"].append("sudo-observer")
-        plugins["entries"]["sudo-observer"] = {"enabled": True, "config": {
-            "ownerNumber": owner_number, "ownerName": user}}
-        # Reading other chats is paused (see the owner account above).
-        with open("/opt/sudo/whatsapp-observer.json", "w", encoding="utf-8") as fh:
-            json.dump({"read_others": False}, fh)
+        # allowConversationAccess: before_agent_run is a conversation hook,
+        # and OpenClaw drops it for a non-bundled plugin without this -- the
+        # read-only gate would silently not exist.
+        plugins["entries"]["sudo-observer"] = {"enabled": True,
+            "hooks": {"allowConversationAccess": True},
+            "config": {"ownerNumber": owner_number, "agentNumber": (numbers.get("agent") or "").strip(),
+                       "ownerName": user}}
+        if not os.path.exists("/opt/sudo/whatsapp-observer.json"):
+            with open("/opt/sudo/whatsapp-observer.json", "w", encoding="utf-8") as fh:
+                json.dump({"read_others": bool(sudo.get("whatsapp_read_others", False))}, fh)
         also = tools.setdefault("alsoAllow", [])
         for tool in ("whatsapp_chats", "whatsapp_new_numbers"):
             if tool not in also:
@@ -978,6 +1005,17 @@ if ! "$OC_BIN" config validate; then
   build_config
   unset SUDO_OC_CLEAN
   "$OC_BIN" config validate || echo "WARNING: OpenClaw rejected the generated config"
+fi
+# A rejected config is not applied: the gateway keeps running the last one it
+# accepted, and nothing else says so. On one device that kept the owner's
+# WhatsApp open to everyone for a night after the owner had switched it off.
+# Record it, so the dashboard and the daily report can.
+CONFIG_STATUS=/var/lib/sudo-openclaw-config-status.json
+if validate_out="$("$OC_BIN" config validate 2>&1)"; then
+  printf '{"ok": true, "at": %s}\n' "$(date +%s)" > "$CONFIG_STATUS"
+else
+  python3 -c 'import json,sys,time; json.dump({"ok": False, "at": int(time.time()), "error": sys.argv[1][-600:]}, open(sys.argv[2], "w"))' \
+    "$validate_out" "$CONFIG_STATUS"
 fi
 
 # The Composio relay. Managed here rather than by install-factory.sh so that a
