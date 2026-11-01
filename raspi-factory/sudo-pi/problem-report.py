@@ -198,15 +198,33 @@ def gateway_log():
     """Error lines from the agent's log in the last day, counted by the
     subsystem tag OpenClaw puts on each line ([telegram], [whatsapp]...)."""
     text = run(["journalctl", "-u", GATEWAY, "--since", "-24h", "--no-pager", "-o", "cat"], timeout=40)
-    tags = {}
+    tags, kinds = {}, {}
     for line in text.splitlines():
         low = line.lower()
         if " error" in low or "failed" in low or "exception" in low:
             m = re.search(r"\[([a-z][\w.-]{1,30})\]", line)
             tag = m.group(1) if m else "other"
             tags[tag] = tags.get(tag, 0) + 1
+            kind = next((k for k, rx in LOG_ERROR_KINDS if re.search(rx, low)), "other")
+            kinds[kind] = kinds.get(kind, 0) + 1
     oom = run(["journalctl", "-k", "--since", "-24h", "--no-pager", "-o", "cat"], timeout=30).count("Out of memory")
-    return {"error_lines": tags, "out_of_memory_kills": oom}
+    return {"error_lines": tags, "error_kinds": kinds, "out_of_memory_kills": oom}
+
+
+# What the error lines are about, by pattern only, like TOOL_ERROR_CLASSES.
+# 1.0.54's rejected config logged 27,000 lines a day on two beta devices and
+# the report could only say "other".
+LOG_ERROR_KINDS = (
+    ("config_invalid", r"invalid config|config (reload|validation) failed|additional propert"),
+    ("plugin", r"plugin"),
+    ("auth", r"\b40[13]\b|unauthori[sz]ed|invalid api key|forbidden"),
+    ("rate_limited", r"\b429\b|rate.?limit|too many requests"),
+    ("credits", r"\b402\b|insufficient (credit|balance|funds)|quota"),
+    ("timeout", r"time(d)?.?out"),
+    ("network", r"enotfound|econnre|eai_again|fetch failed|socket hang up|network"),
+    ("socket_closed", r"connection closed|stream errored|ws (closed|error)|websocket"),
+    ("tool", r"tool"),
+)
 
 
 def system_events():
@@ -226,7 +244,15 @@ def system_events():
         "openclaw_installed": os.path.isfile("/opt/openclaw/node_modules/.bin/openclaw"),
         "openclaw_install_failed": (not os.path.isfile("/opt/openclaw/node_modules/.bin/openclaw")
                                     and "=== install-openclaw" in install_log),
-        "local_model": {"state": local.get("state"), "model": local.get("model")} if local else None,
+        # The installer's own message says which step failed (runtime, memory,
+        # download, first answer); age and whether it is still running tell a
+        # slow download from one that died -- one 8GB Pi said "installing"
+        # for nine days and the report could not say which.
+        "local_model": {"state": local.get("state"), "model": local.get("model"),
+                        "message": scrub(local.get("message"), 100),
+                        "age_h": round((time.time() - float(local.get("at") or 0)) / 3600, 1) if local.get("at") else None,
+                        "installer_running": run(["pgrep", "-f", "install-local-model"], timeout=5).strip() != ""}
+                       if local else None,
     }
 
 
@@ -305,10 +331,18 @@ def channel_of_prompt(text):
 # kind and a count, never the error text (it can name people or places).
 TOOL_ERROR_CLASSES = (
     ("not_configured", r"not configured|no .{0,30}provider|currently available|needs? an? .{0,20}(api )?key"),
+    # sudo-contacts refusing a send addressed to a name (1.0.57). Before
+    # "blocked", which its message would otherwise land in.
+    ("name_not_number", r"not a whatsapp number"),
     ("blocked", r"not on (the|their) list|blocked|not allowed|forbidden|denied|not permitted|cancel"),
     ("not_visible", r"visibilit|not visible|outside (the|this|your) (scope|tree)"),
     ("not_connected", r"not (connected|linked|running|logged in)|disconnected|no active|offline"),
-    ("bad_target", r"invalid (target|number|recipient|chat|jid)|unknown (target|recipient|channel|account)"),
+    # One "bad_target" hid which of these it was for a week on a beta device.
+    ("ambiguous_target", r"ambiguous target"),
+    ("unknown_channel", r"unknown channel"),
+    ("unknown_account", r"unknown account"),
+    ("missing_target", r"requires target|target is required"),
+    ("bad_target", r"invalid (target|number|recipient|chat|jid)|unknown (target|recipient)"),
     ("timeout", r"time(d)?.?out|timeout"),
     ("not_found", r"\b404\b|not found|no such|does not exist|enoent"),
     ("rate_limited", r"\b429\b|rate.?limit|too many requests"),

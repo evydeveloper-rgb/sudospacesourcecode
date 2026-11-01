@@ -166,13 +166,74 @@ export default {
     }, { priority: 100 });
 
     // Adding people needs the owner present: never from a scheduled run.
+    // OpenClaw gives this hook no jobId; a scheduled run shows in the
+    // session key instead (agent:main:cron:<job>, the heartbeat's own).
+    const scheduled = (ctx) => Boolean(ctx?.jobId) || /:(cron|heartbeat)(:|$)/.test(String(ctx?.sessionKey || ""));
     api.on("before_tool_call", async (event, ctx) => {
       if (event?.toolName !== "whatsapp_contacts") return;
       const action = String(event?.params?.action || "");
-      if (action === "add" && ctx?.jobId) {
+      if (action === "add" && scheduled(ctx)) {
         return { block: true, blockReason: `Adding people needs ${ownerName} in the conversation, not a scheduled task.` };
       }
     }, { priority: 100 });
+
+    // The agent asked to message "Mum" sends to the name, and WhatsApp
+    // answers "Unknown target" -- most of one beta device's sends failed
+    // that way for a week, and the agent retried instead of looking the
+    // number up. A name that is on the owner's list (or is the owner) is
+    // swapped for the number; anything else is refused with what to do.
+    // Whole words only, so "Sam" never quietly becomes "Samira": a message to
+    // the wrong person is worse than one that does not go.
+    const OWNER_WORDS = new Set(["me", "myself", "owner", "self"]);
+    const words = (value) => String(value ?? "").toLowerCase().replace(/^whatsapp:/, "")
+      .split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+    function resolveName(raw) {
+      const query = words(raw).filter((w, i) => !(i === 0 && w === "my"));
+      if (!query.length) return { error: "empty" };
+      const joined = query.join(" ");
+      if (owner && (OWNER_WORDS.has(joined) || joined === words(ownerName).join(" "))) return { number: `+${owner}` };
+      const contacts = load().contacts;
+      const exact = contacts.filter((c) => words(String(c.name).replace(/\(.*\)/, "")).join(" ") === joined);
+      const found = exact.length ? exact : contacts.filter((c) => query.every((w) => words(c.name).includes(w)));
+      if (found.length === 1) return { number: `+${digits(found[0].number)}`, name: found[0].name };
+      if (found.length > 1) return { error: "ambiguous", names: found.map((c) => c.name) };
+      return { error: "none" };
+    }
+    const isAddress = (value) => {
+      const s = String(value ?? "").trim();
+      return s.includes("@") || digits(s).length >= 8;
+    };
+    api.on("before_tool_call", async (event, ctx) => {
+      if (event?.toolName !== "message") return;
+      const params = event?.params || {};
+      const channel = String(params.channel || "").toLowerCase();
+      const onWhatsApp = channel ? channel === "whatsapp"
+        : ctx?.channelId === "whatsapp" || String(ctx?.sessionKey || "").includes(":whatsapp:");
+      if (!onWhatsApp) return;
+      const fields = ["target", "to"].filter((k) => typeof params[k] === "string" && params[k].trim());
+      const many = Array.isArray(params.targets) ? params.targets : null;
+      const names = [...fields.map((k) => params[k]), ...(many || [])].filter((t) => !isAddress(t));
+      if (!names.length) return;
+      const next = { ...params };
+      for (const raw of names) {
+        const hit = resolveName(raw);
+        if (!hit.number) {
+          const why = hit.error === "ambiguous"
+            ? `"${raw}" matches more than one person on ${ownerName}'s list (${hit.names.join(", ")}). Use their number.`
+            : `"${raw}" is not on ${ownerName}'s list of people you may message.`;
+          return {
+            block: true,
+            blockReason: `${why} A WhatsApp target must be a phone number (e.g. +15551234567), not a name: ` +
+              `this is not a WhatsApp number. whatsapp_contacts action "list" shows the numbers you have; ` +
+              `if they are not there, ask ${ownerName} for it. Do not retry with the name.`,
+          };
+        }
+        for (const k of fields) if (next[k] === raw) next[k] = hit.number;
+        if (many) next.targets = next.targets.map((t) => (t === raw ? hit.number : t));
+        api.logger.info(`sudo-contacts: sending to a name on the list, swapped in their number`);
+      }
+      return { params: next };
+    }, { priority: 90 });
 
     api.registerTool({
       name: "whatsapp_contacts",
@@ -209,7 +270,7 @@ export default {
         if (action === "reply") {
           const number = digits(params?.number || params?.name);
           const person = data.contacts.find((c) => digits(c.number) === number);
-          if (!person) return text("Nobody on the list matches that. Add them first.");
+          if (!person) return text("Nobody on the list matches that number. Use the number from action \"list\", or add them first.");
           person.allow_reply = params?.can_reply === true;
           save(data);
           return text(`${person.name} — you ${person.allow_reply ? "may" : "may not"} answer messages they send you.`);
