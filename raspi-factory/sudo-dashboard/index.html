@@ -5799,7 +5799,8 @@
       const source = crm.tab === 'new' ? newNums : people;
       const q = crm.search.trim().toLowerCase();
       const shown = !q ? source : source.filter(p =>
-        (p.name || '').toLowerCase().includes(q) || (p.number || '').includes(q));
+        (p.name || '').toLowerCase().includes(q) || (p.number || '').includes(q)
+        || (p.page && [p.page.who, ...(p.page.tags || [])].join(' ').toLowerCase().includes(q)));
 
       if (!shown.length) {
         if (empty) {
@@ -5836,7 +5837,17 @@
       top.append(hEl('strong', '', label));
       if (p.waiting_on_owner) top.append(hEl('span', 'ct-pill waiting', t('crm.waiting')));
       if (!isNew && p.allow_reply) top.append(hEl('span', 'ct-pill', t('ct.canReplyTag')));
+      // On the agent's pages but not the WhatsApp list: notes, no messaging.
+      if (!isNew && p.on_list === false) {
+        const pill = hEl('span', 'ct-pill', t('crm.notesOnly'));
+        pill.title = t('crm.notesOnlyHint');
+        top.append(pill);
+      }
       who.append(top);
+      const page = !isNew && p.page;
+      if (page && (page.who || (page.tags || []).length)) {
+        who.append(hEl('div', 'ct-meta', [page.who, ...(page.tags || [])].filter(Boolean).join(' \u00b7 ')));
+      }
       const meta = hEl('div', 'ct-meta');
       if (p.name && p.number) {
         const num = hEl('span', 'ct-num', p.number);
@@ -5846,12 +5857,47 @@
         meta.append(hEl('span', '', t('crm.unknownPerson')));
       }
       if (p.last_message && p.last_message.at) meta.append(hEl('span', 'ct-when', fmtWhen(p.last_message.at)));
+      else if (page && page.last_contact) {
+        const day = new Date(page.last_contact + 'T12:00:00');
+        if (!isNaN(day)) meta.append(hEl('span', 'ct-when', t('crm.lastContact', { when: day.toLocaleDateString() })));
+      }
       if (meta.childNodes.length) who.append(meta);
       if (p.last_message && p.last_message.body) {
         who.append(hEl('p', 'ct-last', (p.last_message.from === 'them' ? '' : t('ct.you') + ' ') + p.last_message.body));
       }
+      // The agent's latest notes on them, folded away until asked for.
+      if (page && (page.notes || []).length) {
+        const box = hEl('details', 'ct-notes');
+        box.append(hEl('summary', '', t('crm.notes', { n: page.note_count || page.notes.length })));
+        const ul = hEl('ul');
+        page.notes.forEach(n => ul.append(hEl('li', '', n)));
+        box.append(ul);
+        who.append(box);
+      }
       const actions = hEl('div', 'ct-actions');
-      if (isNew) {
+      if (!isNew && p.on_list === false) {
+        if (p.number) {
+          const add = hEl('button', 'btn-secondary btn-sm', t('crm.addToList'));
+          add.type = 'button';
+          add.addEventListener('click', () => {
+            $('crm-name').value = p.name || '';
+            $('crm-number').value = p.number || '';
+            $('crm-add-card').hidden = false;
+            revealPanel($('crm-add-card'));
+          });
+          actions.append(add);
+        }
+        const rm = hEl('button', 'ct-remove', t('crm.forgetPage'));
+        rm.type = 'button';
+        rm.addEventListener('click', () => {
+          if (rm.dataset.confirm) { forgetCrmPage(page.file); return; }
+          rm.dataset.confirm = '1';
+          rm.textContent = t('ct.removeConfirm');
+          rm.classList.add('confirm');
+          setTimeout(() => { delete rm.dataset.confirm; rm.textContent = t('crm.forgetPage'); rm.classList.remove('confirm'); }, 4000);
+        });
+        actions.append(rm);
+      } else if (isNew) {
         const add = hEl('button', 'btn-primary ct-primary btn-sm', t('crm.addToList'));
         add.type = 'button';
         add.addEventListener('click', () => {
@@ -5892,7 +5938,9 @@
 
     // The header's live line and the cluster of people.
     function renderCtHeader(d) {
-      const people = d.contacts || [];
+      // The summary line counts who the agent can message; notes-only people
+      // are in the list below but not in that sentence.
+      const people = (d.contacts || []).filter(p => p.on_list !== false);
       const waiting = people.filter(p => p.waiting_on_owner).length;
       const el = $('ct-summary');
       if (el && people.length) {
@@ -5928,6 +5976,11 @@
       if (cb) cb.disabled = true;
       try { await crmPost({ action: 'can_reply', number, value }); }
       catch (err) { if (cb) cb.checked = !value; showToast(t('crm.saveFailed')); }
+    }
+
+    async function forgetCrmPage(file) {
+      try { await crmPost({ action: 'forget_page', file }); showToast(t('crm.forgotten')); }
+      catch (_) { showToast(t('crm.saveFailed')); }
     }
 
     async function saveCrmRemove(number) {

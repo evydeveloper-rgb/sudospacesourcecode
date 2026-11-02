@@ -99,9 +99,10 @@ import copy
 OUT_PATH = "/opt/sudo/openclaw/openclaw.json"
 # Plugins and tools Sudo switches on and off itself. They are dropped from the
 # carried-over lists and re-added below only when they apply.
-SUDO_PLUGINS = {"whatsapp", "admin-http-rpc", "sudo-contacts", "sudo-observer", "telegram"}
-SUDO_ALSO_ALLOW = {"message", "whatsapp_contacts", "whatsapp_chats", "whatsapp_new_numbers", "image"}
-SUDO_LOAD_PATHS = {"/opt/sudo-openclaw/plugins/sudo-contacts", "/opt/sudo-openclaw/plugins/sudo-observer"}
+SUDO_PLUGINS = {"whatsapp", "admin-http-rpc", "sudo-contacts", "sudo-observer", "sudo-people", "telegram"}
+SUDO_ALSO_ALLOW = {"message", "whatsapp_contacts", "whatsapp_chats", "whatsapp_new_numbers", "image", "people"}
+SUDO_LOAD_PATHS = {"/opt/sudo-openclaw/plugins/sudo-contacts", "/opt/sudo-openclaw/plugins/sudo-observer",
+                   "/opt/sudo-openclaw/plugins/sudo-people"}
 
 
 def overlay(dst, src):
@@ -244,6 +245,12 @@ if or_key:
         "provider": "openai-compatible",
         "model": "openai/text-embedding-3-small",
         "remote": {"baseUrl": "https://openrouter.ai/api/v1", "apiKey": or_key},
+        # OpenClaw's default cut-off (0.35) is set for keyword hits. This
+        # model scores a match that shares no words with the question at
+        # 0.15-0.30 ("food allergy" vs "allergic to peanuts": 0.18), so the
+        # default dropped every one of them and search was keywords in all
+        # but name. Unrelated notes score under 0.13. Measured on 2026.6.11.
+        "query": {"minScore": 0.15},
     })
 defaults["memorySearch"] = mem
 # memory-core is the memory engine that holds that index. Allowed in the base
@@ -658,6 +665,44 @@ if os.path.isfile("/etc/sudo/voice.env") and _sp.run(["systemctl", "is-enabled",
         "call. Otherwise send a message. If nobody picks up, send the message instead.",
         "",
     ]
+# People: a page per person in knowledge/people/, kept by the agent through
+# the sudo-people plugin's `people` tool, shown in the Contacts app: notice a
+# name, offer to add them, keep last contact and a few notes. Notes only --
+# messaging stays the WhatsApp list.
+people_plugin = "/opt/sudo-openclaw/plugins/sudo-people"
+if os.path.isfile(os.path.join(people_plugin, "index.js")):
+    plugins = cfg.setdefault("plugins", {})
+    load = plugins.setdefault("load", {}).setdefault("paths", [])
+    if people_plugin not in load:
+        load.append(people_plugin)
+    if "sudo-people" not in plugins.setdefault("allow", []):
+        plugins["allow"].append("sudo-people")
+    plugins.setdefault("entries", {})["sudo-people"] = {"enabled": True, "config": {"ownerName": _who}}
+    also = cfg.setdefault("tools", {}).setdefault("alsoAllow", [])
+    if "people" not in also:
+        also.append("people")
+    tools_md += [
+        f"## {_who}'s people (Contacts)",
+        "",
+        f"- Keep a page for each person who matters to {_who}, with the `people` tool. The pages "
+        "show in the Contacts app, and `memory_search` finds them.",
+        f"- When someone comes up by name -- {_who} mentions them, they message, a call -- check "
+        f"`people` action `find`. If they have no page and seem to matter (family, a friend, work, "
+        f"someone {_who} wants to remember), offer once, briefly: \"Want me to add Rosa to your "
+        f"contacts?\" Start the page only after a yes, with who they are and a way to reach them if "
+        "you have one.",
+        f"- Before answering about someone, read their page (`people` action `get`).",
+        f"- When you learn something lasting about them, or {_who} talks with them, `save` it: one "
+        "short `note`, and `contacted` true when they were in touch. Facts, not gossip; nothing "
+        f"about their health, money or private life unless {_who} asks you to keep it.",
+        "- A page does not let you message anyone. If they should be reachable on WhatsApp too, that "
+        f"is the WhatsApp list (`whatsapp_contacts`), and only when {_who} says so.",
+        f"- knowledge/people.md is the older single-file version. When you update someone who is "
+        "only there, move them to a page and take their section out of people.md.",
+        "",
+    ]
+    print("People pages: on (sudo-people)")
+
 tools_md += [
     "## Tasks on websites (bookings, forms, sign-ups)",
     "",

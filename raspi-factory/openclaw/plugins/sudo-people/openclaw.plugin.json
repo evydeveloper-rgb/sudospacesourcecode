@@ -1,0 +1,13 @@
+{
+  "id": "sudo-people",
+  "contracts": {
+    "tools": ["people"]
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "ownerName": { "type": "string" }
+    }
+  }
+}

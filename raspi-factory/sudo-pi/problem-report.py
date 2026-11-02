@@ -517,6 +517,8 @@ def setup_and_settings(cfg):
         "agents": max(1, len(agents)),
         "telegram_bots": len(tg.get("accounts") or {}) or (1 if tg.get("botToken") else 0),
         "whatsapp_accounts": len(cfg.get("whatsapp_numbers") or {}),
+        # How many people the agent keeps a page on (a count, never who).
+        "people_pages": len(glob.glob("/opt/sudo/agent-workspace/knowledge/people/*.md")),
         "settings": {
             "shell": bool(cfg.get("exec_enabled", True)), "helpers": bool(cfg.get("subagent_enabled")),
             "skills": bool(cfg.get("skills_enabled")), "full_access": bool(cfg.get("full_access_enabled")),

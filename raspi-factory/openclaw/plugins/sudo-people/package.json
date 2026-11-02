@@ -1,0 +1,10 @@
+{
+  "name": "sudo-people",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A page per person the owner cares about, kept by the agent.",
+  "type": "module",
+  "openclaw": {
+    "extensions": ["./index.js"]
+  }
+}

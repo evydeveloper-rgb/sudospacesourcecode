@@ -1057,6 +1057,10 @@ body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
 .ct-meta { display: flex; flex-wrap: wrap; gap: 2px 12px; margin-top: 3px; color: var(--ink-3); font-size: .74rem; }
 .ct-num { font-family: var(--font-mono); font-size: .72rem; }
 .ct-last { margin: 5px 0 0; max-width: 60ch; color: var(--ink-2); font-size: .8rem; line-height: 1.4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ct-notes { margin-top: 6px; font-size: .78rem; color: var(--ink-2); }
+.ct-notes summary { cursor: pointer; color: var(--ct-deep); font-weight: 600; width: fit-content; }
+.ct-notes ul { margin: 6px 0 0; padding-inline-start: 18px; max-width: 60ch; line-height: 1.45; }
+.ct-notes li + li { margin-top: 3px; }
 .ct-actions { display: flex; align-items: center; gap: 14px; }
 .ct-reply { display: inline-flex; align-items: center; gap: 8px; color: var(--ink-2); font-size: .76rem; font-weight: 650; cursor: pointer; }
 .ct-remove {

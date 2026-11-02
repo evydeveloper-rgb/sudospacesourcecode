@@ -1024,6 +1024,9 @@ def agent_file_writable(name):
         return True
     if re.fullmatch(r"(memory|knowledge)/[A-Za-z0-9._ -]+\.md", name):
         return os.path.isfile(os.path.join(WORKSPACE, name))
+    # People pages (sudo-people): names in any script, so not the pattern above.
+    if re.fullmatch(r"knowledge/people/[^/\\]+\.md", name):
+        return os.path.isfile(os.path.join(WORKSPACE, name))
     return False
 
 
@@ -1043,7 +1046,13 @@ def read_agent_files():
                            if n.endswith(".md"))
     except OSError:
         knowledge = []
-    for rel in AGENT_FILES + ["memory/" + n for n in daily] + ["knowledge/" + n for n in knowledge]:
+    # One page per person (sudo-people), after the other knowledge files.
+    try:
+        people = sorted(n for n in os.listdir(PEOPLE_DIR) if n.endswith(".md"))
+    except OSError:
+        people = []
+    for rel in (AGENT_FILES + ["memory/" + n for n in daily] + ["knowledge/" + n for n in knowledge]
+                + ["knowledge/people/" + n for n in people]):
         path = os.path.join(WORKSPACE, rel)
         if not os.path.isfile(path):
             continue
@@ -2712,6 +2721,59 @@ def read_wa_contacts() -> dict:
 
 WA_ACTIVITY = "/opt/sudo/whatsapp-activity.json"
 
+# The agent's page for each person (the sudo-people OpenClaw plugin writes
+# them; same format, parsed here for the Contacts app):
+#   # Rosa
+#   - Number: +15551234567
+#   - Who: sister
+#   - Tags: family, Madrid
+#   - Last contact: 2026-11-01
+#   ## Notes
+#   - 2026-11-01 — Moved to Madrid.
+PEOPLE_DIR = os.path.join(WORKSPACE, "knowledge", "people")
+PEOPLE_FIELDS = {"number": "number", "who": "who", "tags": "tags", "last contact": "last_contact"}
+
+
+def read_people_pages() -> list:
+    try:
+        names = sorted(n for n in os.listdir(PEOPLE_DIR) if n.endswith(".md"))
+    except OSError:
+        return []
+    pages = []
+    for file in names:
+        try:
+            with open(os.path.join(PEOPLE_DIR, file), encoding="utf-8", errors="replace") as f:
+                lines = f.read().splitlines()
+        except OSError:
+            continue
+        page = {"file": file, "name": "", "number": "", "who": "", "tags": [], "last_contact": "", "notes": []}
+        section = "head"
+        for line in lines:
+            if not page["name"] and line.startswith("# "):
+                page["name"] = line[2:].strip()
+            elif re.match(r"##\s+notes\s*$", line, re.I):
+                section = "notes"
+            elif line.startswith("## "):
+                section = "other"
+            elif section == "head":
+                m = re.match(r"-\s*([A-Za-z ]+):\s*(.*)$", line)
+                key = PEOPLE_FIELDS.get(m.group(1).strip().lower()) if m else None
+                if key == "tags":
+                    page["tags"] = [t.strip() for t in m.group(2).split(",") if t.strip()]
+                elif key:
+                    page[key] = m.group(2).strip()
+            elif section == "notes" and re.match(r"-\s+", line):
+                page["notes"].append(re.sub(r"^-\s+", "", line).strip())
+        if page["name"]:
+            pages.append(page)
+    return pages
+
+
+def _page_summary(page: dict) -> dict:
+    return {"file": page["file"], "who": page["who"], "tags": page["tags"],
+            "last_contact": page["last_contact"], "notes": page["notes"][-5:][::-1],
+            "note_count": len(page["notes"])}
+
 
 def crm_people() -> dict:
     """The owner's contacts, with the recent WhatsApp activity the observer saw.
@@ -2743,24 +2805,65 @@ def crm_people() -> dict:
             "body": last.get("body", ""),
         }, len(msgs))
 
+    # The agent's pages, matched to the list by number, else by the whole name.
+    pages = read_people_pages()
+    used = set()
+
+    def page_for(number: str, name: str):
+        digits = re.sub(r"[^0-9]", "", number)
+        for p in pages:
+            if p["file"] not in used and digits and re.sub(r"[^0-9]", "", p["number"]) == digits:
+                return p
+        for p in pages:
+            if p["file"] not in used and name and p["name"].strip().lower() == name.strip().lower():
+                return p
+        return None
+
+    def last_contact_at(person: dict) -> float:
+        at = ((person.get("last_message") or {}).get("at") or 0) / 1000
+        try:
+            day = (person.get("page") or {}).get("last_contact") or ""
+            at = max(at, time.mktime(time.strptime(day, "%Y-%m-%d")) + 12 * 3600)
+        except ValueError:
+            pass
+        return at
+
     people = []
     for contact in raw:
         number = str(contact.get("number") or "")
         last, count = last_for(number)
+        page = page_for(number, contact.get("name", ""))
+        if page:
+            used.add(page["file"])
         people.append({
             "name": contact.get("name", ""),
             "number": number,
+            "on_list": True,
             "allow_reply": bool(contact.get("allow_reply")),
             "added_by": contact.get("added_by", "owner"),
             "last_message": last,
             "message_count": count,
             "waiting_on_owner": bool(last and last.get("from") == "them"),
+            "page": _page_summary(page) if page else None,
         })
-    people.sort(key=lambda p: (p["last_message"] or {}).get("at") or 0, reverse=True)
+    # Someone the agent keeps a page on but who is not on the WhatsApp list:
+    # notes only, the agent cannot message them.
+    for page in pages:
+        if page["file"] in used:
+            continue
+        number = page["number"] if E164.match(page["number"] or "") else ""
+        last, count = last_for(number) if number else (None, 0)
+        people.append({
+            "name": page["name"], "number": number, "on_list": False, "allow_reply": False,
+            "added_by": "agent", "last_message": last, "message_count": count,
+            "waiting_on_owner": bool(last and last.get("from") == "them"),
+            "page": _page_summary(page),
+        })
+    people.sort(key=last_contact_at, reverse=True)
 
     # People the observer saw who are not on the list yet -- the same people the
     # agent offers to add in chat. A suggestion, never a send list.
-    listed = {p["number"] for p in people}
+    listed = {p["number"] for p in people if p["number"]}
     new_numbers = []
     for number, msgs in by_number.items():
         if number in listed:
@@ -3742,8 +3845,20 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                 body = {}
             if not isinstance(body, dict):
                 body = {}
-            data = read_wa_contacts()
             action = body.get("action")
+            # Deleting the agent's page on someone. Not the WhatsApp list, so
+            # it returns before that file is rewritten (a write there reruns
+            # configure-openclaw.sh).
+            if action == "forget_page":
+                file = os.path.basename(str(body.get("file") or ""))
+                target = os.path.join(PEOPLE_DIR, file)
+                if not file.endswith(".md") or not os.path.isfile(target):
+                    self.send_json({"error": "That page isn't there any more"}, code=404)
+                    return True
+                os.remove(target)
+                self.send_json({"ok": True})
+                return True
+            data = read_wa_contacts()
             number = re.sub(r"[\s()-]", "", str(body.get("number") or ""))
             if action == "add":
                 name = str(body.get("name") or "").strip()[:80]
