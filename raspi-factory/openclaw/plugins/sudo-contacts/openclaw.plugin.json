@@ -1,5 +1,6 @@
 {
   "id": "sudo-contacts",
+  "activation": { "onCapabilities": ["hook"] },
   "contracts": {
     "tools": ["whatsapp_contacts"]
   },

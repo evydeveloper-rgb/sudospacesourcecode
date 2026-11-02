@@ -1,5 +1,6 @@
 {
   "id": "sudo-people",
+  "activation": { "onCapabilities": ["hook"] },
   "contracts": {
     "tools": ["people"]
   },

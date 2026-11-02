@@ -1,5 +1,6 @@
 {
   "id": "sudo-observer",
+  "activation": { "onCapabilities": ["hook"] },
   "contracts": {
     "tools": ["whatsapp_chats", "whatsapp_new_numbers"]
   },
