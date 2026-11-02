@@ -779,6 +779,11 @@ if reach and hb_switch:
         "lightContext": True,
         "activeHours": {"start": "08:00", "end": "22:00"},
         "timeoutSeconds": 180,
+        # A shell command that exits non-zero in a check-in otherwise reaches
+        # the owner as OpenClaw's raw warning ("⚠️ 🛠️ list files in memory/
+        # ... failed: total 8") -- an imported agent sent one every check-in
+        # for two days. The agent still sees the error; the owner does not.
+        "suppressToolErrorWarnings": True,
     }
     if reach.get("accountId"):
         hb["accountId"] = reach["accountId"]
@@ -808,6 +813,8 @@ if reach and hb_switch:
         f"mention heartbeats or check-in rules.",
         "",
         f"Read `USER.md` if you need to know more about {user}. Never invent anything.",
+        "Look at files with `read` and search your notes with `memory_search`, not shell commands: "
+        "a file that does not exist yet (today's notes, early in the day) is normal, not an error.",
         "",
     ])
     # Check-ins run in a fresh session each time, so they only know what the

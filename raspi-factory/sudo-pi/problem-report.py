@@ -393,6 +393,12 @@ def conversations(since_ms):
         for k, v in (store.items() if isinstance(store, dict) else []):
             if isinstance(v, dict) and v.get("sessionId"):
                 key_of[v["sessionId"]] = k
+            # A session left on /verbose shows the owner raw tool output and
+            # every failed command ("⚠️ 🛠️ ... failed: total 8"); an imported
+            # agent can bring that setting with it.
+            if isinstance(v, dict) and v.get("verboseLevel") not in (None, "", "off"):
+                level = str(v.get("verboseLevel"))
+                out.setdefault("verbose_sessions", {})[level] = out.get("verbose_sessions", {}).get(level, 0) + 1
         for path in glob.glob(os.path.join(sessions_dir, "*.jsonl")):
             try:
                 if os.path.getmtime(path) * 1000 < since_ms:
