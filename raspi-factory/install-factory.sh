@@ -768,8 +768,8 @@ systemctl daemon-reload
 # ── On-device greeter ───────────────────────────────────────────────────────
 # Runs on boot rather than from the portal: the portal reboots seconds after a
 # successful join, which would kill a multi-minute download halfway. This
-# retries each boot and exits immediately once the model is in place, so a
-# device that was offline the first time picks it up later on its own.
+# runs each boot (and from the retry timer) and exits immediately once the
+# model is in place, so a device that was offline picks it up on its own.
 cat > /etc/systemd/system/sudo-local-model.service << 'EOF'
 [Unit]
 Description=Install the on-device greeter model
@@ -778,12 +778,12 @@ Wants=network-online.target
 ConditionPathExists=/var/lib/wifi-setup-configured
 
 [Service]
-Type=oneshot
-RemainAfterExit=no
+# exec, not oneshot: boot does not wait for it, and there is no time limit
+# for a slow line to hit. configure-agent.sh adds the retry timer.
+Type=exec
 ExecStart=/usr/local/bin/sudo-install-local-model.sh
 # systemd units get no HOME, and the ollama CLI panics without one.
 Environment=HOME=/root
-TimeoutStartSec=1800
 # Nothing depends on this: the box works without it, chat just falls back.
 SuccessExitStatus=0 1
 

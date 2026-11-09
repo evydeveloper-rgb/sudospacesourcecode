@@ -1803,7 +1803,7 @@ def local_model_state():
     elif (state == "installing" and time.time() - float(data.get("at") or 0) > 45 * 60
           and subprocess.run(["pgrep", "-f", "install-local-model"], capture_output=True).returncode != 0):
         state = "failed"
-        data = {**data, "message": "The download stopped before it finished. It tries again when sudo restarts."}
+        data = {**data, "message": "The download stopped before it finished. It keeps trying by itself."}
     return {
         "state": state,
         "message": data.get("message", ""),

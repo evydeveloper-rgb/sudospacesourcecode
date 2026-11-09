@@ -486,6 +486,63 @@ UNIT
   systemctl daemon-reload 2>/dev/null || true
   systemctl enable --now sudo-problem-report.timer 2>/dev/null || true
 fi
+# The on-device model's installer. Until 1.0.58 it ran as a oneshot with a
+# 30-minute limit, which a slow line cannot download the 1.6GB runtime in,
+# and it only tried again at the next boot. Now it runs without a limit
+# (Type=exec, so boot does not wait for it), and a timer picks up a failed or
+# cut-off install every 20 minutes; the download resumes where it stopped.
+# Rewritten whenever it differs, so devices in the field get it on update.
+LM_UNITS_CHANGED=""
+write_unit() {
+  if ! cmp -s - "$1" 2>/dev/null <<< "$2"; then
+    printf '%s\n' "$2" > "$1"
+    LM_UNITS_CHANGED=1
+  fi
+}
+write_unit /etc/systemd/system/sudo-local-model.service "[Unit]
+Description=Install the on-device greeter model
+After=network-online.target NetworkManager.service
+Wants=network-online.target
+ConditionPathExists=/var/lib/wifi-setup-configured
+
+[Service]
+Type=exec
+ExecStart=/usr/local/bin/sudo-install-local-model.sh
+# systemd units get no HOME, and the ollama CLI panics without one.
+Environment=HOME=/root
+# Nothing depends on this: the box works without it, chat just falls back.
+SuccessExitStatus=0 1
+
+[Install]
+WantedBy=multi-user.target"
+write_unit /etc/systemd/system/sudo-local-model-retry.service "[Unit]
+Description=Carry on an on-device model install that failed or was cut off
+After=network-online.target
+ConditionPathExists=/var/lib/wifi-setup-configured
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/sudo-install-local-model.sh --retry
+Environment=HOME=/root
+TimeoutStartSec=infinity
+SuccessExitStatus=0 1"
+write_unit /etc/systemd/system/sudo-local-model-retry.timer "[Unit]
+Description=Retry the on-device model install every 20 minutes while it has not finished
+
+[Timer]
+OnBootSec=10min
+OnUnitInactiveSec=20min
+
+[Install]
+WantedBy=timers.target"
+if [ -n "$LM_UNITS_CHANGED" ]; then
+  systemctl daemon-reload 2>/dev/null || true
+  systemctl enable sudo-local-model.service 2>/dev/null || true
+  systemctl enable --now sudo-local-model-retry.timer 2>/dev/null || true
+  # Just updated: carry on a failed install now rather than in 10 minutes.
+  # The script itself checks that the last attempt failed.
+  systemctl start --no-block sudo-local-model-retry.service 2>/dev/null || true
+fi
 systemctl daemon-reload 2>/dev/null || true
 
 

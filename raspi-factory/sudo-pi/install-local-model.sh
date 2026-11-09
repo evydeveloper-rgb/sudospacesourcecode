@@ -23,7 +23,29 @@ LOG="/var/log/sudo-local-model.log"
 # becomes the active one only if it downloads and answers. Without one (the
 # boot run): make sure the active model -- the greeter on a new device -- is
 # in place.
+#
+# --retry: sudo-local-model-retry.timer's run. It goes ahead only when the
+# last attempt failed, or says "installing" with nothing running, so a
+# download cut by a bad connection carries on without waiting for a restart.
+RETRY=""
+if [ "${1:-}" = "--retry" ]; then RETRY=1; shift; fi
 SWITCH="${1:-}"
+if [ -n "$RETRY" ]; then
+  case "$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("state", ""))' \
+          /var/lib/sudo-localmodel-status 2>/dev/null)" in
+    failed|installing) ;;
+    *) exit 0 ;;
+  esac
+fi
+# One run at a time: the boot run, a retry and an owner's switch must not
+# download the same files over each other. A switch waits its turn; a boot
+# run or retry finding one under way leaves it to that one.
+exec 9>/run/sudo-local-model.lock
+if [ -n "$SWITCH" ]; then
+  flock 9
+elif ! flock -n 9; then
+  exit 0
+fi
 GREETER=gemma3:270m
 MODEL="${SWITCH:-$(cat "$ACTIVE" 2>/dev/null || true)}"
 MODEL="${MODEL:-${SUDO_LOCAL_MODEL:-}}"
@@ -99,11 +121,11 @@ with open(path, "w", encoding="utf-8") as f:
                "model": model, "at": time.time()}, f)
 PY
 }
-# Stopped before the end -- the boot unit's 30-minute limit on a slow link
-# (seen in China), a shutdown -- would otherwise leave "installing" in the
-# status file for good, and the dashboard showing a download that is not
-# happening. Say it stopped; the next boot tries again.
-trap 'set_status failed "The download stopped before it finished. It tries again when sudo restarts." 0; exit 1' TERM INT
+# Stopped before the end -- a shutdown, or the 30-minute limit the boot unit
+# had until 1.0.58 (seen in China) -- would otherwise leave "installing" in
+# the status file for good, and the dashboard showing a download that is not
+# happening. Say it stopped; the retry timer carries on from there.
+trap 'set_status failed "The download stopped before it finished. It keeps trying by itself." 0; exit 1' TERM INT
 
 # A 4GB board cannot afford to be wrong about this. If something already ate
 # the RAM, installing a resident model makes the device worse, not better.
@@ -120,30 +142,129 @@ if [ "${avail_mb:-0}" -lt 900 ] && ! { [ -z "$SWITCH" ] && [ -s "$ACTIVE" ] && c
   exit 1
 fi
 
-if ! command -v ollama >/dev/null 2>&1; then
-  set_status installing "Installing the local model runtime…" 5
-  # Ollama's installer unpacks a .tar.zst and stops with "requires zstd"
-  # when the tool is missing, which it is on minimal Ubuntu and Debian
-  # images. Put it there first.
-  if ! command -v zstd >/dev/null 2>&1; then
-    echo "installing zstd (Ollama's installer needs it)"
-    DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=300 install -y -qq zstd \
-      || { DEBIAN_FRONTEND=noninteractive apt-get update -qq && \
-           DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=300 install -y -qq zstd; } \
-      || echo "zstd install failed"
+# The runtime is a .tar.zst. zstd is missing on minimal Ubuntu and Debian
+# images, and without it nothing can be unpacked.
+need_zstd() {
+  command -v zstd >/dev/null 2>&1 && return 0
+  echo "installing zstd (the runtime is a .tar.zst)"
+  DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=300 install -y -qq zstd \
+    || { DEBIAN_FRONTEND=noninteractive apt-get update -qq && \
+         DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=300 install -y -qq zstd; } \
+    || echo "zstd install failed"
+  command -v zstd >/dev/null 2>&1
+}
+
+# Ollama's own installer streams the runtime -- 1.6GB for a Pi -- through a
+# single curl straight into tar, with no retry: one drop anywhere and the
+# whole install fails, and the next try starts again from zero. A Pi on a
+# home line in Puerto Rico never got past it ("Could not install the model
+# runtime"). On a Pi it is downloaded here instead: into a file that
+# survives a cut or a reboot, resumed where it stopped, checked, and only
+# then unpacked where the official installer puts it (/usr/local).
+RUNTIME_CACHE=/var/cache/sudo-ollama
+# How much bigger the runtime is unpacked than downloaded, for the space check.
+RUNTIME_UNPACKED_X=3
+RUNTIME_ERR=""
+runtime_download_pi() {
+  local url="https://ollama.com/download/ollama-linux-arm64.tar.zst"
+  local file="$RUNTIME_CACHE/ollama-linux-arm64.tar.zst"
+  local part="$file.part" sizef="$file.size"
+  local size have tries=0 rc pct watcher free_kb need_kb
+  mkdir -p "$RUNTIME_CACHE"
+  if [ ! -s "$file" ]; then
+    set_status installing "Checking the model runtime download…" 2
+    size="$(curl -sIL --max-time 30 "$url" 2>/dev/null | tr -d '\r' \
+            | awk 'tolower($1)=="content-length:" {n=$2} END {print n+0}')"
+    if [ "${size:-0}" -le 0 ]; then
+      RUNTIME_ERR="Could not reach ollama.com to download the model runtime. It keeps trying."
+      return 1
+    fi
+    # A new Ollama release since the last try: what is on disk is part of the
+    # old file, and resuming would splice two versions together.
+    if [ "$(cat "$sizef" 2>/dev/null)" != "$size" ]; then
+      rm -f "$part"
+      echo "$size" > "$sizef"
+    fi
+    have=$(stat -c %s "$part" 2>/dev/null || echo 0)
+    # Room for the rest of the download and for what it unpacks to.
+    free_kb=$(df -Pk "$RUNTIME_CACHE" | awk 'NR==2 {print $4}')
+    need_kb=$(( (size - have + size * RUNTIME_UNPACKED_X) / 1024 + 512 * 1024 ))
+    if [ "${free_kb:-0}" -lt "$need_kb" ]; then
+      RUNTIME_ERR="Not enough space on the card for the model runtime: it needs about $(( need_kb / 1048576 + 1 ))GB free and there is $(( free_kb / 1048576 ))GB."
+      return 1
+    fi
+    while [ "$have" -lt "$size" ]; do
+      tries=$((tries + 1))
+      if [ "$tries" -gt 30 ]; then
+        RUNTIME_ERR="Downloading the model runtime stopped at $(( have * 100 / size ))%. It keeps trying, and goes on from there."
+        return 1
+      fi
+      # The status file shows how far it got while curl runs.
+      # (Without its own trap, killing it would run the script's TERM trap
+      # and mark the install failed.)
+      ( trap - TERM INT; while sleep 5; do
+          pct=$(( $(stat -c %s "$part" 2>/dev/null || echo 0) * 100 / size ))
+          set_status installing "Downloading the model runtime… ${pct}%" $(( 2 + pct / 12 ))
+        done ) &
+      watcher=$!
+      # -C -: carry on from what is already on disk. A stall (under 1KB/s for
+      # a minute) ends this try rather than hanging it; the loop resumes.
+      curl -fsSL --connect-timeout 30 --speed-limit 1024 --speed-time 60 -C - -o "$part" "$url"
+      rc=$?
+      kill "$watcher" 2>/dev/null; wait "$watcher" 2>/dev/null
+      have=$(stat -c %s "$part" 2>/dev/null || echo 0)
+      echo "runtime download try ${tries}: curl exit ${rc}, ${have} of ${size} bytes"
+      # 33: the server will not resume. Start the file again.
+      [ "$rc" -eq 33 ] && { rm -f "$part"; have=0; }
+      [ "$rc" -ne 0 ] && [ "$have" -lt "$size" ] && sleep $(( tries < 6 ? tries * 10 : 60 ))
+    done
+    if [ "$have" -ne "$size" ] || ! zstd -tq "$part"; then
+      rm -f "$part"
+      RUNTIME_ERR="The model runtime download was damaged. It downloads it again."
+      return 1
+    fi
+    mv -f "$part" "$file"
   fi
-  echo "installing ollama"
-  # Progress bars are carriage-return spam: they filled 12KB of log with
-  # "####" and pushed the lines that matter out of the tail we keep.
-  # tr first: the progress bar is carriage-return separated, so without it
-  # this is one enormous line and nothing can be filtered out of it. sed
-  # rather than grep because pipefail is on and grep exits non-zero when it
-  # drops every line — which would read as the install having failed.
-  if ! curl -fsSL --max-time 300 https://ollama.com/install.sh | sh 2>&1 \
-       | tr '\r' '\n' | sed -E '/^[#[:space:]]*([0-9.]+%)?[[:space:]]*$/d' ; then
-    set_status failed "Could not install the model runtime — check the connection" 0
-    echo "ollama install failed"
+  set_status installing "Unpacking the model runtime…" 10
+  rm -rf /usr/local/lib/ollama
+  install -o0 -g0 -m755 -d /usr/local/bin /usr/local/lib/ollama
+  if ! zstd -dc "$file" | tar -xf - -C /usr/local; then
+    RUNTIME_ERR="Could not unpack the model runtime."
+    return 1
+  fi
+  rm -f "$file" "$sizef"
+  command -v ollama >/dev/null 2>&1 || { RUNTIME_ERR="The model runtime unpacked but the ollama program is missing."; return 1; }
+}
+
+if ! command -v ollama >/dev/null 2>&1; then
+  set_status installing "Installing the local model runtime…" 2
+  if ! need_zstd; then
+    set_status failed "Could not install zstd, which unpacks the model runtime. It keeps trying." 0
     exit 1
+  fi
+  if [ "$(uname -m)" = aarch64 ] && [ ! -f /etc/nv_tegra_release ]; then
+    echo "installing ollama (resumable download)"
+    if ! runtime_download_pi; then
+      set_status failed "$RUNTIME_ERR" 0
+      echo "ollama install failed: $RUNTIME_ERR"
+      exit 1
+    fi
+  else
+    # Elsewhere (x86, Jetson) the official installer also sets up GPU
+    # drivers, which this script should not try to copy.
+    echo "installing ollama (official installer)"
+    # Progress bars are carriage-return spam: they filled 12KB of log with
+    # "####" and pushed the lines that matter out of the tail we keep.
+    # tr first: the progress bar is carriage-return separated, so without it
+    # this is one enormous line and nothing can be filtered out of it. sed
+    # rather than grep because pipefail is on and grep exits non-zero when it
+    # drops every line — which would read as the install having failed.
+    if ! curl -fsSL --max-time 300 https://ollama.com/install.sh | sh 2>&1 \
+         | tr '\r' '\n' | sed -E '/^[#[:space:]]*([0-9.]+%)?[[:space:]]*$/d' ; then
+      set_status failed "Ollama's installer stopped before the model runtime was in place. It keeps trying." 0
+      echo "ollama install failed"
+      exit 1
+    fi
   fi
 fi
 
@@ -280,7 +401,7 @@ for attempt in 1 2 3; do
 done
 if [ -z "$pulled" ]; then
   fallback_to_greeter "download failed"
-  set_status failed "Could not download ${MODEL}" 0
+  set_status failed "The runtime is installed but downloading ${MODEL} failed. It keeps trying." 0
   echo "pull failed"
   exit 1
 fi
