@@ -162,8 +162,10 @@ need_zstd() {
 # survives a cut or a reboot, resumed where it stopped, checked, and only
 # then unpacked where the official installer puts it (/usr/local).
 RUNTIME_CACHE=/var/cache/sudo-ollama
-# How much bigger the runtime is unpacked than downloaded, for the space check.
-RUNTIME_UNPACKED_X=3
+# How much room the unpacked runtime takes, as a multiple of the download,
+# for the space check: 2.2GB from a 1.6GB download (Ollama 0.40), so 2 leaves
+# headroom for later releases.
+RUNTIME_UNPACKED_X=2
 RUNTIME_ERR=""
 runtime_download_pi() {
   local url="https://ollama.com/download/ollama-linux-arm64.tar.zst"
