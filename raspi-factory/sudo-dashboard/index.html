@@ -2207,6 +2207,14 @@
                   <em class="sr-only" data-i18n="reports.toggle">Send daily problem reports</em>
                 </label>
               </div>
+              <div class="access-row">
+                <div>
+                  <strong data-i18n="reports.now">Send a report now</strong>
+                  <small data-i18n="reports.nowSmall">When someone at Sudo is helping you. Sends this one report, even if daily reports are off.</small>
+                </div>
+                <button class="soft-button" type="button" id="reports-now-btn" data-i18n="reports.nowBtn">Send now</button>
+              </div>
+              <p class="form-status" id="reports-now-status" role="status"></p>
               <div class="reports-lists">
                 <div><p class="usd-head" data-i18n="reports.sentHead">What's in a report</p>
                   <ul><li data-i18n="reports.sent1">Sudo and OpenClaw versions, the board, memory, temperature</li>
@@ -2214,7 +2222,8 @@
                   <li data-i18n="reports.sent3">How many reminders ran, failed or didn't arrive, and the kind of error</li>
                   <li data-i18n="reports.sent4">Error counts per part of the agent; crashes, failed updates</li>
                   <li data-i18n="reports.sent5">How it's used: messages per chat app, tools, check-ins, tokens and cost, reply times, settings, dashboard tabs</li>
-                  <li data-i18n="reports.sent6">Signs a reply went badly (counted here, not the words), and the name of a website when a task on it fails</li></ul></div>
+                  <li data-i18n="reports.sent6">Signs a reply went badly (counted here, not the words), and the name of a website when a task on it fails</li>
+                  <li data-i18n="reports.sent7">If the on-device model won't install: how far the download got, free space, and how fast the connection to the download is</li></ul></div>
                 <div><p class="usd-head" data-i18n="reports.neverHead">Never in a report</p>
                   <ul><li data-i18n="reports.never1">Your messages, reminders' text, contacts or files</li>
                   <li data-i18n="reports.never2">Names, phone numbers, email addresses, links</li>
@@ -8126,6 +8135,16 @@
       }
     });
     $('reports-preview-btn').addEventListener('click', showReportPreview);
+    $('reports-now-btn').addEventListener('click', async () => {
+      const btn = $('reports-now-btn'), out = $('reports-now-status');
+      btn.disabled = true;
+      out.textContent = t('reports.nowSending');
+      try {
+        const r = await api('/api/reports/send-now', { method: 'POST' }, 100000);
+        out.textContent = t('reports.nowSent', { code: r.code || '?' });
+      } catch (error) { out.textContent = error.message; }
+      btn.disabled = false;
+    });
 
     // --- Time zone ----------------------------------------------------------
     function phoneTimezone() {

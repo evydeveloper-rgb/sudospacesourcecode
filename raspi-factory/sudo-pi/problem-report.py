@@ -22,6 +22,8 @@ Settings before and after it is sent.
 
   problem-report.py collect   print the report this device would send now
   problem-report.py send      collect and send it (only when opted in)
+  problem-report.py send-now  send one now because the owner pressed the
+                              button; prints the report code to read out
   problem-report.py forget    ask the service to delete this device's reports
   problem-report.py feedback  "Report this": send one exchange the owner chose,
                               read as JSON from stdin ({source, note, exchange}).
@@ -249,11 +251,86 @@ def system_events():
         # slow download from one that died -- one 8GB Pi said "installing"
         # for nine days and the report could not say which.
         "local_model": {"state": local.get("state"), "model": local.get("model"),
-                        "message": scrub(local.get("message"), 100),
+                        "message": scrub(local.get("message"), 160),
+                        "percent": local.get("percent"),
                         "age_h": round((time.time() - float(local.get("at") or 0)) / 3600, 1) if local.get("at") else None,
-                        "installer_running": run(["pgrep", "-f", "install-local-model"], timeout=5).strip() != ""}
+                        "installer_running": run(["pgrep", "-f", "install-local-model"], timeout=5).strip() != "",
+                        # Only while it is not working: everything needed to
+                        # tell a slow line from a full card from a dead runtime.
+                        "detail": local_model_detail() if local.get("state") != "done" else None}
                        if local else None,
     }
+
+
+LM_LOG = "/var/log/sudo-local-model.log"
+RUNTIME_CACHE = "/var/cache/sudo-ollama"
+RUNTIME_URL = "https://ollama.com/download/ollama-linux-arm64.tar.zst"
+
+
+def scrub_log(text, limit=160):
+    """A line of the installer's own log. It holds no personal data, but curl
+    and ollama errors can carry addresses: those go; byte counts and exit
+    codes stay, they are the point."""
+    text = str(text or "")
+    text = re.sub(r"\S+@\S+", "<email>", text)
+    text = re.sub(r"\b\d{1,3}(\.\d{1,3}){3}\b", "<ip>", text)
+    text = re.sub(r"\b[0-9a-f]{0,4}(:[0-9a-f]{0,4}){3,7}\b", "<ip>", text)
+    return re.sub(r"\s+", " ", text).strip()[:limit]
+
+
+def local_model_detail():
+    """Why the on-device model is not installed: the runtime, a download in
+    progress, room on the card, the clock, the connection to ollama.com and
+    how fast it is right now, and the end of the installer's log."""
+    out = {}
+    ollama = shutil.which("ollama") or ("/usr/local/bin/ollama" if os.path.isfile("/usr/local/bin/ollama") else None)
+    out["runtime_installed"] = bool(ollama)
+    if ollama:
+        version = run([ollama, "--version"], timeout=10).strip().splitlines()
+        out["runtime_version"] = scrub_log(version[-1], 60) if version else None
+        out["ollama_service"] = run(["systemctl", "is-active", "ollama"], timeout=5).strip() or None
+        try:
+            with urllib.request.urlopen("http://127.0.0.1:11434/api/tags", timeout=5) as r:
+                out["models"] = [m.get("name") for m in json.load(r).get("models", [])][:10]
+        except Exception:  # noqa: BLE001 - the daemon being down is itself the finding
+            out["models"] = None
+    parts = glob.glob(os.path.join(RUNTIME_CACHE, "*.part"))
+    if parts:
+        have = os.path.getsize(parts[0])
+        try:
+            size = int(open(parts[0][:-len(".part")] + ".size").read().strip())
+        except (OSError, ValueError):
+            size = 0
+        out["runtime_download"] = {"have_mb": round(have / 1e6), "of_mb": round(size / 1e6) or None}
+    disk = shutil.disk_usage("/")
+    out["disk_free_gb"] = round(disk.free / 1e9, 1)
+    out["zstd"] = bool(shutil.which("zstd"))
+    out["clock_synced"] = run(["timedatectl", "show", "-p", "NTPSynchronized", "--value"], timeout=5).strip() or None
+    out["units"] = {
+        "boot": run(["systemctl", "show", "-p", "Type", "--value", "sudo-local-model.service"], timeout=5).strip() or None,
+        "retry_timer": run(["systemctl", "is-active", "sudo-local-model-retry.timer"], timeout=5).strip() or None,
+    }
+    # The connection as it is right now: can it reach the download at all, and
+    # how fast does the first part of it come in (6 seconds, at most 30MB).
+    probe = run(["curl", "-s", "-o", "/dev/null", "-L", "-r", "0-30000000", "--max-time", "6",
+                 "-w", "%{http_code} %{size_download} %{time_total} %{time_connect}", RUNTIME_URL], timeout=15).split()
+    if len(probe) == 4:
+        try:
+            code, got, total, connect = int(probe[0]), int(probe[1]), float(probe[2]), float(probe[3])
+            out["probe"] = {"http": code, "connect_s": round(connect, 2),
+                            "mbps": round(got * 8 / 1e6 / max(total - connect, 0.1), 1) if got else 0}
+        except ValueError:
+            out["probe"] = {"error": scrub_log(" ".join(probe), 80)}
+    else:
+        out["probe"] = {"error": "no reply"}
+    try:
+        lines = open(LM_LOG, encoding="utf-8", errors="ignore").read()[-20000:].splitlines()
+    except OSError:
+        lines = []
+    # The lines that say what happened, not the progress noise.
+    keep = [l for l in lines if l.strip() and not re.match(r"^\s*(pulling [0-9a-f]+|[#\s]*[0-9.]+%)", l)]
+    out["log_tail"] = [scrub_log(l) for l in keep[-25:]]
+    return out
 
 
 def sudo_version():
@@ -616,6 +693,13 @@ def report_key():
     return data["key"]
 
 
+def report_code():
+    """Six characters the owner can read out to whoever is helping them: the
+    start of the hash the service files this device's reports under, so
+    their reports can be found without the service knowing whose they are."""
+    return hashlib.sha256(report_key().encode()).hexdigest()[:6].upper()
+
+
 def post(route, body):
     req = urllib.request.Request(SERVICE + route, data=json.dumps(body).encode(), method="POST",
                                  headers={"Content-Type": "application/json", "X-Sudo-Report-Key": report_key()})
@@ -639,18 +723,22 @@ def main():
     if cmd == "collect":
         print(json.dumps(collect(), indent=2))
         return 0
-    if cmd == "send":
-        if cfg.get("problem_reports") is not True:
+    if cmd in ("send", "send-now"):
+        # send-now: the owner pressed "Send a report now", usually while
+        # someone at Sudo is helping them. That press is the go-ahead for this
+        # one report, whatever the daily setting.
+        if cmd == "send" and cfg.get("problem_reports") is not True:
             print(json.dumps({"sent": False, "reason": "off"}))
             return 0
         report = collect()
+        report["manual"] = cmd == "send-now"
         try:
             status, reply = post("/report", report)
             ok = status == 200
         except Exception as exc:  # noqa: BLE001 - offline: try again tomorrow
             ok, reply = False, {"error": scrub(exc)}
         save_last({"sent": ok, "at": int(time.time()), "reply": reply, "report": report})
-        print(json.dumps({"sent": ok, "reply": reply}))
+        print(json.dumps({"sent": ok, "reply": reply, "code": report_code()}))
         return 0 if ok else 1
     if cmd == "feedback":
         try:

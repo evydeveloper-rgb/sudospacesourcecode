@@ -4945,6 +4945,25 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             self.send_json({"ok": True})
             return True
 
+        if path == "/api/reports/send-now" and self.command == "POST":
+            # "Send a report now": for when someone at Sudo is helping the
+            # owner. The press is the go-ahead for this one report, whatever
+            # the daily setting; the code is what they read out.
+            try:
+                r = subprocess.run(["systemd-run", "--quiet", "--collect", "--wait", "--pipe",
+                                    f"--unit=sudo-report-now-{int(time.time() * 1000)}",
+                                    "/usr/bin/python3", REPORT_SCRIPT, "send-now"],
+                                   capture_output=True, text=True, timeout=90)
+                out = json.loads((r.stdout or "{}").strip().splitlines()[-1])
+            except (OSError, subprocess.SubprocessError, ValueError, IndexError):
+                out = {}
+            if not out.get("sent"):
+                self.send_json({"error": "Couldn't send it right now. Try again in a minute."}, code=502)
+                return True
+            count_usage("reports_sent")
+            self.send_json({"ok": True, "code": out.get("code")})
+            return True
+
         if path == "/api/reports/settings" and self.command == "POST":
             try:
                 body = self.read_body_json()

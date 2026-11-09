@@ -6224,7 +6224,13 @@ I18N.add('en', {
   "chalert.body": "Reminders can't reach you there until it's linked again. It takes a minute.",
   "chalert.go": "Link again",
   "reports.sent5": "How it's used: messages per chat app, tools, check-ins, tokens and cost, reply times, settings, dashboard tabs",
-  "reports.sent6": "Signs a reply went badly (counted here, not the words), and the name of a website when a task on it fails"
+  "reports.sent6": "Signs a reply went badly (counted here, not the words), and the name of a website when a task on it fails",
+  "reports.sent7": "If the on-device model won't install: how far the download got, free space, and how fast the connection to the download is",
+  "reports.now": "Send a report now",
+  "reports.nowSmall": "When someone at Sudo is helping you. Sends this one report, even if daily reports are off.",
+  "reports.nowBtn": "Send now",
+  "reports.nowSending": "Sending…",
+  "reports.nowSent": "Sent. Your report code is {code}: read it to the person helping you."
 });
 I18N.add('es', {
   "fb.flag": "Esta respuesta estuvo mal o no sirvió",
@@ -6241,7 +6247,13 @@ I18N.add('es', {
   "chalert.body": "Los recordatorios no te llegarán por ahí hasta que lo vincules otra vez. Toma un minuto.",
   "chalert.go": "Vincular otra vez",
   "reports.sent5": "Cómo se usa: mensajes por app de chat, herramientas, avisos, tokens y costo, tiempos de respuesta, ajustes, pestañas del panel",
-  "reports.sent6": "Señales de que una respuesta salió mal (contadas aquí, sin las palabras) y el nombre del sitio web cuando falla una tarea en él"
+  "reports.sent6": "Señales de que una respuesta salió mal (contadas aquí, sin las palabras) y el nombre del sitio web cuando falla una tarea en él",
+  "reports.sent7": "Si el modelo en el dispositivo no se instala: cuánto avanzó la descarga, el espacio libre y la velocidad de la conexión a la descarga",
+  "reports.now": "Enviar un informe ahora",
+  "reports.nowSmall": "Para cuando alguien de Sudo te está ayudando. Envía solo este informe, aunque los informes diarios estén apagados.",
+  "reports.nowBtn": "Enviar ahora",
+  "reports.nowSending": "Enviando…",
+  "reports.nowSent": "Enviado. Tu código de informe es {code}: díselo a la persona que te está ayudando."
 });
 I18N.add('zh', {
   "fb.flag": "这个回复不对或没帮上忙",
@@ -6258,7 +6270,13 @@ I18N.add('zh', {
   "chalert.body": "重新关联之前，提醒无法通过 WhatsApp 发给你。只需一分钟。",
   "chalert.go": "重新关联",
   "reports.sent5": "使用情况：各聊天应用的消息数、工具、主动问候、token 和费用、回复时间、设置、面板标签页",
-  "reports.sent6": "回复效果不好的迹象（只在本机计数，不含内容），以及网站任务失败时的网站名称"
+  "reports.sent6": "回复效果不好的迹象（只在本机计数，不含内容），以及网站任务失败时的网站名称",
+  "reports.sent7": "如果本机模型装不上：下载到了哪里、剩余空间，以及连接下载地址的速度",
+  "reports.now": "立即发送一份报告",
+  "reports.nowSmall": "在 Sudo 团队帮你排查问题时使用。只发送这一份报告，即使每日报告是关闭的。",
+  "reports.nowBtn": "立即发送",
+  "reports.nowSending": "正在发送…",
+  "reports.nowSent": "已发送。你的报告代码是 {code}，请告诉正在帮你的人。"
 });
 I18N.add('ar', {
   "fb.flag": "هذا الرد كان خاطئًا أو غير مفيد",
@@ -6275,7 +6293,13 @@ I18N.add('ar', {
   "chalert.body": "لن تصلك التذكيرات هناك حتى تعيد الربط. يستغرق دقيقة.",
   "chalert.go": "أعد الربط",
   "reports.sent5": "طريقة الاستخدام: الرسائل لكل تطبيق دردشة، الأدوات، الرسائل التلقائية، الرموز والتكلفة، أزمنة الرد، الإعدادات، تبويبات اللوحة",
-  "reports.sent6": "علامات على أن ردًا لم يكن جيدًا (تُعد هنا دون الكلمات)، واسم الموقع عندما تفشل مهمة عليه"
+  "reports.sent6": "علامات على أن ردًا لم يكن جيدًا (تُعد هنا دون الكلمات)، واسم الموقع عندما تفشل مهمة عليه",
+  "reports.sent7": "إذا لم يُثبَّت النموذج على الجهاز: إلى أين وصل التنزيل، والمساحة الفارغة، وسرعة الاتصال بمصدر التنزيل",
+  "reports.now": "إرسال تقرير الآن",
+  "reports.nowSmall": "عندما يساعدك أحد من فريق Sudo. يرسل هذا التقرير وحده، حتى لو كانت التقارير اليومية متوقفة.",
+  "reports.nowBtn": "إرسال الآن",
+  "reports.nowSending": "جارٍ الإرسال…",
+  "reports.nowSent": "تم الإرسال. رمز تقريرك هو {code}: أخبر به الشخص الذي يساعدك."
 });
 
 // ---- Chat: no key, and the on-device model did not answer ----------------------
