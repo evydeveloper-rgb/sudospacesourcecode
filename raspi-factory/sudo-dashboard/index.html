@@ -283,7 +283,7 @@
             <small id="cloud-nudge-text" data-i18n="chat.iMRunningOn">I'm running on the small on-device model — good for chatting, not for real work. Connect a cloud model whenever you're ready.</small>
           </div>
           <div class="cloud-nudge-actions">
-            <button id="cloud-nudge-go" type="button" data-i18n="chat.goToOpenrouter">Go to OpenRouter</button>
+            <button id="cloud-nudge-go" type="button" data-i18n="or.connect">Connect OpenRouter</button>
             <button id="cloud-nudge-settings" type="button" data-i18n="chat.setUp">Set up</button>
             <button id="cloud-nudge-dismiss" type="button" aria-label="Dismiss" data-i18n-attr="aria-label:hint.dismiss">×</button>
           </div>
@@ -588,23 +588,18 @@
               <ol class="gs-steps">
                 <li>
                   <span class="gs-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0M19 8v6M16 11h6"/></svg><b>1</b></span>
-                  <strong data-i18n="gs.c.s1">Sign up</strong>
-                  <small><a href="https://openrouter.ai" target="_blank" rel="noopener noreferrer">openrouter.ai</a></small>
+                  <strong data-i18n="or.connect">Connect OpenRouter</strong>
+                  <small data-i18n="gs.c.o1b">Sign in, or make an account</small>
                 </li>
                 <li>
-                  <span class="gs-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg><b>2</b></span>
+                  <span class="gs-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2M9 14l2 2 4-4"/></svg><b>2</b></span>
+                  <strong data-i18n="gs.c.o2">Allow sudo</strong>
+                  <small data-i18n="gs.c.o2b">The key arrives by itself</small>
+                </li>
+                <li>
+                  <span class="gs-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg><b>3</b></span>
                   <strong data-i18n="gs.c.s2">Add credit</strong>
                   <small data-i18n="gs.c.s2b">You pick the amount</small>
-                </li>
-                <li>
-                  <span class="gs-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="7.5" cy="15.5" r="4.5"/><path d="m10.7 12.3 9.8-9.8M17 6l3 3M14.5 8.5l2 2"/></svg><b>3</b></span>
-                  <strong data-i18n="gs.c.s3">Create a key</strong>
-                  <small data-i18n-html="gs.c.s3b">Starts with <code>sk-or-</code></small>
-                </li>
-                <li>
-                  <span class="gs-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2M9 14l2 2 4-4"/></svg><b>4</b></span>
-                  <strong data-i18n="gs.c.s4">Paste it in sudo</strong>
-                  <small data-i18n="gs.c.s4b">Settings → LLM key</small>
                 </li>
               </ol>
 
@@ -616,8 +611,8 @@
               <p class="gs-alt" data-i18n="gs.c.alt">Already have a DeepSeek, OpenAI, Anthropic or Gemini key? Paste that instead.</p>
 
               <div class="milestone-actions">
-                <button class="primary-button" type="button" data-go="providers" data-i18n="gs.c.paste">Paste my key</button>
-                <a class="text-link" href="https://openrouter.ai" target="_blank" rel="noopener noreferrer" data-i18n="guide.cloud.openOpenrouterAi">Open openrouter.ai →</a>
+                <button class="primary-button" type="button" data-go="openrouter" data-i18n="or.connect">Connect OpenRouter</button>
+                <button class="text-link link-button" type="button" data-go="providers" data-i18n="gs.c.paste">Paste my key</button>
               </div>
 
               <details class="gs-more">
@@ -1960,6 +1955,36 @@
             </button>
             <div class="setting-body">
               <p class="section-intro" data-i18n="key.intro">Your agent thinks with an AI model you pay for directly. Paste a key and sudo works out whose it is.</p>
+
+              <div class="or-connect" id="or-connect">
+                <div class="or-head">
+                  <span class="key-logo" aria-hidden="true">O</span>
+                  <div>
+                    <strong>OpenRouter</strong>
+                    <small data-i18n="or.small">Sign in or make an account on OpenRouter, then allow sudo. The key is made in your own account and stays on this device. Sudo never sees it.</small>
+                  </div>
+                </div>
+                <button class="primary-button" id="or-connect-btn" type="button" data-i18n="or.connect">Connect OpenRouter</button>
+                <div class="or-wait" id="or-wait" hidden>
+                  <p class="microcopy" data-i18n="or.waiting">Finish on the OpenRouter tab. This page updates by itself when you're done.</p>
+                  <button class="info-link" id="or-code-link" type="button" data-i18n="or.useCode">OpenRouter showed an error? Use a code instead</button>
+                  <div class="or-code" id="or-code-box" hidden>
+                    <p class="microcopy" data-i18n="or.codeHelp">In the tab that just opened, allow sudo. OpenRouter then shows a code: paste it here.</p>
+                    <input id="or-code" type="text" autocomplete="off" spellcheck="false" data-i18n-attr="placeholder:or.codePlaceholder" placeholder="Paste the code from OpenRouter">
+                    <button class="primary-button" id="or-code-save" type="button" data-i18n="or.codeSave">Connect</button>
+                  </div>
+                </div>
+                <div class="or-done" id="or-done" hidden>
+                  <p class="microcopy" id="or-credit-note"></p>
+                  <div class="or-links">
+                    <a class="text-link" href="https://openrouter.ai/settings/credits" target="_blank" rel="noopener noreferrer" data-i18n="or.addCredit">Add credit</a>
+                    <a class="text-link" href="https://openrouter.ai/activity" target="_blank" rel="noopener noreferrer" data-i18n="or.usage">See what it has spent</a>
+                  </div>
+                </div>
+                <p class="form-status" id="or-status" role="status"></p>
+              </div>
+              <p class="or-divider" data-i18n="or.orPaste">or paste any key</p>
+
               <label for="auto-key" class="sr-only" data-i18n="key.title">AI key</label>
               <div class="key-box">
                 <input id="auto-key" type="password" autocomplete="off" spellcheck="false" data-i18n-attr="placeholder:key.placeholder" placeholder="Paste a key">
@@ -4363,6 +4388,7 @@
       // Wi-Fi scans the moment its page opens — no extra tap to see networks.
       if (id === 'wifi-setting') openWifi();
       if (id === 'ssh-setting') loadTailscale();
+      if (id === 'providers-setting') loadOpenRouterAccount();
     }
 
     // --- The owner's own Tailscale (tailscale.sh on the device) ------------------
@@ -6722,6 +6748,7 @@
       });
       list.hidden = !list.children.length;
       $('key-empty').hidden = !!list.children.length;
+      renderOpenRouterConnect(hints);
       $('providers-summary').textContent = brain
         ? t('key.summaryInUse', { name: brain.name })
         : t('key.summaryNone');
@@ -6878,6 +6905,104 @@
       } catch (error) {
         status.textContent = error.message;
       }
+    }
+
+    // --- Connect OpenRouter (server.py: openrouter_begin / openrouter_finish) --
+    // OpenRouter opens in its own tab; this one waits and shows the outcome.
+    // If OpenRouter will not send the owner back here (it decides which
+    // return addresses it accepts), the same sign-in can show a code instead.
+    const orWait = { since: 0, timer: null };
+    const OR_RESULTS = ['ok', 'denied', 'expired', 'offline', 'failed', 'no_code'];
+
+    function renderOpenRouterConnect(hints) {
+      const connected = !!(hints && hints.openrouter);
+      const btn = $('or-connect-btn');
+      btn.textContent = connected ? t('or.reconnect') : t('or.connect');
+      btn.setAttribute('data-i18n', connected ? 'or.reconnect' : 'or.connect');
+      btn.classList.toggle('soft-button', connected);
+      btn.classList.toggle('primary-button', !connected);
+      $('or-done').hidden = !connected;
+      if (connected && !orWait.timer) $('or-wait').hidden = true;
+    }
+
+    async function loadOpenRouterAccount() {
+      const note = $('or-credit-note');
+      if (!(state.providerHints && state.providerHints.openrouter)) { note.textContent = ''; return; }
+      note.textContent = t('or.connected');
+      try {
+        const acct = await api('/api/openrouter/account', {}, 15000);
+        if (acct.never_paid) note.textContent = t('or.noCredit');
+        else if (typeof acct.limit_remaining === 'number' && acct.limit_remaining <= 0) note.textContent = t('or.outOfCredit');
+      } catch (_) {}
+    }
+
+    function openRouterBegin(mode) {
+      // Opened straight from the click, or the browser treats it as a pop-up.
+      window.open('/api/openrouter/start' + (mode === 'code' ? '?mode=code' : ''), '_blank', 'noopener');
+      setTab('settings');
+      openSettingPage('providers-setting');
+      $('or-wait').hidden = false;
+      $('or-status').textContent = '';
+      orWait.since = Date.now() / 1000 - 2;
+      clearInterval(orWait.timer);
+      const until = Date.now() + 30 * 60 * 1000;
+      orWait.timer = setInterval(async () => {
+        if (Date.now() > until) { clearInterval(orWait.timer); orWait.timer = null; return; }
+        try {
+          const s = await api('/api/openrouter/state', {}, 8000);
+          if (s.result && s.at > orWait.since) openRouterOutcome(s.result);
+        } catch (_) {}
+      }, 3000);
+    }
+
+    function startOpenRouter() {
+      $('or-code-box').hidden = true;
+      openRouterBegin('redirect');
+    }
+
+    function startOpenRouterCode() {
+      openRouterBegin('code');
+      $('or-code-box').hidden = false;
+      $('or-code').focus();
+    }
+
+    async function openRouterOutcome(result) {
+      clearInterval(orWait.timer);
+      orWait.timer = null;
+      $('or-status').textContent = t('or.result.' + (OR_RESULTS.includes(result) ? result : 'failed'));
+      if (result !== 'ok') return;
+      $('or-wait').hidden = true;
+      $('or-code').value = '';
+      try {
+        const data = await api('/api/setup/status');
+        state.status = data;
+        renderProviders(data.provider_key_hints);
+        if (data.answering_with) $('answering-with').textContent = data.answering_with.label;
+      } catch (_) {}
+      loadOpenRouterAccount();
+    }
+
+    async function sendOpenRouterCode() {
+      const code = $('or-code').value.trim();
+      if (!code) { $('or-status').textContent = t('or.codeFirst'); return; }
+      $('or-status').textContent = t('common.checking');
+      try {
+        const data = await api('/api/openrouter/code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code }),
+        }, 30000);
+        openRouterOutcome(data.ok ? 'ok' : data.reason);
+      } catch (error) {
+        $('or-status').textContent = error.message;
+      }
+    }
+
+    function openRouterLanded(result) {
+      history.replaceState({}, '', location.pathname);
+      setTab('settings');
+      openSettingPage('providers-setting', true);
+      openRouterOutcome(result);
     }
 
     async function saveAutoKey() {
@@ -7776,6 +7901,7 @@
     const SETUP_DESTINATIONS = {
       chat: () => setTab('chat'),
       providers: () => { setTab('settings'); openSettingPage('providers-setting'); },
+      openrouter: () => startOpenRouter(),
       spend: () => { setTab('settings'); openSettingPage('spend-setting'); },
       routing: () => { setTab('settings'); openSettingPage('routing-setting'); },
       whatsapp: () => { setTab('channels'); revealField('whatsapp-connect'); },
@@ -8567,6 +8693,8 @@
 
     async function init() {
       const path = location.pathname;
+      // Read before anything below rewrites the address bar.
+      const landedFromOpenRouter = new URLSearchParams(location.search).get('openrouter');
       if (path.includes('setup')) setTab('setup');
       else if (path.includes('onboarding')) setTab('settings');
       else if (path.includes('connectors')) setTab('connectors');
@@ -8604,6 +8732,7 @@
       applyBillingVisibility();
 
       const params = new URLSearchParams(location.search);
+      if (landedFromOpenRouter) openRouterLanded(landedFromOpenRouter);
       if (BILLING_ENABLED && (params.get('paid') === '1' || params.get('session_id'))) {
         setTab('settings');
         $('billing-setting').classList.add('open');
@@ -8757,9 +8886,11 @@
     $('welcome-agent').addEventListener('keydown', event => {
       if (event.key === 'Enter') finishWelcome();
     });
-    $('cloud-nudge-go').addEventListener('click', () => {
-      window.open('https://openrouter.ai/?utm_source=sudo', '_blank', 'noopener');
-    });
+    $('cloud-nudge-go').addEventListener('click', startOpenRouter);
+    $('or-connect-btn').addEventListener('click', startOpenRouter);
+    $('or-code-link').addEventListener('click', startOpenRouterCode);
+    $('or-code-save').addEventListener('click', sendOpenRouterCode);
+    $('or-code').addEventListener('keydown', event => { if (event.key === 'Enter') sendOpenRouterCode(); });
     $('cloud-nudge-settings').addEventListener('click', () => {
       setTab('settings');
       openSettingPage('providers-setting');

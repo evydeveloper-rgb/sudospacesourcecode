@@ -7,6 +7,7 @@ Public mode (optional): bind 127.0.0.1:8080 behind Caddy HTTPS.
 
 from __future__ import annotations
 
+import base64
 import hashlib
 import hmac
 import http.server
@@ -562,6 +563,141 @@ def provider_key_hints(cfg):
     if "openrouter" not in hints and cfg.get("openrouter_key_source") == "own" and cfg.get("user_openrouter_key"):
         hints["openrouter"] = str(cfg["user_openrouter_key"])[-4:]
     return hints
+
+
+# --- Connect OpenRouter (their OAuth PKCE flow) --------------------------------
+# The owner signs in (or signs up) on openrouter.ai and allows sudo; OpenRouter
+# hands back a one-time code, and this device swaps it for a key in the owner's
+# own account. The secret half of the exchange (the verifier) never leaves this
+# process, so the code is useless to anyone who sees it in a URL. No Sudo
+# server is involved, and the key is billed to the owner's OpenRouter credit.
+OPENROUTER_AUTH_URL = "https://openrouter.ai/auth"
+OPENROUTER_EXCHANGE_URL = "https://openrouter.ai/api/v1/auth/keys"
+OPENROUTER_KEY_URL = "https://openrouter.ai/api/v1/key"
+OR_PENDING_TTL = 30 * 60     # time to sign up and add a card, not just sign in
+OR_PENDING_MAX = 8
+OR_CALLBACK_PATH = "/api/openrouter/callback"
+_or_lock = threading.Lock()
+_or_pending: dict = {}       # state -> {"verifier", "at", "mode"}
+_or_last: dict = {}          # the latest outcome, for the tab that is waiting
+
+
+def _or_challenge(verifier: str) -> str:
+    digest = hashlib.sha256(verifier.encode("ascii")).digest()
+    return base64.urlsafe_b64encode(digest).decode("ascii").rstrip("=")
+
+
+def openrouter_begin(callback_base: str | None) -> str:
+    """A fresh sign-in URL. With callback_base, OpenRouter sends the owner
+    back here; without it, OpenRouter shows a code to paste instead."""
+    verifier = secrets.token_urlsafe(48)
+    state = secrets.token_urlsafe(24)
+    now = time.time()
+    with _or_lock:
+        for k in [k for k, v in _or_pending.items() if now - v["at"] > OR_PENDING_TTL]:
+            _or_pending.pop(k, None)
+        while len(_or_pending) >= OR_PENDING_MAX:
+            _or_pending.pop(min(_or_pending, key=lambda k: _or_pending[k]["at"]), None)
+        _or_pending[state] = {"verifier": verifier, "at": now,
+                              "mode": "redirect" if callback_base else "code"}
+    params = {
+        "code_challenge": _or_challenge(verifier),
+        "code_challenge_method": "S256",
+        "key_label": "sudo",
+    }
+    if callback_base:
+        params["callback_url"] = callback_base + OR_CALLBACK_PATH
+        params["state"] = state
+    return OPENROUTER_AUTH_URL + "?" + urllib.parse.urlencode(params)
+
+
+def _or_take(state: str | None) -> list:
+    """Verifiers that may belong to this code. A redirect names its state; a
+    pasted code does not (OpenRouter drops state in that mode), so it is tried
+    against the code-mode sign-ins started recently, newest first."""
+    now = time.time()
+    with _or_lock:
+        if state is not None:
+            entry = _or_pending.get(state)
+            if not entry or now - entry["at"] > OR_PENDING_TTL:
+                return []
+            return [(state, entry["verifier"])]
+        live = [(k, v) for k, v in _or_pending.items()
+                if v["mode"] == "code" and now - v["at"] <= OR_PENDING_TTL]
+        live.sort(key=lambda kv: kv[1]["at"], reverse=True)
+        return [(k, v["verifier"]) for k, v in live]
+
+
+def _or_exchange(code: str, verifier: str) -> str:
+    body = json.dumps({"code": code, "code_verifier": verifier,
+                       "code_challenge_method": "S256"}).encode()
+    req = urllib.request.Request(OPENROUTER_EXCHANGE_URL, data=body, method="POST",
+                                 headers={"Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=20) as resp:
+        data = json.loads(resp.read().decode("utf-8") or "{}")
+    key = str(data.get("key") or "").strip()
+    if not key.startswith("sk-or-") or len(key) > 256:
+        raise ValueError("OpenRouter did not send back a key")
+    return key
+
+
+def openrouter_finish(code: str, state: str | None) -> dict:
+    """Swap the code for a key and make it the agent's OpenRouter key.
+    Returns {"ok": True} or {"ok": False, "reason": ...}."""
+    code = (code or "").strip()
+    if not code or len(code) > 512:
+        return {"ok": False, "reason": "no_code"}
+    candidates = _or_take(state)
+    if not candidates:
+        return {"ok": False, "reason": "expired"}
+    last_err = "failed"
+    for st, verifier in candidates:
+        try:
+            key = _or_exchange(code, verifier)
+        except urllib.error.HTTPError as exc:
+            # 403 is a wrong pairing (or an old code); try the next one.
+            last_err = "expired" if exc.code == 403 else "failed"
+            continue
+        except Exception:  # noqa: BLE001 - network, bad JSON
+            last_err = "offline"
+            break
+        with _or_lock:
+            _or_pending.pop(st, None)
+        cfg = read_json_file(CONFIG)
+        stored = dict(cfg.get("provider_keys") or {})
+        stored["openrouter"] = key
+        cfg["provider_keys"] = stored
+        cfg["openrouter_connected_at"] = int(time.time())
+        write_json_file(CONFIG, cfg)  # chmod 600
+        apply_settings()
+        _or_last.clear()
+        _or_last.update(at=time.time(), result="ok")
+        return {"ok": True}
+    _or_last.clear()
+    _or_last.update(at=time.time(), result=last_err)
+    return {"ok": False, "reason": last_err}
+
+
+def openrouter_account(cfg) -> dict:
+    """Whether the connected key has ever had credit, from OpenRouter itself.
+    {} when there is no OpenRouter key or OpenRouter could not be reached."""
+    key = (cfg.get("provider_keys") or {}).get("openrouter")
+    if not key:
+        return {}
+    req = urllib.request.Request(OPENROUTER_KEY_URL,
+                                 headers={"Authorization": f"Bearer {key}"})
+    try:
+        with urllib.request.urlopen(req, timeout=8) as resp:
+            data = (json.loads(resp.read().decode("utf-8") or "{}").get("data") or {})
+    except Exception:  # noqa: BLE001
+        return {}
+    free = data.get("free_model_daily_requests") or {}
+    return {
+        "never_paid": bool(data.get("is_free_tier")),
+        "limit_remaining": data.get("limit_remaining"),
+        "usage": data.get("usage"),
+        "free_requests_left": free.get("remaining"),
+    }
 
 
 def read_wifi_country():
@@ -3152,6 +3288,17 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             return True
         return bool(self.headers.get("X-Forwarded-For") or self.headers.get("Cf-Connecting-Ip"))
 
+    def own_origin(self):
+        """scheme://host this page was opened on, for OpenRouter to send the
+        owner back to. None when the Host header is not a plain host name."""
+        host = (self.headers.get("Host") or "").strip()
+        if not re.fullmatch(r"[A-Za-z0-9.-]{1,253}(:[0-9]{1,5})?|\[[0-9A-Fa-f:]{2,45}\](:[0-9]{1,5})?", host):
+            return None
+        name = host.rsplit(":", 1)[0].lower() if not host.startswith("[") else host
+        https = ((self.headers.get("X-Forwarded-Proto") or "").lower() == "https"
+                 or name.endswith((".trycloudflare.com", ".ts.net")))
+        return f"{'https' if https else 'http'}://{host}"
+
     def client_ip(self) -> str:
         # Prefer proxy header only when behind local Caddy
         xff = self.headers.get("X-Forwarded-For", "")
@@ -3389,8 +3536,58 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             })
             return True
 
+        # OpenRouter sends the owner back here after they allow sudo. It sits
+        # before the password check on purpose: the session cookie is
+        # SameSite=Strict, so a browser arriving from openrouter.ai does not
+        # carry it. What guards it instead is the state, which only a signed-in
+        # /api/openrouter/start can have issued, and the verifier, which never
+        # leaves this process.
+        if path == OR_CALLBACK_PATH and self.command == "GET":
+            q = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            code = (q.get("code") or [""])[0]
+            state = (q.get("state") or [""])[0]
+            if not code:
+                result = "denied"      # they said no; OpenRouter sends no state then
+            elif not state:
+                result = "expired"
+            else:
+                out = openrouter_finish(code, state)
+                result = "ok" if out["ok"] else out["reason"]
+            self.redirect(f"/?openrouter={result}")
+            return True
+
         # Everything below requires session
         if not self.require_auth():
+            return True
+
+        if path == "/api/openrouter/start" and self.command == "GET":
+            # Opened in a new tab, so this answers with a redirect, not JSON.
+            # mode=code asks OpenRouter to show a code to paste instead of
+            # sending the owner back, for when the way back does not work.
+            q = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            want_code = (q.get("mode") or [""])[0] == "code"
+            self.redirect(openrouter_begin(None if want_code else self.own_origin()))
+            return True
+
+        if path == "/api/openrouter/code" and self.command == "POST":
+            try:
+                body = self.read_body_json()
+            except (ValueError, json.JSONDecodeError):
+                self.send_json({"error": "Invalid JSON"}, code=400)
+                return True
+            out = openrouter_finish(str(body.get("code") or ""), None)
+            if out["ok"]:
+                self.send_json({"ok": True, **setup_status(include_sensitive=False)})
+            else:
+                self.send_json({"ok": False, "reason": out["reason"]})
+            return True
+
+        if path == "/api/openrouter/state" and self.command == "GET":
+            self.send_json({"result": _or_last.get("result"), "at": _or_last.get("at", 0)})
+            return True
+
+        if path == "/api/openrouter/account" and self.command == "GET":
+            self.send_json(openrouter_account(read_json_file(CONFIG)))
             return True
 
         if path == "/api/setup/status":

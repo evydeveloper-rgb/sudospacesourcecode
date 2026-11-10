@@ -358,6 +358,31 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .key-remove:hover { color: var(--ink); border-color: var(--ink-3); }
 .key-remove.confirm { border-color: var(--error); color: var(--error); }
 .key-empty { margin: 16px 0 8px; color: var(--ink-3); font-size: .8rem; }
+
+/* Settings > AI key: Connect OpenRouter, above the paste box. */
+.or-connect {
+  display: grid; gap: 12px; margin: 6px 0 4px; padding: 16px;
+  border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface);
+}
+.or-head { display: flex; gap: 12px; align-items: flex-start; }
+.or-head > div { display: grid; gap: 3px; min-width: 0; }
+.or-head strong { font-size: .9rem; }
+.or-head small { color: var(--ink-3); font-size: .78rem; line-height: 1.45; }
+.or-connect .primary-button, .or-connect .soft-button { width: auto; min-height: 44px; margin-top: 0; padding: 0 20px; justify-self: start; }
+.or-wait, .or-code, .or-done { display: grid; gap: 8px; }
+.or-wait[hidden], .or-code[hidden], .or-done[hidden] { display: none; }
+.or-wait .info-link { justify-self: start; }
+.or-code input { width: 100%; }
+.or-links { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.or-connect .form-status { margin: 0; }
+.or-connect .form-status:empty { display: none; }
+.or-divider {
+  display: flex; align-items: center; gap: 10px; margin: 16px 0 6px;
+  color: var(--ink-3); font-size: .74rem;
+}
+.or-divider::before, .or-divider::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.link-button { padding: 0; border: 0; background: none; font-family: inherit; cursor: pointer; }
+@media (max-width: 480px) { .or-connect .primary-button, .or-connect .soft-button { width: 100%; justify-self: stretch; } }
 .key-empty[hidden] { display: none; }
 .settings-group[hidden], .setting-card[hidden] { display: none; }
 /* "online" is the normal state, so it is not shown; only a problem is. */
