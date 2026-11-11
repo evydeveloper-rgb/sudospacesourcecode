@@ -257,7 +257,9 @@ def system_events():
                         "installer_running": run(["pgrep", "-f", "install-local-model"], timeout=5).strip() != "",
                         # Only while it is not working: everything needed to
                         # tell a slow line from a full card from a dead runtime.
-                        "detail": local_model_detail() if local.get("state") != "done" else None}
+                        "detail": local_model_detail() if local.get("state") != "done" or answers_failing()
+                                  else None,
+                        "answers": local_answers()}
                        if local else None,
     }
 
@@ -276,6 +278,72 @@ def scrub_log(text, limit=160):
     text = re.sub(r"\b\d{1,3}(\.\d{1,3}){3}\b", "<ip>", text)
     text = re.sub(r"\b[0-9a-f]{0,4}(:[0-9a-f]{0,4}){3,7}\b", "<ip>", text)
     return re.sub(r"\s+", " ", text).strip()[:limit]
+
+
+LOCAL_ANSWERS = "/var/lib/sudo-local-answers.json"
+ACTIVE_MODEL = "/var/lib/sudo-localmodel-active"
+
+
+def local_answers():
+    """The chat's recent failures to get an answer from the on-device model
+    (what Ollama said, how long it waited) and how long since one worked."""
+    data = read_json(LOCAL_ANSWERS, {}) or {}
+    fails = [f for f in (data.get("fails") or []) if isinstance(f, dict)][-8:]
+    now = time.time()
+    return {
+        "last_ok_h": round((now - float(data["last_ok"])) / 3600, 1) if data.get("last_ok") else None,
+        "fails": [{"h_ago": round((now - float(f.get("at") or 0)) / 3600, 1), "model": f.get("model"),
+                   "why": scrub_log(f.get("why"), 160), "secs": f.get("secs")} for f in fails],
+    } if data else None
+
+
+def answers_failing():
+    """Installed, but the last time the chat asked it, it did not answer."""
+    data = read_json(LOCAL_ANSWERS, {}) or {}
+    fails = data.get("fails") or []
+    if not fails:
+        return False
+    last_fail = float(fails[-1].get("at") or 0)
+    return last_fail > float(data.get("last_ok") or 0) and time.time() - last_fail < 3 * 86400
+
+
+def memory_mb():
+    out = {}
+    try:
+        for line in open("/proc/meminfo"):
+            key, _, value = line.partition(":")
+            if key in ("MemTotal", "MemAvailable", "SwapTotal", "SwapFree"):
+                out[key] = int(value.split()[0]) // 1024
+    except (OSError, ValueError):
+        pass
+    return out
+
+
+def answer_test(model):
+    """Ask the model for one word, as the chat would, and time it. Capped
+    well under the send-now wait; a first load on a slow card can take longer,
+    which the timing itself then shows."""
+    if not model:
+        return {"error": "no active model"}
+    body = json.dumps({"model": model, "prompt": "Say hi.", "stream": False, "keep_alive": "30m",
+                       "options": {"num_predict": 8}}).encode()
+    req = urllib.request.Request("http://127.0.0.1:11434/api/generate", data=body,
+                                 headers={"Content-Type": "application/json"}, method="POST")
+    started = time.time()
+    try:
+        with urllib.request.urlopen(req, timeout=60) as r:
+            data = json.load(r)
+        return {"ok": bool((data.get("response") or "").strip()), "secs": round(time.time() - started, 1),
+                "load_s": round((data.get("load_duration") or 0) / 1e9, 1)}
+    except Exception as exc:  # noqa: BLE001 - the error is the finding
+        detail = ""
+        if hasattr(exc, "read"):
+            try:
+                detail = " " + exc.read().decode("utf-8", "ignore")[:200]
+            except Exception:  # noqa: BLE001
+                pass
+        return {"ok": False, "secs": round(time.time() - started, 1),
+                "error": scrub_log(f"{type(exc).__name__}: {exc}{detail}", 240)}
 
 
 def local_model_detail():
@@ -330,6 +398,28 @@ def local_model_detail():
     # The lines that say what happened, not the progress noise.
     keep = [l for l in lines if l.strip() and not re.match(r"^\s*(pulling [0-9a-f]+|[#\s]*[0-9.]+%)", l)]
     out["log_tail"] = [scrub_log(l) for l in keep[-25:]]
+    # Installed but not answering: memory, what Ollama has loaded, its own
+    # log, and one live question.
+    out["memory_mb"] = memory_mb()
+    try:
+        active = open(ACTIVE_MODEL).read().strip() or None
+    except OSError:
+        active = None
+    out["active_model"] = active
+    if out.get("models") is not None:
+        try:
+            with urllib.request.urlopen("http://127.0.0.1:11434/api/ps", timeout=5) as r:
+                out["loaded"] = [{"name": m.get("name"), "vram_mb": round((m.get("size_vram") or 0) / 1e6),
+                                  "size_mb": round((m.get("size") or 0) / 1e6)}
+                                 for m in json.load(r).get("models", [])][:4]
+        except Exception:  # noqa: BLE001
+            out["loaded"] = None
+        out["answer_test"] = answer_test(active)
+    ollama_log = run(["journalctl", "-u", "ollama", "-n", "40", "--no-pager", "-o", "cat"], timeout=10).splitlines()
+    keep = [l for l in ollama_log if re.search(r"error|fail|panic|killed|out of memory|oom|level=(WARN|ERROR)", l, re.I)]
+    out["ollama_log"] = [scrub_log(l, 200) for l in keep[-12:]]
+    out["oom_kills"] = len(re.findall(r"Out of memory|oom-kill",
+                                      run(["journalctl", "-k", "-b", "--no-pager", "-o", "cat"], timeout=10)))
     return out
 
 

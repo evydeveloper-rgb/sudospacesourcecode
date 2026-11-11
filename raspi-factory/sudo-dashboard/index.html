@@ -8266,7 +8266,7 @@
       btn.disabled = true;
       out.textContent = t('reports.nowSending');
       try {
-        const r = await api('/api/reports/send-now', { method: 'POST' }, 100000);
+        const r = await api('/api/reports/send-now', { method: 'POST' }, 160000);
         out.textContent = t('reports.nowSent', { code: r.code || '?' });
       } catch (error) { out.textContent = error.message; }
       btn.disabled = false;

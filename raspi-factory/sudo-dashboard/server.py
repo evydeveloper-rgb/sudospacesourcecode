@@ -122,6 +122,10 @@ LOCAL_MODEL = "gemma3:270m"
 # finishes and passes its test, and by the dashboard when switching between
 # models already on the device. Absent means the greeter above.
 LOCALMODEL_ACTIVE = "/var/lib/sudo-localmodel-active"
+# The on-device model's recent failures to answer in chat, for problem reports:
+# "installed" and "answering" are different things, and the chat's own red
+# line says nothing about which of the many reasons it was.
+LOCAL_ANSWERS = "/var/lib/sudo-local-answers.json"
 # The embedding model memory search runs on (cloud, via OpenRouter — the same
 # key as chat). Kept in step with memorySearch in configure-openclaw.sh.
 EMBED_MODEL = "text-embedding-3-small"
@@ -2403,6 +2407,29 @@ def local_model_speed_test():
     return result
 
 
+def note_local_answer(model, ok, why="", secs=0.0):
+    """Keep the last few failures and the time of the last success. Only
+    the model, the error and how long it took -- never the message."""
+    try:
+        data = read_json_file(LOCAL_ANSWERS)
+    except Exception:  # noqa: BLE001
+        data = {}
+    if not isinstance(data, dict):
+        data = {}
+    if ok:
+        data["last_ok"] = time.time()
+        data["last_ok_model"] = model
+    else:
+        fails = [f for f in (data.get("fails") or []) if isinstance(f, dict)][-9:]
+        fails.append({"at": time.time(), "model": model, "why": str(why)[:200], "secs": round(secs, 1)})
+        data["fails"] = fails
+    try:
+        with open(LOCAL_ANSWERS, "w", encoding="utf-8") as f:
+            json.dump(data, f)
+    except OSError:
+        pass
+
+
 def local_model_chat(message, history=None, cfg=None):
     """Ask the on-device model. Returns None if it cannot answer.
 
@@ -2474,6 +2501,7 @@ def local_model_chat(message, history=None, cfg=None):
                 data = json.loads(response.read().decode("utf-8"))
             reply = ((data.get("message") or {}).get("content") or "").strip()
             if reply:
+                note_local_answer(model, True)
                 return reply
             why = "empty reply"
         except Exception as exc:  # noqa: BLE001 - logged, then the caller says it could not answer
@@ -2483,6 +2511,7 @@ def local_model_chat(message, history=None, cfg=None):
                 time.sleep(5)
         print(f"on-device model {model} did not answer (try {attempt}): {why}", flush=True)
         if attempt == 2 or time.time() - started > 30:
+            note_local_answer(model, False, why, time.time() - started)
             return None
     return None
 
@@ -5150,7 +5179,7 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                 r = subprocess.run(["systemd-run", "--quiet", "--collect", "--wait", "--pipe",
                                     f"--unit=sudo-report-now-{int(time.time() * 1000)}",
                                     "/usr/bin/python3", REPORT_SCRIPT, "send-now"],
-                                   capture_output=True, text=True, timeout=90)
+                                   capture_output=True, text=True, timeout=150)
                 out = json.loads((r.stdout or "{}").strip().splitlines()[-1])
             except (OSError, subprocess.SubprocessError, ValueError, IndexError):
                 out = {}
