@@ -155,9 +155,11 @@ else
     -H "User-Agent: sudo-updater" \
     "$RELEASES_API" 2>>"$LOG")"
   if [ -z "$release_json" ]; then
-    # No releases published yet, or offline. Not an error worth alarming about:
-    # the device simply stays on its current version.
-    write_status "idle" "No published releases found — staying on ${CURRENT}." "$CURRENT" ""
+    # GitHub could not be reached (offline, a slow line, its rate limit).
+    # Not alarming -- the device stays on its current version and tries
+    # again -- but not "up to date" either: the dashboard showed that green
+    # pill while a device sat two releases behind.
+    write_status "offline" "Couldn't reach GitHub to check for updates. Still on ${CURRENT}; try again in a few minutes." "$CURRENT" ""
     log "no release metadata"
     exit 0
   fi
