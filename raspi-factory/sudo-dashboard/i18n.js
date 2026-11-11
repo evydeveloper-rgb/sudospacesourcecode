@@ -6578,6 +6578,7 @@ I18N.add('ar', {
 
 // ---- Pi password (Home > On-device models) -----------------------------------
 I18N.add('en', {
+  "pw.summary": "For logging in and sudo",
   "pw.title": "Pi password",
   "pw.intro": "The password of the Pi's own account. You need it to log in with a keyboard and screen, over SSH, and when a command run with <code>sudo</code> asks for it.",
   "pw.account": "Account",
@@ -6594,6 +6595,7 @@ I18N.add('en', {
   "pw.saved": "Saved. Use this password to log in and for sudo."
 });
 I18N.add('es', {
+  "pw.summary": "Para entrar y para sudo",
   "pw.title": "Contraseña de la Pi",
   "pw.intro": "La contraseña de la cuenta de la propia Pi. La necesitas para entrar con teclado y pantalla, por SSH y cuando un comando con <code>sudo</code> la pide.",
   "pw.account": "Cuenta",
@@ -6610,6 +6612,7 @@ I18N.add('es', {
   "pw.saved": "Guardada. Usa esta contraseña para entrar y para sudo."
 });
 I18N.add('zh', {
+  "pw.summary": "用于登录和 sudo",
   "pw.title": "Pi 密码",
   "pw.intro": "Pi 自身账户的密码。用键盘和屏幕登录、通过 SSH 登录，以及用 <code>sudo</code> 运行命令时都需要它。",
   "pw.account": "账户",
@@ -6626,6 +6629,7 @@ I18N.add('zh', {
   "pw.saved": "已保存。登录和使用 sudo 时都用这个密码。"
 });
 I18N.add('ar', {
+  "pw.summary": "لتسجيل الدخول ولـ sudo",
   "pw.title": "كلمة مرور الـ Pi",
   "pw.intro": "كلمة مرور حساب الـ Pi نفسه. تحتاجها لتسجيل الدخول بلوحة مفاتيح وشاشة، وعبر SSH، وعندما يطلبها أمر يُشغَّل بـ <code>sudo</code>.",
   "pw.account": "الحساب",

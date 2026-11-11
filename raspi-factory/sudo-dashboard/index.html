@@ -1495,32 +1495,6 @@
             <h3 class="lm-h" data-i18n="lm.yourPi">Your Pi</h3>
             <div class="lm-specs" id="lm-specs"><p class="microcopy" data-i18n="lm.loading">Reading the device…</p></div>
 
-            <h3 class="lm-h" data-i18n="pw.title">Pi password</h3>
-            <div class="lm-login" id="lm-login">
-              <p class="microcopy" data-i18n-html="pw.intro">The password of the Pi's own account. You need it to log in with a keyboard and screen, over SSH, and when a command run with <code>sudo</code> asks for it.</p>
-              <div class="lm-login-now">
-                <div>
-                  <small data-i18n="pw.account">Account</small>
-                  <strong id="lm-login-user" dir="ltr">…</strong>
-                </div>
-                <div>
-                  <small data-i18n="pw.password">Password</small>
-                  <strong id="lm-login-pw" dir="ltr">…</strong>
-                </div>
-                <button class="soft-button" id="lm-login-copy" type="button" data-i18n="set.access.copy" hidden>Copy</button>
-              </div>
-              <p class="microcopy" id="lm-login-note"></p>
-              <div class="lm-login-change" id="lm-login-change">
-                <label for="lm-login-new" data-i18n="pw.newLabel">New password</label>
-                <input id="lm-login-new" type="text" autocomplete="new-password" spellcheck="false" dir="ltr" data-i18n-attr="placeholder:pw.newPh" placeholder="8 characters or more">
-                <div class="lm-login-actions">
-                  <button class="primary-button" id="lm-login-save" type="button" data-i18n="pw.save">Set this password</button>
-                  <button class="soft-button" id="lm-login-make" type="button" data-i18n="pw.make">Make one for me</button>
-                </div>
-              </div>
-              <p class="form-status" id="lm-login-status" role="status"></p>
-            </div>
-
             <h3 class="lm-h" data-i18n="lm.runningNow">Running now</h3>
             <div class="lm-progress" id="lm-progress" hidden>
               <div class="lm-progress-head"><strong id="lm-progress-title"></strong><span id="lm-progress-pct"></span></div>
@@ -2367,6 +2341,37 @@
               <button class="primary-button" id="save-hostname" type="button" data-i18n="set.access.renameDevice">Rename device</button>
               <p class="form-status" id="hostname-status" role="status"></p>
               <div class="info-bubble" id="hostname-done" style="border-inline-start-color: var(--ok);"></div>
+            </div>
+          </section>
+          <section class="setting-card" id="pi-password-setting">
+            <button class="setting-head" type="button" aria-expanded="false">
+              <span class="setting-icon">•••</span>
+              <span><strong data-i18n="pw.title">Pi password</strong><small id="pi-password-summary" data-i18n="pw.summary">For logging in and sudo</small></span>
+              <span class="chevron">›</span>
+            </button>
+            <div class="setting-body lm-login" id="lm-login">
+              <p class="section-intro" data-i18n-html="pw.intro">The password of the Pi's own account. You need it to log in with a keyboard and screen, over SSH, and when a command run with <code>sudo</code> asks for it.</p>
+              <div class="lm-login-now">
+                <div>
+                  <small data-i18n="pw.account">Account</small>
+                  <strong id="lm-login-user" dir="ltr">…</strong>
+                </div>
+                <div>
+                  <small data-i18n="pw.password">Password</small>
+                  <strong id="lm-login-pw" dir="ltr">…</strong>
+                </div>
+                <button class="soft-button" id="lm-login-copy" type="button" data-i18n="set.access.copy" hidden>Copy</button>
+              </div>
+              <p class="microcopy" id="lm-login-note"></p>
+              <div class="lm-login-change" id="lm-login-change">
+                <label for="lm-login-new" data-i18n="pw.newLabel">New password</label>
+                <input id="lm-login-new" type="text" autocomplete="new-password" spellcheck="false" dir="ltr" data-i18n-attr="placeholder:pw.newPh" placeholder="8 characters or more">
+                <div class="lm-login-actions">
+                  <button class="primary-button" id="lm-login-save" type="button" data-i18n="pw.save">Set this password</button>
+                  <button class="soft-button" id="lm-login-make" type="button" data-i18n="pw.make">Make one for me</button>
+                </div>
+              </div>
+              <p class="form-status" id="lm-login-status" role="status"></p>
             </div>
           </section>
           <section class="setting-card" id="reset-setting">
@@ -3622,7 +3627,7 @@
       });
       $('mseg-cloud').hidden = name !== 'cloud';
       $('mseg-local').hidden = name !== 'local';
-      if (name === 'local') { loadLocalModels(); loadPiLogin(); }
+      if (name === 'local') loadLocalModels();
       else stopLocalPoll();
     }
 
@@ -4454,6 +4459,7 @@
       if (id === 'wifi-setting') openWifi();
       if (id === 'ssh-setting') loadTailscale();
       if (id === 'providers-setting') loadOpenRouterAccount();
+      if (id === 'pi-password-setting') loadPiLogin();
     }
 
     // --- The owner's own Tailscale (tailscale.sh on the device) ------------------
