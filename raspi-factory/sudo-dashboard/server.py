@@ -5773,6 +5773,11 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             v = app_icon_state()["version"]
             icon = f'<link rel="apple-touch-icon" href="/app-icon.png?v={v}">'.encode()
             data = data.replace(b"</head>", icon + b"</head>", 1)
+            # Which version this page is. After an update the page compares
+            # it with the device's and reloads itself; it used to keep showing
+            # the old page under a "1.0.60" version line.
+            ver = re.sub(r"[^0-9A-Za-z.\-]", "", read_text(VERSION_FILE) or "")[:32]
+            data = data.replace(b"</head>", f'<meta name="sudo-version" content="{ver}">'.encode() + b"</head>", 1)
             if os.path.isfile("/opt/sudo/theme.css"):
                 link = b'<link rel="stylesheet" href="/theme.css">'
                 data = data.replace(b"</head>", link + b"</head>", 1)

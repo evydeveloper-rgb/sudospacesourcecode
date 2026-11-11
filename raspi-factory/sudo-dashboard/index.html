@@ -2673,9 +2673,32 @@
     // Refresh when the tab is looked at again, rather than polling a device
     // that is usually idle.
     document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') refreshStatus();
+      if (document.visibilityState === 'visible') { refreshStatus(); reloadIfUpdated(); }
     });
-    window.addEventListener('focus', refreshStatus);
+
+    // The page is the version it was loaded as. An update changes the files
+    // on the device, but a page already open (a home-screen app especially)
+    // keeps the old screens while its version line, read live, says the new
+    // number. Reload once the device is on a different version -- unless
+    // something is half-typed in the chat box, which waits for next time.
+    const PAGE_VERSION = (document.querySelector('meta[name="sudo-version"]') || {}).content || '';
+    async function reloadIfUpdated(tries = 1) {
+      if (!PAGE_VERSION) return;
+      try {
+        const info = await api('/api/agent/update', {}, 8000);
+        if (!info.current || info.current === PAGE_VERSION) return;
+        if (['checking', 'downloading', 'applying'].includes(info.state)) return;
+        const typing = $('chat-input') && $('chat-input').value.trim();
+        if (!typing) location.reload();
+      } catch (_) {
+        // The dashboard restarts at the end of an update; try again shortly.
+        if (tries < 6) setTimeout(() => reloadIfUpdated(tries + 1), 4000);
+      }
+    }
+    window.addEventListener('focus', () => { refreshStatus(); reloadIfUpdated(); });
+    // A page left open in front (a wall tablet, a desk) through an overnight
+    // update: look every five minutes while it is on screen.
+    setInterval(() => { if (document.visibilityState === 'visible') reloadIfUpdated(); }, 5 * 60 * 1000);
 
     // While a screen is sitting on the welcome flow it is the one place
     // staleness actually costs something: setup finished elsewhere would
@@ -6605,6 +6628,7 @@
           updatePollTimer = setTimeout(pollUpdate, 3000);
         } else if (info.state === 'done') {
           setTimeout(() => pollStatus(), 1500);
+          setTimeout(() => reloadIfUpdated(), 3000);
         }
       } catch (_) {
         updatePollTimer = setTimeout(pollUpdate, 5000);
