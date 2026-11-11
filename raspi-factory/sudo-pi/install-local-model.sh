@@ -156,8 +156,8 @@ need_zstd() {
 
 # Ollama's own installer streams the runtime -- 1.6GB for a Pi -- through a
 # single curl straight into tar, with no retry: one drop anywhere and the
-# whole install fails, and the next try starts again from zero. A Pi on a
-# home line in Puerto Rico never got past it ("Could not install the model
+# whole install fails, and the next try starts again from zero. A Pi on an
+# uneven home line never got past it ("Could not install the model
 # runtime"). On a Pi it is downloaded here instead: into a file that
 # survives a cut or a reboot, resumed where it stopped, checked, and only
 # then unpacked where the official installer puts it (/usr/local).
