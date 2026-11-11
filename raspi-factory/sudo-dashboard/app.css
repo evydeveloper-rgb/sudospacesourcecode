@@ -130,6 +130,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   height: var(--vvh, 100dvh);
   margin: 0 auto;
   position: relative;
+  /* Follows the visible area down while the iPhone keyboard is up (see
+     setKeyboardOpen); 0 everywhere else. */
+  top: var(--vvt, 0px);
   background: var(--veil);
   display: flex; flex-direction: column; overflow: hidden;
 }
@@ -540,6 +543,15 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   overflow: hidden;
 }
 body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
+/* On a phone the keyboard leaves about 420px. The install hint and the cloud
+   banner took 236px of it, squeezing the conversation to a strip and pushing
+   the composer under the keys. They step aside while typing and come back
+   when the keyboard closes. Touch screens only: on a computer, focusing the
+   box is not a keyboard opening. */
+@media (hover: none) and (pointer: coarse) {
+  body.keyboard-open .install-hint,
+  body.keyboard-open .cloud-nudge { display: none !important; }
+}
 .public-link-strip {
   width: min(100%, 720px); margin: 0 auto 16px; padding: 9px 12px;
   display: flex; justify-content: space-between; align-items: center;

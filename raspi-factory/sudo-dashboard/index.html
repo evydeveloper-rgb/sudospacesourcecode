@@ -9136,6 +9136,15 @@
     });
     function setKeyboardOpen(open) {
       document.body.classList.toggle('keyboard-open', open);
+      // iPhone Safari does not shrink the page for the keyboard: it slides
+      // the visible area down the page (visualViewport.offsetTop). The shell
+      // is already as tall as the visible area, so it has to slide with it,
+      // or the top bar goes off the top and an empty band of the same height
+      // opens between the composer and the keys. Android resizes instead and
+      // reports 0 here. Only while typing: a pinch-zoom pans the same way
+      // and must not drag the page about.
+      const top = open && window.visualViewport ? Math.max(0, Math.round(window.visualViewport.offsetTop)) : 0;
+      document.documentElement.style.setProperty('--vvt', `${top}px`);
     }
     function syncViewportHeight() {
       if (!window.visualViewport) return;
