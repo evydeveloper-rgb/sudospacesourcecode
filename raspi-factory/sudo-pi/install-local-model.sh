@@ -27,6 +27,26 @@ LOG="/var/log/sudo-local-model.log"
 # --retry: sudo-local-model-retry.timer's run. It goes ahead only when the
 # last attempt failed, or says "installing" with nothing running, so a
 # download cut by a bad connection carries on without waiting for a restart.
+# Is the model runtime whole? "ollama is on the PATH" is not enough. The
+# runtime is one archive unpacked as it streams in; a download that drops
+# part-way leaves bin/ollama in place with part of lib/ollama missing. Then
+# `ollama pull` still works, but nothing can answer ("llama-server binary not
+# found"), and a check for the command alone called it installed for good.
+# The binary names the server it needs, so only ask for it when it does:
+# an older Ollama that runs models itself has no llama-server and is fine.
+runtime_ok() {
+  local bin
+  bin="$(command -v ollama 2>/dev/null)" || return 1
+  [ -x "$bin" ] || return 1
+  if grep -aq 'llama-server' "$bin" 2>/dev/null; then
+    local lib
+    lib="$(dirname "$(dirname "$(readlink -f "$bin")")")/lib/ollama"
+    [ -x "$lib/llama-server" ] || return 1
+    ls "$lib"/libggml-base.so* >/dev/null 2>&1 || return 1
+  fi
+  return 0
+}
+
 RETRY=""
 if [ "${1:-}" = "--retry" ]; then RETRY=1; shift; fi
 SWITCH="${1:-}"
@@ -34,6 +54,9 @@ if [ -n "$RETRY" ]; then
   case "$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("state", ""))' \
           /var/lib/sudo-localmodel-status 2>/dev/null)" in
     failed|installing) ;;
+    # "Ready" on top of a broken runtime: the state devices were left in
+    # before runtime_ok existed. Mend it rather than wait for a reboot.
+    done) runtime_ok && exit 0 ;;
     *) exit 0 ;;
   esac
 fi
@@ -238,8 +261,16 @@ runtime_download_pi() {
   command -v ollama >/dev/null 2>&1 || { RUNTIME_ERR="The model runtime unpacked but the ollama program is missing."; return 1; }
 }
 
-if ! command -v ollama >/dev/null 2>&1; then
-  set_status installing "Installing the local model runtime…" 2
+if ! runtime_ok; then
+  if command -v ollama >/dev/null 2>&1; then
+    echo "model runtime is incomplete (llama-server or its libraries missing) -- installing it again"
+    set_status installing "Part of the model runtime is missing. Installing it again…" 2
+    # Nothing can answer with it like this anyway, and its files are about
+    # to be replaced underneath it.
+    systemctl stop ollama 2>/dev/null || true
+  else
+    set_status installing "Installing the local model runtime…" 2
+  fi
   if ! need_zstd; then
     set_status failed "Could not install zstd, which unpacks the model runtime. It keeps trying." 0
     exit 1
@@ -454,6 +485,11 @@ done
 
 # The test leaves the model loaded (keep_alive above), so the owner's first
 # message does not wait for it to load into memory again.
+if [ -z "$reply" ] && ! runtime_ok; then
+  set_status failed "Part of the model runtime is missing, so the model can't start. It installs it again by itself." 0
+  echo "smoke test: no reply, and the runtime is incomplete -- marked failed so the retry reinstalls it"
+  exit 1
+fi
 if [ -z "$reply" ]; then
   fallback_to_greeter "no reply after retries"
 fi
