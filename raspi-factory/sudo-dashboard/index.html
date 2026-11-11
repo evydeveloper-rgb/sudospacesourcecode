@@ -1495,6 +1495,32 @@
             <h3 class="lm-h" data-i18n="lm.yourPi">Your Pi</h3>
             <div class="lm-specs" id="lm-specs"><p class="microcopy" data-i18n="lm.loading">Reading the device…</p></div>
 
+            <h3 class="lm-h" data-i18n="pw.title">Pi password</h3>
+            <div class="lm-login" id="lm-login">
+              <p class="microcopy" data-i18n-html="pw.intro">The password of the Pi's own account. You need it to log in with a keyboard and screen, over SSH, and when a command run with <code>sudo</code> asks for it.</p>
+              <div class="lm-login-now">
+                <div>
+                  <small data-i18n="pw.account">Account</small>
+                  <strong id="lm-login-user" dir="ltr">…</strong>
+                </div>
+                <div>
+                  <small data-i18n="pw.password">Password</small>
+                  <strong id="lm-login-pw" dir="ltr">…</strong>
+                </div>
+                <button class="soft-button" id="lm-login-copy" type="button" data-i18n="set.access.copy" hidden>Copy</button>
+              </div>
+              <p class="microcopy" id="lm-login-note"></p>
+              <div class="lm-login-change" id="lm-login-change">
+                <label for="lm-login-new" data-i18n="pw.newLabel">New password</label>
+                <input id="lm-login-new" type="text" autocomplete="new-password" spellcheck="false" dir="ltr" data-i18n-attr="placeholder:pw.newPh" placeholder="8 characters or more">
+                <div class="lm-login-actions">
+                  <button class="primary-button" id="lm-login-save" type="button" data-i18n="pw.save">Set this password</button>
+                  <button class="soft-button" id="lm-login-make" type="button" data-i18n="pw.make">Make one for me</button>
+                </div>
+              </div>
+              <p class="form-status" id="lm-login-status" role="status"></p>
+            </div>
+
             <h3 class="lm-h" data-i18n="lm.runningNow">Running now</h3>
             <div class="lm-progress" id="lm-progress" hidden>
               <div class="lm-progress-head"><strong id="lm-progress-title"></strong><span id="lm-progress-pct"></span></div>
@@ -3596,8 +3622,45 @@
       });
       $('mseg-cloud').hidden = name !== 'cloud';
       $('mseg-local').hidden = name !== 'local';
-      if (name === 'local') loadLocalModels();
+      if (name === 'local') { loadLocalModels(); loadPiLogin(); }
       else stopLocalPoll();
+    }
+
+    // --- Pi password (server.py: /api/device/login-password) ----------------
+    function renderPiLogin(d) {
+      $('lm-login-user').textContent = d.user || '—';
+      const shown = !!d.password;
+      $('lm-login-pw').textContent = shown ? d.password : (d.known ? '••••••••' : t('pw.unknown'));
+      $('lm-login-copy').hidden = !shown;
+      state.piPassword = d.password || '';
+      $('lm-login-note').textContent = d.hidden_remotely ? t('pw.remote')
+        : d.known ? t('pw.homeOnly') : t('pw.notSet');
+      $('lm-login-change').hidden = !!d.hidden_remotely;
+    }
+
+    async function loadPiLogin() {
+      try { renderPiLogin(await api('/api/device/login-password', {}, 15000)); } catch (_) {}
+    }
+
+    async function savePiLogin(generate) {
+      const status = $('lm-login-status');
+      const value = $('lm-login-new').value;
+      if (!generate && value.length < 8) { status.textContent = t('pw.tooShort'); return; }
+      status.textContent = t('common.saving');
+      try {
+        const d = await api('/api/device/login-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(generate ? { generate: true } : { password: value }),
+        }, 30000);
+        $('lm-login-new').value = '';
+        renderPiLogin(d);
+        status.textContent = t('pw.saved');
+        // Terminal access shows the same password.
+        api('/api/agent/ssh').then(renderSsh).catch(() => {});
+      } catch (error) {
+        status.textContent = error.message;
+      }
     }
 
     let localData = null;
@@ -3822,7 +3885,9 @@
         if (localData) { localData.measured = r; localData.active_loaded = true; }
         renderLocalNow(localData || {});
       } catch (error) {
-        $('lm-status').textContent = error.message;
+        const out = $('lm-test-out');
+        if (out) out.replaceChildren(lmEl('p', 'lm-test-error', error.message));
+        else $('lm-status').textContent = error.message;
         btn.disabled = false;
         btn.textContent = old;
       }
@@ -8887,6 +8952,10 @@
       if (event.key === 'Enter') finishWelcome();
     });
     $('cloud-nudge-go').addEventListener('click', startOpenRouter);
+    $('lm-login-save').addEventListener('click', () => savePiLogin(false));
+    $('lm-login-make').addEventListener('click', () => savePiLogin(true));
+    $('lm-login-new').addEventListener('keydown', event => { if (event.key === 'Enter') savePiLogin(false); });
+    $('lm-login-copy').addEventListener('click', () => copyText(state.piPassword, $('lm-login-copy')));
     $('or-connect-btn').addEventListener('click', startOpenRouter);
     $('or-code-link').addEventListener('click', startOpenRouterCode);
     $('or-code-save').addEventListener('click', sendOpenRouterCode);

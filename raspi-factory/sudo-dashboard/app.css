@@ -2793,6 +2793,21 @@ input[type="password"], input[type="tel"], input[type="number"], #ssh-key, #devi
 .lm-only .form-status:empty { display: none; }
 
 .lm-specs { padding: 16px; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface); }
+.lm-login { display: grid; gap: 12px; padding: 16px; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface); }
+.lm-login > .microcopy { margin: 0; }
+.lm-login-now { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 24px; padding: 12px; border-radius: 12px; background: var(--surface-low); }
+.lm-login-now small { display: block; color: var(--ink-3); font-size: .72rem; }
+.lm-login-now strong { display: block; font: 700 .92rem var(--font-mono); word-break: break-all; }
+.lm-login-now .soft-button { margin: 0 0 0 auto; min-height: 36px; padding: 0 14px; }
+.lm-login-change { display: grid; gap: 8px; }
+.lm-login-change[hidden] { display: none; }
+.lm-login-change input { width: 100%; }
+.lm-login-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.lm-login-actions .primary-button, .lm-login-actions .soft-button { width: auto; min-height: 44px; margin: 0; padding: 0 18px; }
+.lm-login .form-status { margin: 0; }
+.lm-login .form-status:empty { display: none; }
+.lm-test-error { margin: 8px 0 0; color: var(--error); font-size: .8rem; }
+@media (max-width: 480px) { .lm-login-actions .primary-button, .lm-login-actions .soft-button { width: 100%; } }
 .lm-spec-chips { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
 .lm-spec { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; background: var(--surface-low); }
 .lm-spec svg { width: 30px; height: 30px; flex: none; padding: 6px; border-radius: 9px; background: var(--violet-tint); fill: none; stroke: var(--primary); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }

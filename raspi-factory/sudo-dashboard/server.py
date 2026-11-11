@@ -864,6 +864,8 @@ def notify_owner(text):
 # RFC 1123, lowercased. Also the shape of a usable mDNS name.
 HOSTNAME_RE = re.compile(r"^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$")
 SSH_PENDING_KEY = "/etc/sudo/ssh_key_pending"
+LOGIN_PENDING_PW = "/etc/sudo/login_password_pending"
+PW_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789"
 # GitHub tokens: classic (ghp_), fine-grained (github_pat_), and the older
 # oauth/app/server-to-server shapes GitHub has issued over the years. Loosened
 # deliberately -- a wrong vendor prefix should not block a perfectly good
@@ -935,6 +937,20 @@ def install_ssh_key(public_key: str):
     r = run_privileged("sudo-ssh-setup", SSH_SETUP_SCRIPT, "enable-key")
     if r.returncode != 0:
         raise RuntimeError("Could not install that key — see /var/log/sudo-ssh-setup.log")
+    user, _ = login_user()
+    return user
+
+
+def set_login_password(password: str):
+    """Make `password` the Pi user's own password: logging in at the Pi,
+    over SSH, and what sudo asks for. Handed over on disk, not argv."""
+    os.makedirs(os.path.dirname(LOGIN_PENDING_PW), exist_ok=True)
+    fd = os.open(LOGIN_PENDING_PW, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        f.write(password + "\n")
+    r = run_privileged("sudo-login-password", SSH_SETUP_SCRIPT, "set-password")
+    if r.returncode != 0:
+        raise RuntimeError("Could not change the password -- see /var/log/sudo-ssh-setup.log")
     user, _ = login_user()
     return user
 
@@ -2251,6 +2267,24 @@ def ollama_call(path, body=None, method=None, timeout=10):
     with urllib.request.urlopen(request, timeout=timeout) as response:
         raw = response.read().decode("utf-8")
     return json.loads(raw) if raw.strip() else {}
+
+
+def ollama_error_text(exc):
+    """What went wrong talking to Ollama, in words someone can act on."""
+    detail = ""
+    if isinstance(exc, urllib.error.HTTPError):
+        try:
+            detail = str(json.loads(exc.read().decode("utf-8", "ignore") or "{}").get("error") or "")
+        except Exception:  # noqa: BLE001
+            detail = ""
+    if "llama-server" in detail or "binary not found" in detail:
+        return ("Part of the model runtime is missing, so the model can't start. "
+                "Sudo installs it again by itself.")
+    if isinstance(exc, (TimeoutError, socket.timeout)) or "timed out" in str(exc):
+        return "The on-device model took too long to answer. Try again in a moment."
+    if detail:
+        return f"The on-device model couldn't answer: {detail[:160]}"
+    return "The on-device model runtime didn't answer. Try again in a moment."
 
 
 def ollama_installed():
@@ -3791,6 +3825,44 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                 self.send_json({"ok": True, **setup_status(include_sensitive=False)})
                 return True
 
+        if path == "/api/device/login-password":
+            user, _ = login_user()
+            if self.command == "GET":
+                # Shown on the home network only, like the SSH password.
+                self.send_json({
+                    "user": user,
+                    "password": None if self.via_tunnel() else read_text(SSH_PASSWORD_FILE),
+                    "known": bool(read_text(SSH_PASSWORD_FILE)),
+                    "hidden_remotely": bool(self.via_tunnel()),
+                })
+                return True
+            if self.command == "POST":
+                if self.via_tunnel():
+                    self.send_json({"error": "Change the Pi password from your home Wi-Fi."}, code=403)
+                    return True
+                try:
+                    body = self.read_body_json()
+                except (ValueError, json.JSONDecodeError):
+                    self.send_json({"error": "Invalid JSON"}, code=400)
+                    return True
+                if body.get("generate"):
+                    password = "".join(secrets.choice(PW_ALPHABET) for _ in range(16))
+                else:
+                    password = str(body.get("password") or "")
+                    if len(password) < 8 or len(password) > 64:
+                        self.send_json({"error": "Use 8 to 64 characters."}, code=400)
+                        return True
+                    if any(ord(c) < 32 or ord(c) == 127 for c in password):
+                        self.send_json({"error": "Use letters, numbers and symbols only."}, code=400)
+                        return True
+                try:
+                    user = set_login_password(password)
+                except Exception as exc:  # noqa: BLE001
+                    self.send_json({"error": str(exc)}, code=500)
+                    return True
+                self.send_json({"ok": True, "user": user, "password": password, "known": True})
+                return True
+
         if path == "/api/agent/ssh":
             cfg = read_json_file(CONFIG)
             user, _ = login_user()
@@ -3826,10 +3898,8 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                     disable_ssh()
                     cfg["ssh_enabled"] = False
                     write_json_file(CONFIG, cfg)
-                    try:
-                        os.remove(SSH_PASSWORD_FILE)
-                    except OSError:
-                        pass
+                    # The password itself stays: it is the Pi's own password,
+                    # which sudo still asks for (Home > On-device models).
                     self.send_json({"ok": True, "enabled": False})
                     return True
 
@@ -4832,8 +4902,8 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                     self.send_json({"error": "Not found"}, code=404)
             except ValueError as error:
                 self.send_json({"error": str(error)}, code=400)
-            except Exception:
-                self.send_json({"error": "The on-device model runtime didn't answer. Try again in a moment."}, code=502)
+            except Exception as exc:  # noqa: BLE001
+                self.send_json({"error": ollama_error_text(exc)}, code=502)
             return True
 
         # Home tab: what the agent is running on, and what is on the device.

@@ -6575,3 +6575,69 @@ I18N.add('ar', {
   "gs.c.o2": "اسمح لـ sudo",
   "gs.c.o2b": "يصل المفتاح وحده"
 });
+
+// ---- Pi password (Home > On-device models) -----------------------------------
+I18N.add('en', {
+  "pw.title": "Pi password",
+  "pw.intro": "The password of the Pi's own account. You need it to log in with a keyboard and screen, over SSH, and when a command run with <code>sudo</code> asks for it.",
+  "pw.account": "Account",
+  "pw.password": "Password",
+  "pw.newLabel": "New password",
+  "pw.newPh": "8 characters or more",
+  "pw.save": "Set this password",
+  "pw.make": "Make one for me",
+  "pw.unknown": "Not set here yet",
+  "pw.notSet": "It's still the password typed when the card was made. Set one below and it shows here.",
+  "pw.homeOnly": "Shown on your home Wi-Fi only.",
+  "pw.remote": "Hidden over the remote link. Open the dashboard on your home Wi-Fi to see or change it.",
+  "pw.tooShort": "Use 8 characters or more.",
+  "pw.saved": "Saved. Use this password to log in and for sudo."
+});
+I18N.add('es', {
+  "pw.title": "Contraseña de la Pi",
+  "pw.intro": "La contraseña de la cuenta de la propia Pi. La necesitas para entrar con teclado y pantalla, por SSH y cuando un comando con <code>sudo</code> la pide.",
+  "pw.account": "Cuenta",
+  "pw.password": "Contraseña",
+  "pw.newLabel": "Nueva contraseña",
+  "pw.newPh": "8 caracteres o más",
+  "pw.save": "Usar esta contraseña",
+  "pw.make": "Crear una por mí",
+  "pw.unknown": "Aún no se ha puesto aquí",
+  "pw.notSet": "Sigue siendo la contraseña que se escribió al preparar la tarjeta. Pon una abajo y aparecerá aquí.",
+  "pw.homeOnly": "Solo se muestra en el Wi-Fi de tu casa.",
+  "pw.remote": "Oculta desde el enlace remoto. Abre el panel en el Wi-Fi de tu casa para verla o cambiarla.",
+  "pw.tooShort": "Usa 8 caracteres o más.",
+  "pw.saved": "Guardada. Usa esta contraseña para entrar y para sudo."
+});
+I18N.add('zh', {
+  "pw.title": "Pi 密码",
+  "pw.intro": "Pi 自身账户的密码。用键盘和屏幕登录、通过 SSH 登录，以及用 <code>sudo</code> 运行命令时都需要它。",
+  "pw.account": "账户",
+  "pw.password": "密码",
+  "pw.newLabel": "新密码",
+  "pw.newPh": "至少 8 个字符",
+  "pw.save": "设为这个密码",
+  "pw.make": "帮我生成一个",
+  "pw.unknown": "还没在这里设置",
+  "pw.notSet": "目前仍是制作这张卡时输入的密码。在下面设置一个后，它会显示在这里。",
+  "pw.homeOnly": "只在你家的 Wi-Fi 上显示。",
+  "pw.remote": "通过远程链接时隐藏。在家里的 Wi-Fi 上打开面板即可查看或修改。",
+  "pw.tooShort": "请至少使用 8 个字符。",
+  "pw.saved": "已保存。登录和使用 sudo 时都用这个密码。"
+});
+I18N.add('ar', {
+  "pw.title": "كلمة مرور الـ Pi",
+  "pw.intro": "كلمة مرور حساب الـ Pi نفسه. تحتاجها لتسجيل الدخول بلوحة مفاتيح وشاشة، وعبر SSH، وعندما يطلبها أمر يُشغَّل بـ <code>sudo</code>.",
+  "pw.account": "الحساب",
+  "pw.password": "كلمة المرور",
+  "pw.newLabel": "كلمة مرور جديدة",
+  "pw.newPh": "8 أحرف أو أكثر",
+  "pw.save": "استخدم كلمة المرور هذه",
+  "pw.make": "أنشئ واحدة لي",
+  "pw.unknown": "لم تُضبط هنا بعد",
+  "pw.notSet": "ما زالت كلمة المرور التي كُتبت عند تجهيز البطاقة. اضبط واحدة أدناه وستظهر هنا.",
+  "pw.homeOnly": "تظهر على شبكة Wi-Fi المنزلية فقط.",
+  "pw.remote": "مخفية عبر الرابط البعيد. افتح اللوحة على شبكة Wi-Fi المنزلية لتراها أو تغيّرها.",
+  "pw.tooShort": "استخدم 8 أحرف أو أكثر.",
+  "pw.saved": "تم الحفظ. استخدم كلمة المرور هذه لتسجيل الدخول ولـ sudo."
+});
