@@ -144,6 +144,9 @@ rm -f /var/lib/sudo-usage.json /var/lib/sudo-channel-alert.json /var/lib/sudo-te
 if [ -f /etc/sudo/ssh_password ] || [ -f /etc/ssh/sshd_config.d/05-sudo-user.conf ]; then
     /usr/local/bin/sudo-setup-ssh.sh disable 2>/dev/null || true
 fi
+# The Pi password's saved copy goes too. On a device set up since 1.0.62,
+# sudo-first-password.service then gives the account a new random password
+# on the next boot, so a new owner never inherits the last one's.
 rm -f /etc/sudo/ssh_password /etc/sudo/ssh_key_pending
 
 # NOTE: no dev-key SSH teardown here on purpose — see the header.

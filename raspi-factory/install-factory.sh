@@ -177,6 +177,7 @@ chmod +x /usr/local/bin/sudo-screenshot
 cp "${BOOT}/sudo-pi/migrate-config.py" /usr/local/bin/sudo-migrate-config.py
 chmod +x /usr/local/bin/sudo-migrate-config.py
 cp "${BOOT}/sudo-pi/setup-ssh.sh" /usr/local/bin/sudo-setup-ssh.sh
+cp "${BOOT}/sudo-pi/first-password.sh" /usr/local/bin/sudo-first-password.sh
 cp "${BOOT}/sudo-pi/install-local-model.sh" /usr/local/bin/sudo-install-local-model.sh
 cp "${BOOT}/sudo-pi/set-hostname.sh" /usr/local/bin/sudo-set-hostname.sh
 cp "${BOOT}/sudo-pi/set-timezone.sh" /usr/local/bin/sudo-set-timezone.sh
@@ -230,6 +231,7 @@ chmod +x /usr/local/bin/sudo-device-id.sh \
          /usr/local/bin/sudo-remote-access.sh \
          /usr/local/bin/sudo-install-devtools.sh \
          /usr/local/bin/sudo-setup-ssh.sh \
+         /usr/local/bin/sudo-first-password.sh \
          /usr/local/bin/sudo-install-local-model.sh \
          /usr/local/bin/sudo-set-hostname.sh \
          /usr/local/bin/sudo-set-timezone.sh \
@@ -604,6 +606,29 @@ rm -f /etc/systemd/system/captive-portal.service
 rm -f /etc/systemd/system/iptables-restore.service
 rm -f /etc/systemd/system/iptables-save.service
 rm -f /usr/local/bin/captive-portal.sh
+
+# ── The Pi's own password: random, and this device's alone ─────────────────
+# Imager wrote the account, with whatever password it was given -- the same on
+# every card flashed with the same settings. Replace it with a random one the
+# owner can see and change in Settings > This device > Pi password. Runs while
+# no password is saved: this first boot, and the first boot after Reset setup
+# (which clears it). The account can appear after this script has run, so the
+# helper waits for it.
+cat > /etc/systemd/system/sudo-first-password.service << 'EOF'
+[Unit]
+Description=Give the Pi's account a random password of its own
+After=cloud-init.target
+ConditionPathExists=!/etc/sudo/ssh_password
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/sudo-first-password.sh
+TimeoutStartSec=700
+
+[Install]
+WantedBy=multi-user.target
+EOF
+systemctl enable sudo-first-password.service 2>/dev/null || true
 
 # ── Dev SSH access (only when prepare-sd.sh --dev staged a key) ─────────────
 if [ -f "${BOOT}/dev-authorized_keys" ]; then
