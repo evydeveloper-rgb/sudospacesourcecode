@@ -232,7 +232,6 @@
           <!-- step 2 — carry on at a computer (phones only, optional) -->
           <div class="welcome-step" id="welcome-step1" hidden>
             <h1 data-i18n="wel.deskTitle">continue on a computer?</h1>
-            <p class="lede" data-i18n="wel.deskLede">The rest is easier on a bigger screen. Optional.</p>
             <div class="wel-desk-art" aria-hidden="true">
               <svg viewBox="0 0 220 96">
                 <rect class="a-dev" x="14" y="18" width="38" height="66" rx="8"/><rect class="a-scr" x="19" y="26" width="28" height="46" rx="3"/>
@@ -242,14 +241,14 @@
               </svg>
             </div>
             <ol class="wel-desk-steps">
-              <li><b>1</b><div><span data-i18n-html="wel.desk1">On a computer on the <strong>same Wi‑Fi</strong> as this phone</span> <em class="wel-ssid" id="wel-ssid" hidden></em></div></li>
+              <li><b>1</b><div><span id="wel-desk1-any" data-i18n-html="wel.desk1">On a computer on the <strong>same Wi‑Fi</strong> as this phone</span><span id="wel-desk1-on" data-i18n="wel.desk1On" hidden>On a computer on</span> <em class="wel-ssid" id="wel-ssid" hidden></em></div></li>
               <li><b>2</b><span data-i18n="wel.desk2">open this address:</span></li>
             </ol>
             <div class="wel-addr"><code id="wel-addr-name"></code><button type="button" class="soft-button" data-copy-from="wel-addr-name" data-i18n="common.copy">Copy</button></div>
-            <div class="wel-addr-alt" id="wel-addr-ip-row" hidden>
-              <small data-i18n="wel.deskIpHint">If it does not open on your computer, use this one:</small>
+            <details class="wel-addr-alt" id="wel-addr-ip-row" hidden>
+              <summary data-i18n="wel.deskNotLoading">Link not loading?</summary>
               <div class="wel-addr"><code id="wel-addr-ip"></code><button type="button" class="soft-button" data-copy-from="wel-addr-ip" data-i18n="common.copy">Copy</button></div>
-            </div>
+            </details>
             <p class="microcopy" data-i18n="wel.deskResume">You pick up right where you left off.</p>
             <button class="primary-button" id="welcome-phone" type="button" data-i18n="wel.deskStay">Continue on this phone</button>
             <button class="ghost-button" id="welcome-back" type="button" data-i18n="welcome.back">← Back</button>
@@ -3309,8 +3308,11 @@
         const ip = a.ip_url && a.ip_url !== primary ? a.ip_url : '';
         $('wel-addr-ip').textContent = ip;
         $('wel-addr-ip-row').hidden = !ip;
+        // With the Wi-Fi's name, the line reads "On a computer on <name>".
         $('wel-ssid').textContent = a.ssid || '';
         $('wel-ssid').hidden = !a.ssid;
+        $('wel-desk1-on').hidden = !a.ssid;
+        $('wel-desk1-any').hidden = !!a.ssid;
       } catch (_) { /* the name shown is still right */ }
     }
 

@@ -3287,3 +3287,9 @@ input[type="password"], input[type="tel"], input[type="number"], #ssh-key, #devi
 .wc-paste[hidden] { display: none; }
 /* Setup: apps */
 .wx-open { font-weight: 700; color: var(--primary, #4f3fc9); white-space: nowrap; }
+
+.wel-addr-alt summary { cursor: pointer; color: var(--ink-3); font-size: .82rem; font-weight: 600; list-style: none; }
+.wel-addr-alt summary::-webkit-details-marker { display: none; }
+.wel-addr-alt summary::after { content: " ⌄"; }
+.wel-addr-alt[open] summary { margin-bottom: 8px; }
+.wel-ssid::before { content: "📶 "; }
