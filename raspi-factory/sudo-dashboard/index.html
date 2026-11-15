@@ -404,10 +404,6 @@
           </button>
           <label class="sr-only" for="chat-input" data-i18n="chat.messageYourAgent">Message your agent</label>
           <textarea id="chat-input" dir="auto" rows="1" maxlength="2000" placeholder="ask sudo anything…" enterkeyhint="send" data-i18n-attr="placeholder:chat.askSudoAnything"></textarea>
-          <button class="composer-model" id="composer-model" type="button" aria-label="Model: Automatic" title="Choose the model" data-i18n-attr="title:chat.chooseTheModel">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>
-            <em id="composer-model-label">Auto</em>
-          </button>
           <button class="composer-bg" id="composer-bg" type="button" aria-pressed="false" aria-label="Run in the background" title="Run in the background" data-i18n-attr="aria-label:chat.runInBackground,title:chat.runInBackground">
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>
           </button>
@@ -7096,23 +7092,7 @@
       $('routing-summary').textContent = auto
         ? t('set.routing.automatic')
         : ($('model').selectedOptions[0]?.textContent.split('·')[0].trim() || t('routing.fixed'));
-      renderComposerModel();
       if (save) saveProfile();
-    }
-
-    // The composer's model chip mirrors the routing choice: "Auto" while sudo
-    // picks the model itself, otherwise the chosen model's short name. Tapping
-    // it opens Model & routing in Settings rather than duplicating the picker.
-    function renderComposerModel() {
-      const chip = $('composer-model');
-      const label = $('composer-model-label');
-      if (!chip || !label) return;
-      const auto = state.routing !== 'fixed';
-      const name = auto
-        ? t('routing.auto')
-        : (($('model').selectedOptions[0]?.textContent.split('·')[0].trim()) || t('guide.cloud.model'));
-      label.textContent = name;
-      chip.setAttribute('aria-label', t('routing.chipAria', { name: auto ? t('set.routing.automatic') : name }));
     }
 
     // The composer's + starts a clean conversation, the same thing the old
@@ -9246,10 +9226,6 @@
     $('hub-cc-open').addEventListener('click', () => { setTab('settings'); openSettingPage('ssh-setting'); });
     initSetupGuide();
     initIcons();
-    $('composer-model').addEventListener('click', () => {
-      setTab('settings');
-      openSettingPage('routing-setting');
-    });
     // Run in the background: a toggle, not a one-shot, so you can send a few
     // long jobs in a row without re-arming it each time. It stays on until
     // tapped off.

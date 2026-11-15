@@ -613,18 +613,15 @@ body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
 /* Composer actions: the + (fresh chat) and the model chip. Both are plain
    icon buttons that sit inline with the field, so they stay quiet until
    touched. */
-.composer-add, .composer-model {
+.composer-add {
   flex: none; align-self: center; display: grid; place-items: center;
   border: 0; background: transparent; color: var(--muted); cursor: pointer;
   border-radius: 10px; height: 42px;
 }
 .composer-add { width: 40px; }
 .composer-add svg { width: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
-.composer-add:hover, .composer-model:hover { color: var(--ink); background: var(--surface-soft); }
-.composer-add:focus-visible, .composer-model:focus-visible { outline: 3px solid rgba(52, 0, 117, .22); outline-offset: 2px; }
-.composer-model { width: auto; grid-auto-flow: column; gap: 5px; padding: 0 9px; }
-.composer-model svg { width: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
-.composer-model em { font-style: normal; font-size: .78rem; font-weight: 650; color: currentColor; }
+.composer-add:hover { color: var(--ink); background: var(--surface-soft); }
+.composer-add:focus-visible { outline: 3px solid rgba(52, 0, 117, .22); outline-offset: 2px; }
 .send-button {
   width: 36px; height: 36px; flex: none; align-self: center; display: grid; place-items: center;
   border: 0; border-radius: 10px; background: var(--send-bg); cursor: pointer;
