@@ -408,6 +408,48 @@ def remote_enabled():
     return os.path.isfile(REMOTE_MARKER)
 
 
+def default_remote_on():
+    """New setups start with the anywhere link on.
+
+    Setup opens on the home link (the only one that exists while sudo is on
+    its own Wi-Fi), and "Next" moves the owner to the Cloudflare link so the
+    address they keep works away from home too. Only for a device nobody has
+    set up yet and that never chose: Reset setup clears the choice, an owner
+    who turned it off keeps it off.
+    """
+    cfg = read_json_file(CONFIG)
+    if cfg.get("profile_done") or "remote_access" in cfg:
+        return
+    if not os.path.isfile(WIFI_MARKER):
+        return
+    cfg["remote_access"] = True
+    write_json_file(CONFIG, cfg)
+    run_remote_access(True)
+
+
+# "Next" on the home link hands the owner to the anywhere link already signed
+# in: a one-time code, good for five minutes, swapped for a session there.
+HANDOFFS = {}
+HANDOFF_TTL = 300
+HANDOFF_PATH = "/api/setup/claim"
+
+
+def handoff_issue():
+    now = time.time()
+    for k in [k for k, exp in HANDOFFS.items() if exp < now]:
+        HANDOFFS.pop(k, None)
+    while len(HANDOFFS) >= 8:
+        HANDOFFS.pop(next(iter(HANDOFFS)))
+    token = secrets.token_urlsafe(24)
+    HANDOFFS[token] = now + HANDOFF_TTL
+    return token
+
+
+def handoff_take(token):
+    exp = HANDOFFS.pop(token, None) if token else None
+    return bool(exp and exp >= time.time())
+
+
 CMDLINE = "/boot/firmware/cmdline.txt"
 
 
@@ -3630,8 +3672,46 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             self.redirect(f"/?openrouter={result}")
             return True
 
+        # The other half of "Next" on the home link: the one-time code becomes
+        # a session on this (public) address. Before the password check, like
+        # the OpenRouter callback, because the owner is not signed in here
+        # yet. The page then moves itself to /, so the SameSite=Strict cookie
+        # goes along -- a redirect from a cross-site arrival would drop it.
+        if path == HANDOFF_PATH and self.command == "GET":
+            q = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            if not handoff_take((q.get("t") or [""])[0]):
+                self.redirect("/")
+                return True
+            page = (b'<!doctype html><meta charset="utf-8"><meta name="viewport" '
+                    b'content="width=device-width,initial-scale=1"><title>sudo</title>'
+                    b'<script>location.replace("/")</script>')
+            self.send_bytes(page, extra_headers=[
+                ("Set-Cookie", self.session_cookie_header(make_session_token())),
+                ("Cache-Control", "no-store"),
+            ])
+            return True
+
         # Everything below requires session
         if not self.require_auth():
+            return True
+
+        if path == "/api/setup/handoff" and self.command == "POST":
+            # Only from home: on the public link it would hand out sessions.
+            if self.via_tunnel():
+                self.send_json({"error": "Only on your home Wi-Fi"}, code=403)
+                return True
+            if not remote_enabled():
+                cfg = read_json_file(CONFIG)
+                cfg["remote_access"] = True
+                write_json_file(CONFIG, cfg)
+                run_remote_access(True)
+                self.send_json({"starting": True})
+                return True
+            url = public_url()
+            if not url:
+                self.send_json({"starting": True})
+                return True
+            self.send_json({"url": url.rstrip("/") + HANDOFF_PATH + "?t=" + handoff_issue()})
             return True
 
         if path == "/api/openrouter/start" and self.command == "GET":
@@ -5887,6 +5967,7 @@ if __name__ == "__main__":
 
         server = Fallback((BIND, PORT), DashboardHandler)
 
+    default_remote_on()
     threading.Thread(target=telegram_local_loop, name="telegram-local", daemon=True).start()
     threading.Thread(target=channel_watch_loop, name="channel-watch", daemon=True).start()
 

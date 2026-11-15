@@ -3198,3 +3198,23 @@ input[type="password"], input[type="tel"], input[type="number"], #ssh-key, #devi
 .ts-block .primary-button, .ts-block .ghost-button { margin-top: 10px; }
 .ts-link { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
 .ts-link[hidden] { display: none; }
+
+/* Before setup: the home link hands over to the anywhere link. */
+.ws-art { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 6px 0 22px; }
+.ws-ico {
+  flex: none; width: 58px; height: 58px; display: grid; place-items: center;
+  border-radius: 18px; background: var(--primary-fixed, #ece9ff); color: var(--primary, #4f3fc9);
+}
+.ws-ico.on { background: var(--coral, #fe6944); color: #fff; box-shadow: 0 8px 18px rgba(254,105,68,.28); }
+.ws-ico svg { width: 28px; height: 28px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.ws-arrow { width: 22px; height: 22px; fill: none; stroke: var(--ink-3, #888); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.wl-cards { display: grid; gap: 10px; margin: 6px 0 20px; }
+.wl-card { display: flex; gap: 12px; align-items: flex-start; padding: 14px; border-radius: 18px; background: var(--surface, #fff); border: 1px solid var(--line, #e6e3ee); }
+.wl-card .ws-ico { width: 44px; height: 44px; border-radius: 14px; }
+.wl-card .ws-ico svg { width: 22px; height: 22px; }
+.wl-card b { display: block; margin: 2px 0 3px; }
+.wl-card p { margin: 0; font-size: .88rem; line-height: 1.4; color: var(--ink-2, #555); }
+.wl-how-title { margin: 0 0 8px; font-weight: 700; }
+.wl-how { list-style: none; margin: 0 0 20px; padding: 0; display: grid; gap: 8px; }
+.wl-how li { display: flex; gap: 10px; align-items: flex-start; font-size: .9rem; line-height: 1.4; color: var(--ink-2, #555); }
+.wl-how b { flex: none; width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; background: var(--coral, #fe6944); color: #fff; font-size: .72rem; }

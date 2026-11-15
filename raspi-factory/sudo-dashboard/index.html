@@ -169,6 +169,37 @@
           </label>
           <div class="welcome-steps" id="welcome-dots" aria-hidden="true"></div>
 
+          <!-- before setup, on the home link: Next moves to the anywhere link -->
+          <div class="welcome-step" id="welcome-start" hidden>
+            <div class="ws-art" aria-hidden="true">
+              <span class="ws-ico"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg></span>
+              <svg class="ws-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+              <span class="ws-ico on"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></span>
+            </div>
+            <h1 data-i18n="ws.title">let’s set up your sudo.</h1>
+            <p class="lede" data-i18n="ws.lede">Next opens your sudo link. It works at home and anywhere else.</p>
+            <button class="primary-button" id="ws-next" type="button" data-i18n="ws.next">Next</button>
+            <p class="form-status" id="ws-status" role="status"></p>
+            <button class="ghost-button" id="ws-local" type="button" data-i18n="ws.local">Use the local page instead</button>
+          </div>
+
+          <!-- what the two links are, and how to stay fully local -->
+          <div class="welcome-step" id="welcome-local" hidden>
+            <h1 data-i18n="wl.title">two ways in.</h1>
+            <div class="wl-cards">
+              <div class="wl-card"><span class="ws-ico on"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></span><div><b data-i18n="wl.anyName">Your sudo link</b><p data-i18n="wl.anyNote">Cloudflare made it when sudo joined your Wi‑Fi. Works anywhere, asks for your password.</p></div></div>
+              <div class="wl-card"><span class="ws-ico"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg></span><div><b data-i18n="wl.homeName">Local page</b><p data-i18n="wl.homeNote">Only on your home Wi‑Fi. Nothing goes through Cloudflare.</p></div></div>
+            </div>
+            <p class="wl-how-title" data-i18n="wl.howTitle">To keep it fully local</p>
+            <ol class="wl-how">
+              <li><b>1</b><span data-i18n="wl.how1">Tap Keep it local. The link turns off.</span></li>
+              <li><b>2</b><span data-i18n="wl.how2">Want it away from home too? Connect your own Tailscale later in Settings → Developer access.</span></li>
+            </ol>
+            <button class="primary-button" id="wl-keep" type="button" data-i18n="wl.keep">Keep it local</button>
+            <button class="ghost-button" id="wl-back" type="button" data-i18n="wl.back">Use my sudo link</button>
+            <p class="form-status" id="wl-status" role="status"></p>
+          </div>
+
           <!-- step 1 — put it on the home screen -->
           <div class="welcome-step" id="welcome-step0">
             <h1 id="welcome-title" data-i18n="welcome.letSMakeThis">let’s make this yours.</h1>
@@ -2996,6 +3027,10 @@
     function renderWelcomeStep(step) {
       state.welcomeStep = step;
       for (let i = 0; i < WELCOME_STEPS; i += 1) $('welcome-step' + i).hidden = step !== i;
+      $('welcome-start').hidden = true;
+      $('welcome-local').hidden = true;
+      $('welcome-dots').hidden = false;
+      $('step-now').parentElement.style.visibility = '';
       $('view-welcome').classList.toggle('wide', step === 3);
       $('welcome-back-2').hidden = !isPhoneFlow();
       renderWelcomeDots();
@@ -3035,7 +3070,59 @@
 
     function initWelcome() {
       renderHowTo();
+      if (offerAnywhere()) { showWelcomePanel('welcome-start'); return; }
       renderWelcomeStep(welcomeSeq()[0]);
+    }
+
+    // Setup opens on the home link, the only one there is while sudo is still
+    // on its own Wi-Fi. Before it starts, Next moves the owner to the anywhere
+    // (Cloudflare) link, signed in, so the address they save works away from
+    // home too. "Use the local page instead" explains both and can turn the
+    // anywhere link off.
+    function onHomeAddress() {
+      const h = location.hostname;
+      return h.endsWith('.local') || h === 'localhost' || /^127\./.test(h)
+        || /^(10|192\.168)\./.test(h) || /^172\.(1[6-9]|2\d|3[01])\./.test(h);
+    }
+    function keptLocal() {
+      try { return localStorage.getItem('sudo-keep-local') === '1'; } catch (_) { return false; }
+    }
+    function offerAnywhere() {
+      const s = state.status || {};
+      return !!s.remote_access && onHomeAddress() && !keptLocal();
+    }
+    function showWelcomePanel(id) {
+      for (let i = 0; i < WELCOME_STEPS; i += 1) $('welcome-step' + i).hidden = true;
+      ['welcome-start', 'welcome-local'].forEach(x => { $(x).hidden = x !== id; });
+      $('welcome-dots').hidden = true;
+      $('step-now').parentElement.style.visibility = 'hidden';
+      $('view-welcome').classList.remove('wide');
+    }
+    async function goAnywhere() {
+      const btn = $('ws-next');
+      btn.disabled = true;
+      $('ws-status').textContent = t('ws.making');
+      // The link appears a few seconds after the tunnel starts; up to ~90 s.
+      for (let i = 0; i < 45; i += 1) {
+        const r = await api('/api/setup/handoff', { method: 'POST', body: '{}' }).catch(() => null);
+        if (r && r.url) { location.href = r.url; return; }
+        await new Promise(res => setTimeout(res, 2000));
+      }
+      btn.disabled = false;
+      $('ws-status').textContent = t('ws.slow');
+    }
+    async function keepLocal() {
+      $('wl-keep').disabled = true;
+      try {
+        await api('/api/remote-access', { method: 'POST', body: JSON.stringify({ enabled: false }) });
+        try { localStorage.setItem('sudo-keep-local', '1'); } catch (_) {}
+        if (state.status) state.status.remote_access = false;
+        renderWelcomeStep(welcomeSeq()[0]);
+      } catch (error) {
+        $('wl-status').textContent = error.message;
+      } finally {
+        $('wl-keep').disabled = false;
+      }
     }
 
     function leaveHomeScreenStep() {
@@ -3049,6 +3136,13 @@
     async function loadWelcomeAddress() {
       const name = location.hostname.endsWith('.local') ? location.origin : '';
       $('wel-addr-name').textContent = name || location.origin;
+      if (!onHomeAddress()) {
+        // On the anywhere link: this address works on any computer, anywhere.
+        $('wel-addr-ip-row').hidden = true;
+        $('wel-ssid').hidden = true;
+        document.querySelector('[data-i18n-html="wel.desk1"]').textContent = t('wel.deskAny');
+        return;
+      }
       try {
         const a = await api('/api/device/address');
         const primary = name || a.local_url || location.origin;
@@ -8967,6 +9061,10 @@
     $('welcome-next').addEventListener('click', leaveHomeScreenStep);
     $('welcome-skip').addEventListener('click', leaveHomeScreenStep);
     $('welcome-back').addEventListener('click', () => renderWelcomeStep(0));
+    $('ws-next').addEventListener('click', goAnywhere);
+    $('ws-local').addEventListener('click', () => showWelcomePanel('welcome-local'));
+    $('wl-back').addEventListener('click', () => showWelcomePanel('welcome-start'));
+    $('wl-keep').addEventListener('click', keepLocal);
     $('welcome-phone').addEventListener('click', () => renderWelcomeStep(2));
     $('welcome-back-2').addEventListener('click', () => renderWelcomeStep(1));
     $('welcome-finish').addEventListener('click', finishWelcome);
