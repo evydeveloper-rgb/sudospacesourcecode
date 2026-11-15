@@ -3284,7 +3284,12 @@ SESSION_SEEN_EVERY = 120   # seconds between "last active" writes per device
 
 
 def _sessions_read():
-    data = read_json_file(SESSIONS_FILE) if os.path.isfile(SESSIONS_FILE) else {}
+    try:
+        data = read_json_file(SESSIONS_FILE) if os.path.isfile(SESSIONS_FILE) else {}
+    except Exception:
+        data = {}
+    if not isinstance(data, dict):
+        data = {}
     data.setdefault("active", {})
     data.setdefault("revoked", {})
     now = int(time.time())
@@ -3296,12 +3301,18 @@ def _sessions_read():
 
 
 def _sessions_write(data):
-    os.makedirs("/etc/sudo", exist_ok=True)
-    tmp = SESSIONS_FILE + ".tmp"
-    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-    with os.fdopen(fd, "w", encoding="utf-8") as f:
-        json.dump(data, f)
-    os.replace(tmp, SESSIONS_FILE)
+    """Best effort: a device that cannot write here must still let people
+    sign in. Only signing a device out needs the write, and that reports it."""
+    try:
+        os.makedirs("/etc/sudo", exist_ok=True)
+        tmp = SESSIONS_FILE + ".tmp"
+        fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(data, f)
+        os.replace(tmp, SESSIONS_FILE)
+        return True
+    except OSError:
+        return False
 
 
 def session_id(nonce):
@@ -3395,7 +3406,8 @@ def sessions_revoke(ids=None, keep_nonce=None):
             data["revoked"][nonce] = int(v.get("exp") or (time.time() + SESSION_TTL))
             data["active"].pop(nonce, None)
             gone += 1
-        _sessions_write(data)
+        if gone and not _sessions_write(data):
+            raise RuntimeError("Could not save that on this device.")
     return gone
 
 
@@ -4000,7 +4012,10 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             except ValueError as exc:
                 self.send_json({"error": str(exc)}, code=400)
                 return True
-            sessions_revoke(keep_nonce=self.current_nonce())
+            try:
+                sessions_revoke(keep_nonce=self.current_nonce())
+            except RuntimeError:
+                pass
             token = make_session_token()
             self.send_json(
                 {"ok": True},
@@ -5413,14 +5428,16 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                 self.send_json({"error": "Invalid JSON"}, code=400)
                 return True
             mine = self.current_nonce()
-            if body.get("all_others"):
-                n = sessions_revoke(keep_nonce=mine)
-            else:
-                sid = str(body.get("id") or "")
-                if not sid:
-                    self.send_json({"error": "Which device?"}, code=400)
-                    return True
-                n = sessions_revoke(ids={sid})
+            sid = str(body.get("id") or "")
+            if not body.get("all_others") and not sid:
+                self.send_json({"error": "Which device?"}, code=400)
+                return True
+            try:
+                n = (sessions_revoke(keep_nonce=mine) if body.get("all_others")
+                     else sessions_revoke(ids={sid}))
+            except RuntimeError as exc:
+                self.send_json({"error": str(exc)}, code=500)
+                return True
             self.send_json({"ok": True, "signed_out": n,
                             "sessions": sessions_list(mine)})
             return True
@@ -5472,7 +5489,10 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                     return True
                 # A new password means the old one may be out there: sign
                 # every other device out.
-                sessions_revoke(keep_nonce=self.current_nonce())
+                try:
+                    sessions_revoke(keep_nonce=self.current_nonce())
+                except RuntimeError:
+                    pass
                 # Keep a readable copy so the dashboard can show it at home.
                 try:
                     os.makedirs("/etc/sudo", exist_ok=True)
