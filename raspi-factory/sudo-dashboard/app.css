@@ -3297,3 +3297,5 @@ input[type="password"], input[type="tel"], input[type="number"], #ssh-key, #devi
 .welcome-view label.wel-icon-upload { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin: 0; }
 .wel-icon-upload svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .wel-icon-h small { font-weight: 500; color: var(--ink-3); font-size: .82rem; }
+
+.wel-addr-alt > small { display: block; margin: 0 0 6px; }
