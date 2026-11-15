@@ -3231,3 +3231,23 @@ input[type="password"], input[type="tel"], input[type="number"], #ssh-key, #devi
 .sess-me { font-style: normal; font-size: .72rem; font-weight: 700; color: var(--primary, #4f3fc9); background: var(--surface, #fff); padding: 2px 7px; border-radius: 999px; margin-inline-start: 4px; }
 .sess-out { flex: none; min-height: 36px; padding: 0 14px; }
 .sess-empty { padding: 12px; border-radius: 14px; background: var(--surface-low); color: var(--ink-3); font-size: .88rem; }
+
+/* The anywhere / home-only choice: two big tappable cards. */
+.wl-choice {
+  display: flex; align-items: center; gap: 14px; width: 100%; margin: 0 0 12px; padding: 16px;
+  border: 1.5px solid var(--line, #e6e3ee); border-radius: 20px; background: var(--surface, #fff);
+  text-align: start; font: inherit; color: inherit; cursor: pointer;
+}
+.wl-choice:active { transform: scale(.99); }
+.wl-choice:hover { border-color: var(--primary, #4f3fc9); }
+.wl-big {
+  flex: none; width: 64px; height: 64px; display: grid; place-items: center; border-radius: 20px;
+  background: var(--primary-fixed, #ece9ff); color: var(--primary, #4f3fc9);
+}
+.wl-big.on { background: var(--coral, #fe6944); color: #fff; box-shadow: 0 8px 18px rgba(254,105,68,.28); }
+.wl-big svg { width: 32px; height: 32px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.wl-txt { display: grid; gap: 4px; min-width: 0; }
+.wl-txt b { font-size: 1.1rem; }
+.wl-txt small { color: var(--ink-2, #555); font-size: .88rem; line-height: 1.4; }
+.wl-txt .wl-more { color: var(--ink-3, #888); font-size: .8rem; }
+.wl-badge { font-style: normal; font-size: .7rem; font-weight: 700; vertical-align: 2px; margin-inline-start: 6px; padding: 2px 8px; border-radius: 999px; background: #d8f5dd; color: #16692b; }

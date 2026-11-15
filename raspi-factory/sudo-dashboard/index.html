@@ -177,27 +177,31 @@
               <span class="ws-ico on"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></span>
             </div>
             <h1 data-i18n="ws.title">let’s set up your sudo.</h1>
-            <p class="lede" data-i18n="ws.lede">Next opens your sudo link. It works at home and anywhere else.</p>
             <button class="primary-button" id="ws-next" type="button" data-i18n="ws.next">Next</button>
             <p class="form-status" id="ws-status" role="status"></p>
             <button class="ghost-button" id="ws-local" type="button" data-i18n="ws.local">Use the local page instead</button>
           </div>
 
-          <!-- what the two links are, and how to stay fully local -->
+          <!-- the choice, in pictures: anywhere (Cloudflare) or home Wi-Fi only -->
           <div class="welcome-step" id="welcome-local" hidden>
-            <h1 data-i18n="wl.title">two ways in.</h1>
-            <div class="wl-cards">
-              <div class="wl-card"><span class="ws-ico on"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></span><div><b data-i18n="wl.anyName">Your sudo link</b><p data-i18n="wl.anyNote">Cloudflare made it when sudo joined your Wi‑Fi. Works anywhere, asks for your password.</p></div></div>
-              <div class="wl-card"><span class="ws-ico"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg></span><div><b data-i18n="wl.homeName">Local page</b><p data-i18n="wl.homeNote">Only on your home Wi‑Fi. Nothing goes through Cloudflare.</p></div></div>
-            </div>
-            <p class="wl-how-title" data-i18n="wl.howTitle">To keep it fully local</p>
-            <ol class="wl-how">
-              <li><b>1</b><span data-i18n="wl.how1">Tap Keep it local. The link turns off.</span></li>
-              <li><b>2</b><span data-i18n="wl.how2">Want it away from home too? Connect your own Tailscale later in Settings → Developer access.</span></li>
-            </ol>
-            <button class="primary-button" id="wl-keep" type="button" data-i18n="wl.keep">Keep it local</button>
-            <button class="ghost-button" id="wl-back" type="button" data-i18n="wl.back">Use my sudo link</button>
+            <h1 data-i18n="wl.title">where will you open sudo?</h1>
+            <button class="wl-choice" id="wl-any" type="button">
+              <span class="wl-big on"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></span>
+              <span class="wl-txt">
+                <b><span data-i18n="wl.anyName">Anywhere</span> <em class="wl-badge" data-i18n="wl.easy">Easiest</em></b>
+                <small data-i18n="wl.anyNote">Any phone or computer, at home or out. Uses a Cloudflare link.</small>
+              </span>
+            </button>
+            <button class="wl-choice" id="wl-keep" type="button">
+              <span class="wl-big"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9 15.2a4.2 4.2 0 0 1 6 0"/><circle cx="12" cy="18" r=".9"/></svg></span>
+              <span class="wl-txt">
+                <b data-i18n="wl.homeName">Home Wi‑Fi only</b>
+                <small data-i18n="wl.homeNote">Only on devices on your Wi‑Fi.</small>
+                <small class="wl-more" data-i18n="wl.homeMore">Away from home later? Add Tailscale, or pick Anywhere now and turn it off later.</small>
+              </span>
+            </button>
             <p class="form-status" id="wl-status" role="status"></p>
+            <button class="ghost-button" id="wl-back" type="button" data-i18n="welcome.back">← Back</button>
           </div>
 
           <!-- step 1 — put it on the home screen -->
@@ -9186,6 +9190,7 @@
     $('ws-local').addEventListener('click', () => showWelcomePanel('welcome-local'));
     $('wl-back').addEventListener('click', () => showWelcomePanel('welcome-start'));
     $('wl-keep').addEventListener('click', keepLocal);
+    $('wl-any').addEventListener('click', () => { showWelcomePanel('welcome-start'); goAnywhere(); });
     $('welcome-phone').addEventListener('click', () => renderWelcomeStep(2));
     $('welcome-back-2').addEventListener('click', () => renderWelcomeStep(1));
     $('welcome-finish').addEventListener('click', finishWelcome);
