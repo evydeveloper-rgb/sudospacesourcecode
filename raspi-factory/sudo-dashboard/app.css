@@ -3218,3 +3218,16 @@ input[type="password"], input[type="tel"], input[type="number"], #ssh-key, #devi
 .wl-how { list-style: none; margin: 0 0 20px; padding: 0; display: grid; gap: 8px; }
 .wl-how li { display: flex; gap: 10px; align-items: flex-start; font-size: .9rem; line-height: 1.4; color: var(--ink-2, #555); }
 .wl-how b { flex: none; width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; background: var(--coral, #fe6944); color: #fff; font-size: .72rem; }
+
+/* Passwords & devices */
+.sess-list { list-style: none; margin: 10px 0 12px; padding: 0; display: grid; gap: 8px; }
+.sess-row { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 14px; background: var(--surface-low); }
+.sess-row.current { background: var(--primary-fixed, #ece9ff); }
+.sess-ico { flex: none; width: 40px; height: 40px; display: grid; place-items: center; border-radius: 12px; background: var(--surface, #fff); color: var(--primary, #4f3fc9); }
+.sess-ico svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.sess-txt { flex: 1; min-width: 0; }
+.sess-txt strong { display: block; font-size: .95rem; }
+.sess-txt small { display: block; color: var(--ink-3); font-size: .78rem; margin-top: 2px; }
+.sess-me { font-style: normal; font-size: .72rem; font-weight: 700; color: var(--primary, #4f3fc9); background: var(--surface, #fff); padding: 2px 7px; border-radius: 999px; margin-inline-start: 4px; }
+.sess-out { flex: none; min-height: 36px; padding: 0 14px; }
+.sess-empty { padding: 12px; border-radius: 14px; background: var(--surface-low); color: var(--ink-3); font-size: .88rem; }

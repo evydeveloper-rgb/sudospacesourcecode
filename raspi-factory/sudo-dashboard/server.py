@@ -3272,6 +3272,139 @@ def session_secret_key() -> bytes:
     return sec.encode("utf-8")
 
 
+# Sign-ins on the public link (and Tailscale), so Settings > Passwords &
+# devices can list them and sign any of them out. A token stays signed and
+# self-checking as before; this file adds who it was and when, and the ones
+# signed out, which are refused until they would have expired anyway.
+# Tokens made before this existed are recorded the first time they are seen,
+# so nobody is signed out by the update.
+SESSIONS_FILE = "/etc/sudo/sessions.json"
+SESSIONS_LOCK = threading.Lock()
+SESSION_SEEN_EVERY = 120   # seconds between "last active" writes per device
+
+
+def _sessions_read():
+    data = read_json_file(SESSIONS_FILE) if os.path.isfile(SESSIONS_FILE) else {}
+    data.setdefault("active", {})
+    data.setdefault("revoked", {})
+    now = int(time.time())
+    for bucket in ("active", "revoked"):
+        for k in [k for k, v in data[bucket].items()
+                  if int((v.get("exp") if isinstance(v, dict) else v) or 0) < now]:
+            data[bucket].pop(k, None)
+    return data
+
+
+def _sessions_write(data):
+    os.makedirs("/etc/sudo", exist_ok=True)
+    tmp = SESSIONS_FILE + ".tmp"
+    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        json.dump(data, f)
+    os.replace(tmp, SESSIONS_FILE)
+
+
+def session_id(nonce):
+    """What the page sees: never the nonce itself, which is half a token."""
+    return hashlib.sha256(nonce.encode("utf-8")).hexdigest()[:16]
+
+
+def device_label(ua):
+    ua = ua or ""
+    if "iPhone" in ua:
+        dev = "iPhone"
+    elif "iPad" in ua:
+        dev = "iPad"
+    elif "Android" in ua:
+        dev = "Android"
+    elif "Macintosh" in ua or "Mac OS X" in ua:
+        dev = "Mac"
+    elif "Windows" in ua:
+        dev = "Windows"
+    elif "CrOS" in ua:
+        dev = "Chromebook"
+    elif "Linux" in ua:
+        dev = "Linux"
+    else:
+        dev = ""
+    if "Edg/" in ua:
+        app = "Edge"
+    elif "SamsungBrowser" in ua:
+        app = "Samsung Internet"
+    elif "Firefox/" in ua or "FxiOS" in ua:
+        app = "Firefox"
+    elif "CriOS" in ua or ("Chrome/" in ua and "Chromium" not in ua):
+        app = "Chrome"
+    elif "Safari/" in ua:
+        app = "Safari"
+    elif ua:
+        app = ua.split("/")[0][:24]
+    else:
+        app = ""
+    return " · ".join(x for x in (dev, app) if x) or "Unknown device"
+
+
+def session_note(nonce, exp, meta=None):
+    """Record a sign-in, or refresh when it was last used. False if signed out."""
+    with SESSIONS_LOCK:
+        data = _sessions_read()
+        if nonce in data["revoked"]:
+            return False
+        now = int(time.time())
+        cur = data["active"].get(nonce)
+        if cur is None:
+            cur = {"exp": exp, "created": now, "seen": now, **(meta or {})}
+            data["active"][nonce] = cur
+            _sessions_write(data)
+        elif now - int(cur.get("seen") or 0) > SESSION_SEEN_EVERY:
+            cur["seen"] = now
+            if meta:
+                cur.update({k: v for k, v in meta.items() if v})
+            _sessions_write(data)
+        return True
+
+
+def sessions_list(current_nonce=""):
+    with SESSIONS_LOCK:
+        data = _sessions_read()
+    out = []
+    for nonce, v in data["active"].items():
+        out.append({
+            "id": session_id(nonce),
+            "device": device_label(v.get("ua")),
+            "via": v.get("via") or "link",
+            "country": v.get("country") or "",
+            "created": v.get("created"),
+            "seen": v.get("seen"),
+            "current": nonce == current_nonce,
+        })
+    out.sort(key=lambda x: (not x["current"], -(x["seen"] or 0)))
+    return out
+
+
+def sessions_revoke(ids=None, keep_nonce=None):
+    """Sign out the sessions with these ids, or every one but keep_nonce."""
+    with SESSIONS_LOCK:
+        data = _sessions_read()
+        gone = 0
+        for nonce, v in list(data["active"].items()):
+            if nonce == keep_nonce:
+                continue
+            if ids is not None and session_id(nonce) not in ids:
+                continue
+            data["revoked"][nonce] = int(v.get("exp") or (time.time() + SESSION_TTL))
+            data["active"].pop(nonce, None)
+            gone += 1
+        _sessions_write(data)
+    return gone
+
+
+def token_nonce(token):
+    if not token or token.count(".") != 2:
+        return ""
+    return token.split(".", 2)[1]
+
+
 def make_session_token() -> str:
     exp = int(time.time()) + SESSION_TTL
     nonce = secrets.token_hex(16)
@@ -3280,7 +3413,7 @@ def make_session_token() -> str:
     return f"{payload}.{sig}"
 
 
-def verify_session_token(token: str) -> bool:
+def verify_session_token(token: str, meta=None) -> bool:
     if not token or token.count(".") != 2:
         return False
     exp_s, nonce, sig = token.split(".", 2)
@@ -3294,7 +3427,9 @@ def verify_session_token(token: str) -> bool:
         return False
     payload = f"{exp_s}.{nonce}"
     expected = hmac.new(session_secret_key(), payload.encode("utf-8"), hashlib.sha256).hexdigest()
-    return hmac.compare_digest(expected, sig)
+    if not hmac.compare_digest(expected, sig):
+        return False
+    return session_note(nonce, exp, meta)
 
 
 def rate_allow(key: str, limit: int, window: float) -> bool:
@@ -3568,9 +3703,24 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
         auth = self.headers.get("Authorization", "")
         if auth.lower().startswith("bearer "):
             token = auth[7:].strip()
-            return verify_session_token(token)
+            return verify_session_token(token, self.session_meta())
         token = self.get_cookie(COOKIE_NAME)
-        return verify_session_token(token or "")
+        return verify_session_token(token or "", self.session_meta())
+
+    def session_meta(self):
+        host = (self.headers.get("Host") or "").split(":")[0].lower()
+        via = "tailscale" if host.endswith(".ts.net") else ("link" if self.via_tunnel() else "home")
+        return {
+            "ua": (self.headers.get("User-Agent") or "")[:300],
+            "via": via,
+            "country": (self.headers.get("Cf-Ipcountry") or "")[:2],
+        }
+
+    def current_nonce(self):
+        auth = self.headers.get("Authorization", "")
+        if auth.lower().startswith("bearer "):
+            return token_nonce(auth[7:].strip())
+        return token_nonce(self.get_cookie(COOKIE_NAME) or "")
 
     def require_auth(self) -> bool:
         """Passwordless at home; a password over the public link.
@@ -3637,6 +3787,13 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             return True
 
         if path == "/api/auth/logout" and self.command == "POST":
+            mine = self.current_nonce()
+            if mine:
+                with SESSIONS_LOCK:
+                    data = _sessions_read()
+                    v = data["active"].pop(mine, None)
+                    data["revoked"][mine] = int((v or {}).get("exp") or (time.time() + SESSION_TTL))
+                    _sessions_write(data)
             self.send_json(
                 {"ok": True},
                 extra_headers=[("Set-Cookie", self.clear_cookie_header())],
@@ -3843,6 +4000,7 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             except ValueError as exc:
                 self.send_json({"error": str(exc)}, code=400)
                 return True
+            sessions_revoke(keep_nonce=self.current_nonce())
             token = make_session_token()
             self.send_json(
                 {"ok": True},
@@ -3916,10 +4074,11 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                         pass
 
                 apply_settings()
-                if cfg.get("remote_access"):
-                    run_remote_access(True)
-                else:
-                    run_remote_access(False)
+                # Only when it actually changes: starting the tunnel again
+                # gives it a new address, which signed out whoever was on the
+                # old one -- including an owner mid-setup on that link.
+                if bool(cfg.get("remote_access")) != remote_enabled():
+                    run_remote_access(bool(cfg.get("remote_access")))
                 self.send_json({"ok": True, **setup_status(include_sensitive=False)})
                 return True
 
@@ -5218,6 +5377,34 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             self.send_json({"ok": True, **setup_status(include_sensitive=False)})
             return True
 
+        if path == "/api/auth/sessions" and self.command == "GET":
+            self.send_json({
+                "sessions": sessions_list(self.current_nonce()),
+                "here": "link" if self.via_tunnel() else "home",
+            })
+            return True
+
+        if path == "/api/auth/sessions/revoke" and self.command == "POST":
+            # Allowed over the link too: signing a lost phone out from
+            # somewhere else is the point.
+            try:
+                body = self.read_body_json()
+            except (ValueError, json.JSONDecodeError):
+                self.send_json({"error": "Invalid JSON"}, code=400)
+                return True
+            mine = self.current_nonce()
+            if body.get("all_others"):
+                n = sessions_revoke(keep_nonce=mine)
+            else:
+                sid = str(body.get("id") or "")
+                if not sid:
+                    self.send_json({"error": "Which device?"}, code=400)
+                    return True
+                n = sessions_revoke(ids={sid})
+            self.send_json({"ok": True, "signed_out": n,
+                            "sessions": sessions_list(mine)})
+            return True
+
         if path == "/api/auth/remote-password":
             cfg = read_json_file(CONFIG)
 
@@ -5263,6 +5450,9 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                 except ValueError as exc:
                     self.send_json({"error": str(exc)}, code=400)
                     return True
+                # A new password means the old one may be out there: sign
+                # every other device out.
+                sessions_revoke(keep_nonce=self.current_nonce())
                 # Keep a readable copy so the dashboard can show it at home.
                 try:
                     os.makedirs("/etc/sudo", exist_ok=True)

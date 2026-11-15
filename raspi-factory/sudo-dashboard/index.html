@@ -266,6 +266,22 @@
             <button class="ghost-button" id="welcome-pers-skip" type="button" data-i18n="welcome.skipForNow">Skip for now</button>
             <p class="form-status" id="pers-status" role="status"></p>
           </div>
+
+          <!-- last step on the anywhere link — a password of their own -->
+          <div class="welcome-step" id="welcome-step4" hidden>
+            <div class="ws-art" aria-hidden="true">
+              <span class="ws-ico"><svg viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M10 12l1.6 1.6L14.5 10.5"/></svg></span>
+              <svg class="ws-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+              <span class="ws-ico on"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8"/><rect x="9.5" y="9" width="5" height="4" rx="1"/><path d="M10.5 9V7.8a1.5 1.5 0 0 1 3 0V9"/></svg></span>
+            </div>
+            <h1 data-i18n="wp.title">one last thing: your password.</h1>
+            <p class="lede" data-i18n="wp.lede">sudo made a random password and signed this device in for you. To open your dashboard on other devices, set your own.</p>
+            <label for="wp-new" data-i18n="wp.label">Your password</label>
+            <input id="wp-new" type="text" autocomplete="new-password" spellcheck="false" autocapitalize="off" dir="ltr" maxlength="128" placeholder="at least 10 characters" data-i18n-attr="placeholder:set.access.atLeast10Characters">
+            <button class="primary-button" id="wp-save" type="button" data-i18n="wp.save">Save and start chatting</button>
+            <button class="ghost-button" id="wp-skip" type="button" data-i18n="welcome.skipForNow">Skip for now</button>
+            <p class="form-status" id="wp-status" role="status"></p>
+          </div>
         </div>
       </section>
 
@@ -1838,32 +1854,7 @@
                 <button class="ghost-button" id="ts-disconnect" type="button" hidden data-i18n="ts.disconnect">Disconnect Tailscale</button>
                 <p class="form-status" id="ts-status" role="status"></p>
               </div>
-              <div class="settings-subgroup" data-i18n="set.access.passwordForThePublic">password for the public link</div>
 
-              <div class="access-row">
-                <div>
-                  <strong data-i18n="set.access.askForAPassword">Ask for a password</strong>
-                  <small data-i18n="set.access.appliesToThePublic">Applies to the public link only. Your home network never asks.</small>
-                </div>
-                <label class="switch">
-                  <input id="remote-pw-toggle" type="checkbox">
-                  <span aria-hidden="true"></span>
-                  <em class="sr-only" data-i18n="set.access.requireAPasswordOn">Require a password on the public link</em>
-                </label>
-              </div>
-
-              <div class="addr-row">
-                <code id="remote-pw-value">—</code>
-                <button type="button" id="remote-pw-copy" data-i18n="set.access.copy">Copy</button>
-              </div>
-              <p class="microcopy" id="remote-pw-note">Only shown on your home network.</p>
-
-              <label for="remote-pw-new" data-i18n="set.access.changeIt">Change it</label>
-              <input id="remote-pw-new" type="password" autocomplete="new-password" spellcheck="false" placeholder="at least 10 characters" data-i18n-attr="placeholder:set.access.atLeast10Characters">
-              <button class="primary-button" id="remote-pw-save" type="button" data-i18n="set.access.savePassword">Save password</button>
-              <p class="form-status" id="remote-pw-status" role="status"></p>
-
-              <p class="warning-copy" id="remote-pw-warning" hidden data-i18n-html="set.access.stronglyRecommendedLeaveThis"><strong>Strongly recommended: leave this on.</strong> With it off, the public link is a web address that opens your dashboard for anyone who has it — no login, no limit on attempts, from anywhere in the world. They could read your chats, change your settings, and use your API credit. Links get shared, logged by services you paste them into, and forwarded by accident.</p>
 
               
               <div class="settings-subgroup" data-i18n="dev.terminal">terminal and coding tools</div>
@@ -2377,10 +2368,45 @@
           <section class="setting-card" id="pi-password-setting">
             <button class="setting-head" type="button" aria-expanded="false">
               <span class="setting-icon">•••</span>
-              <span><strong data-i18n="pw.title">Pi password</strong><small id="pi-password-summary" data-i18n="pw.summary">For logging in and sudo</small></span>
+              <span><strong data-i18n="sec.title">Passwords &amp; devices</strong><small id="pi-password-summary" data-i18n="sec.summary">Who is signed in, and your passwords</small></span>
               <span class="chevron">›</span>
             </button>
-            <div class="setting-body lm-login" id="lm-login">
+            <div class="setting-body">
+              <div class="settings-subgroup" data-i18n="sec.devices">signed-in devices</div>
+              <p class="microcopy" data-i18n="sec.devicesNote">Devices that signed in on your sudo link. Ones on your home Wi‑Fi don’t need to sign in, so they aren’t listed.</p>
+              <ul class="sess-list" id="sess-list"></ul>
+              <button class="soft-button" id="sess-all" type="button" hidden data-i18n="sec.signOutOthers">Sign out all other devices</button>
+              <p class="form-status" id="sess-status" role="status"></p>
+
+              <div class="settings-subgroup" data-i18n="sec.dashPw">dashboard password</div>
+
+              <div class="access-row">
+                <div>
+                  <strong data-i18n="set.access.askForAPassword">Ask for a password</strong>
+                  <small data-i18n="set.access.appliesToThePublic">Applies to the public link only. Your home network never asks.</small>
+                </div>
+                <label class="switch">
+                  <input id="remote-pw-toggle" type="checkbox">
+                  <span aria-hidden="true"></span>
+                  <em class="sr-only" data-i18n="set.access.requireAPasswordOn">Require a password on the public link</em>
+                </label>
+              </div>
+
+              <div class="addr-row">
+                <code id="remote-pw-value">—</code>
+                <button type="button" id="remote-pw-copy" data-i18n="set.access.copy">Copy</button>
+              </div>
+              <p class="microcopy" id="remote-pw-note">Only shown on your home network.</p>
+
+              <label for="remote-pw-new" data-i18n="set.access.changeIt">Change it</label>
+              <input id="remote-pw-new" type="password" autocomplete="new-password" spellcheck="false" placeholder="at least 10 characters" data-i18n-attr="placeholder:set.access.atLeast10Characters">
+              <button class="primary-button" id="remote-pw-save" type="button" data-i18n="set.access.savePassword">Save password</button>
+              <p class="form-status" id="remote-pw-status" role="status"></p>
+
+              <p class="warning-copy" id="remote-pw-warning" hidden data-i18n-html="set.access.stronglyRecommendedLeaveThis"><strong>Strongly recommended: leave this on.</strong> With it off, the public link is a web address that opens your dashboard for anyone who has it — no login, no limit on attempts, from anywhere in the world. They could read your chats, change your settings, and use your API credit. Links get shared, logged by services you paste them into, and forwarded by accident.</p>
+
+              <div class="lm-login" id="lm-login">
+              <div class="settings-subgroup" data-i18n="pw.title">Pi password</div>
               <p class="section-intro" data-i18n-html="pw.intro">The password of the Pi's own account. You need it to log in with a keyboard and screen, over SSH, and when a command run with <code>sudo</code> asks for it.</p>
               <div class="lm-login-now">
                 <div>
@@ -2403,6 +2429,7 @@
                 </div>
               </div>
               <p class="form-status" id="lm-login-status" role="status"></p>
+              </div>
             </div>
           </section>
           <section class="setting-card" id="reset-setting">
@@ -3006,7 +3033,7 @@
       return 'how.desktop';
     }
 
-    const WELCOME_STEPS = 4;
+    const WELCOME_STEPS = 5;
 
     // Phones go through all four steps. A computer skips the home-screen and
     // "continue on a computer" steps: it is already where they lead.
@@ -3014,7 +3041,14 @@
       return platformHowTo() !== 'how.desktop';
     }
     function welcomeSeq() {
-      return isPhoneFlow() ? [0, 1, 2, 3] : [2, 3];
+      const seq = isPhoneFlow() ? [0, 1, 2, 3] : [2, 3];
+      if (wantsOwnPassword()) seq.push(4);
+      return seq;
+    }
+    // The last step, only while the anywhere link is on: setup signed this
+    // device in with sudo's own random password, which the owner never saw.
+    function wantsOwnPassword() {
+      return !!(state.status && state.status.remote_access);
     }
 
     function renderWelcomeDots() {
@@ -3036,7 +3070,8 @@
       renderWelcomeDots();
       if (step === 1) loadWelcomeAddress();
       if (step === 2) setTimeout(() => $('welcome-user').focus(), 60);
-      if (step === 3) loadSoul();
+      if (step === 3) { loadSoul(); $('welcome-pers-save').textContent = t(wantsOwnPassword() ? 'ws.next' : 'wel.persSave'); }
+      if (step === 4) setTimeout(() => $('wp-new').focus(), 60);
     }
 
     // Add to home screen: three pictured steps per platform, a few words each.
@@ -3227,10 +3262,34 @@
         });
         if (state.status) { state.status.personality = state.persStyle; state.status.welcome_pending = ''; }
         status.textContent = '';
-        enterChatAfterWelcome();
+        afterPersonality();
       } catch (error) {
         status.textContent = error.message;
         save.disabled = false;
+      }
+    }
+
+    function afterPersonality() {
+      if (wantsOwnPassword()) { renderWelcomeStep(4); return; }
+      enterChatAfterWelcome();
+    }
+    async function saveOwnPassword() {
+      const pw = $('wp-new').value.trim();
+      const status = $('wp-status');
+      if (pw.length < 10) { status.textContent = t('wp.short'); return; }
+      $('wp-save').disabled = true;
+      status.textContent = t('common.saving');
+      try {
+        await api('/api/auth/remote-password', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ new_password: pw }),
+        });
+        status.textContent = '';
+        enterChatAfterWelcome();
+      } catch (error) {
+        status.textContent = error.message;
+      } finally {
+        $('wp-save').disabled = false;
       }
     }
 
@@ -3268,7 +3327,7 @@
             agent_name: agentName,
             personality: 'friendly',
             model: 'sudo-default',
-            remote_access: false,
+            // Left as it is: setup may be running on the anywhere link itself.
             theme: state.theme,
             welcome: true,
           }),
@@ -3758,6 +3817,67 @@
       $('lm-login-note').textContent = d.hidden_remotely ? t('pw.remote')
         : d.known ? t('pw.homeOnly') : t('pw.notSet');
       $('lm-login-change').hidden = !!d.hidden_remotely;
+    }
+
+
+    // Passwords & devices: who is signed in on the sudo link, and signing
+    // any of them out (a lost phone, a borrowed laptop).
+    function agoText(ts) {
+      if (!ts) return '';
+      const s = Math.max(0, Math.round(Date.now() / 1000 - ts));
+      if (s < 120) return t('sec.now');
+      if (s < 3600) return t('sec.minAgo', { n: Math.round(s / 60) });
+      if (s < 86400) return t('sec.hAgo', { n: Math.round(s / 3600) });
+      return t('sec.dAgo', { n: Math.round(s / 86400) });
+    }
+    const SESS_ICON = {
+      phone: '<svg viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg>',
+      computer: '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>',
+    };
+    function renderSessions(data) {
+      const list = $('sess-list');
+      const items = (data && data.sessions) || [];
+      if (!items.length) {
+        list.replaceChildren(hEl('li', 'sess-empty', t('sec.none')));
+        $('sess-all').hidden = true;
+        return;
+      }
+      list.replaceChildren(...items.map(it => {
+        const li = hEl('li', 'sess-row' + (it.current ? ' current' : ''));
+        const phone = /iPhone|iPad|Android/.test(it.device);
+        const ico = hEl('span', 'sess-ico');
+        ico.innerHTML = phone ? SESS_ICON.phone : SESS_ICON.computer;
+        const txt = hEl('div', 'sess-txt');
+        const name = hEl('strong', '', it.device);
+        if (it.current) name.append(' ', hEl('em', 'sess-me', t('sec.thisOne')));
+        const where = [it.via === 'tailscale' ? 'Tailscale' : t('sec.viaLink'), it.country, agoText(it.seen)]
+          .filter(Boolean).join(' · ');
+        txt.append(name, hEl('small', '', where));
+        li.append(ico, txt);
+        if (!it.current) {
+          const b = hEl('button', 'soft-button sess-out', t('sec.signOut'));
+          b.type = 'button';
+          b.addEventListener('click', () => signOutSession(it.id, b));
+          li.append(b);
+        }
+        return li;
+      }));
+      $('sess-all').hidden = !items.some(it => !it.current);
+    }
+    async function loadSessions() {
+      try { renderSessions(await api('/api/auth/sessions')); }
+      catch (error) { $('sess-status').textContent = error.message; }
+    }
+    async function signOutSession(id, btn) {
+      if (btn) btn.disabled = true;
+      try {
+        const r = await api('/api/auth/sessions/revoke', { method: 'POST', body: JSON.stringify(id ? { id } : { all_others: true }) });
+        renderSessions(r);
+        $('sess-status').textContent = t('sec.signedOut', { n: r.signed_out || 0 });
+      } catch (error) {
+        $('sess-status').textContent = error.message;
+        if (btn) btn.disabled = false;
+      }
     }
 
     async function loadPiLogin() {
@@ -4576,7 +4696,7 @@
       if (id === 'wifi-setting') openWifi();
       if (id === 'ssh-setting') loadTailscale();
       if (id === 'providers-setting') loadOpenRouterAccount();
-      if (id === 'pi-password-setting') loadPiLogin();
+      if (id === 'pi-password-setting') { loadPiLogin(); loadSessions(); loadRemotePassword(); }
     }
 
     // --- The owner's own Tailscale (tailscale.sh on the device) ------------------
@@ -9061,6 +9181,7 @@
     $('welcome-next').addEventListener('click', leaveHomeScreenStep);
     $('welcome-skip').addEventListener('click', leaveHomeScreenStep);
     $('welcome-back').addEventListener('click', () => renderWelcomeStep(0));
+    $('sess-all').addEventListener('click', () => signOutSession(null, $('sess-all')));
     $('ws-next').addEventListener('click', goAnywhere);
     $('ws-local').addEventListener('click', () => showWelcomePanel('welcome-local'));
     $('wl-back').addEventListener('click', () => showWelcomePanel('welcome-start'));
@@ -9072,8 +9193,11 @@
     $('welcome-pers-skip').addEventListener('click', () => {
       api('/api/agent/welcome-done', { method: 'POST' }).catch(() => {});
       if (state.status) state.status.welcome_pending = '';
-      enterChatAfterWelcome();
+      afterPersonality();
     });
+    $('wp-save').addEventListener('click', saveOwnPassword);
+    $('wp-skip').addEventListener('click', enterChatAfterWelcome);
+    $('wp-new').addEventListener('keydown', e => { if (e.key === 'Enter') saveOwnPassword(); });
     document.querySelectorAll('[data-copy-from]').forEach(b => b.addEventListener('click', () =>
       copyText($(b.dataset.copyFrom).textContent.trim(), b)));
     $('home-preview-close').addEventListener('click', () => { $('home-preview').hidden = true; });
