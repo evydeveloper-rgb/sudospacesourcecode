@@ -232,6 +232,7 @@
           <!-- step 2 — carry on at a computer (phones only, optional) -->
           <div class="welcome-step" id="welcome-step1" hidden>
             <h1 data-i18n="wel.deskTitle">continue on a computer?</h1>
+            <p class="wel-desk-sub" data-i18n="wel.deskOptional">Optional. You pick up right where you left off.</p>
             <div class="wel-desk-art" aria-hidden="true">
               <svg viewBox="0 0 220 96">
                 <rect class="a-dev" x="14" y="18" width="38" height="66" rx="8"/><rect class="a-scr" x="19" y="26" width="28" height="46" rx="3"/>
@@ -240,17 +241,15 @@
                 <rect class="a-dev" x="160" y="26" width="52" height="38" rx="5"/><rect class="a-scr" x="165" y="31" width="42" height="28" rx="2"/><path class="a-dev" d="M152 70h68l-5 7h-58z"/>
               </svg>
             </div>
-            <ol class="wel-desk-steps">
-              <li><b>1</b><div><span id="wel-desk1-any" data-i18n-html="wel.desk1">On a computer on the <strong>same Wi‑Fi</strong> as this phone</span><span id="wel-desk1-on" data-i18n="wel.desk1On" hidden>On a computer on</span> <em class="wel-ssid" id="wel-ssid" hidden></em></div></li>
-              <li><b>2</b><span data-i18n="wel.desk2">open this address:</span></li>
-            </ol>
-            <div class="wel-addr"><code id="wel-addr-name"></code><button type="button" class="soft-button" data-copy-from="wel-addr-name" data-i18n="common.copy">Copy</button></div>
-            <p class="microcopy" data-i18n="wel.deskResume">You pick up right where you left off.</p>
-            <details class="wel-addr-alt" id="wel-addr-ip-row" hidden>
-              <summary data-i18n="wel.deskNotLoading">Link not loading?</summary>
-              <small data-i18n="wel.deskPasteThis">Paste this instead:</small>
-              <div class="wel-addr"><code id="wel-addr-ip"></code><button type="button" class="soft-button" data-copy-from="wel-addr-ip" data-i18n="common.copy">Copy</button></div>
-            </details>
+            <div class="wel-desk-card">
+              <p class="wel-desk-line"><span id="wel-desk1-any" data-i18n-html="wel.desk1">Open this in a browser on any device on the <strong>same Wi‑Fi</strong> as this phone</span><span id="wel-desk1-on" data-i18n="wel.desk1On" hidden>Open this in a browser on any device on</span> <em class="wel-ssid" id="wel-ssid" hidden></em></p>
+              <div class="wel-addr"><code id="wel-addr-name"></code><button type="button" class="soft-button" data-copy-from="wel-addr-name" data-i18n="common.copy">Copy</button></div>
+              <details class="wel-addr-alt" id="wel-addr-ip-row" hidden>
+                <summary data-i18n="wel.deskNotLoading">Link not loading?</summary>
+                <small data-i18n="wel.deskPasteThis">Paste this instead:</small>
+                <div class="wel-addr"><code id="wel-addr-ip"></code><button type="button" class="soft-button" data-copy-from="wel-addr-ip" data-i18n="common.copy">Copy</button></div>
+              </details>
+            </div>
             <button class="primary-button" id="welcome-phone" type="button" data-i18n="wel.deskStay">Continue on this phone</button>
             <button class="ghost-button" id="welcome-back" type="button" data-i18n="welcome.back">← Back</button>
           </div>

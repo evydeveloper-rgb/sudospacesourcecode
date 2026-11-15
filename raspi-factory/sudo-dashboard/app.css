@@ -3299,3 +3299,10 @@ input[type="password"], input[type="tel"], input[type="number"], #ssh-key, #devi
 .wel-icon-h small { font-weight: 500; color: var(--ink-3); font-size: .82rem; }
 
 .wel-addr-alt > small { display: block; margin: 0 0 6px; }
+
+/* Continue on a computer: one card, one line, one link. */
+.wel-desk-sub { margin: -6px 0 6px; color: var(--ink-3); font-size: .9rem; }
+.wel-desk-card { margin: 0 0 20px; padding: 16px; border-radius: 18px; background: var(--surface, #fff); border: 1px solid var(--line, #e6e3ee); }
+.wel-desk-line { margin: 0 0 10px; font-size: .95rem; font-weight: 600; line-height: 1.5; }
+.wel-desk-card .wel-addr { margin: 0; }
+.wel-desk-card .wel-addr-alt { margin-top: 12px; }
