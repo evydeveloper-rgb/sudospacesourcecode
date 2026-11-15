@@ -214,6 +214,16 @@
               </div>
             </div>
             <h1 id="welcome-title" data-i18n="wel.homeTitle">add sudo to your home screen.</h1>
+            <p class="wel-icon-h" data-i18n="wel.iconPick">Pick its icon first</p>
+            <div class="wel-icon-row">
+              <div class="icon-grid wel-icon-grid" id="wel-icon-grid" role="radiogroup" aria-label="Icons" data-i18n-attr="aria-label:icon.pick"></div>
+              <label class="soft-button icon-upload wel-icon-upload">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+                <span data-i18n="icon.upload">Use your own picture</span>
+                <input type="file" id="wel-icon-file" accept="image/*" hidden>
+              </label>
+              <p class="form-status" id="wel-icon-status" role="status"></p>
+            </div>
             <ol class="wel-how" id="how-steps"></ol>
             <button class="primary-button" id="welcome-next" type="button" data-i18n="welcome.doneNext">Done — next</button>
             <button class="ghost-button" id="welcome-skip" type="button" data-i18n="welcome.skipForNow">Skip for now</button>
@@ -255,6 +265,7 @@
 
             <label for="welcome-agent" data-i18n="welcome.andWhatShouldYou">And what should you call me?</label>
             <input id="welcome-agent" placeholder="sudo" maxlength="32">
+            <p class="microcopy wel-later" data-i18n="wel.namesLater">You can change both names later in Settings → Names.</p>
 
             <button class="primary-button" id="welcome-finish" type="button" data-i18n="welcome.sayHello">Say hello</button>
             <button class="ghost-button" id="welcome-back-2" type="button" data-i18n="welcome.back">← Back</button>
@@ -275,6 +286,49 @@
             <button class="primary-button" id="welcome-pers-save" type="button" data-i18n="wel.persSave">Save and start chatting</button>
             <button class="ghost-button" id="welcome-pers-skip" type="button" data-i18n="welcome.skipForNow">Skip for now</button>
             <p class="form-status" id="pers-status" role="status"></p>
+          </div>
+
+          <!-- a cloud brain: Connect OpenRouter, paste a key, or stay on-device -->
+          <div class="welcome-step" id="welcome-step5" hidden>
+            <div class="ws-art" aria-hidden="true">
+              <span class="ws-ico"><svg viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="2"/><path d="M10 3v4M14 3v4M10 17v4M14 17v4M3 10h4M3 14h4M17 10h4M17 14h4"/></svg></span>
+              <svg class="ws-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+              <span class="ws-ico on"><svg viewBox="0 0 24 24"><path d="M7 18a4.5 4.5 0 0 1-.5-9 6 6 0 0 1 11.6 1.5A3.8 3.8 0 0 1 17.5 18Z"/></svg></span>
+            </div>
+            <h1 data-i18n="wc.title">give me a smarter brain.</h1>
+            <ul class="wc-chips">
+              <li data-i18n="gs.c.chip1">≈ $10–15 a month</li>
+              <li data-i18n="gs.c.chip2">Sudo takes no cut</li>
+              <li data-i18n="gs.c.chip3">Daily spending cap</li>
+            </ul>
+            <p class="wc-done" id="wc-done" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5 10 17 19 7"/></svg><span data-i18n="wc.connected">Connected</span></p>
+            <button class="primary-button" id="wc-connect" type="button" data-i18n="or.connect">Connect OpenRouter</button>
+            <button class="primary-button" id="wc-next" type="button" hidden data-i18n="ws.next">Next</button>
+            <details class="wc-paste" id="wc-paste">
+              <summary data-i18n="wc.haveKey">I already have a key</summary>
+              <input id="wc-key" type="text" autocomplete="off" spellcheck="false" autocapitalize="off" dir="ltr" placeholder="sk-or-…">
+              <button class="soft-button" id="wc-key-save" type="button" data-i18n="wc.saveKey">Save key</button>
+            </details>
+            <p class="form-status" id="wc-status" role="status"></p>
+            <button class="ghost-button" id="wc-skip" type="button" data-i18n="wc.skip">Skip, use the small model on this device</button>
+          </div>
+
+          <!-- apps through Composio -->
+          <div class="welcome-step" id="welcome-step6" hidden>
+            <div class="ws-art" aria-hidden="true">
+              <span class="ws-ico"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6.5 8.5 7 8.5-7"/></svg></span><span class="ws-ico"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></span><span class="ws-ico on"><svg viewBox="0 0 24 24"><path d="M5 8h14l-1 12H6Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg></span>
+            </div>
+            <h1 data-i18n="wx.title">connect your apps.</h1>
+            <p class="lede" data-i18n="wx.lede">Gmail, Calendar, Shopify and 1,600+ more, through Composio.</p>
+            <ol class="wl-how">
+              <li><b>1</b><span><span data-i18n="wx.s1">Make a free Composio account</span> <a class="wx-open" href="https://dashboard.composio.dev" target="_blank" rel="noopener" data-i18n="wx.open">Open Composio</a></span></li>
+              <li><b>2</b><span data-i18n-html="wx.s2">Copy your key. It starts with <code>ck_</code></span></li>
+              <li><b>3</b><span data-i18n="wx.s3">Paste it here</span></li>
+            </ol>
+            <input id="wx-key" type="text" autocomplete="off" spellcheck="false" autocapitalize="off" dir="ltr" placeholder="ck_…">
+            <button class="primary-button" id="wx-save" type="button" data-i18n="wx.save">Save and continue</button>
+            <p class="form-status" id="wx-status" role="status"></p>
+            <button class="ghost-button" id="wx-skip" type="button" data-i18n="welcome.skipForNow">Skip for now</button>
           </div>
 
           <!-- last step on the anywhere link — a password of their own -->
@@ -1979,6 +2033,21 @@
             </div>
           </section>
           <div class="settings-group" data-i18n="settings.yourAgent">Your agent</div>
+          <section class="setting-card" id="names-setting">
+            <button class="setting-head" type="button" aria-expanded="false">
+              <span class="setting-icon">Aa</span>
+              <span><strong data-i18n="nm.title">Names</strong><small id="names-summary">sudo</small></span>
+              <span class="chevron">›</span>
+            </button>
+            <div class="setting-body">
+              <label for="nm-agent" data-i18n="set.profile.agentName">Agent name</label>
+              <input id="nm-agent" placeholder="sudo" maxlength="32">
+              <label for="nm-user" data-i18n="set.profile.yourName">Your name</label>
+              <input id="nm-user" autocomplete="given-name" maxlength="64">
+              <button class="primary-button" id="nm-save" type="button" data-i18n="nm.save">Save names</button>
+              <p class="form-status" id="nm-status" role="status"></p>
+            </div>
+          </section>
           <section class="setting-card" id="providers-setting">
             <button class="setting-head" type="button">
               <span class="setting-icon">⚿</span>
@@ -3043,7 +3112,7 @@
       return 'how.desktop';
     }
 
-    const WELCOME_STEPS = 5;
+    const WELCOME_STEPS = 7;
 
     // Phones go through all four steps. A computer skips the home-screen and
     // "continue on a computer" steps: it is already where they lead.
@@ -3051,9 +3120,21 @@
       return platformHowTo() !== 'how.desktop';
     }
     function welcomeSeq() {
-      const seq = isPhoneFlow() ? [0, 1, 2, 3] : [2, 3];
+      // Home screen, computer, cloud brain, apps, then names and personality:
+      // the agent is introduced once it has a brain and its tools.
+      const seq = isPhoneFlow() ? [0, 1, 5, 6, 2, 3] : [5, 6, 2, 3];
       if (wantsOwnPassword()) seq.push(4);
       return seq;
+    }
+    function welcomeNext(from) {
+      const seq = welcomeSeq();
+      const i = seq.indexOf(from);
+      renderWelcomeStep(i >= 0 && i + 1 < seq.length ? seq[i + 1] : seq[seq.length - 1]);
+    }
+    function welcomeBack(from) {
+      const seq = welcomeSeq();
+      const i = seq.indexOf(from);
+      renderWelcomeStep(i > 0 ? seq[i - 1] : seq[0]);
     }
     // The last step, only while the anywhere link is on: setup signed this
     // device in with sudo's own random password, which the owner never saw.
@@ -3082,6 +3163,13 @@
       if (step === 2) setTimeout(() => $('welcome-user').focus(), 60);
       if (step === 3) { loadSoul(); $('welcome-pers-save').textContent = t(wantsOwnPassword() ? 'ws.next' : 'wel.persSave'); }
       if (step === 4) setTimeout(() => $('wp-new').focus(), 60);
+      if (step === 5) renderCloudStep();
+      // Steps before the names survive a reload (OpenRouter's sign-in comes
+      // back in a new tab); after the names, the server keeps the place.
+      try {
+        if ([0, 1, 5, 6].includes(step)) localStorage.setItem('sudo-welcome-step', String(step));
+        else localStorage.removeItem('sudo-welcome-step');
+      } catch (_) {}
     }
 
     // Add to home screen: pictured steps for this exact phone and browser,
@@ -3136,7 +3224,10 @@
     function initWelcome() {
       renderHowTo();
       if (offerAnywhere()) { showWelcomePanel('welcome-start'); return; }
-      renderWelcomeStep(welcomeSeq()[0]);
+      let saved = NaN;
+      try { saved = parseInt(localStorage.getItem('sudo-welcome-step') || '', 10); } catch (_) {}
+      const seq = welcomeSeq();
+      renderWelcomeStep(seq.includes(saved) ? saved : seq[0]);
     }
 
     // Setup opens on the home link, the only one there is while sudo is still
@@ -3203,7 +3294,7 @@
     function leaveHomeScreenStep() {
       // Onboarding covered this, so the standalone banner shouldn't repeat it.
       try { localStorage.setItem('sudo-install-hint', 'dismissed'); } catch (_) {}
-      renderWelcomeStep(1);
+      welcomeNext(0);
     }
 
     // The address to open on a computer: the .local name, and the number
@@ -3300,6 +3391,103 @@
         status.textContent = error.message;
         save.disabled = false;
       }
+    }
+
+
+    // Setup: the cloud brain step.
+    function cloudConnected() {
+      const s = state.status || {};
+      return Object.values(s.provider_key_hints || {}).some(Boolean);
+    }
+    function renderCloudStep() {
+      const on = cloudConnected();
+      $('wc-done').hidden = !on;
+      $('wc-next').hidden = !on;
+      $('wc-connect').hidden = on;
+      $('wc-paste').hidden = on;
+      $('wc-skip').hidden = on;
+    }
+    async function refreshStatusQuiet() {
+      try { state.status = await api('/api/setup/status'); } catch (_) {}
+    }
+    const wcWait = { timer: null };
+    function cloudConnect() {
+      // Opened straight from the tap, or the browser treats it as a pop-up.
+      window.open('/api/openrouter/start', '_blank', 'noopener');
+      $('wc-status').textContent = t('wc.waiting');
+      const since = Date.now() / 1000 - 2;
+      const until = Date.now() + 30 * 60 * 1000;
+      clearInterval(wcWait.timer);
+      wcWait.timer = setInterval(async () => {
+        if (Date.now() > until) { clearInterval(wcWait.timer); return; }
+        try {
+          const r = await api('/api/openrouter/state', {}, 8000);
+          if (!r.result || r.at <= since) return;
+          clearInterval(wcWait.timer);
+          if (r.result === 'ok') {
+            await refreshStatusQuiet();
+            $('wc-status').textContent = '';
+            renderCloudStep();
+          } else {
+            $('wc-status').textContent = t('or.result.' + (OR_RESULTS.includes(r.result) ? r.result : 'failed'));
+          }
+        } catch (_) {}
+      }, 3000);
+    }
+    async function cloudSaveKey() {
+      const v = $('wc-key').value.trim();
+      if (!v) { $('wc-status').textContent = t('common.pasteKeyFirst'); return; }
+      $('wc-status').textContent = t('common.checking');
+      try {
+        await api('/api/agent/provider-keys', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ auto_key: v }),
+        });
+        $('wc-key').value = '';
+        await refreshStatusQuiet();
+        $('wc-status').textContent = '';
+        renderCloudStep();
+      } catch (error) { $('wc-status').textContent = error.message; }
+    }
+    // Setup: apps through Composio.
+    async function appsSaveKey() {
+      const v = $('wx-key').value.trim();
+      if (!v) { $('wx-status').textContent = t('common.pasteKeyFirst'); return; }
+      $('wx-save').disabled = true;
+      $('wx-status').textContent = t('common.saving');
+      try {
+        await api('/api/agent/provider-keys', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ composio_api_key: v }),
+        });
+        $('wx-key').value = '';
+        $('wx-status').textContent = '';
+        welcomeNext(6);
+      } catch (error) {
+        $('wx-status').textContent = error.message;
+      } finally { $('wx-save').disabled = false; }
+    }
+    // Settings > Names.
+    function renderNames(s) {
+      if (!s) return;
+      $('names-summary').textContent = s.agent_name || 'sudo';
+      if (document.activeElement !== $('nm-agent')) $('nm-agent').value = s.agent_name || '';
+      if (document.activeElement !== $('nm-user')) $('nm-user').value = s.user_name || '';
+    }
+    async function saveNames() {
+      $('nm-save').disabled = true;
+      $('nm-status').textContent = t('common.saving');
+      try {
+        const data = await api('/api/agent/names', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ agent_name: $('nm-agent').value.trim(), user_name: $('nm-user').value.trim() }),
+        });
+        state.status = { ...(state.status || {}), ...data };
+        renderNames(state.status);
+        $('nm-status').textContent = t('nm.saved');
+      } catch (error) {
+        $('nm-status').textContent = error.message;
+      } finally { $('nm-save').disabled = false; }
     }
 
     function afterPersonality() {
@@ -7346,6 +7534,12 @@
 
     function openRouterLanded(result) {
       history.replaceState({}, '', location.pathname);
+      if (state.status && !state.status.profile_done) {
+        // Mid-setup: back to the brain step, not Settings.
+        renderWelcomeStep(5);
+        if (result !== 'ok') $('wc-status').textContent = t('or.result.' + (OR_RESULTS.includes(result) ? result : 'failed'));
+        return;
+      }
       setTab('settings');
       openSettingPage('providers-setting', true);
       openRouterOutcome(result);
@@ -8181,8 +8375,12 @@
       return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
     }
 
+    function iconSay(text) {
+      $('icon-status').textContent = text;
+      $('wel-icon-status').textContent = text;
+    }
     async function saveIcon(blob, choice) {
-      $('icon-status').textContent = t('icon.saving');
+      iconSay(t('icon.saving'));
       try {
         const res = await fetch('/api/app-icon?choice=' + encodeURIComponent(choice), {
           method: 'POST', headers: { 'Content-Type': 'image/png' }, body: blob, credentials: 'same-origin',
@@ -8191,9 +8389,9 @@
         if (!res.ok) throw new Error(data.error || t('icon.failed'));
         iconState = data;
         renderIcons();
-        $('icon-status').textContent = t('icon.saved');
+        iconSay(t('icon.saved'));
       } catch (error) {
-        $('icon-status').textContent = error.message;
+        iconSay(error.message);
       }
     }
 
@@ -8204,7 +8402,9 @@
       const link = document.querySelector('link[rel="apple-touch-icon"]');
       if (link) link.href = src;
       $('icon-preview-name').textContent = 'sudo';
-      document.querySelectorAll('#icon-grid .icon-opt').forEach(b => {
+      const mock = document.querySelector('.wa-sudo img');
+      if (mock) mock.src = src;
+      document.querySelectorAll('#icon-grid .icon-opt, #wel-icon-grid .icon-opt').forEach(b => {
         const on = b.dataset.icon === iconState.choice;
         b.classList.toggle('selected', on);
         b.setAttribute('aria-checked', String(on));
@@ -8214,7 +8414,7 @@
     }
 
     async function initIcons() {
-      $('icon-grid').replaceChildren(...Object.keys(PREMADE_ICONS).map(key => {
+      const makeGrid = () => Object.keys(PREMADE_ICONS).map(key => {
         const b = hEl('button', 'icon-opt');
         b.type = 'button';
         b.dataset.icon = key;
@@ -8225,21 +8425,23 @@
           try {
             const img = await loadImage('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(iconSvg(key)));
             await saveIcon(await iconPng(img), key);
-          } catch (error) { $('icon-status').textContent = error.message; }
+          } catch (error) { iconSay(error.message); }
         });
         return b;
-      }));
-      $('icon-file').addEventListener('change', async () => {
-        const file = $('icon-file').files[0];
-        $('icon-file').value = '';
+      });
+      $('icon-grid').replaceChildren(...makeGrid());
+      $('wel-icon-grid').replaceChildren(...makeGrid());
+      ['icon-file', 'wel-icon-file'].forEach(id => $(id).addEventListener('change', async () => {
+        const file = $(id).files[0];
+        $(id).value = '';
         if (!file) return;
         const url = URL.createObjectURL(file);
         try {
           await saveIcon(await iconPng(await loadImage(url)), 'custom');
         } catch (error) {
-          $('icon-status').textContent = error.message;
+          iconSay(error.message);
         } finally { URL.revokeObjectURL(url); }
-      });
+      }));
       try { iconState = await api('/api/app-icon'); } catch (_) {}
       renderIcons();
     }
@@ -8683,6 +8885,7 @@
     $('timezone-follow').addEventListener('click', () => saveTimezone('follow'));
 
     function renderStatus(status) {
+      renderNames(status);
       renderLegacyWhatsapp(status);
       $('channel-alert').hidden = !(status && status.channel_alert && status.channel_alert.channel) || state.tab === 'welcome';
       renderReports(status);
@@ -9220,8 +9423,15 @@
     $('wl-back').addEventListener('click', () => showWelcomePanel('welcome-start'));
     $('wl-keep').addEventListener('click', keepLocal);
     $('wl-any').addEventListener('click', () => { showWelcomePanel('welcome-start'); goAnywhere(); });
-    $('welcome-phone').addEventListener('click', () => renderWelcomeStep(2));
-    $('welcome-back-2').addEventListener('click', () => renderWelcomeStep(1));
+    $('welcome-phone').addEventListener('click', () => welcomeNext(1));
+    $('welcome-back-2').addEventListener('click', () => welcomeBack(2));
+    $('wc-connect').addEventListener('click', cloudConnect);
+    $('wc-key-save').addEventListener('click', cloudSaveKey);
+    $('wc-next').addEventListener('click', () => welcomeNext(5));
+    $('wc-skip').addEventListener('click', () => welcomeNext(5));
+    $('wx-save').addEventListener('click', appsSaveKey);
+    $('wx-skip').addEventListener('click', () => welcomeNext(6));
+    $('nm-save').addEventListener('click', saveNames);
     $('welcome-finish').addEventListener('click', finishWelcome);
     $('welcome-pers-save').addEventListener('click', savePersonality);
     $('welcome-pers-skip').addEventListener('click', () => {

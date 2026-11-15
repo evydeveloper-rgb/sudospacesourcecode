@@ -3268,3 +3268,22 @@ input[type="password"], input[type="tel"], input[type="number"], #ssh-key, #devi
 }
 .wa-sudo small { position: absolute; top: 42px; left: 50%; transform: translateX(-50%); font-size: .62rem; font-weight: 800; color: #1f1d2b; }
 @keyframes wa-pop { from { transform: scale(0); } to { transform: scale(1); } }
+
+/* Setup: icon picker on the home-screen step */
+.wel-icon-h { margin: 4px 0 8px; font-weight: 700; font-size: .92rem; }
+.wel-icon-row { margin: 0 0 16px; }
+.wel-icon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(46px, 1fr)); gap: 8px; margin-bottom: 10px; }
+.wel-icon-upload { width: 100%; justify-content: center; }
+.wel-later { margin: 6px 0 14px; }
+/* Setup: cloud brain */
+.wc-chips { list-style: none; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin: 0 0 18px; padding: 0; }
+.wc-chips li { padding: 6px 12px; border-radius: 999px; background: var(--surface-low); font-size: .82rem; font-weight: 600; color: var(--ink-2); }
+.wc-done { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 0 0 12px; padding: 12px; border-radius: 14px; background: #d8f5dd; color: #16692b; font-weight: 700; }
+.wc-done[hidden] { display: none; }
+.wc-done svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.wc-paste { margin: 12px 0 4px; }
+.wc-paste summary { cursor: pointer; color: var(--ink-2); font-weight: 600; font-size: .9rem; text-align: center; }
+.wc-paste input { margin: 10px 0 8px; }
+.wc-paste[hidden] { display: none; }
+/* Setup: apps */
+.wx-open { font-weight: 700; color: var(--primary, #4f3fc9); white-space: nowrap; }

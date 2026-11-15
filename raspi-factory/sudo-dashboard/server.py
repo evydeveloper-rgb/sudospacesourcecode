@@ -4008,6 +4008,26 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             )
             return True
 
+        if path == "/api/agent/names" and self.command == "POST":
+            # Just the two names, from Settings > Names. The profile route
+            # rewrites personality and model too, so it is not used for this.
+            try:
+                body = self.read_body_json()
+            except (ValueError, json.JSONDecodeError):
+                self.send_json({"error": "Invalid JSON"}, code=400)
+                return True
+            cfg = read_json_file(CONFIG)
+            agent = str(body.get("agent_name") or "").strip()[:32]
+            user = str(body.get("user_name") or "").strip()[:64]
+            if agent:
+                cfg["agent_name"] = agent
+            if user:
+                cfg["user_name"] = user
+            write_json_file(CONFIG, cfg)
+            apply_settings()
+            self.send_json({"ok": True, **setup_status(include_sensitive=False)})
+            return True
+
         if path == "/api/agent/profile":
             if self.command == "GET":
                 cfg = read_json_file(CONFIG)
