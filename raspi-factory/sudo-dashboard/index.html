@@ -372,10 +372,6 @@
       </section>
 
       <section class="view chat-view active" id="view-chat" aria-label="Chat" data-i18n-attr="aria-label:nav.chat">
-        <div class="public-link-strip" id="public-link-strip" hidden>
-          <span data-i18n="chat.availableAnywhere">Available anywhere</span>
-          <button id="copy-public-link" type="button" data-i18n="chat.copyLink">copy link</button>
-        </div>
         <div class="model-loading" id="model-loading" hidden>
           <span class="model-loading-dot" aria-hidden="true"></span>
           <div class="model-loading-body">
@@ -3520,7 +3516,6 @@
     function enterChatAfterWelcome() {
       $('messages').replaceChildren();
       state.greeted = false;
-      ensureGreeting(true);
       if (state.status) renderStatus(state.status);
       setTab('chat');
     }
@@ -3594,80 +3589,8 @@
     // Single owner on purpose: renderStatus used to add an opening line of its
     // own, so finishing setup produced two -- it clears the thread, calls
     // renderStatus (empty thread, so: greeting) and then greets again.
-    async function ensureGreeting(firstRun = false) {
-      if (state.greeted || $('messages').children.length) return;
-
-      // Hold the greeting until there is actually something able to answer.
-      // Previously the written line appeared the instant setup finished, then
-      // sat there for the few minutes the on-device model was still
-      // downloading -- so the person met a "brain" that could not reply. Now
-      // nothing is said until the model is ready, and then exactly one hello
-      // lands. If the local install failed outright, we do not hold forever:
-      // the banner already explains, so the greeting still shows.
-      const status = state.status || {};
-      if (status.profile_done) {
-        const where = status.answering_with && status.answering_with.where;
-        const ready = where && where !== 'none';
-        const localState = (status.local_model && status.local_model.state) || 'absent';
-        if (!ready && localState !== 'failed') {
-          // Remember that a first meeting is owed, so the warmer line is used
-          // whenever readiness finally flips true on a later poll.
-          if (firstRun) state.firstGreetingOwed = true;
-          return;
-        }
-      }
-
-      state.greeted = true;
-      const agent = status.agent_name || 'sudo';
-      const name = status.user_name || t('greet.there');
-      const isFirstMeeting = firstRun || state.firstGreetingOwed;
-      let written;
-      if (!status.profile_done) {
-        written = t('greet.noProfile');
-      } else if (isFirstMeeting) {
-        written = t('greet.first', { name, agent });
-      } else {
-        written = t('greet.back', { name, agent });
-      }
-      const node = addMessage('agent', written);
-
-      // Only try to personalise the first hello, and only when the on-device
-      // model can answer. A later poll has no firstRun flag, so gate on the
-      // remembered first-meeting marker too.
-      if (!isFirstMeeting || !status.profile_done) return;
-      state.firstGreetingOwed = false;
-      const local = status.local_model;
-      if (!local || local.state !== 'done') return;
-      // The small on-device model only greets in English (and the check
-      // below only recognises English), so in any other dashboard language
-      // the translated written line stays.
-      if (I18N.lang() !== 'en') return;
-      try {
-        // Non-blocking either way -- the written line is already on screen --
-        // so there is no cost to waiting out a cold model load here rather
-        // than giving up at 20s and quietly keeping the written line anyway.
-        const data = await api('/api/agent/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            message: `Say hello to ${name} and ask what they are up to today. `
-                     + 'Reply with only the greeting, one or two short sentences, spoken to them directly.',
-          }),
-        }, 90000);
-        const reply = (data.reply || '').trim();
-        // isConnected: a reply arriving after the thread was cleared -- a reset,
-        // a re-run of setup -- must not put a stray line back into it.
-        if (reply && data.source !== 'none' && looksLikeGreeting(reply) && node.isConnected) {
-          node.querySelector('div').replaceChildren(renderRich(reply));
-          scrollChat();
-        }
-      } catch (_) {
-        // Keep the written greeting. A greeting is not worth an error message.
-      }
-    }
-
-    // quiet: a re-draw for a language switch, which must not ask the device
-    // about the dev tools all over again.
+    // No automatic first message: the chat starts empty and the owner
+    // speaks first.
     function renderSsh(data, quiet) {
       state.sshData = data;
       const on = !!data.enabled;
@@ -8624,7 +8547,6 @@
     function showRemote(url) {
       state.publicUrl = url || '';
       $('remote-box').hidden = !url;
-      $('public-link-strip').hidden = !url;
       if (url) {
         $('remote-url').href = url;
         $('remote-url').textContent = url;
@@ -8938,7 +8860,6 @@
       selectPersonality(status.personality || 'friendly');
       showRemote(status.public_url);
       if (status.remote_starting && !status.public_url) pollRemote();
-      ensureGreeting();
       // Not while already in the flow: a refresh mid-setup would throw the
       // person back to the first question.
       // Names saved but the personality step not done yet (a reload, a closed
@@ -9192,7 +9113,6 @@
           $('messages').replaceChildren();
           state.greeted = false;
           setTab('chat');
-          ensureGreeting(true);
         }
       } catch (_) {
         // Offline or asleep. The next time the tab is looked at, try again.
@@ -9513,7 +9433,6 @@
     $('subscribe-button').addEventListener('click', subscribe);
     $('remote-toggle').addEventListener('change', toggleRemote);
     $('copy-remote').addEventListener('click', event => copyText(state.publicUrl, event.currentTarget));
-    $('copy-public-link').addEventListener('click', event => copyText(state.publicUrl, event.currentTarget));
     $('whatsapp-connect').addEventListener('click', connectWhatsapp);
     $('whatsapp-settings-btn').addEventListener('click', openWhatsappSettings);
     $('whatsapp-panel-close').addEventListener('click', () => {

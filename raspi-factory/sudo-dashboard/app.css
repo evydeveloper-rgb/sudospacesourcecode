@@ -552,13 +552,7 @@ body.keyboard-open .chat-view.active { margin-bottom: 0; padding-bottom: 2px; }
   body.keyboard-open .install-hint,
   body.keyboard-open .cloud-nudge { display: none !important; }
 }
-.public-link-strip {
-  width: min(100%, 720px); margin: 0 auto 16px; padding: 9px 12px;
-  display: flex; justify-content: space-between; align-items: center;
-  border-radius: 12px; background: var(--ok-tint);
-  color: var(--ok-ink); font-size: .76rem; font-weight: 650;
-}
-.public-link-strip button, .remote-box button {
+.remote-box button {
   border: 0; background: transparent; text-decoration: underline; cursor: pointer;
   min-height: 36px; padding: 0 6px; font-weight: 700;
 }

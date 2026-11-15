@@ -607,6 +607,17 @@ rm -f /etc/systemd/system/iptables-restore.service
 rm -f /etc/systemd/system/iptables-save.service
 rm -f /usr/local/bin/captive-portal.sh
 
+# ── Keep the system log across restarts ────────────────────────────────────
+# Raspberry Pi OS keeps it in memory only, so after a crash or a power cut
+# there is no record of what happened (a demo Pi dropped off the network on
+# 2026-11-15 and nothing could say why). Capped so it never fills the card.
+mkdir -p /etc/systemd/journald.conf.d
+if [ ! -f /etc/systemd/journald.conf.d/80-sudo-persistent.conf ]; then
+  printf '[Journal]\nStorage=persistent\nSystemMaxUse=200M\n' \
+    > /etc/systemd/journald.conf.d/80-sudo-persistent.conf
+  systemctl restart systemd-journald 2>/dev/null || true
+fi
+
 # ── apt: accept a repository renaming itself ────────────────────────────────
 # Debian relabelled trixie-security (Label/Codename) in Nov 2026, and apt
 # refuses to update past such a change until told to accept it. Every install
