@@ -535,7 +535,7 @@ def restore_hotspot():
     return True
 
 
-# The device holds its own AP until the owner taps "Done" on the success page
+# The device holds its own AP until the owner copies the address on the success page
 # (POST /go): a fixed timer either cut them off mid-copy or made them wait. Two
 # fallbacks so a closed page cannot strand it on the hotspot: the phone has
 # left the hotspot for a minute, or fifteen minutes have passed.
@@ -544,6 +544,7 @@ PENDING = {}
 WAITER = {"running": False}
 WAIT_MAX_SECONDS = 15 * 60
 LEFT_SECONDS = 60
+GO_GRACE_SECONDS = 8
 
 
 def hotspot_clients():
@@ -576,7 +577,7 @@ def wait_for_go():
 def switch_to_wifi(ssid, password, country, username=""):
     """Join the home network once the owner says they have the address.
 
-    The credentials wait in PENDING; a second submit before "Done" (another
+    The credentials wait in PENDING; a second submit before the copy (another
     network, a fixed typo) replaces them rather than starting a second join.
     """
     PENDING.update(ssid=ssid, password=password, country=country, username=username)
@@ -590,7 +591,10 @@ def switch_to_wifi(ssid, password, country, username=""):
             reason = wait_for_go()
             log.info("joining after: %s", reason)
             if reason == "done":
-                time.sleep(2)   # let the reply to "Done" reach the phone first
+                # The page asks for this the moment the address is copied, then
+                # shows "go to Safari and paste it". This pause is the time to
+                # read that before the hotspot (and the page with it) goes.
+                time.sleep(GO_GRACE_SECONDS)
             join(**PENDING)
         finally:
             WAITER["running"] = False

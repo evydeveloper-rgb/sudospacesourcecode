@@ -6,50 +6,59 @@
 <title>sudo — Save your address</title>
 <style>
 {{BRAND_CSS}}
-/* The page the owner holds while sudo moves onto their Wi-Fi. One job: save
-   the address. sudo waits for "Done" before it drops its own network, so
-   there is no countdown to race. */
-.addr-card {
-  margin: 0 0 22px; padding: 18px; border: 1px solid var(--line); border-radius: 20px;
-  background: var(--surface); box-shadow: var(--shadow-hi);
-}
-.addr-label { margin: 0 0 10px; color: var(--ink-3); font-size: .8rem; font-weight: 600; }
-.addr-row { display: flex; align-items: center; gap: 10px; }
-.addr-row code {
-  flex: 1; min-width: 0; padding: 14px 14px; border-radius: 12px; background: var(--surface-low);
-  font: 700 1.05rem/1.2 var(--font-mono); color: var(--primary); word-break: break-all;
-  -webkit-user-select: all; user-select: all;
-}
-.copy {
-  flex: none; height: 48px; min-width: 84px; padding: 0 16px; border: 0; border-radius: 12px;
-  background: var(--primary); color: #fff; font-weight: 700; font-size: .9rem; cursor: pointer;
-}
-.copy:active { transform: scale(.97); }
-.shot {
-  display: inline-flex; align-items: center; gap: 7px; margin: 0 0 12px; padding: 7px 12px; border-radius: 999px;
-  background: var(--coral-tint); color: #a3321a; font-size: .82rem; font-weight: 700;
-}
-.shot svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-
-.steps { list-style: none; margin: 0 0 24px; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.steps li { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; font-size: .78rem; font-weight: 600; line-height: 1.3; color: var(--ink-2); }
-.step-icon {
-  position: relative; width: 56px; height: 56px; display: grid; place-items: center;
+/* The page the owner holds while sudo moves onto their Wi-Fi. Two steps:
+   copy the link, then paste it in Safari. Copying is what tells sudo to
+   move; it waits a few seconds so step two can be seen. Pictures over words. */
+[hidden] { display: none !important; }
+.wifi-chip { display: inline-flex; align-items: center; gap: 5px; }
+.wifi-chip svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; }
+.ico {
+  width: 56px; height: 56px; display: grid; place-items: center;
   border-radius: 18px; background: var(--primary-fixed); color: var(--primary);
 }
-.step-icon svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
-.step-icon b {
-  position: absolute; top: -6px; inset-inline-end: -6px; width: 22px; height: 22px; display: grid; place-items: center;
-  border-radius: 50%; background: var(--coral); color: #fff; font-size: .7rem;
+.ico svg { width: 27px; height: 27px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.flow { list-style: none; display: flex; align-items: flex-start; justify-content: center; gap: 6px; margin: 8px 0 26px; padding: 0; }
+.flow li { display: flex; flex-direction: column; align-items: center; gap: 7px; font-size: .8rem; font-weight: 700; color: var(--ink-2); }
+.flow li.on .ico { background: var(--coral); color: #fff; box-shadow: 0 8px 18px rgba(254,105,68,.28); }
+.flow li.arrow { padding-top: 18px; color: var(--ink-3); }
+.flow li.arrow svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+h1.center { text-align: center; margin-bottom: 14px; }
+#url-name {
+  display: block; margin: 0 0 14px; padding: 16px; border-radius: 14px; background: var(--surface);
+  border: 1px solid var(--line); box-shadow: var(--shadow-hi);
+  font: 700 1.1rem/1.2 var(--font-mono); color: var(--primary); word-break: break-all; text-align: center;
+  -webkit-user-select: all; user-select: all;
 }
-
 .done {
-  width: 100%; height: 56px; border: 0; border-radius: 16px; background: var(--coral); color: #fff;
-  font-weight: 700; font-size: 1rem; cursor: pointer; box-shadow: 0 10px 24px rgba(254,105,68,.25);
+  width: 100%; height: 58px; display: flex; align-items: center; justify-content: center; gap: 9px;
+  border: 0; border-radius: 16px; background: var(--coral); color: #fff;
+  font-weight: 800; font-size: 1.08rem; cursor: pointer; box-shadow: 0 10px 24px rgba(254,105,68,.25);
 }
-.done:disabled { opacity: .6; }
-.wait { text-decoration: underline; text-decoration-color: var(--coral); text-decoration-thickness: 2px; text-underline-offset: 3px; color: var(--ink-2); font-weight: 600; }
-.after { margin: 12px 0 0; color: var(--ink-3); font-size: .8rem; text-align: center; line-height: 1.45; }
+.done svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.done:active { transform: scale(.98); }
+.hold { margin: 0 0 10px; text-align: center; color: var(--ink-2); font-size: .95rem; }
+.tick {
+  width: 84px; height: 84px; margin: 14px auto 12px; display: grid; place-items: center;
+  border-radius: 50%; background: #d8f5dd; color: #16692b;
+  animation: pop .35s cubic-bezier(.2,1.4,.4,1);
+}
+.tick svg { width: 44px; height: 44px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+@keyframes pop { from { transform: scale(.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+/* A little picture of a browser bar with the link pasted in. */
+.paste-visual {
+  display: flex; align-items: center; gap: 10px; margin: 6px 0 14px; padding: 12px;
+  border-radius: 20px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow-hi);
+}
+.ico.big { flex: none; width: 48px; height: 48px; border-radius: 14px; }
+.bar {
+  flex: 1; min-width: 0; padding: 12px 12px; border-radius: 12px; background: var(--surface-low);
+  font: 700 .9rem/1.2 var(--font-mono); color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.caret { display: inline-block; width: 2px; height: 1em; margin-right: 4px; vertical-align: -2px; background: var(--coral); animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+.go-line { margin: 0 0 16px; text-align: center; font-size: 1.15rem; color: var(--ink); }
+.after { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 0; color: var(--ink-3); font-size: .85rem; }
+.after svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .state {
   display: none; margin: 0 0 20px; padding: 14px 16px; border-radius: 16px;
   background: var(--primary-fixed); color: var(--primary); font-size: .9rem; font-weight: 600; line-height: 1.45;
@@ -57,30 +66,7 @@
 .state.show { display: block; }
 .state.bad { background: #ffdad6; color: var(--error); }
 .retry { display: none; width: 100%; height: 48px; margin-top: 10px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); font-weight: 700; cursor: pointer; }
-
-/* Shown when "Done" is pressed before the address was copied: once this
-   network goes away, the address is the only way back to sudo. */
-.first-copy {
-  position: fixed; inset: 0; z-index: 10; display: none; align-items: flex-end; justify-content: center;
-  padding: 16px; background: rgba(20, 20, 30, .45);
-}
-.first-copy.show { display: flex; }
-.first-copy-card {
-  width: 100%; max-width: 460px; padding: 22px 18px 18px; border-radius: 24px;
-  background: var(--surface); box-shadow: var(--shadow-hi);
-}
-.first-copy-card h2 { margin: 0 0 6px; font-size: 1.2rem; }
-.first-copy-card p { margin: 0 0 16px; color: var(--ink-2); font-size: .9rem; line-height: 1.45; }
-.first-copy-card code {
-  display: block; margin: 0 0 14px; padding: 14px; border-radius: 12px; background: var(--surface-low);
-  font: 700 1.05rem/1.2 var(--font-mono); color: var(--primary); word-break: break-all;
-  -webkit-user-select: all; user-select: all;
-}
-.first-copy-card .done { margin: 0; }
-.skip {
-  display: block; width: 100%; margin-top: 10px; padding: 10px; border: 0; background: none;
-  color: var(--ink-3); font-size: .85rem; font-weight: 600; cursor: pointer;
-}
+.retry.show { display: block; }
 </style>
 </head>
 <body>
@@ -89,44 +75,43 @@
     <span class="brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5 10 17 19 7"/></svg></span>
     <span class="brand-name">sudo</span>
   </div>
-  <span class="step-chip" id="ssid">{{SSID}}</span>
+  <span class="step-chip wifi-chip" id="ssid"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0"/><circle cx="12" cy="19.5" r=".9"/></svg>{{SSID}}</span>
 </header>
 
 <main class="wrap">
-  <p class="shot"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Screenshot this page</p>
-  <h1>Save this address</h1>
-  <p class="sub">It is how you open sudo once your phone is back on your home Wi‑Fi.</p>
+  <!-- Step 1: copy. sudo stays on its own network until this is done. -->
+  <section id="copy-step">
+    <ol class="flow" aria-label="Copy, open Safari, paste">
+      <li class="on"><span class="ico"><svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg></span>Copy</li>
+      <li class="arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></li>
+      <li><span class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5z"/></svg></span>Safari</li>
+      <li class="arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></li>
+      <li><span class="ico"><svg viewBox="0 0 24 24"><path d="M9 4h6v3H9z"/><path d="M15 5.5h2a2 2 0 0 1 2 2V19a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V7.5a2 2 0 0 1 2-2h2"/></svg></span>Paste</li>
+    </ol>
 
-  <div class="state" id="state" role="status"></div>
-
-  <section class="addr-card">
-    <p class="addr-label">Your sudo address</p>
-    <div class="addr-row">
-      <code id="url-name">{{DASHBOARD_URL}}</code>
-      <button type="button" class="copy" data-target="url-name">Copy</button>
-    </div>
+    <h1 class="center">Your sudo link</h1>
+    <code id="url-name">{{DASHBOARD_URL}}</code>
+    <button type="button" class="done" id="copy"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>Copy</button>
+    <p class="hold" id="hold" hidden>Hold the link above → <b>Copy</b></p>
+    <button type="button" class="retry show" id="copied-by-hand" hidden>Copied ✓</button>
   </section>
 
-  <ol class="steps" aria-label="What happens next">
-    <li><span class="step-icon"><b>1</b><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg></span>Copy the address</li>
-    <li><span class="step-icon"><b>2</b><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0M2 9a14 14 0 0 1 20 0"/><circle cx="12" cy="19.5" r=".8"/></svg></span>Join {{SSID}}</li>
-    <li><span class="step-icon"><b>3</b><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M7 6.5h.01M10 6.5h.01"/></svg></span>Open it</li>
-  </ol>
+  <!-- Step 2: go. sudo leaves this network a few seconds later and this
+       window closes by itself. -->
+  <section id="go-step" hidden>
+    <div class="tick" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5 10 17 19 7"/></svg></div>
+    <h1 class="center">Copied</h1>
+    <div class="paste-visual" aria-hidden="true">
+      <span class="ico big"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5z"/></svg></span>
+      <div class="bar"><span class="caret"></span>{{DASHBOARD_URL}}</div>
+    </div>
+    <p class="go-line">Paste it in <b>Safari</b> or <b>Chrome</b></p>
+    <p class="after"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v4h-4"/></svg>Not loading? Wait a minute, reload.</p>
+  </section>
 
-  <button type="button" class="done" id="done">Done, connect to {{SSID}}</button>
-  <p class="after" id="after">sudo then joins {{SSID}} and this page closes. <span class="wait">Give it about a minute before you open the address. sudo needs a moment to connect.</span></p>
+  <div class="state" id="state" role="status"></div>
   <button type="button" class="retry" id="retry">Try a different network</button>
 </main>
-
-<div class="first-copy" id="first-copy" role="dialog" aria-modal="true" aria-labelledby="first-copy-title">
-  <div class="first-copy-card">
-    <h2 id="first-copy-title">Copy your address first</h2>
-    <p id="first-copy-note">Once sudo moves to {{SSID}}, this page closes and the address is how you get back to it.</p>
-    <code id="first-copy-url">{{DASHBOARD_URL}}</code>
-    <button type="button" class="done" id="first-copy-go">Copy address</button>
-    <button type="button" class="skip" id="first-copy-skip">I took a screenshot, connect</button>
-  </div>
-</div>
 
 <script>
   // Plain http, so navigator.clipboard is usually missing (it needs a secure
@@ -145,82 +130,47 @@
       if (ok) { resolve(); } else { reject(); }
     });
   }
-  var copied = false;
-  Array.prototype.forEach.call(document.querySelectorAll('.copy'), function (button) {
-    button.addEventListener('click', function () {
-      var code = document.getElementById(button.dataset.target);
-      copyText(code.textContent.trim()).then(function () {
-        copied = true;
-        button.textContent = 'Copied';
-        setTimeout(function () { button.textContent = 'Copy'; }, 1800);
-      }).catch(function () {
-        var range = document.createRange();
-        range.selectNodeContents(code);
-        var sel = window.getSelection();
-        sel.removeAllRanges(); sel.addRange(range);
-        button.textContent = 'Hold to copy';
-        setTimeout(function () { button.textContent = 'Copy'; }, 2600);
-      });
-    });
-  });
 
+  var code = document.getElementById('url-name');
+  var copyBtn = document.getElementById('copy');
+  var copyStep = document.getElementById('copy-step');
+  var goStep = document.getElementById('go-step');
   var stateBox = document.getElementById('state');
-  var doneBtn = document.getElementById('done');
   var retryBtn = document.getElementById('retry');
-  var after = document.getElementById('after');
+
   function say(text, bad) {
     stateBox.textContent = text;
     stateBox.className = 'state show' + (bad ? ' bad' : '');
   }
 
-  // "Done" is what starts the move. The hotspot drops a couple of seconds
-  // later, so the reply may never arrive -- that is the expected outcome.
-  var firstCopy = document.getElementById('first-copy');
-  var firstCopyGo = document.getElementById('first-copy-go');
-  var ssidName = document.getElementById('ssid').textContent;
-  // Not copied yet: ask for that first. One press copies and then connects:
-  // a version that needed a second press left a Pi waiting in setup, because
-  // "Copied" read as the end. If copying is blocked, the address is selected
-  // so it can be held and copied by hand, and the next press connects.
-  firstCopyGo.addEventListener('click', function () {
-    if (copied) { firstCopy.className = 'first-copy'; connect(); return; }
-    var code = document.getElementById('first-copy-url');
-    copyText(code.textContent.trim()).then(function () {
-      copied = true;
-      firstCopyGo.disabled = true;
-      firstCopyGo.textContent = 'Copied. Connecting to ' + ssidName + '…';
-      setTimeout(function () { firstCopy.className = 'first-copy'; connect(); }, 1200);
-    }).catch(function () {
-      var range = document.createRange();
-      range.selectNodeContents(code);
-      var sel = window.getSelection();
-      sel.removeAllRanges(); sel.addRange(range);
-      document.getElementById('first-copy-note').textContent =
-        'This phone would not let sudo copy it. Hold the address above and choose Copy.';
-      copied = true;
-      firstCopyGo.textContent = 'Copied it? Connect to ' + ssidName;
-    });
-  });
-  document.getElementById('first-copy-skip').addEventListener('click', function () {
-    firstCopy.className = 'first-copy';
-    connect();
-  });
-  doneBtn.addEventListener('click', function () {
-    if (!copied) { firstCopy.className = 'first-copy show'; return; }
-    connect();
-  });
-
-  function connect() {
-    doneBtn.disabled = true;
-    var ssid = ssidName;
-    say('Connecting to ' + ssid + '. You can switch your phone back to it now.');
-    after.innerHTML = '<span class="wait">Give it about a minute before you open the address. sudo needs a moment to connect.</span>';
+  // Copying is the go-ahead. /go is sent straight away -- once the owner
+  // switches to Safari this window may be paused -- and sudo waits a few
+  // seconds before it leaves, so the next step can be seen first.
+  var started = false;
+  function go() {
+    if (started) return;
+    started = true;
+    copyStep.hidden = true;
+    goStep.hidden = false;
     var xhr = new XMLHttpRequest();
     xhr.open('POST', '/go', true);
     xhr.timeout = 5000;
     xhr.send('');
     startPolling();
   }
+
+  copyBtn.addEventListener('click', function () {
+    copyText(code.textContent.trim()).then(go).catch(function () {
+      var range = document.createRange();
+      range.selectNodeContents(code);
+      var sel = window.getSelection();
+      sel.removeAllRanges(); sel.addRange(range);
+      copyBtn.hidden = true;
+      document.getElementById('hold').hidden = false;
+      document.getElementById('copied-by-hand').hidden = false;
+    });
+  });
+  document.getElementById('copied-by-hand').addEventListener('click', go);
   retryBtn.addEventListener('click', function () { window.location.href = '/setup'; });
 
   // Only a failed join brings the hotspot back; then this page can say so.
@@ -240,9 +190,8 @@
       try { data = JSON.parse(xhr.responseText); } catch (e) { return; }
       if (data.state === 'failed') {
         clearInterval(timer);
+        goStep.hidden = true;
         say(data.error || 'sudo could not join that network.', true);
-        doneBtn.style.display = 'none';
-        after.textContent = '';
         retryBtn.style.display = 'block';
       }
     };
