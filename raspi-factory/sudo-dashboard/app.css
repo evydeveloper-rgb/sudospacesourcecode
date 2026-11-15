@@ -3251,3 +3251,20 @@ input[type="password"], input[type="tel"], input[type="number"], #ssh-key, #devi
 .wl-txt small { color: var(--ink-2, #555); font-size: .88rem; line-height: 1.4; }
 .wl-txt .wl-more { color: var(--ink-3, #888); font-size: .8rem; }
 .wl-badge { font-style: normal; font-size: .7rem; font-weight: 700; vertical-align: 2px; margin-inline-start: 6px; padding: 2px 8px; border-radius: 999px; background: #d8f5dd; color: #16692b; }
+
+/* Home-screen step: sudo among the phone's other apps. */
+.wel-phone {
+  width: 220px; margin: 4px auto 18px; padding: 20px 0 18px; border-radius: 30px 30px 0 0;
+  background: linear-gradient(160deg, #cfd8ff, #f6d5e8 60%, #ffe2cf); border: 6px solid #1f1d2b; border-bottom: 0;
+}
+.wel-apps { display: grid; grid-template-columns: repeat(4, 38px); justify-content: center; gap: 16px 12px; }
+.wa { width: 38px; height: 38px; border-radius: 11px; }
+.wa.a1 { background: #6fcf97; } .wa.a2 { background: #56ccf2; } .wa.a3 { background: #f2c94c; } .wa.a4 { background: #bb6bd9; }
+.wa.a5 { background: #eb5757; } .wa.a6 { background: #2f80ed; } .wa.a7 { background: #f2994a; }
+.wa-sudo { position: relative; }
+.wa-sudo img {
+  display: block; width: 38px; height: 38px; border-radius: 11px; object-fit: cover; background: #fff;
+  box-shadow: 0 0 0 3px #fff, 0 6px 16px rgba(254,105,68,.5); animation: wa-pop .6s .3s cubic-bezier(.2,1.5,.4,1) both;
+}
+.wa-sudo small { position: absolute; top: 42px; left: 50%; transform: translateX(-50%); font-size: .62rem; font-weight: 800; color: #1f1d2b; }
+@keyframes wa-pop { from { transform: scale(0); } to { transform: scale(1); } }
