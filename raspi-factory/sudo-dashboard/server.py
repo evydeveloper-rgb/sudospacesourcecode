@@ -3700,6 +3700,13 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             if self.via_tunnel():
                 self.send_json({"error": "Only on your home Wi-Fi"}, code=403)
                 return True
+            # And only during setup. Being on the Wi-Fi already opens the home
+            # page with no password, but a session on the public link outlives
+            # the visit: a guest could take one home. After setup, the link
+            # asks for the password like everywhere else.
+            if read_json_file(CONFIG).get("profile_done"):
+                self.send_json({"error": "Setup is already done"}, code=403)
+                return True
             if not remote_enabled():
                 cfg = read_json_file(CONFIG)
                 cfg["remote_access"] = True
