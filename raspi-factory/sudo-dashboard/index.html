@@ -1715,327 +1715,6 @@
               </details>
             </div>
           </section>
-          <div class="settings-group" data-i18n="settings.developer">Developer</div>
-          <section class="setting-card" id="ssh-setting">
-            <button class="setting-head" type="button" aria-expanded="false">
-              <span class="setting-icon">⌘</span>
-              <span><strong data-i18n="set.ssh.developerAccess">Developer access</strong><small id="ssh-summary">Terminal off</small></span>
-              <span class="chevron">›</span>
-            </button>
-            <div class="setting-body">
-              <div class="settings-subgroup" data-i18n="dev.anywhere">access from anywhere</div>
-              <div class="access-row">
-                <div>
-                  <strong data-i18n="set.access.accessFromAnywhere">Access from anywhere</strong>
-                  <small data-i18n="set.access.createsATemporaryPublic">Creates a temporary public Cloudflare link.</small>
-                </div>
-                <label class="switch">
-                  <input id="remote-toggle" type="checkbox">
-                  <span aria-hidden="true"></span>
-                  <em class="sr-only" data-i18n="set.access.toggleRemoteAccess">Toggle remote access</em>
-                </label>
-              </div>
-
-
-              <button class="info-btn" type="button" data-info="remote-info" aria-expanded="false" aria-label="About access from anywhere" data-i18n-attr="aria-label:set.access.aboutAccessFromAnywhere">i</button>
-              <div class="info-bubble" id="remote-info" data-i18n-html="set.access.normallyYourDashboardOnly">
-                Normally your dashboard only works on your home Wi‑Fi. Turn this on and sudo creates a public web address that reaches it from anywhere — useful on the go.<br><br>Away from home it asks for your dashboard password, unless you switch that off below. Even so, don't post the link or share it with people you don't trust.<br><br>The link changes when your device restarts, and sudo messages you the new one on WhatsApp or Telegram. Turn this off when you don't need it.
-              </div>
-              <div class="remote-box" id="remote-box" hidden>
-                <a id="remote-url" href="#" target="_blank" rel="noopener"></a>
-                <button id="copy-remote" type="button" data-i18n="set.access.copy">Copy</button>
-              </div>
-
-              <div class="ts-block" id="ts-block">
-                <div class="settings-subgroup" data-i18n="ts.title">Your own Tailscale</div>
-                <p class="microcopy" data-i18n="ts.intro">Gives sudo an address that never changes, on your own private network. Install the free Tailscale app on your phone and sign in with the same account; your home-screen icon then works anywhere. You sign in with your own Tailscale account: Sudo runs nothing in between.</p>
-                <button class="primary-button" id="ts-connect" type="button" data-i18n="ts.connect">Connect Tailscale</button>
-                <a class="primary-button ts-link" id="ts-signin" href="#" target="_blank" rel="noopener" hidden data-i18n="ts.signin">Sign in to Tailscale</a>
-                <div class="remote-box" id="ts-box" hidden>
-                  <a id="ts-url" href="#" target="_blank" rel="noopener"></a>
-                  <button id="ts-copy" type="button" data-i18n="set.access.copy">Copy</button>
-                </div>
-                <a class="ghost-button ts-link" id="ts-admin" href="#" target="_blank" rel="noopener" hidden data-i18n="ts.openAdmin">Open Tailscale settings</a>
-                <button class="ghost-button" id="ts-retry" type="button" hidden data-i18n="ts.retry">Try again</button>
-                <div class="access-row" id="ts-funnel-row" hidden>
-                  <div>
-                    <strong data-i18n="ts.funnel">Reachable without the Tailscale app</strong>
-                    <small data-i18n="ts.funnelNote">Off by default. The same address then opens from any phone or computer, like the public link, and still asks for your password.</small>
-                  </div>
-                  <label class="switch">
-                    <input id="ts-funnel" type="checkbox">
-                    <span aria-hidden="true"></span>
-                    <em class="sr-only" data-i18n="ts.funnel">Reachable without the Tailscale app</em>
-                  </label>
-                </div>
-                <button class="ghost-button" id="ts-disconnect" type="button" hidden data-i18n="ts.disconnect">Disconnect Tailscale</button>
-                <p class="form-status" id="ts-status" role="status"></p>
-              </div>
-
-
-              
-              <div class="settings-subgroup" data-i18n="dev.terminal">terminal and coding tools</div>
-
-              <div class="access-row">
-                <div>
-                  <strong data-i18n="set.ssh.terminalAccessSsh">Terminal access (SSH)</strong>
-                  <small data-i18n="set.ssh.logIntoThisDevice">Log into this device from your computer and work on it directly.</small>
-                </div>
-                <label class="switch">
-                  <input id="ssh-toggle" type="checkbox">
-                  <span aria-hidden="true"></span>
-                  <em class="sr-only" data-i18n="set.ssh.toggleTerminalAccess">Toggle terminal access</em>
-                </label>
-              </div>
-              <button class="info-btn" type="button" data-info="ssh-info" aria-expanded="false" aria-label="About terminal access" data-i18n-attr="aria-label:set.ssh.aboutTerminalAccess">i</button>
-              <div class="info-bubble" id="ssh-info" data-i18n-html="set.ssh.itSYourDevice">
-                It's your device, so you can have full access to it. This opens a way to log in from a computer on your home Wi‑Fi and use it like any other machine — install things, read files, change how sudo works.<br><br>
-                <strong>You don't need this for normal use.</strong> Everything the device is meant to do, it does from this dashboard.<br><br>
-                <strong>Home Wi‑Fi only.</strong> This is never reachable from the internet, even with <em>Access from anywhere</em> switched on.<br><br>
-                Changes you make by hand are undone if the device is ever re‑flashed.
-              </div>
-
-              <div id="ssh-details" hidden>
-                <p class="key-state" id="ssh-command">ssh …</p>
-                <div id="ssh-password-wrap">
-                  <div class="label-row">
-                    <span class="label-text" data-i18n="login.password">Password</span>
-                    <button class="info-btn" type="button" data-info="ssh-pw-info" aria-expanded="false" aria-label="About this password" data-i18n-attr="aria-label:set.ssh.aboutThisPassword">i</button>
-                  </div>
-                  <div class="info-bubble" id="ssh-pw-info" data-i18n="set.ssh.generatedJustNowFor">
-                    Generated just now for your device's user account. Copy it somewhere safe — you can always come back here to see it again while you're on your home Wi‑Fi.
-                  </div>
-                  <div class="remote-box">
-                    <a id="ssh-password" href="#" onclick="return false;"></a>
-                    <button id="copy-ssh" type="button" data-i18n="set.access.copy">Copy</button>
-                  </div>
-                </div>
-                <p class="microcopy" id="ssh-remote-note" hidden data-i18n="set.ssh.openThisPageOn">
-                  Open this page on your home Wi‑Fi to see the password — it isn't shown over the public link.
-                </p>
-              </div>
-
-              <div class="label-row">
-                <span class="label-text" data-i18n="set.ssh.preferToUseYour">Prefer to use your own SSH key?</span>
-                <button class="info-btn" type="button" data-info="ssh-key-info" aria-expanded="false" aria-label="About SSH keys" data-i18n-attr="aria-label:set.ssh.aboutSshKeys">i</button>
-              </div>
-              <div class="info-bubble" id="ssh-key-info" data-i18n-html="set.ssh.anSshKeyIs">
-                An SSH key is a pair of files on your computer — a private half that never leaves it, and a public half that's safe to share. You put the public half here, and your computer proves it holds the private half when it connects. No password to type or remember.<br><br>
-                <strong>If you don't have one</strong>, skip this — the password above works fine. To make one, run <code>ssh-keygen -t ed25519</code> on your computer, then paste the contents of <code>~/.ssh/id_ed25519.pub</code>.
-              </div>
-              <input id="ssh-key" type="text" placeholder="ssh-ed25519 AAAA…" autocomplete="off" spellcheck="false">
-              <button class="primary-button" id="save-ssh-key" type="button" data-i18n="set.ssh.useThisKeyInstead">Use this key instead</button>
-              <p class="form-status" id="ssh-status" role="status"></p>
-
-              <div id="devtools-wrap" hidden>
-                <div class="label-row">
-                  <span class="label-text">Claude Code</span>
-                  <button class="info-btn" type="button" data-info="devtools-info" aria-expanded="false" aria-label="About Claude Code" data-i18n-attr="aria-label:set.ssh.aboutClaudeCode">i</button>
-                </div>
-                <div class="info-bubble" id="devtools-info" data-i18n-html="set.ssh.claudeCodeIsAn">
-                  Claude Code is an AI assistant that runs in a terminal and can read and change the files on this device — handy if you want to customise how sudo works.<br><br>
-                  We don't ship it preinstalled, so the device stays small and you always get the current version. Installing takes a few minutes and needs internet. You can watch the progress right here.
-                </div>
-                <button class="primary-button" id="install-devtools" type="button" data-i18n="set.ssh.installClaudeCode">Install Claude Code</button>
-                <p class="form-status" id="devtools-status" role="status"></p>
-                <div id="devtools-done" hidden>
-                  <p class="microcopy" data-i18n="set.ssh.installedOpenATerminal">Installed. Open a terminal on your computer and run these:</p>
-                  <p class="key-state" id="devtools-cmd-ssh">ssh …</p>
-                  <p class="key-state">claude</p>
-                </div>
-
-                <div class="label-row"><span class="label-text">Codex</span></div>
-                <p class="microcopy" style="margin-top:0" data-i18n="set.ssh.openaiSTerminalAssistant">OpenAI's terminal assistant. Same idea, different provider — you can have both.</p>
-                <button class="primary-button" id="install-codex" type="button" data-i18n="set.ssh.installCodex">Install Codex</button>
-                <p class="form-status" id="codex-status" role="status"></p>
-                <div id="codex-done" hidden>
-                  <p class="key-state">codex</p>
-                </div>
-              </div>
-            </div>
-          </section>
-          <section class="setting-card" id="github-setting">
-            <button class="setting-head" type="button" aria-expanded="false">
-              <span class="setting-icon">⌥</span>
-              <span><strong>GitHub</strong><small id="github-summary">Not connected</small></span>
-              <span class="chevron">›</span>
-            </button>
-            <div class="setting-body">
-              <p class="section-intro" data-i18n="set.github.giveSudoAGithub">Give sudo a GitHub token and it can work with your repositories directly — cloning one, pushing changes, opening an issue — instead of only talking you through it.</p>
-              <label for="github-username"><span data-i18n="set.github.githubUsername">GitHub username</span> <span class="optional-tag" data-i18n="set.github.optional">optional</span></label>
-              <input id="github-username" autocomplete="off" spellcheck="false" placeholder="your-handle" data-i18n-attr="placeholder:set.github.yourHandle">
-              <label for="github-token" data-i18n="set.github.personalAccessToken">Personal access token</label>
-              <input id="github-token" type="password" autocomplete="off" spellcheck="false" placeholder="ghp_… or github_pat_…" data-i18n-attr="placeholder:set.github.ghpOrGithubPat">
-              <p class="microcopy" data-i18n-html="set.github.createOneAtGithub">Create one at <strong>github.com → Settings → Developer settings → Personal access tokens</strong>. Choose only the scopes sudo needs; a fine-grained token limited to the repos you care about is the safest. Stored on this device only.</p>
-              <button class="primary-button" id="save-github" type="button" data-i18n="set.github.saveToken">Save token</button>
-
-              <div class="access-row">
-                <div>
-                  <strong data-i18n="set.github.letSudoUseMy">Let sudo use my repos</strong>
-                  <small data-i18n="set.github.whenOffTheToken">When off, the token is saved but sudo cannot reach GitHub.</small>
-                </div>
-                <label class="switch"><input type="checkbox" id="github-toggle"><span></span></label>
-              </div>
-              <p class="form-status" id="github-status" role="status"></p>
-
-              <button class="info-link" type="button" aria-expanded="false" aria-controls="github-info" data-i18n="set.github.whatTheTokenCan">What the token can do ⓘ</button>
-              <div class="info-bubble" id="github-info" data-i18n-html="set.github.aTokenIsA">
-                A token is a key to your GitHub account. What it can reach is exactly what you ticked when you made it — repo access lets sudo clone, push and open issues; nothing else.<br><br>
-                <strong>Treat it like a password.</strong> Keep it off unless you want sudo working in your repos, and revoke it on GitHub the moment you are done. It is stored on this device only and never leaves it except to talk to GitHub.
-              </div>
-            </div>
-          </section>
-          <section class="setting-card" id="models-setting">
-            <button class="setting-head" type="button" aria-expanded="false">
-              <span class="setting-icon">◎</span>
-              <span><strong data-i18n="ms.title">Models</strong><small data-i18n="ms.summary">Cloud and on-device</small></span>
-              <span class="chevron">›</span>
-            </button>
-            <div class="setting-body">
-            <div class="models-panel" id="home-panel-agent">
-              <div class="model-seg" role="tablist" aria-label="Model kinds" data-i18n-attr="aria-label:lm.kinds">
-                <button type="button" role="tab" class="model-seg-btn active" data-mseg="cloud" aria-selected="true">
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 18a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 8.5a4.5 4.5 0 0 1-.5 9.5Z"/></svg><span data-i18n="lm.tabCloud">Cloud models</span>
-                </button>
-                <button type="button" role="tab" class="model-seg-btn" data-mseg="local" aria-selected="false">
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9.5 9.5h5v5h-5zM9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg><span data-i18n="lm.tabLocal">On-device models</span>
-                </button>
-              </div>
-
-              <div id="mseg-cloud">
-              <p class="model-ask" data-i18n="home.modelAsk">Want a different model? Just ask your agent to switch. Models cost different amounts per message, so we recommend keeping DeepSeek as your main one.</p>
-              <div class="model-head">
-                <span class="routing-pill" id="home-routing-pill">Auto</span>
-                <p class="microcopy" id="home-routing-note"></p>
-              </div>
-              <div class="model-grid" id="home-model-grid"></div>
-              <div class="warning-copy" id="home-model-warning" data-i18n-html="home.modelWarning">
-                <strong>Why more than one model.</strong> sudo hands each job to the model that can actually do it: a photo goes to the one that can see, a picture request to the one that can make images. If you ask your agent to use one model for everything, anything that model cannot do stops working.
-              </div>
-              </div>
-
-              <!-- On-device models: a small workstation for what runs on the Pi
-                   itself. What it is, what else fits this board, switching, and
-                   how these models work -- in numbers, not adjectives. -->
-              <div id="mseg-local" class="lm" hidden>
-                <div class="lm-only">
-                  <div class="lm-only-row">
-                    <div>
-                      <strong data-i18n="lm.only">Use only the on-device model</strong>
-                      <small id="lm-answering"></small>
-                    </div>
-                    <label class="switch">
-                      <input id="lm-only" type="checkbox">
-                      <span aria-hidden="true"></span>
-                      <em class="sr-only" data-i18n="lm.only">Use only the on-device model</em>
-                    </label>
-                  </div>
-                  <p class="lm-caution">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 20h20Z"/><path d="M12 10v4M12 17h.01"/></svg>
-                    <span data-i18n-html="lm.caution">Good for basic chatting, <strong>not a daily driver</strong>. It can’t search the web, use your apps or handle long tasks. Only this chat stays on the Pi: WhatsApp and other channels keep using your cloud model.</span>
-                  </p>
-                  <p class="form-status" id="lm-status" role="status"></p>
-                </div>
-
-                <h3 class="lm-h" data-i18n="lm.yourPi">Your Pi</h3>
-                <div class="lm-specs" id="lm-specs"><p class="microcopy" data-i18n="lm.loading">Reading the device…</p></div>
-
-                <h3 class="lm-h" data-i18n="lm.runningNow">Running now</h3>
-                <div class="lm-progress" id="lm-progress" hidden>
-                  <div class="lm-progress-head"><strong id="lm-progress-title"></strong><span id="lm-progress-pct"></span></div>
-                  <div class="model-progress"><div class="model-progress-fill" id="lm-progress-fill"></div></div>
-                  <small id="lm-progress-msg"></small>
-                </div>
-                <div class="lm-now" id="lm-now"></div>
-
-                <h3 class="lm-h" data-i18n="lm.pickTitle">Models for your Pi</h3>
-                <p class="lm-sub" id="lm-pick-lede"></p>
-                <div id="lm-tiers"></div>
-                <div id="lm-custom"></div>
-
-                <h3 class="lm-h" data-i18n="lm.learnTitle">How on-device models work</h3>
-                <div class="lm-learn">
-                  <details class="hub-guide" open>
-                    <summary>
-                      <span class="hub-guide-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="6" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/><circle cx="12" cy="12" r="2"/><path d="m7.5 7.5 3 3M16.5 7.5l-3 3M7.5 16.5l3-3M16.5 16.5l-3-3"/></svg></span>
-                      <span><strong data-i18n="lm.l1.title">Parameters: what the “B” means</strong><small data-i18n="lm.l1.sub">Size is knowledge, and memory</small></span>
-                    </summary>
-                    <div class="hub-guide-body">
-                      <p data-i18n-html="lm.l1.body">A <strong>parameter</strong> is one number the model learned in training. <strong>1.7B</strong> means 1.7 billion of them. More parameters hold more knowledge and follow instructions better, but take more memory and run slower.</p>
-                      <div class="lm-scale">
-                        <div class="lm-scale-row"><span>Gemma 3 270M</span><div class="lm-scale-track"><i style="width:43%"></i></div><b>0.27B</b></div>
-                        <div class="lm-scale-row"><span>Qwen3 1.7B</span><div class="lm-scale-track"><i style="width:58%"></i></div><b>2B</b></div>
-                        <div class="lm-scale-row"><span>Qwen3 14B</span><div class="lm-scale-track"><i style="width:73%"></i></div><b>15B</b></div>
-                        <div class="lm-scale-row cloud"><span data-i18n="lm.l1.cloud">Cloud models</span><div class="lm-scale-track"><i style="width:100%"></i></div><b>500B+</b></div>
-                      </div>
-                      <p class="lm-note" data-i18n="lm.l1.note">The scale is squeezed: the cloud bar stands for about 250 times Qwen3 1.7B. Cloud models run on data-centre hardware, which is why they are so much smarter.</p>
-                    </div>
-                  </details>
-
-                  <details class="hub-guide">
-                    <summary>
-                      <span class="hub-guide-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h10M4 17h5"/></svg></span>
-                      <span><strong data-i18n="lm.l2.title">Quantization: shrinking a model to fit</strong><small data-i18n="lm.l2.sub">Why a 2B model is a 1.4 GB file</small></span>
-                    </summary>
-                    <div class="hub-guide-body">
-                      <p data-i18n-html="lm.l2.body">Each parameter is stored as a number. Fresh from training it takes <strong>16 bits</strong>. Quantization rounds it to <strong>8 or 4 bits</strong>: the file shrinks by half or three quarters, and quality drops a little.</p>
-                      <div class="lm-quant">
-                        <div class="lm-quant-row"><span class="lm-quant-bits">16-bit</span><div class="lm-quant-track"><i style="width:100%"></i></div><b>4.1 GB</b><small data-i18n="lm.l2.q16">Original</small></div>
-                        <div class="lm-quant-row"><span class="lm-quant-bits">8-bit</span><div class="lm-quant-track"><i style="width:54%"></i></div><b>2.2 GB</b><small data-i18n="lm.l2.q8">Almost no difference</small></div>
-                        <div class="lm-quant-row"><span class="lm-quant-bits">4-bit</span><div class="lm-quant-track"><i style="width:33%"></i></div><b>1.4 GB</b><small data-i18n="lm.l2.q4">Small loss, rarely noticed</small></div>
-                      </div>
-                      <p class="lm-note" data-i18n="lm.l2.caption">Qwen3 1.7B at each precision. Below 4 bits, answers get noticeably worse.</p>
-                      <p class="lm-decode-title" data-i18n="lm.l2.decode">Reading a name like Q4_K_M</p>
-                      <div class="lm-decode">
-                        <div><code>Q4</code><span data-i18n="lm.l2.dQ">4 bits per weight</span></div>
-                        <div><code>K</code><span data-i18n="lm.l2.dK">“k-quant”: weights in small blocks, each with its own scale, so rounding errors stay small</span></div>
-                        <div><code>M</code><span data-i18n="lm.l2.dM">Medium: a few sensitive layers kept at 6 bits (S = fewer, L = more)</span></div>
-                      </div>
-                      <p class="lm-formula"><span data-i18n="lm.l2.formula">File size ≈ parameters × bits ÷ 8</span></p>
-                    </div>
-                  </details>
-
-                  <details class="hub-guide">
-                    <summary>
-                      <span class="hub-guide-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14 16 9"/><path d="M3.5 18a9 9 0 1 1 17 0"/></svg></span>
-                      <span><strong data-i18n="lm.l3.title">Speed: why bigger is slower</strong><small data-i18n="lm.l3.sub">Memory speed sets the pace</small></span>
-                    </summary>
-                    <div class="hub-guide-body">
-                      <p data-i18n-html="lm.l3.body">To write each <strong>token</strong> (about ¾ of a word), the model reads every one of its weights from memory once. So the Pi’s <strong>memory speed</strong>, not its processor, sets the pace.</p>
-                      <div class="lm-eq">
-                        <div class="lm-eq-box"><b>≈ 9 GB/s</b><small data-i18n="lm.l3.bw">Pi 5 memory</small></div>
-                        <span class="lm-eq-op">÷</span>
-                        <div class="lm-eq-box"><b>1.4 GB</b><small data-i18n="lm.l3.size">model file</small></div>
-                        <span class="lm-eq-op">≈</span>
-                        <div class="lm-eq-box hot"><b data-i18n="lm.l3.result">6 tokens/s</b><small data-i18n="lm.l3.out">writing speed</small></div>
-                      </div>
-                      <p class="lm-note" data-i18n="lm.l3.note">You read about 4–5 tokens a second, so anything above that feels live. Before writing, the model also reads your message and the chat so far, so long chats take longer to start.</p>
-                    </div>
-                  </details>
-
-                  <details class="hub-guide">
-                    <summary>
-                      <span class="hub-guide-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4Z"/></svg></span>
-                      <span><strong data-i18n="lm.l4.title">Fine-tune your own model</strong><small data-i18n="lm.l4.sub">Teach a small model your style, then run it here</small></span>
-                    </summary>
-                    <div class="hub-guide-body">
-                      <p data-i18n-html="lm.l4.body">Fine-tuning teaches an existing model from your own examples. The Pi can <strong>run</strong> models but not train them: training needs a graphics card, like a gaming PC or a free Google Colab notebook.</p>
-                      <ol class="lm-steps">
-                        <li><b>1</b><div><strong data-i18n="lm.l4.s1">Pick a base</strong><span data-i18n="lm.l4.s1b">A small model that already fits, such as Qwen3 1.7B.</span></div></li>
-                        <li><b>2</b><div><strong data-i18n="lm.l4.s2">Collect examples</strong><span data-i18n="lm.l4.s2b">200–1,000 question and answer pairs in the style you want, one per line in a .jsonl file.</span></div></li>
-                        <li><b>3</b><div><strong data-i18n="lm.l4.s3">Train a LoRA</strong><span data-i18n="lm.l4.s3b">With Unsloth. A LoRA trains a small add-on (under 1% of the weights) instead of the whole model, often in under an hour.</span></div></li>
-                        <li><b>4</b><div><strong data-i18n="lm.l4.s4">Export as GGUF, 4-bit</strong><span data-i18n="lm.l4.s4b">Unsloth saves a Q4_K_M .gguf file and a matching Modelfile.</span></div></li>
-                        <li><b>5</b><div><strong data-i18n="lm.l4.s5">Load it on the Pi</strong><span data-i18n="lm.l4.s5b">Copy both files over (Developer access), then run:</span></div></li>
-                      </ol>
-                      <pre class="lm-code">ollama create my-model -f Modelfile</pre>
-                      <p class="lm-note" data-i18n="lm.l4.note">It then shows up on this page under “Your own models”, ready to switch to.</p>
-                    </div>
-                  </details>
-                </div>
-              </div>
-            </div>
-            </div>
-          </section>
           <div class="settings-group" data-i18n="settings.yourAgent">Your agent</div>
           <section class="setting-card" id="names-setting">
             <button class="setting-head" type="button" aria-expanded="false">
@@ -2535,6 +2214,327 @@
             </div>
           </section>
           <!-- Kept for their code; their jobs moved elsewhere. -->
+          <div class="settings-group" data-i18n="settings.developer">Developer</div>
+          <section class="setting-card" id="ssh-setting">
+            <button class="setting-head" type="button" aria-expanded="false">
+              <span class="setting-icon">⌘</span>
+              <span><strong data-i18n="set.ssh.developerAccess">Developer access</strong><small id="ssh-summary">Terminal off</small></span>
+              <span class="chevron">›</span>
+            </button>
+            <div class="setting-body">
+              <div class="settings-subgroup" data-i18n="dev.anywhere">access from anywhere</div>
+              <div class="access-row">
+                <div>
+                  <strong data-i18n="set.access.accessFromAnywhere">Access from anywhere</strong>
+                  <small data-i18n="set.access.createsATemporaryPublic">Creates a temporary public Cloudflare link.</small>
+                </div>
+                <label class="switch">
+                  <input id="remote-toggle" type="checkbox">
+                  <span aria-hidden="true"></span>
+                  <em class="sr-only" data-i18n="set.access.toggleRemoteAccess">Toggle remote access</em>
+                </label>
+              </div>
+
+
+              <button class="info-btn" type="button" data-info="remote-info" aria-expanded="false" aria-label="About access from anywhere" data-i18n-attr="aria-label:set.access.aboutAccessFromAnywhere">i</button>
+              <div class="info-bubble" id="remote-info" data-i18n-html="set.access.normallyYourDashboardOnly">
+                Normally your dashboard only works on your home Wi‑Fi. Turn this on and sudo creates a public web address that reaches it from anywhere — useful on the go.<br><br>Away from home it asks for your dashboard password, unless you switch that off below. Even so, don't post the link or share it with people you don't trust.<br><br>The link changes when your device restarts, and sudo messages you the new one on WhatsApp or Telegram. Turn this off when you don't need it.
+              </div>
+              <div class="remote-box" id="remote-box" hidden>
+                <a id="remote-url" href="#" target="_blank" rel="noopener"></a>
+                <button id="copy-remote" type="button" data-i18n="set.access.copy">Copy</button>
+              </div>
+
+              <div class="ts-block" id="ts-block">
+                <div class="settings-subgroup" data-i18n="ts.title">Your own Tailscale</div>
+                <p class="microcopy" data-i18n="ts.intro">Gives sudo an address that never changes, on your own private network. Install the free Tailscale app on your phone and sign in with the same account; your home-screen icon then works anywhere. You sign in with your own Tailscale account: Sudo runs nothing in between.</p>
+                <button class="primary-button" id="ts-connect" type="button" data-i18n="ts.connect">Connect Tailscale</button>
+                <a class="primary-button ts-link" id="ts-signin" href="#" target="_blank" rel="noopener" hidden data-i18n="ts.signin">Sign in to Tailscale</a>
+                <div class="remote-box" id="ts-box" hidden>
+                  <a id="ts-url" href="#" target="_blank" rel="noopener"></a>
+                  <button id="ts-copy" type="button" data-i18n="set.access.copy">Copy</button>
+                </div>
+                <a class="ghost-button ts-link" id="ts-admin" href="#" target="_blank" rel="noopener" hidden data-i18n="ts.openAdmin">Open Tailscale settings</a>
+                <button class="ghost-button" id="ts-retry" type="button" hidden data-i18n="ts.retry">Try again</button>
+                <div class="access-row" id="ts-funnel-row" hidden>
+                  <div>
+                    <strong data-i18n="ts.funnel">Reachable without the Tailscale app</strong>
+                    <small data-i18n="ts.funnelNote">Off by default. The same address then opens from any phone or computer, like the public link, and still asks for your password.</small>
+                  </div>
+                  <label class="switch">
+                    <input id="ts-funnel" type="checkbox">
+                    <span aria-hidden="true"></span>
+                    <em class="sr-only" data-i18n="ts.funnel">Reachable without the Tailscale app</em>
+                  </label>
+                </div>
+                <button class="ghost-button" id="ts-disconnect" type="button" hidden data-i18n="ts.disconnect">Disconnect Tailscale</button>
+                <p class="form-status" id="ts-status" role="status"></p>
+              </div>
+
+
+              
+              <div class="settings-subgroup" data-i18n="dev.terminal">terminal and coding tools</div>
+
+              <div class="access-row">
+                <div>
+                  <strong data-i18n="set.ssh.terminalAccessSsh">Terminal access (SSH)</strong>
+                  <small data-i18n="set.ssh.logIntoThisDevice">Log into this device from your computer and work on it directly.</small>
+                </div>
+                <label class="switch">
+                  <input id="ssh-toggle" type="checkbox">
+                  <span aria-hidden="true"></span>
+                  <em class="sr-only" data-i18n="set.ssh.toggleTerminalAccess">Toggle terminal access</em>
+                </label>
+              </div>
+              <button class="info-btn" type="button" data-info="ssh-info" aria-expanded="false" aria-label="About terminal access" data-i18n-attr="aria-label:set.ssh.aboutTerminalAccess">i</button>
+              <div class="info-bubble" id="ssh-info" data-i18n-html="set.ssh.itSYourDevice">
+                It's your device, so you can have full access to it. This opens a way to log in from a computer on your home Wi‑Fi and use it like any other machine — install things, read files, change how sudo works.<br><br>
+                <strong>You don't need this for normal use.</strong> Everything the device is meant to do, it does from this dashboard.<br><br>
+                <strong>Home Wi‑Fi only.</strong> This is never reachable from the internet, even with <em>Access from anywhere</em> switched on.<br><br>
+                Changes you make by hand are undone if the device is ever re‑flashed.
+              </div>
+
+              <div id="ssh-details" hidden>
+                <p class="key-state" id="ssh-command">ssh …</p>
+                <div id="ssh-password-wrap">
+                  <div class="label-row">
+                    <span class="label-text" data-i18n="login.password">Password</span>
+                    <button class="info-btn" type="button" data-info="ssh-pw-info" aria-expanded="false" aria-label="About this password" data-i18n-attr="aria-label:set.ssh.aboutThisPassword">i</button>
+                  </div>
+                  <div class="info-bubble" id="ssh-pw-info" data-i18n="set.ssh.generatedJustNowFor">
+                    Generated just now for your device's user account. Copy it somewhere safe — you can always come back here to see it again while you're on your home Wi‑Fi.
+                  </div>
+                  <div class="remote-box">
+                    <a id="ssh-password" href="#" onclick="return false;"></a>
+                    <button id="copy-ssh" type="button" data-i18n="set.access.copy">Copy</button>
+                  </div>
+                </div>
+                <p class="microcopy" id="ssh-remote-note" hidden data-i18n="set.ssh.openThisPageOn">
+                  Open this page on your home Wi‑Fi to see the password — it isn't shown over the public link.
+                </p>
+              </div>
+
+              <div class="label-row">
+                <span class="label-text" data-i18n="set.ssh.preferToUseYour">Prefer to use your own SSH key?</span>
+                <button class="info-btn" type="button" data-info="ssh-key-info" aria-expanded="false" aria-label="About SSH keys" data-i18n-attr="aria-label:set.ssh.aboutSshKeys">i</button>
+              </div>
+              <div class="info-bubble" id="ssh-key-info" data-i18n-html="set.ssh.anSshKeyIs">
+                An SSH key is a pair of files on your computer — a private half that never leaves it, and a public half that's safe to share. You put the public half here, and your computer proves it holds the private half when it connects. No password to type or remember.<br><br>
+                <strong>If you don't have one</strong>, skip this — the password above works fine. To make one, run <code>ssh-keygen -t ed25519</code> on your computer, then paste the contents of <code>~/.ssh/id_ed25519.pub</code>.
+              </div>
+              <input id="ssh-key" type="text" placeholder="ssh-ed25519 AAAA…" autocomplete="off" spellcheck="false">
+              <button class="primary-button" id="save-ssh-key" type="button" data-i18n="set.ssh.useThisKeyInstead">Use this key instead</button>
+              <p class="form-status" id="ssh-status" role="status"></p>
+
+              <div id="devtools-wrap" hidden>
+                <div class="label-row">
+                  <span class="label-text">Claude Code</span>
+                  <button class="info-btn" type="button" data-info="devtools-info" aria-expanded="false" aria-label="About Claude Code" data-i18n-attr="aria-label:set.ssh.aboutClaudeCode">i</button>
+                </div>
+                <div class="info-bubble" id="devtools-info" data-i18n-html="set.ssh.claudeCodeIsAn">
+                  Claude Code is an AI assistant that runs in a terminal and can read and change the files on this device — handy if you want to customise how sudo works.<br><br>
+                  We don't ship it preinstalled, so the device stays small and you always get the current version. Installing takes a few minutes and needs internet. You can watch the progress right here.
+                </div>
+                <button class="primary-button" id="install-devtools" type="button" data-i18n="set.ssh.installClaudeCode">Install Claude Code</button>
+                <p class="form-status" id="devtools-status" role="status"></p>
+                <div id="devtools-done" hidden>
+                  <p class="microcopy" data-i18n="set.ssh.installedOpenATerminal">Installed. Open a terminal on your computer and run these:</p>
+                  <p class="key-state" id="devtools-cmd-ssh">ssh …</p>
+                  <p class="key-state">claude</p>
+                </div>
+
+                <div class="label-row"><span class="label-text">Codex</span></div>
+                <p class="microcopy" style="margin-top:0" data-i18n="set.ssh.openaiSTerminalAssistant">OpenAI's terminal assistant. Same idea, different provider — you can have both.</p>
+                <button class="primary-button" id="install-codex" type="button" data-i18n="set.ssh.installCodex">Install Codex</button>
+                <p class="form-status" id="codex-status" role="status"></p>
+                <div id="codex-done" hidden>
+                  <p class="key-state">codex</p>
+                </div>
+              </div>
+            </div>
+          </section>
+          <section class="setting-card" id="github-setting">
+            <button class="setting-head" type="button" aria-expanded="false">
+              <span class="setting-icon">⌥</span>
+              <span><strong>GitHub</strong><small id="github-summary">Not connected</small></span>
+              <span class="chevron">›</span>
+            </button>
+            <div class="setting-body">
+              <p class="section-intro" data-i18n="set.github.giveSudoAGithub">Give sudo a GitHub token and it can work with your repositories directly — cloning one, pushing changes, opening an issue — instead of only talking you through it.</p>
+              <label for="github-username"><span data-i18n="set.github.githubUsername">GitHub username</span> <span class="optional-tag" data-i18n="set.github.optional">optional</span></label>
+              <input id="github-username" autocomplete="off" spellcheck="false" placeholder="your-handle" data-i18n-attr="placeholder:set.github.yourHandle">
+              <label for="github-token" data-i18n="set.github.personalAccessToken">Personal access token</label>
+              <input id="github-token" type="password" autocomplete="off" spellcheck="false" placeholder="ghp_… or github_pat_…" data-i18n-attr="placeholder:set.github.ghpOrGithubPat">
+              <p class="microcopy" data-i18n-html="set.github.createOneAtGithub">Create one at <strong>github.com → Settings → Developer settings → Personal access tokens</strong>. Choose only the scopes sudo needs; a fine-grained token limited to the repos you care about is the safest. Stored on this device only.</p>
+              <button class="primary-button" id="save-github" type="button" data-i18n="set.github.saveToken">Save token</button>
+
+              <div class="access-row">
+                <div>
+                  <strong data-i18n="set.github.letSudoUseMy">Let sudo use my repos</strong>
+                  <small data-i18n="set.github.whenOffTheToken">When off, the token is saved but sudo cannot reach GitHub.</small>
+                </div>
+                <label class="switch"><input type="checkbox" id="github-toggle"><span></span></label>
+              </div>
+              <p class="form-status" id="github-status" role="status"></p>
+
+              <button class="info-link" type="button" aria-expanded="false" aria-controls="github-info" data-i18n="set.github.whatTheTokenCan">What the token can do ⓘ</button>
+              <div class="info-bubble" id="github-info" data-i18n-html="set.github.aTokenIsA">
+                A token is a key to your GitHub account. What it can reach is exactly what you ticked when you made it — repo access lets sudo clone, push and open issues; nothing else.<br><br>
+                <strong>Treat it like a password.</strong> Keep it off unless you want sudo working in your repos, and revoke it on GitHub the moment you are done. It is stored on this device only and never leaves it except to talk to GitHub.
+              </div>
+            </div>
+          </section>
+          <section class="setting-card" id="models-setting">
+            <button class="setting-head" type="button" aria-expanded="false">
+              <span class="setting-icon">◎</span>
+              <span><strong data-i18n="ms.title">Models</strong><small data-i18n="ms.summary">Cloud and on-device</small></span>
+              <span class="chevron">›</span>
+            </button>
+            <div class="setting-body">
+            <div class="models-panel" id="home-panel-agent">
+              <div class="model-seg" role="tablist" aria-label="Model kinds" data-i18n-attr="aria-label:lm.kinds">
+                <button type="button" role="tab" class="model-seg-btn active" data-mseg="cloud" aria-selected="true">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 18a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 8.5a4.5 4.5 0 0 1-.5 9.5Z"/></svg><span data-i18n="lm.tabCloud">Cloud models</span>
+                </button>
+                <button type="button" role="tab" class="model-seg-btn" data-mseg="local" aria-selected="false">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9.5 9.5h5v5h-5zM9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg><span data-i18n="lm.tabLocal">On-device models</span>
+                </button>
+              </div>
+
+              <div id="mseg-cloud">
+              <p class="model-ask" data-i18n="home.modelAsk">Want a different model? Just ask your agent to switch. Models cost different amounts per message, so we recommend keeping DeepSeek as your main one.</p>
+              <div class="model-head">
+                <span class="routing-pill" id="home-routing-pill">Auto</span>
+                <p class="microcopy" id="home-routing-note"></p>
+              </div>
+              <div class="model-grid" id="home-model-grid"></div>
+              <div class="warning-copy" id="home-model-warning" data-i18n-html="home.modelWarning">
+                <strong>Why more than one model.</strong> sudo hands each job to the model that can actually do it: a photo goes to the one that can see, a picture request to the one that can make images. If you ask your agent to use one model for everything, anything that model cannot do stops working.
+              </div>
+              </div>
+
+              <!-- On-device models: a small workstation for what runs on the Pi
+                   itself. What it is, what else fits this board, switching, and
+                   how these models work -- in numbers, not adjectives. -->
+              <div id="mseg-local" class="lm" hidden>
+                <div class="lm-only">
+                  <div class="lm-only-row">
+                    <div>
+                      <strong data-i18n="lm.only">Use only the on-device model</strong>
+                      <small id="lm-answering"></small>
+                    </div>
+                    <label class="switch">
+                      <input id="lm-only" type="checkbox">
+                      <span aria-hidden="true"></span>
+                      <em class="sr-only" data-i18n="lm.only">Use only the on-device model</em>
+                    </label>
+                  </div>
+                  <p class="lm-caution">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 20h20Z"/><path d="M12 10v4M12 17h.01"/></svg>
+                    <span data-i18n-html="lm.caution">Good for basic chatting, <strong>not a daily driver</strong>. It can’t search the web, use your apps or handle long tasks. Only this chat stays on the Pi: WhatsApp and other channels keep using your cloud model.</span>
+                  </p>
+                  <p class="form-status" id="lm-status" role="status"></p>
+                </div>
+
+                <h3 class="lm-h" data-i18n="lm.yourPi">Your Pi</h3>
+                <div class="lm-specs" id="lm-specs"><p class="microcopy" data-i18n="lm.loading">Reading the device…</p></div>
+
+                <h3 class="lm-h" data-i18n="lm.runningNow">Running now</h3>
+                <div class="lm-progress" id="lm-progress" hidden>
+                  <div class="lm-progress-head"><strong id="lm-progress-title"></strong><span id="lm-progress-pct"></span></div>
+                  <div class="model-progress"><div class="model-progress-fill" id="lm-progress-fill"></div></div>
+                  <small id="lm-progress-msg"></small>
+                </div>
+                <div class="lm-now" id="lm-now"></div>
+
+                <h3 class="lm-h" data-i18n="lm.pickTitle">Models for your Pi</h3>
+                <p class="lm-sub" id="lm-pick-lede"></p>
+                <div id="lm-tiers"></div>
+                <div id="lm-custom"></div>
+
+                <h3 class="lm-h" data-i18n="lm.learnTitle">How on-device models work</h3>
+                <div class="lm-learn">
+                  <details class="hub-guide" open>
+                    <summary>
+                      <span class="hub-guide-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="6" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/><circle cx="12" cy="12" r="2"/><path d="m7.5 7.5 3 3M16.5 7.5l-3 3M7.5 16.5l3-3M16.5 16.5l-3-3"/></svg></span>
+                      <span><strong data-i18n="lm.l1.title">Parameters: what the “B” means</strong><small data-i18n="lm.l1.sub">Size is knowledge, and memory</small></span>
+                    </summary>
+                    <div class="hub-guide-body">
+                      <p data-i18n-html="lm.l1.body">A <strong>parameter</strong> is one number the model learned in training. <strong>1.7B</strong> means 1.7 billion of them. More parameters hold more knowledge and follow instructions better, but take more memory and run slower.</p>
+                      <div class="lm-scale">
+                        <div class="lm-scale-row"><span>Gemma 3 270M</span><div class="lm-scale-track"><i style="width:43%"></i></div><b>0.27B</b></div>
+                        <div class="lm-scale-row"><span>Qwen3 1.7B</span><div class="lm-scale-track"><i style="width:58%"></i></div><b>2B</b></div>
+                        <div class="lm-scale-row"><span>Qwen3 14B</span><div class="lm-scale-track"><i style="width:73%"></i></div><b>15B</b></div>
+                        <div class="lm-scale-row cloud"><span data-i18n="lm.l1.cloud">Cloud models</span><div class="lm-scale-track"><i style="width:100%"></i></div><b>500B+</b></div>
+                      </div>
+                      <p class="lm-note" data-i18n="lm.l1.note">The scale is squeezed: the cloud bar stands for about 250 times Qwen3 1.7B. Cloud models run on data-centre hardware, which is why they are so much smarter.</p>
+                    </div>
+                  </details>
+
+                  <details class="hub-guide">
+                    <summary>
+                      <span class="hub-guide-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h10M4 17h5"/></svg></span>
+                      <span><strong data-i18n="lm.l2.title">Quantization: shrinking a model to fit</strong><small data-i18n="lm.l2.sub">Why a 2B model is a 1.4 GB file</small></span>
+                    </summary>
+                    <div class="hub-guide-body">
+                      <p data-i18n-html="lm.l2.body">Each parameter is stored as a number. Fresh from training it takes <strong>16 bits</strong>. Quantization rounds it to <strong>8 or 4 bits</strong>: the file shrinks by half or three quarters, and quality drops a little.</p>
+                      <div class="lm-quant">
+                        <div class="lm-quant-row"><span class="lm-quant-bits">16-bit</span><div class="lm-quant-track"><i style="width:100%"></i></div><b>4.1 GB</b><small data-i18n="lm.l2.q16">Original</small></div>
+                        <div class="lm-quant-row"><span class="lm-quant-bits">8-bit</span><div class="lm-quant-track"><i style="width:54%"></i></div><b>2.2 GB</b><small data-i18n="lm.l2.q8">Almost no difference</small></div>
+                        <div class="lm-quant-row"><span class="lm-quant-bits">4-bit</span><div class="lm-quant-track"><i style="width:33%"></i></div><b>1.4 GB</b><small data-i18n="lm.l2.q4">Small loss, rarely noticed</small></div>
+                      </div>
+                      <p class="lm-note" data-i18n="lm.l2.caption">Qwen3 1.7B at each precision. Below 4 bits, answers get noticeably worse.</p>
+                      <p class="lm-decode-title" data-i18n="lm.l2.decode">Reading a name like Q4_K_M</p>
+                      <div class="lm-decode">
+                        <div><code>Q4</code><span data-i18n="lm.l2.dQ">4 bits per weight</span></div>
+                        <div><code>K</code><span data-i18n="lm.l2.dK">“k-quant”: weights in small blocks, each with its own scale, so rounding errors stay small</span></div>
+                        <div><code>M</code><span data-i18n="lm.l2.dM">Medium: a few sensitive layers kept at 6 bits (S = fewer, L = more)</span></div>
+                      </div>
+                      <p class="lm-formula"><span data-i18n="lm.l2.formula">File size ≈ parameters × bits ÷ 8</span></p>
+                    </div>
+                  </details>
+
+                  <details class="hub-guide">
+                    <summary>
+                      <span class="hub-guide-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14 16 9"/><path d="M3.5 18a9 9 0 1 1 17 0"/></svg></span>
+                      <span><strong data-i18n="lm.l3.title">Speed: why bigger is slower</strong><small data-i18n="lm.l3.sub">Memory speed sets the pace</small></span>
+                    </summary>
+                    <div class="hub-guide-body">
+                      <p data-i18n-html="lm.l3.body">To write each <strong>token</strong> (about ¾ of a word), the model reads every one of its weights from memory once. So the Pi’s <strong>memory speed</strong>, not its processor, sets the pace.</p>
+                      <div class="lm-eq">
+                        <div class="lm-eq-box"><b>≈ 9 GB/s</b><small data-i18n="lm.l3.bw">Pi 5 memory</small></div>
+                        <span class="lm-eq-op">÷</span>
+                        <div class="lm-eq-box"><b>1.4 GB</b><small data-i18n="lm.l3.size">model file</small></div>
+                        <span class="lm-eq-op">≈</span>
+                        <div class="lm-eq-box hot"><b data-i18n="lm.l3.result">6 tokens/s</b><small data-i18n="lm.l3.out">writing speed</small></div>
+                      </div>
+                      <p class="lm-note" data-i18n="lm.l3.note">You read about 4–5 tokens a second, so anything above that feels live. Before writing, the model also reads your message and the chat so far, so long chats take longer to start.</p>
+                    </div>
+                  </details>
+
+                  <details class="hub-guide">
+                    <summary>
+                      <span class="hub-guide-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4Z"/></svg></span>
+                      <span><strong data-i18n="lm.l4.title">Fine-tune your own model</strong><small data-i18n="lm.l4.sub">Teach a small model your style, then run it here</small></span>
+                    </summary>
+                    <div class="hub-guide-body">
+                      <p data-i18n-html="lm.l4.body">Fine-tuning teaches an existing model from your own examples. The Pi can <strong>run</strong> models but not train them: training needs a graphics card, like a gaming PC or a free Google Colab notebook.</p>
+                      <ol class="lm-steps">
+                        <li><b>1</b><div><strong data-i18n="lm.l4.s1">Pick a base</strong><span data-i18n="lm.l4.s1b">A small model that already fits, such as Qwen3 1.7B.</span></div></li>
+                        <li><b>2</b><div><strong data-i18n="lm.l4.s2">Collect examples</strong><span data-i18n="lm.l4.s2b">200–1,000 question and answer pairs in the style you want, one per line in a .jsonl file.</span></div></li>
+                        <li><b>3</b><div><strong data-i18n="lm.l4.s3">Train a LoRA</strong><span data-i18n="lm.l4.s3b">With Unsloth. A LoRA trains a small add-on (under 1% of the weights) instead of the whole model, often in under an hour.</span></div></li>
+                        <li><b>4</b><div><strong data-i18n="lm.l4.s4">Export as GGUF, 4-bit</strong><span data-i18n="lm.l4.s4b">Unsloth saves a Q4_K_M .gguf file and a matching Modelfile.</span></div></li>
+                        <li><b>5</b><div><strong data-i18n="lm.l4.s5">Load it on the Pi</strong><span data-i18n="lm.l4.s5b">Copy both files over (Developer access), then run:</span></div></li>
+                      </ol>
+                      <pre class="lm-code">ollama create my-model -f Modelfile</pre>
+                      <p class="lm-note" data-i18n="lm.l4.note">It then shows up on this page under “Your own models”, ready to switch to.</p>
+                    </div>
+                  </details>
+                </div>
+              </div>
+            </div>
+            </div>
+          </section>
           <section class="setting-card" id="profile-setting" hidden>
             <button class="setting-head" type="button" aria-expanded="true">
               <span class="setting-icon">✦</span>
