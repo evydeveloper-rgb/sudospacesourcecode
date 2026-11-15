@@ -3297,3 +3297,23 @@ input[type="password"], input[type="tel"], input[type="number"], #ssh-key, #devi
 .wel-desk-line { margin: 0 0 10px; font-size: .95rem; font-weight: 600; line-height: 1.5; }
 .wel-desk-card .wel-addr { margin: 0; }
 .wel-desk-card .wel-addr-alt { margin-top: 12px; }
+
+/* Chat: the agent / on-device tabs */
+.chat-tabs {
+  width: min(100%, 720px); margin: 0 auto 10px; display: flex; gap: 4px; padding: 4px;
+  border-radius: 14px; background: var(--surface-low); flex: none;
+}
+.chat-tab {
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 38px;
+  border: 0; border-radius: 10px; background: transparent; color: var(--ink-2);
+  font: inherit; font-size: .9rem; font-weight: 700; cursor: pointer;
+}
+.chat-tab.on { background: var(--surface); color: var(--ink); box-shadow: 0 1px 3px rgba(22, 19, 17, .08); }
+.chat-tab svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.lc-note { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 4px auto 14px; color: var(--ink-3); font-size: .8rem; }
+.lc-note svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+.lc-more {
+  display: block; margin: 2px auto 4px; padding: 6px 14px; border: 1px solid var(--line); border-radius: 999px;
+  background: var(--surface); color: var(--primary, #4f3fc9); font: inherit; font-size: .82rem; font-weight: 700; cursor: pointer;
+}

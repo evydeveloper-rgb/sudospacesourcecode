@@ -394,7 +394,15 @@
             <button id="cloud-nudge-dismiss" type="button" aria-label="Dismiss" data-i18n-attr="aria-label:hint.dismiss">×</button>
           </div>
         </div>
+        <div class="chat-tabs" id="chat-tabs" role="tablist">
+          <button type="button" role="tab" class="chat-tab on" id="chat-tab-main" aria-selected="true"><span id="chat-tab-main-name">sudo</span></button>
+          <button type="button" role="tab" class="chat-tab" id="chat-tab-local" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><span data-i18n="lc.tab">On this device</span></button>
+        </div>
         <div class="message-thread" id="messages" role="log" aria-live="polite" aria-relevant="additions"></div>
+        <div class="message-thread" id="local-messages" role="log" aria-live="polite" aria-relevant="additions" hidden>
+          <button type="button" class="lc-more" id="lc-more" data-i18n="lc.more">More on-device models</button>
+          <p class="lc-note"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><span data-i18n="lc.note">Private. This chat never leaves this device.</span></p>
+        </div>
         <div class="thinking" id="thinking" hidden>
           <span></span><span></span><span></span><em data-i18n="chat.thinking">thinking</em>
         </div>
@@ -1513,7 +1521,6 @@
 
         <div class="home-tabs" role="tablist" aria-label="Home sections" data-i18n-attr="aria-label:home.sections">
           <button type="button" role="tab" class="home-tab active" data-home="files" aria-selected="true" data-i18n="home.tabFiles">Device files</button>
-          <button type="button" role="tab" class="home-tab" data-home="agent" aria-selected="false" data-i18n="home.tabAgent">Agent &amp; models</button>
           <button type="button" role="tab" class="home-tab" data-home="tasks" aria-selected="false" data-i18n="home.tabTasks">Tasks</button>
         </div>
 
@@ -1545,152 +1552,6 @@
           </div>
         </div>
 
-        <!-- Panel 2: what the agent is running on. Every model it can use,
-             with the ones it only reaches for when a job needs them marked
-             as such — and a plain warning that pinning one model drops the
-             rest. -->
-        <div class="home-panel" id="home-panel-agent" hidden>
-          <div class="model-seg" role="tablist" aria-label="Model kinds" data-i18n-attr="aria-label:lm.kinds">
-            <button type="button" role="tab" class="model-seg-btn active" data-mseg="cloud" aria-selected="true">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 18a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 8.5a4.5 4.5 0 0 1-.5 9.5Z"/></svg><span data-i18n="lm.tabCloud">Cloud models</span>
-            </button>
-            <button type="button" role="tab" class="model-seg-btn" data-mseg="local" aria-selected="false">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9.5 9.5h5v5h-5zM9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg><span data-i18n="lm.tabLocal">On-device models</span>
-            </button>
-          </div>
-
-          <div id="mseg-cloud">
-          <p class="model-ask" data-i18n="home.modelAsk">Want a different model? Just ask your agent to switch. Models cost different amounts per message, so we recommend keeping DeepSeek as your main one.</p>
-          <div class="model-head">
-            <span class="routing-pill" id="home-routing-pill">Auto</span>
-            <p class="microcopy" id="home-routing-note"></p>
-          </div>
-          <div class="model-grid" id="home-model-grid"></div>
-          <div class="warning-copy" id="home-model-warning" data-i18n-html="home.modelWarning">
-            <strong>Why more than one model.</strong> sudo hands each job to the model that can actually do it: a photo goes to the one that can see, a picture request to the one that can make images. If you ask your agent to use one model for everything, anything that model cannot do stops working.
-          </div>
-          </div>
-
-          <!-- On-device models: a small workstation for what runs on the Pi
-               itself. What it is, what else fits this board, switching, and
-               how these models work -- in numbers, not adjectives. -->
-          <div id="mseg-local" class="lm" hidden>
-            <div class="lm-only">
-              <div class="lm-only-row">
-                <div>
-                  <strong data-i18n="lm.only">Use only the on-device model</strong>
-                  <small id="lm-answering"></small>
-                </div>
-                <label class="switch">
-                  <input id="lm-only" type="checkbox">
-                  <span aria-hidden="true"></span>
-                  <em class="sr-only" data-i18n="lm.only">Use only the on-device model</em>
-                </label>
-              </div>
-              <p class="lm-caution">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 20h20Z"/><path d="M12 10v4M12 17h.01"/></svg>
-                <span data-i18n-html="lm.caution">Good for basic chatting, <strong>not a daily driver</strong>. It can’t search the web, use your apps or handle long tasks. Only this chat stays on the Pi: WhatsApp and other channels keep using your cloud model.</span>
-              </p>
-              <p class="form-status" id="lm-status" role="status"></p>
-            </div>
-
-            <h3 class="lm-h" data-i18n="lm.yourPi">Your Pi</h3>
-            <div class="lm-specs" id="lm-specs"><p class="microcopy" data-i18n="lm.loading">Reading the device…</p></div>
-
-            <h3 class="lm-h" data-i18n="lm.runningNow">Running now</h3>
-            <div class="lm-progress" id="lm-progress" hidden>
-              <div class="lm-progress-head"><strong id="lm-progress-title"></strong><span id="lm-progress-pct"></span></div>
-              <div class="model-progress"><div class="model-progress-fill" id="lm-progress-fill"></div></div>
-              <small id="lm-progress-msg"></small>
-            </div>
-            <div class="lm-now" id="lm-now"></div>
-
-            <h3 class="lm-h" data-i18n="lm.pickTitle">Models for your Pi</h3>
-            <p class="lm-sub" id="lm-pick-lede"></p>
-            <div id="lm-tiers"></div>
-            <div id="lm-custom"></div>
-
-            <h3 class="lm-h" data-i18n="lm.learnTitle">How on-device models work</h3>
-            <div class="lm-learn">
-              <details class="hub-guide" open>
-                <summary>
-                  <span class="hub-guide-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="6" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/><circle cx="12" cy="12" r="2"/><path d="m7.5 7.5 3 3M16.5 7.5l-3 3M7.5 16.5l3-3M16.5 16.5l-3-3"/></svg></span>
-                  <span><strong data-i18n="lm.l1.title">Parameters: what the “B” means</strong><small data-i18n="lm.l1.sub">Size is knowledge, and memory</small></span>
-                </summary>
-                <div class="hub-guide-body">
-                  <p data-i18n-html="lm.l1.body">A <strong>parameter</strong> is one number the model learned in training. <strong>1.7B</strong> means 1.7 billion of them. More parameters hold more knowledge and follow instructions better, but take more memory and run slower.</p>
-                  <div class="lm-scale">
-                    <div class="lm-scale-row"><span>Gemma 3 270M</span><div class="lm-scale-track"><i style="width:43%"></i></div><b>0.27B</b></div>
-                    <div class="lm-scale-row"><span>Qwen3 1.7B</span><div class="lm-scale-track"><i style="width:58%"></i></div><b>2B</b></div>
-                    <div class="lm-scale-row"><span>Qwen3 14B</span><div class="lm-scale-track"><i style="width:73%"></i></div><b>15B</b></div>
-                    <div class="lm-scale-row cloud"><span data-i18n="lm.l1.cloud">Cloud models</span><div class="lm-scale-track"><i style="width:100%"></i></div><b>500B+</b></div>
-                  </div>
-                  <p class="lm-note" data-i18n="lm.l1.note">The scale is squeezed: the cloud bar stands for about 250 times Qwen3 1.7B. Cloud models run on data-centre hardware, which is why they are so much smarter.</p>
-                </div>
-              </details>
-
-              <details class="hub-guide">
-                <summary>
-                  <span class="hub-guide-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h10M4 17h5"/></svg></span>
-                  <span><strong data-i18n="lm.l2.title">Quantization: shrinking a model to fit</strong><small data-i18n="lm.l2.sub">Why a 2B model is a 1.4 GB file</small></span>
-                </summary>
-                <div class="hub-guide-body">
-                  <p data-i18n-html="lm.l2.body">Each parameter is stored as a number. Fresh from training it takes <strong>16 bits</strong>. Quantization rounds it to <strong>8 or 4 bits</strong>: the file shrinks by half or three quarters, and quality drops a little.</p>
-                  <div class="lm-quant">
-                    <div class="lm-quant-row"><span class="lm-quant-bits">16-bit</span><div class="lm-quant-track"><i style="width:100%"></i></div><b>4.1 GB</b><small data-i18n="lm.l2.q16">Original</small></div>
-                    <div class="lm-quant-row"><span class="lm-quant-bits">8-bit</span><div class="lm-quant-track"><i style="width:54%"></i></div><b>2.2 GB</b><small data-i18n="lm.l2.q8">Almost no difference</small></div>
-                    <div class="lm-quant-row"><span class="lm-quant-bits">4-bit</span><div class="lm-quant-track"><i style="width:33%"></i></div><b>1.4 GB</b><small data-i18n="lm.l2.q4">Small loss, rarely noticed</small></div>
-                  </div>
-                  <p class="lm-note" data-i18n="lm.l2.caption">Qwen3 1.7B at each precision. Below 4 bits, answers get noticeably worse.</p>
-                  <p class="lm-decode-title" data-i18n="lm.l2.decode">Reading a name like Q4_K_M</p>
-                  <div class="lm-decode">
-                    <div><code>Q4</code><span data-i18n="lm.l2.dQ">4 bits per weight</span></div>
-                    <div><code>K</code><span data-i18n="lm.l2.dK">“k-quant”: weights in small blocks, each with its own scale, so rounding errors stay small</span></div>
-                    <div><code>M</code><span data-i18n="lm.l2.dM">Medium: a few sensitive layers kept at 6 bits (S = fewer, L = more)</span></div>
-                  </div>
-                  <p class="lm-formula"><span data-i18n="lm.l2.formula">File size ≈ parameters × bits ÷ 8</span></p>
-                </div>
-              </details>
-
-              <details class="hub-guide">
-                <summary>
-                  <span class="hub-guide-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14 16 9"/><path d="M3.5 18a9 9 0 1 1 17 0"/></svg></span>
-                  <span><strong data-i18n="lm.l3.title">Speed: why bigger is slower</strong><small data-i18n="lm.l3.sub">Memory speed sets the pace</small></span>
-                </summary>
-                <div class="hub-guide-body">
-                  <p data-i18n-html="lm.l3.body">To write each <strong>token</strong> (about ¾ of a word), the model reads every one of its weights from memory once. So the Pi’s <strong>memory speed</strong>, not its processor, sets the pace.</p>
-                  <div class="lm-eq">
-                    <div class="lm-eq-box"><b>≈ 9 GB/s</b><small data-i18n="lm.l3.bw">Pi 5 memory</small></div>
-                    <span class="lm-eq-op">÷</span>
-                    <div class="lm-eq-box"><b>1.4 GB</b><small data-i18n="lm.l3.size">model file</small></div>
-                    <span class="lm-eq-op">≈</span>
-                    <div class="lm-eq-box hot"><b data-i18n="lm.l3.result">6 tokens/s</b><small data-i18n="lm.l3.out">writing speed</small></div>
-                  </div>
-                  <p class="lm-note" data-i18n="lm.l3.note">You read about 4–5 tokens a second, so anything above that feels live. Before writing, the model also reads your message and the chat so far, so long chats take longer to start.</p>
-                </div>
-              </details>
-
-              <details class="hub-guide">
-                <summary>
-                  <span class="hub-guide-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4Z"/></svg></span>
-                  <span><strong data-i18n="lm.l4.title">Fine-tune your own model</strong><small data-i18n="lm.l4.sub">Teach a small model your style, then run it here</small></span>
-                </summary>
-                <div class="hub-guide-body">
-                  <p data-i18n-html="lm.l4.body">Fine-tuning teaches an existing model from your own examples. The Pi can <strong>run</strong> models but not train them: training needs a graphics card, like a gaming PC or a free Google Colab notebook.</p>
-                  <ol class="lm-steps">
-                    <li><b>1</b><div><strong data-i18n="lm.l4.s1">Pick a base</strong><span data-i18n="lm.l4.s1b">A small model that already fits, such as Qwen3 1.7B.</span></div></li>
-                    <li><b>2</b><div><strong data-i18n="lm.l4.s2">Collect examples</strong><span data-i18n="lm.l4.s2b">200–1,000 question and answer pairs in the style you want, one per line in a .jsonl file.</span></div></li>
-                    <li><b>3</b><div><strong data-i18n="lm.l4.s3">Train a LoRA</strong><span data-i18n="lm.l4.s3b">With Unsloth. A LoRA trains a small add-on (under 1% of the weights) instead of the whole model, often in under an hour.</span></div></li>
-                    <li><b>4</b><div><strong data-i18n="lm.l4.s4">Export as GGUF, 4-bit</strong><span data-i18n="lm.l4.s4b">Unsloth saves a Q4_K_M .gguf file and a matching Modelfile.</span></div></li>
-                    <li><b>5</b><div><strong data-i18n="lm.l4.s5">Load it on the Pi</strong><span data-i18n="lm.l4.s5b">Copy both files over (Developer access), then run:</span></div></li>
-                  </ol>
-                  <pre class="lm-code">ollama create my-model -f Modelfile</pre>
-                  <p class="lm-note" data-i18n="lm.l4.note">It then shows up on this page under “Your own models”, ready to switch to.</p>
-                </div>
-              </details>
-            </div>
-          </div>
-        </div>
 
         <!-- Panel 3: work running off to the side. A turn sent with "run in
              the background" gets its own lane, so it does not hold the chat
@@ -1854,6 +1715,7 @@
               </details>
             </div>
           </section>
+          <div class="settings-group" data-i18n="settings.developer">Developer</div>
           <section class="setting-card" id="ssh-setting">
             <button class="setting-head" type="button" aria-expanded="false">
               <span class="setting-icon">⌘</span>
@@ -2021,6 +1883,157 @@
                 A token is a key to your GitHub account. What it can reach is exactly what you ticked when you made it — repo access lets sudo clone, push and open issues; nothing else.<br><br>
                 <strong>Treat it like a password.</strong> Keep it off unless you want sudo working in your repos, and revoke it on GitHub the moment you are done. It is stored on this device only and never leaves it except to talk to GitHub.
               </div>
+            </div>
+          </section>
+          <section class="setting-card" id="models-setting">
+            <button class="setting-head" type="button" aria-expanded="false">
+              <span class="setting-icon">◎</span>
+              <span><strong data-i18n="ms.title">Models</strong><small data-i18n="ms.summary">Cloud and on-device</small></span>
+              <span class="chevron">›</span>
+            </button>
+            <div class="setting-body">
+            <div class="models-panel" id="home-panel-agent">
+              <div class="model-seg" role="tablist" aria-label="Model kinds" data-i18n-attr="aria-label:lm.kinds">
+                <button type="button" role="tab" class="model-seg-btn active" data-mseg="cloud" aria-selected="true">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 18a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 8.5a4.5 4.5 0 0 1-.5 9.5Z"/></svg><span data-i18n="lm.tabCloud">Cloud models</span>
+                </button>
+                <button type="button" role="tab" class="model-seg-btn" data-mseg="local" aria-selected="false">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9.5 9.5h5v5h-5zM9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg><span data-i18n="lm.tabLocal">On-device models</span>
+                </button>
+              </div>
+
+              <div id="mseg-cloud">
+              <p class="model-ask" data-i18n="home.modelAsk">Want a different model? Just ask your agent to switch. Models cost different amounts per message, so we recommend keeping DeepSeek as your main one.</p>
+              <div class="model-head">
+                <span class="routing-pill" id="home-routing-pill">Auto</span>
+                <p class="microcopy" id="home-routing-note"></p>
+              </div>
+              <div class="model-grid" id="home-model-grid"></div>
+              <div class="warning-copy" id="home-model-warning" data-i18n-html="home.modelWarning">
+                <strong>Why more than one model.</strong> sudo hands each job to the model that can actually do it: a photo goes to the one that can see, a picture request to the one that can make images. If you ask your agent to use one model for everything, anything that model cannot do stops working.
+              </div>
+              </div>
+
+              <!-- On-device models: a small workstation for what runs on the Pi
+                   itself. What it is, what else fits this board, switching, and
+                   how these models work -- in numbers, not adjectives. -->
+              <div id="mseg-local" class="lm" hidden>
+                <div class="lm-only">
+                  <div class="lm-only-row">
+                    <div>
+                      <strong data-i18n="lm.only">Use only the on-device model</strong>
+                      <small id="lm-answering"></small>
+                    </div>
+                    <label class="switch">
+                      <input id="lm-only" type="checkbox">
+                      <span aria-hidden="true"></span>
+                      <em class="sr-only" data-i18n="lm.only">Use only the on-device model</em>
+                    </label>
+                  </div>
+                  <p class="lm-caution">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 20h20Z"/><path d="M12 10v4M12 17h.01"/></svg>
+                    <span data-i18n-html="lm.caution">Good for basic chatting, <strong>not a daily driver</strong>. It can’t search the web, use your apps or handle long tasks. Only this chat stays on the Pi: WhatsApp and other channels keep using your cloud model.</span>
+                  </p>
+                  <p class="form-status" id="lm-status" role="status"></p>
+                </div>
+
+                <h3 class="lm-h" data-i18n="lm.yourPi">Your Pi</h3>
+                <div class="lm-specs" id="lm-specs"><p class="microcopy" data-i18n="lm.loading">Reading the device…</p></div>
+
+                <h3 class="lm-h" data-i18n="lm.runningNow">Running now</h3>
+                <div class="lm-progress" id="lm-progress" hidden>
+                  <div class="lm-progress-head"><strong id="lm-progress-title"></strong><span id="lm-progress-pct"></span></div>
+                  <div class="model-progress"><div class="model-progress-fill" id="lm-progress-fill"></div></div>
+                  <small id="lm-progress-msg"></small>
+                </div>
+                <div class="lm-now" id="lm-now"></div>
+
+                <h3 class="lm-h" data-i18n="lm.pickTitle">Models for your Pi</h3>
+                <p class="lm-sub" id="lm-pick-lede"></p>
+                <div id="lm-tiers"></div>
+                <div id="lm-custom"></div>
+
+                <h3 class="lm-h" data-i18n="lm.learnTitle">How on-device models work</h3>
+                <div class="lm-learn">
+                  <details class="hub-guide" open>
+                    <summary>
+                      <span class="hub-guide-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="6" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/><circle cx="12" cy="12" r="2"/><path d="m7.5 7.5 3 3M16.5 7.5l-3 3M7.5 16.5l3-3M16.5 16.5l-3-3"/></svg></span>
+                      <span><strong data-i18n="lm.l1.title">Parameters: what the “B” means</strong><small data-i18n="lm.l1.sub">Size is knowledge, and memory</small></span>
+                    </summary>
+                    <div class="hub-guide-body">
+                      <p data-i18n-html="lm.l1.body">A <strong>parameter</strong> is one number the model learned in training. <strong>1.7B</strong> means 1.7 billion of them. More parameters hold more knowledge and follow instructions better, but take more memory and run slower.</p>
+                      <div class="lm-scale">
+                        <div class="lm-scale-row"><span>Gemma 3 270M</span><div class="lm-scale-track"><i style="width:43%"></i></div><b>0.27B</b></div>
+                        <div class="lm-scale-row"><span>Qwen3 1.7B</span><div class="lm-scale-track"><i style="width:58%"></i></div><b>2B</b></div>
+                        <div class="lm-scale-row"><span>Qwen3 14B</span><div class="lm-scale-track"><i style="width:73%"></i></div><b>15B</b></div>
+                        <div class="lm-scale-row cloud"><span data-i18n="lm.l1.cloud">Cloud models</span><div class="lm-scale-track"><i style="width:100%"></i></div><b>500B+</b></div>
+                      </div>
+                      <p class="lm-note" data-i18n="lm.l1.note">The scale is squeezed: the cloud bar stands for about 250 times Qwen3 1.7B. Cloud models run on data-centre hardware, which is why they are so much smarter.</p>
+                    </div>
+                  </details>
+
+                  <details class="hub-guide">
+                    <summary>
+                      <span class="hub-guide-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h10M4 17h5"/></svg></span>
+                      <span><strong data-i18n="lm.l2.title">Quantization: shrinking a model to fit</strong><small data-i18n="lm.l2.sub">Why a 2B model is a 1.4 GB file</small></span>
+                    </summary>
+                    <div class="hub-guide-body">
+                      <p data-i18n-html="lm.l2.body">Each parameter is stored as a number. Fresh from training it takes <strong>16 bits</strong>. Quantization rounds it to <strong>8 or 4 bits</strong>: the file shrinks by half or three quarters, and quality drops a little.</p>
+                      <div class="lm-quant">
+                        <div class="lm-quant-row"><span class="lm-quant-bits">16-bit</span><div class="lm-quant-track"><i style="width:100%"></i></div><b>4.1 GB</b><small data-i18n="lm.l2.q16">Original</small></div>
+                        <div class="lm-quant-row"><span class="lm-quant-bits">8-bit</span><div class="lm-quant-track"><i style="width:54%"></i></div><b>2.2 GB</b><small data-i18n="lm.l2.q8">Almost no difference</small></div>
+                        <div class="lm-quant-row"><span class="lm-quant-bits">4-bit</span><div class="lm-quant-track"><i style="width:33%"></i></div><b>1.4 GB</b><small data-i18n="lm.l2.q4">Small loss, rarely noticed</small></div>
+                      </div>
+                      <p class="lm-note" data-i18n="lm.l2.caption">Qwen3 1.7B at each precision. Below 4 bits, answers get noticeably worse.</p>
+                      <p class="lm-decode-title" data-i18n="lm.l2.decode">Reading a name like Q4_K_M</p>
+                      <div class="lm-decode">
+                        <div><code>Q4</code><span data-i18n="lm.l2.dQ">4 bits per weight</span></div>
+                        <div><code>K</code><span data-i18n="lm.l2.dK">“k-quant”: weights in small blocks, each with its own scale, so rounding errors stay small</span></div>
+                        <div><code>M</code><span data-i18n="lm.l2.dM">Medium: a few sensitive layers kept at 6 bits (S = fewer, L = more)</span></div>
+                      </div>
+                      <p class="lm-formula"><span data-i18n="lm.l2.formula">File size ≈ parameters × bits ÷ 8</span></p>
+                    </div>
+                  </details>
+
+                  <details class="hub-guide">
+                    <summary>
+                      <span class="hub-guide-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14 16 9"/><path d="M3.5 18a9 9 0 1 1 17 0"/></svg></span>
+                      <span><strong data-i18n="lm.l3.title">Speed: why bigger is slower</strong><small data-i18n="lm.l3.sub">Memory speed sets the pace</small></span>
+                    </summary>
+                    <div class="hub-guide-body">
+                      <p data-i18n-html="lm.l3.body">To write each <strong>token</strong> (about ¾ of a word), the model reads every one of its weights from memory once. So the Pi’s <strong>memory speed</strong>, not its processor, sets the pace.</p>
+                      <div class="lm-eq">
+                        <div class="lm-eq-box"><b>≈ 9 GB/s</b><small data-i18n="lm.l3.bw">Pi 5 memory</small></div>
+                        <span class="lm-eq-op">÷</span>
+                        <div class="lm-eq-box"><b>1.4 GB</b><small data-i18n="lm.l3.size">model file</small></div>
+                        <span class="lm-eq-op">≈</span>
+                        <div class="lm-eq-box hot"><b data-i18n="lm.l3.result">6 tokens/s</b><small data-i18n="lm.l3.out">writing speed</small></div>
+                      </div>
+                      <p class="lm-note" data-i18n="lm.l3.note">You read about 4–5 tokens a second, so anything above that feels live. Before writing, the model also reads your message and the chat so far, so long chats take longer to start.</p>
+                    </div>
+                  </details>
+
+                  <details class="hub-guide">
+                    <summary>
+                      <span class="hub-guide-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4Z"/></svg></span>
+                      <span><strong data-i18n="lm.l4.title">Fine-tune your own model</strong><small data-i18n="lm.l4.sub">Teach a small model your style, then run it here</small></span>
+                    </summary>
+                    <div class="hub-guide-body">
+                      <p data-i18n-html="lm.l4.body">Fine-tuning teaches an existing model from your own examples. The Pi can <strong>run</strong> models but not train them: training needs a graphics card, like a gaming PC or a free Google Colab notebook.</p>
+                      <ol class="lm-steps">
+                        <li><b>1</b><div><strong data-i18n="lm.l4.s1">Pick a base</strong><span data-i18n="lm.l4.s1b">A small model that already fits, such as Qwen3 1.7B.</span></div></li>
+                        <li><b>2</b><div><strong data-i18n="lm.l4.s2">Collect examples</strong><span data-i18n="lm.l4.s2b">200–1,000 question and answer pairs in the style you want, one per line in a .jsonl file.</span></div></li>
+                        <li><b>3</b><div><strong data-i18n="lm.l4.s3">Train a LoRA</strong><span data-i18n="lm.l4.s3b">With Unsloth. A LoRA trains a small add-on (under 1% of the weights) instead of the whole model, often in under an hour.</span></div></li>
+                        <li><b>4</b><div><strong data-i18n="lm.l4.s4">Export as GGUF, 4-bit</strong><span data-i18n="lm.l4.s4b">Unsloth saves a Q4_K_M .gguf file and a matching Modelfile.</span></div></li>
+                        <li><b>5</b><div><strong data-i18n="lm.l4.s5">Load it on the Pi</strong><span data-i18n="lm.l4.s5b">Copy both files over (Developer access), then run:</span></div></li>
+                      </ol>
+                      <pre class="lm-code">ollama create my-model -f Modelfile</pre>
+                      <p class="lm-note" data-i18n="lm.l4.note">It then shows up on this page under “Your own models”, ready to switch to.</p>
+                    </div>
+                  </details>
+                </div>
+              </div>
+            </div>
             </div>
           </section>
           <div class="settings-group" data-i18n="settings.yourAgent">Your agent</div>
@@ -2844,9 +2857,9 @@
       if (state.tab === 'chat' && !modelSettled(state.status)) refreshStatus();
     }, 15000);
 
-    function scrollChat(behavior = 'smooth') {
+    function scrollChat(behavior = 'smooth', id = 'messages') {
       requestAnimationFrame(() => {
-        const thread = $('messages');
+        const thread = $(id);
         thread.scrollTo({ top: thread.scrollHeight, behavior });
       });
     }
@@ -2922,7 +2935,7 @@
       return frag;
     }
 
-    function addMessage(role, text) {
+    function addMessage(role, text, thread = 'messages') {
       const item = document.createElement('div');
       item.className = `message ${role}`;
       const avatar = document.createElement('span');
@@ -2951,8 +2964,8 @@
         flag.addEventListener('click', () => openReportModal(item, text));
         item.append(flag);
       }
-      $('messages').appendChild(item);
-      scrollChat(role === 'agent' ? 'smooth' : 'auto');
+      $(thread).appendChild(item);
+      scrollChat(role === 'agent' ? 'smooth' : 'auto', thread);
       return item;
     }
 
@@ -3007,6 +3020,57 @@
       }
     });
 
+    // The "On this device" tab: its own conversation with the on-device
+    // model, kept on the device and never sent anywhere.
+    state.chatMode = 'main';
+    let localLoaded = false;
+    function setChatMode(mode) {
+      state.chatMode = mode;
+      const local = mode === 'local';
+      $('messages').hidden = local;
+      $('local-messages').hidden = !local;
+      $('chat-tab-main').classList.toggle('on', !local);
+      $('chat-tab-local').classList.toggle('on', local);
+      $('chat-tab-main').setAttribute('aria-selected', String(!local));
+      $('chat-tab-local').setAttribute('aria-selected', String(local));
+      $('composer-bg').hidden = local;          // background runs are the agent's
+      if (local && !localLoaded) loadLocalChat();
+      scrollChat('auto', local ? 'local-messages' : 'messages');
+      $('chat-input').focus();
+    }
+    async function loadLocalChat() {
+      localLoaded = true;
+      try {
+        const data = await api('/api/local/chat/history');
+        (data.messages || []).forEach(m => addMessage(m.role === 'user' ? 'user' : 'agent', m.text || '', 'local-messages'));
+      } catch (_) { localLoaded = false; }
+    }
+    async function sendLocal(message) {
+      const input = $('chat-input');
+      $('send-button').disabled = true;
+      $('thinking').querySelector('em').textContent = t('chat.thinking');
+      $('thinking').hidden = false;
+      addMessage('user', message, 'local-messages');
+      try {
+        const data = await api('/api/local/chat', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message }),
+        }, 130000, t('chat.slowReply'));
+        if (data.source === 'none') {
+          const pct = data.percent ? ` (${data.percent}%)` : '';
+          addMessage('system', data.why ? t(`chat.noBrain.${data.why}`, { pct }) : data.reply, 'local-messages');
+        } else {
+          addMessage('agent', data.reply || t('chat.noResponse'), 'local-messages');
+        }
+      } catch (error) {
+        addMessage('system', error.message, 'local-messages');
+      } finally {
+        $('thinking').hidden = true;
+        $('send-button').disabled = false;
+        input.focus();
+      }
+    }
+
     async function sendMessage(event) {
       event.preventDefault();
       const input = $('chat-input');
@@ -3014,6 +3078,7 @@
       if (!message || $('send-button').disabled) return;
       input.value = '';
       input.style.height = '';
+      if (state.chatMode === 'local') { sendLocal(message); return; }
       // "Run in the background" hands the turn to a separate lane, so the box
       // comes back immediately and the agent keeps working on it off to the
       // side. The Tasks panel shows progress and the answer when it lands.
@@ -3927,7 +3992,7 @@
           t.classList.toggle('active', on);
           t.setAttribute('aria-selected', String(on));
         });
-        ['files', 'agent', 'tasks'].forEach(name => {
+        ['files', 'tasks'].forEach(name => {
           $('home-panel-' + name).hidden = tab.dataset.home !== name;
         });
       });
@@ -4837,6 +4902,7 @@
       // Wi-Fi scans the moment its page opens — no extra tap to see networks.
       if (id === 'wifi-setting') openWifi();
       if (id === 'ssh-setting') loadTailscale();
+      if (id === 'models-setting') { loadHomeModels(); if (!$('mseg-local').hidden) loadLocalModels(); }
       if (id === 'providers-setting') loadOpenRouterAccount();
       if (id === 'pi-password-setting') { loadPiLogin(); loadSessions(); loadRemotePassword(); }
     }
@@ -7098,6 +7164,11 @@
     // The composer's + starts a clean conversation, the same thing the old
     // header button did before the composer absorbed it.
     async function startFreshChat() {
+      if (state.chatMode === 'local') {
+        try { await api('/api/local/chat/fresh', { method: 'POST' }); } catch (_) {}
+        [...$('local-messages').querySelectorAll('.message')].forEach(el => el.remove());
+        return;
+      }
       try {
         await api('/api/agent/chat/fresh', { method: 'POST' });
       } catch (_) {
@@ -8365,8 +8436,8 @@
       },
       connectors: () => { setTab('connectors'); revealField('composio-key'); },
       localmodels: () => {
-        setTab('home');
-        document.querySelector('.home-tab[data-home="agent"]').click();
+        setTab('settings');
+        openSettingPage('models-setting');
         showModelSeg('local');
       },
     };
@@ -8790,6 +8861,7 @@
 
     function renderStatus(status) {
       renderNames(status);
+      $('chat-tab-main-name').textContent = status.agent_name || 'sudo';
       renderLegacyWhatsapp(status);
       $('channel-alert').hidden = !(status && status.channel_alert && status.channel_alert.channel) || state.tab === 'welcome';
       renderReports(status);
@@ -9201,6 +9273,9 @@
     $('detail-back').addEventListener('click', () => history.back());
     document.querySelectorAll('#personality-options button').forEach(button => button.addEventListener('click', () => selectPersonality(button.dataset.value)));
     $('chat-form').addEventListener('submit', sendMessage);
+    $('chat-tab-main').addEventListener('click', () => setChatMode('main'));
+    $('chat-tab-local').addEventListener('click', () => setChatMode('local'));
+    $('lc-more').addEventListener('click', () => SETUP_DESTINATIONS.localmodels());
     $('chat-input').addEventListener('input', event => {
       event.target.style.height = 'auto';
       event.target.style.height = `${Math.min(event.target.scrollHeight, 128)}px`;

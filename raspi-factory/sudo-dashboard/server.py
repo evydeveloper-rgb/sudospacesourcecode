@@ -211,13 +211,20 @@ CHAT_LOG_MAX = 200
 _chat_log_lock = threading.Lock()
 
 
-def read_chat_log() -> list:
-    data = read_json_file(CHAT_LOG, {}) or {}
+# The "On this device" tab: its own running conversation with the on-device
+# model, kept apart from the agent's. Never sent anywhere, and not written
+# into the agent's memory either -- that memory goes to the cloud model, and
+# this tab is the private one.
+LOCAL_CHAT_LOG = "/opt/sudo/local-chat.json"
+
+
+def read_chat_log(path=CHAT_LOG) -> list:
+    data = read_json_file(path, {}) or {}
     return data.get("messages", []) if isinstance(data, dict) else []
 
 
-def write_chat_log(messages: list) -> None:
-    write_json_file(CHAT_LOG, {"messages": messages[-CHAT_LOG_MAX:]})
+def write_chat_log(messages: list, path=CHAT_LOG) -> None:
+    write_json_file(path, {"messages": messages[-CHAT_LOG_MAX:]})
 
 
 def append_chat_log(user_text: str, agent_text: str) -> None:
@@ -1895,7 +1902,31 @@ def apply_settings():
             pass
 
 
-def local_system_prompt(cfg):
+def owner_notes_for_local(limit=800):
+    """The filled-in lines of the agent's USER.md, for the on-device model.
+
+    One way only: the on-device model reads what the agent has learned, so
+    both know the same person; nothing said on-device is written back.
+    The template's own placeholder lines ("(ask once...)") are skipped.
+    """
+    try:
+        with open(os.path.join(WORKSPACE, "USER.md"), encoding="utf-8") as f:
+            lines = f.read().splitlines()
+    except OSError:
+        return ""
+    keep = []
+    for line in lines:
+        s = line.strip()
+        if not s.startswith("- "):
+            continue
+        value = s.split(":**", 1)[1].strip() if ":**" in s else s[2:].strip()
+        if not value or value.startswith("("):
+            continue
+        keep.append(s.replace("**", ""))
+    return "\n".join(keep)[:limit]
+
+
+def _local_brief(cfg):
     """The on-device model's brief: welcome someone who just unboxed this.
 
     This model is the first thing a new owner talks to, so its job is the
@@ -1966,6 +1997,18 @@ def local_system_prompt(cfg):
         "Answer whatever they ask simply and directly, then keep the "
         "conversation going.\n" + tail
     )
+
+
+def local_system_prompt(cfg):
+    """The brief, plus what the agent has learned about them (USER.md), so
+    the on-device model knows the same person. Not for the 270M greeter,
+    which recites whatever it is given."""
+    brief = _local_brief(cfg)
+    if active_local_model() != LOCAL_MODEL:
+        notes = owner_notes_for_local()
+        if notes:
+            brief += "\n\nWhat you know about them:\n" + notes
+    return brief
 
 
 # Lines from BOOTSTRAP.md copies written before 1.0.41, taken out of the
@@ -5843,6 +5886,48 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             write_json_file(CONFIG, cfg)  # chmod 600
             apply_settings()
             self.send_json({"ok": True, **setup_status(include_sensitive=False)})
+            return True
+
+        if path == "/api/local/chat/history" and self.command == "GET":
+            self.send_json({"messages": read_chat_log(LOCAL_CHAT_LOG),
+                            "model": active_local_model()})
+            return True
+
+        if path == "/api/local/chat/fresh" and self.command == "POST":
+            write_chat_log([], LOCAL_CHAT_LOG)
+            self.send_json({"ok": True})
+            return True
+
+        if path == "/api/local/chat" and self.command == "POST":
+            if not rate_allow(f"chat:{self.client_ip()}", CHAT_MAX, CHAT_WINDOW):
+                self.send_json({"error": "Rate limit — slow down"}, code=429)
+                return True
+            try:
+                body = self.read_body_json()
+            except (ValueError, json.JSONDecodeError):
+                self.send_json({"error": "Invalid JSON"}, code=400)
+                return True
+            message = (body.get("message") or "").strip()
+            if not message:
+                self.send_json({"error": "message required"}, code=400)
+                return True
+            if len(message) > MAX_CHAT_LEN:
+                self.send_json({"error": f"message too long (max {MAX_CHAT_LEN})"}, code=400)
+                return True
+            cfg = read_json_file(CONFIG)
+            history = read_chat_log(LOCAL_CHAT_LOG)[-LOCAL_HISTORY_TURNS * 2:]
+            reply = local_model_chat(message, history, cfg)
+            if not reply:
+                # Still downloading, failed, or not answering: say which.
+                self.send_json({**no_brain_reply(), "source": "none"})
+                return True
+            now = int(time.time())
+            with _chat_log_lock:
+                write_chat_log(read_chat_log(LOCAL_CHAT_LOG) + [
+                    {"role": "user", "text": message, "at": now},
+                    {"role": "agent", "text": reply, "at": now},
+                ], LOCAL_CHAT_LOG)
+            self.send_json({"reply": reply, "source": "local"})
             return True
 
         if path == "/api/agent/chat/history" and self.command == "GET":
