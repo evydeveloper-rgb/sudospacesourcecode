@@ -364,6 +364,20 @@ elif [ -x "$BIN_DIR/configure-picoclaw.sh" ]; then
   "$BIN_DIR/configure-picoclaw.sh" >>"$LOG" 2>&1 || log "configure step reported an issue"
 fi
 
+# ── apt: accept a repository renaming itself ────────────────────────────────
+# Debian relabelled trixie-security (Label/Codename) in Nov 2026, and apt
+# refuses to update past such a change until told to accept it. Every install
+# that runs apt-get update then failed -- Tailscale's installer first of all.
+# Origin is left out on purpose: a repository changing who it is should still
+# stop apt. Signatures are checked as before.
+mkdir -p /etc/apt/apt.conf.d
+cat > /etc/apt/apt.conf.d/80sudo-releaseinfo << 'EOF'
+Acquire::AllowReleaseInfoChange::Label "true";
+Acquire::AllowReleaseInfoChange::Codename "true";
+Acquire::AllowReleaseInfoChange::Suite "true";
+Acquire::AllowReleaseInfoChange::Version "true";
+EOF
+
 # ── Memory housekeeping timer (added with knowledge/; enable on existing) ──
 # Fresh cards get this from install-factory.sh; devices already in the field
 # only see it through an update, so create it here when missing.

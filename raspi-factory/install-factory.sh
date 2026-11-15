@@ -607,6 +607,20 @@ rm -f /etc/systemd/system/iptables-restore.service
 rm -f /etc/systemd/system/iptables-save.service
 rm -f /usr/local/bin/captive-portal.sh
 
+# ── apt: accept a repository renaming itself ────────────────────────────────
+# Debian relabelled trixie-security (Label/Codename) in Nov 2026, and apt
+# refuses to update past such a change until told to accept it. Every install
+# that runs apt-get update then failed -- Tailscale's installer first of all.
+# Origin is left out on purpose: a repository changing who it is should still
+# stop apt. Signatures are checked as before.
+mkdir -p /etc/apt/apt.conf.d
+cat > /etc/apt/apt.conf.d/80sudo-releaseinfo << 'EOF'
+Acquire::AllowReleaseInfoChange::Label "true";
+Acquire::AllowReleaseInfoChange::Codename "true";
+Acquire::AllowReleaseInfoChange::Suite "true";
+Acquire::AllowReleaseInfoChange::Version "true";
+EOF
+
 # ── The Pi's own password: random, and this device's alone ─────────────────
 # Imager wrote the account, with whatever password it was given -- the same on
 # every card flashed with the same settings. Replace it with a random one the
