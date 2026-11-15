@@ -1893,7 +1893,7 @@
           <section class="setting-card" id="spend-setting">
             <button class="setting-head" type="button" aria-expanded="false">
               <span class="setting-icon">🛑</span>
-              <span><strong data-i18n="set.spend.spendingGuard">Spending guard</strong><small id="spend-summary">On · 300 messages/day</small></span>
+              <span><strong data-i18n="set.spend.spendingGuard">Spending guard</strong><small id="spend-summary">On</small></span>
               <span class="chevron">›</span>
             </button>
             <div class="setting-body">
@@ -1918,7 +1918,6 @@
               </div>
 
               <div class="usd-cap" id="usd-cap">
-                <p class="usd-head" data-i18n="usd.head">Dollar limits</p>
                 <div class="usd-paused" id="usd-paused" hidden></div>
                 <div class="usd-meters" id="usd-meters">
                   <div class="usd-meter"><small data-i18n="usd.today">Today</small><strong id="usd-spent-day">$0.00</strong><i><b id="usd-bar-day"></b></i></div>
@@ -1931,13 +1930,6 @@
                 <p class="microcopy" id="usd-note"></p>
               </div>
 
-              <p class="usd-head" data-i18n="usd.messagesHead">Message limits</p>
-              <div class="field-grid">
-                <label><span data-i18n="set.spend.messagesPerDay">Messages per day</span><input id="spend-max-per-day" type="number" min="1" step="10" inputmode="numeric" placeholder="300"></label>
-                <label><span data-i18n="set.spend.burstLimitPerMinute">Burst limit (per minute)</span><input id="spend-max-per-minute" type="number" min="1" step="1" inputmode="numeric" placeholder="12"></label>
-                <label><span data-i18n="set.spend.pauseLengthAfterA">Pause length after a burst (minutes)</span><input id="spend-cooldown-min" type="number" min="1" step="5" inputmode="numeric" placeholder="30"></label>
-              </div>
-              <p class="microcopy" id="spend-live">Waiting for a count…</p>
               <p class="form-status" id="spend-status" role="status"></p>
             </div>
           </section>
@@ -4765,24 +4757,14 @@
     // textOnly: a re-draw for a language switch; leaves the number boxes alone
     // so nothing half-typed is thrown away.
     function renderSpend(status, textOnly) {
-      const s = status.spend_status || {};
-      if (!textOnly) {
-        $('spend-toggle').checked = !!status.spend_enabled;
-        $('spend-max-per-day').value = status.spend_max_per_day || 300;
-        $('spend-max-per-minute').value = status.spend_max_per_minute || 12;
-        $('spend-cooldown-min').value = status.spend_cooldown_min || 30;
-      }
-      $('spend-summary').textContent = status.spend_enabled
-        ? t('spend.summaryOn', { n: status.spend_max_per_day || 300 })
-        : t('common.off');
-      const used = s.day_calls != null ? s.day_calls : 0;
-      const cap = s.day_cap || status.spend_max_per_day || 300;
-      $('spend-live').textContent = s.tripped
-        ? t('spend.livePaused', { used, cap })
-        : t('spend.live', { used, cap });
+      if (!textOnly) $('spend-toggle').checked = !!status.spend_enabled;
+      const day = Number(status.spend_usd_day) || 0, month = Number(status.spend_usd_month) || 0;
+      $('spend-summary').textContent = !status.spend_enabled ? t('common.off')
+        : day ? t('spend.summaryDay', { amount: money(day) })
+        : month ? t('spend.summaryMonth', { amount: money(month) })
+        : t('spend.summaryNone');
       renderUsd(status, textOnly);
     }
-
     function money(n) { return '$' + (Number(n) || 0).toFixed(2); }
 
     function renderUsd(status, textOnly) {
@@ -4819,9 +4801,6 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             spend_enabled: $('spend-toggle').checked,
-            spend_max_per_day: parseInt($('spend-max-per-day').value, 10) || 300,
-            spend_max_per_minute: parseInt($('spend-max-per-minute').value, 10) || 12,
-            spend_cooldown_min: parseInt($('spend-cooldown-min').value, 10) || 30,
             spend_usd_day: $('spend-usd-day').value,
             spend_usd_month: $('spend-usd-month').value,
           }),
@@ -9032,7 +9011,6 @@
       if (!(state.status && state.status.answering_with)) $('answering-with').textContent = t('common.checking');
       if (!state.status) {
         $('local-model-state').textContent = t('common.checking');
-        $('spend-live').textContent = t('spend.waiting');
       }
       if (!state.updateInfo) $('update-summary').textContent = t('update.version', { v: '1.0.0' });
       renderAccessSummary();
@@ -9380,7 +9358,7 @@
     $('full-access-toggle').addEventListener('change', () => saveAbilities('full-access-toggle'));
     $('heartbeat-toggle').addEventListener('change', () => saveAbilities('heartbeat-toggle'));
     $('spend-toggle').addEventListener('change', () => saveSpend('spend-toggle'));
-    ['spend-max-per-day', 'spend-max-per-minute', 'spend-cooldown-min', 'spend-usd-day', 'spend-usd-month'].forEach(id =>
+    ['spend-usd-day', 'spend-usd-month'].forEach(id =>
       $(id).addEventListener('change', () => saveSpend(null)));
     $('ssh-toggle').addEventListener('change', toggleSsh);
     $('save-ssh-key').addEventListener('click', saveSshKey);

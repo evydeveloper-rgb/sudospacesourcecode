@@ -66,9 +66,11 @@ PAUSE = os.environ.get("SUDO_SPEND_PAUSE", "/opt/sudo/spend-paused.json")
 GATEWAY = "sudo-openclaw-gateway.service"
 NOTIFY = "/usr/local/bin/sudo-notify-owner.sh"
 
+MESSAGE_BACKSTOP = 2000
+
 DEFAULTS = {
     "spend_enabled": True,
-    "spend_max_per_day": 300,
+    "spend_max_per_day": MESSAGE_BACKSTOP,
     "spend_max_per_minute": 12,
     "spend_cooldown_min": 30,
 }
@@ -89,7 +91,11 @@ def _caps():
         value = cfg.get(key, default)
         caps[key] = value if isinstance(value, type(default)) else default
     # Guard against nonsense values that would make the box unusable.
-    caps["spend_max_per_day"] = max(1, int(caps["spend_max_per_day"]))
+    # The limit owners set is in dollars now (spend-usd). The daily message
+    # count is only a backstop for a runaway loop, so it never sits below
+    # MESSAGE_BACKSTOP whatever an older Settings page saved (300 was the
+    # old default, which a busy day could reach).
+    caps["spend_max_per_day"] = max(MESSAGE_BACKSTOP, int(caps["spend_max_per_day"]))
     caps["spend_max_per_minute"] = max(1, int(caps["spend_max_per_minute"]))
     caps["spend_cooldown_min"] = max(1, int(caps["spend_cooldown_min"]))
     return caps
