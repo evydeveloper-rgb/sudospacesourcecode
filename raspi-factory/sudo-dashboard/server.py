@@ -8,6 +8,7 @@ Public mode (optional): bind 127.0.0.1:8080 behind Caddy HTTPS.
 from __future__ import annotations
 
 import base64
+import datetime
 import hashlib
 import hmac
 import http.server
@@ -582,6 +583,136 @@ def agent_brain(cfg):
         if keys.get(provider):
             return {"provider": provider, "name": name, "model": model}
     return None
+
+
+# ── Usage log (Settings > Usage) ─────────────────────────────────────────────
+# What each message cost, read from the agent's own transcripts: OpenClaw
+# writes every model call with its tokens and its cost (from the model's
+# price list). One row per message the owner (or a schedule) sent, adding up
+# every call the agent made to answer it. Shown only when the agent runs on
+# OpenRouter (Sudo credit or their own account): with other providers the
+# prices are not reliable enough to put dollar amounts on screen.
+AGENT_SESSIONS_DIR = "/opt/sudo/openclaw/agents/main/sessions"
+_usage_cache = {}
+
+
+def _session_channel(key):
+    k = (key or "").lower()
+    if "whatsapp" in k:
+        return "whatsapp"
+    if "telegram" in k:
+        return "telegram"
+    if "heartbeat" in k:
+        return "checkin"
+    if ":cron" in k or "cron:" in k:
+        return "scheduled"
+    if "sudo-dashboard" in k:
+        return "background" if "-bg-" in k or ":bg" in k else "dashboard"
+    return "other"
+
+
+def _message_text(msg):
+    c = msg.get("content")
+    if isinstance(c, str):
+        return c
+    if isinstance(c, list):
+        return " ".join(x.get("text") or "" for x in c if isinstance(x, dict) and x.get("type") == "text")
+    return ""
+
+
+def _parse_session_file(path, channel):
+    """Turns in one transcript, cached by modification time."""
+    try:
+        mtime = os.path.getmtime(path)
+    except OSError:
+        return []
+    hit = _usage_cache.get(path)
+    if hit and hit[0] == mtime:
+        return hit[1]
+    turns, cur = [], None
+    try:
+        with open(path, encoding="utf-8", errors="replace") as f:
+            for line in f:
+                if '"message"' not in line:
+                    continue
+                try:
+                    d = json.loads(line)
+                except ValueError:
+                    continue
+                if d.get("type") != "message":
+                    continue
+                m = d.get("message") or {}
+                role = m.get("role")
+                if role == "user":
+                    text = re.sub(r"\s+", " ", _message_text(m)).strip()
+                    cur = {"at": d.get("timestamp") or "", "text": text[:90], "channel": channel,
+                           "models": [], "calls": 0, "input": 0, "output": 0, "cached": 0, "cost": 0.0}
+                    turns.append(cur)
+                elif role == "assistant":
+                    u = m.get("usage") or {}
+                    if not u:
+                        continue
+                    if cur is None:   # calls with no message before them
+                        cur = {"at": d.get("timestamp") or "", "text": "", "channel": channel,
+                               "models": [], "calls": 0, "input": 0, "output": 0, "cached": 0, "cost": 0.0}
+                        turns.append(cur)
+                    cur["calls"] += 1
+                    cur["input"] += int(u.get("input") or 0)
+                    cur["output"] += int(u.get("output") or 0)
+                    cur["cached"] += int(u.get("cacheRead") or 0)
+                    cur["cost"] += float((u.get("cost") or {}).get("total") or 0)
+                    model = (m.get("model") or "").split("/")[-1]
+                    if model and model not in cur["models"]:
+                        cur["models"].append(model)
+    except OSError:
+        return []
+    turns = [t for t in turns if t["calls"]]
+    _usage_cache[path] = (mtime, turns)
+    return turns
+
+
+def usage_log(days=30, limit=200):
+    cfg = read_json_file(CONFIG)
+    brain = agent_brain(cfg) or {}
+    available = brain.get("provider") == "openrouter"
+    if not available:
+        return {"available": False, "reason": "not_openrouter" if brain else "no_cloud"}
+    keys = read_json_file(os.path.join(AGENT_SESSIONS_DIR, "sessions.json"), {}) or {}
+    by_id = {}
+    for key, entry in keys.items():
+        if isinstance(entry, dict) and entry.get("sessionId"):
+            by_id[entry["sessionId"]] = key
+    cutoff = time.time() - days * 86400
+    turns = []
+    try:
+        names = os.listdir(AGENT_SESSIONS_DIR)
+    except OSError:
+        names = []
+    for name in names:
+        if ".trajectory" in name or ".jsonl" not in name:
+            continue
+        path = os.path.join(AGENT_SESSIONS_DIR, name)
+        try:
+            if os.path.getmtime(path) < cutoff:
+                continue
+        except OSError:
+            continue
+        sid = name.split(".jsonl")[0]
+        turns.extend(_parse_session_file(path, _session_channel(by_id.get(sid, ""))))
+    turns.sort(key=lambda t: t["at"], reverse=True)
+    today = time.strftime("%Y-%m-%d")
+    month = today[:7]
+
+    def local_day(ts):
+        try:
+            return time.strftime("%Y-%m-%d", time.localtime(
+                datetime.datetime.fromisoformat(ts.replace("Z", "+00:00")).timestamp()))
+        except (ValueError, AttributeError):
+            return ""
+    cost_day = sum(t["cost"] for t in turns if local_day(t["at"]) == today)
+    cost_month = sum(t["cost"] for t in turns if local_day(t["at"])[:7] == month)
+    return {"available": True, "rows": turns[:limit], "cost_today": round(cost_day, 6),
+            "cost_month": round(cost_month, 6), "count": len(turns)}
 
 
 def effective_openrouter_key(cfg):
@@ -5886,6 +6017,10 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             write_json_file(CONFIG, cfg)  # chmod 600
             apply_settings()
             self.send_json({"ok": True, **setup_status(include_sensitive=False)})
+            return True
+
+        if path == "/api/usage" and self.command == "GET":
+            self.send_json(usage_log())
             return True
 
         if path == "/api/local/chat/history" and self.command == "GET":

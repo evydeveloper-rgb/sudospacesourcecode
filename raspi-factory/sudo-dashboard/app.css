@@ -3317,3 +3317,21 @@ input[type="password"], input[type="tel"], input[type="number"], #ssh-key, #devi
   display: block; margin: 2px auto 4px; padding: 6px 14px; border: 1px solid var(--line); border-radius: 999px;
   background: var(--surface); color: var(--primary, #4f3fc9); font: inherit; font-size: .82rem; font-weight: 700; cursor: pointer;
 }
+
+/* Settings > Usage */
+.us-only { display: flex; gap: 8px; align-items: flex-start; margin: 0 0 14px; padding: 10px 12px; border-radius: 12px; background: var(--surface-low); color: var(--ink-2); font-size: .84rem; line-height: 1.45; }
+.us-only svg { flex: none; width: 17px; height: 17px; margin-top: 1px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.us-totals { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0 0 8px; }
+.us-total { padding: 12px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); }
+.us-total small { display: block; color: var(--ink-3); font-size: .74rem; }
+.us-total strong { font-size: 1.25rem; }
+.us-est { margin: 0 0 10px; }
+.us-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.us-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; background: var(--surface-low); }
+.us-left { flex: 1; min-width: 0; }
+.us-left strong { display: block; font-size: .88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.us-left small { display: block; color: var(--ink-3); font-size: .74rem; margin-top: 2px; }
+.us-cost { flex: none; font: 700 .92rem var(--font-mono); }
+.us-empty { padding: 12px; border-radius: 12px; background: var(--surface-low); color: var(--ink-2); font-size: .88rem; list-style: none; }
+.us-list { grid-template-columns: minmax(0, 1fr); }
+.us-row { min-width: 0; }

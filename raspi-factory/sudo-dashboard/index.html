@@ -1933,6 +1933,18 @@
               <p class="form-status" id="spend-status" role="status"></p>
             </div>
           </section>
+          <section class="setting-card" id="usage-setting">
+            <button class="setting-head" type="button" aria-expanded="false">
+              <span class="setting-icon">$</span>
+              <span><strong data-i18n="us.title">Usage</strong><small id="usage-summary" data-i18n="us.summary">What each message cost</small></span>
+              <span class="chevron">›</span>
+            </button>
+            <div class="setting-body">
+              <p class="us-only"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg><span data-i18n="us.only">Shown when your agent runs on Sudo credit or your own OpenRouter account. Other keys don’t report costs here.</span></p>
+              <div id="usage-body"></div>
+              <p class="form-status" id="usage-status" role="status"></p>
+            </div>
+          </section>
           <div class="settings-group" data-i18n="settings.dashboard">Sudo dashboard</div>
           <section class="setting-card" id="theme-setting">
             <button class="setting-head" type="button" aria-expanded="false">
@@ -3541,6 +3553,45 @@
       } finally { $('nm-save').disabled = false; }
     }
 
+    // Settings > Usage: what each message cost.
+    const US_CHANNEL = { dashboard: 'us.ch.dashboard', whatsapp: 'us.ch.whatsapp', telegram: 'us.ch.telegram',
+      scheduled: 'us.ch.scheduled', checkin: 'us.ch.checkin', background: 'us.ch.background', other: 'us.ch.other' };
+    function usd(n) {
+      n = Number(n) || 0;
+      if (n === 0) return '$0';
+      if (n < 0.01) return '<$0.01';
+      return '$' + n.toFixed(2);
+    }
+    async function loadUsage() {
+      const body = $('usage-body');
+      $('usage-status').textContent = t('common.checking');
+      let d;
+      try { d = await api('/api/usage'); } catch (error) { $('usage-status').textContent = error.message; return; }
+      $('usage-status').textContent = '';
+      if (!d.available) {
+        body.replaceChildren(hEl('p', 'us-empty', t(d.reason === 'no_cloud' ? 'us.noCloud' : 'us.notOr')));
+        return;
+      }
+      const totals = hEl('div', 'us-totals');
+      totals.append(
+        Object.assign(hEl('div', 'us-total'), { innerHTML: `<small>${t('usd.today')}</small><strong>${usd(d.cost_today)}</strong>` }),
+        Object.assign(hEl('div', 'us-total'), { innerHTML: `<small>${t('usd.month')}</small><strong>${usd(d.cost_month)}</strong>` }));
+      const list = hEl('ul', 'us-list');
+      if (!d.rows.length) list.append(hEl('li', 'us-empty', t('us.none')));
+      d.rows.forEach(r => {
+        const li = hEl('li', 'us-row');
+        const left = hEl('div', 'us-left');
+        const when = r.at ? new Date(r.at).toLocaleString(I18N.htmlLang(), { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
+        left.append(hEl('strong', '', r.text || t(US_CHANNEL[r.channel] || 'us.ch.other')),
+          hEl('small', '', [when, t(US_CHANNEL[r.channel] || 'us.ch.other'), r.models.join(', '),
+            t('us.tokens', { n: (r.input + r.output + r.cached).toLocaleString() }),
+            r.calls > 1 ? t('us.calls', { n: r.calls }) : ''].filter(Boolean).join(' · ')));
+        li.append(left, hEl('span', 'us-cost', usd(r.cost)));
+        list.append(li);
+      });
+      body.replaceChildren(totals, hEl('p', 'microcopy us-est', t('us.estimate')), list);
+    }
+
     function afterPersonality() {
       if (wantsOwnPassword()) { renderWelcomeStep(4); return; }
       enterChatAfterWelcome();
@@ -4881,6 +4932,7 @@
       // Wi-Fi scans the moment its page opens — no extra tap to see networks.
       if (id === 'wifi-setting') openWifi();
       if (id === 'ssh-setting') loadTailscale();
+      if (id === 'usage-setting') loadUsage();
       if (id === 'models-setting') { loadHomeModels(); if (!$('mseg-local').hidden) loadLocalModels(); }
       if (id === 'providers-setting') loadOpenRouterAccount();
       if (id === 'pi-password-setting') { loadPiLogin(); loadSessions(); loadRemotePassword(); }
