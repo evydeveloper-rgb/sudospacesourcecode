@@ -727,8 +727,8 @@ def credit_start():
         if out.get("claimed_usd"):
             data["claimed_usd"] = out["claimed_usd"]
         credit_write(data)
-    credit_take(out)
-    if credit_read().get("or_key"):
+    credit_take(out)   # switches over when a key came with it
+    if credit_read().get("or_key") and not credit_in_use():
         credit_switch_on()
     return True, out
 

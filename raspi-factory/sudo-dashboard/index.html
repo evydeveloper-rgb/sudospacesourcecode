@@ -3515,7 +3515,10 @@
         $('wc-status').textContent = '';
         renderCloudStep();
       } catch (error) {
-        $('wc-status').textContent = error.message;
+        await refreshStatusQuiet();
+        const c = (state.status || {}).credit || {};
+        $('wc-status').textContent = c.started ? '' : error.message;
+        renderCloudStep();
       } finally {
         btn.disabled = false;
       }
@@ -8770,7 +8773,9 @@
         await loadCredit();
         refreshStatusQuiet();
       } catch (error) {
-        $('billing-error').textContent = error.message;
+        // The device may have finished even if the reply got lost: look.
+        await loadCredit();
+        $('billing-error').textContent = state.credit && state.credit.started ? '' : error.message;
       } finally {
         btn.disabled = false;
       }
