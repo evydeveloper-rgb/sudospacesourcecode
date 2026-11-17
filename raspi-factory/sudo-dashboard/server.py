@@ -750,6 +750,10 @@ def credit_redeem(code):
         data.pop("claim_code", None)
         credit_write(data)
     credit_take(out)
+    # A sudo with no cloud brain yet starts using the credit straight away;
+    # one with the owner's own key keeps it until they choose otherwise.
+    if not agent_brain(read_json_file(CONFIG)):
+        credit_switch_on()
     return True, out
 
 
