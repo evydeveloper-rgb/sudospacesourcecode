@@ -3435,3 +3435,28 @@ input[type="password"], input[type="tel"], input[type="number"], #ssh-key, #devi
 .link-pw code { flex: 1; min-width: 0; font: 700 .92rem var(--font-mono); word-break: break-all; }
 .link-pw button { border: 0; background: transparent; text-decoration: underline; cursor: pointer; min-height: 32px; font-weight: 700; }
 #link-pw-note.warn { color: var(--danger, #b3261e); }
+
+/* Chat spacing, closer to a calm assistant layout: roomy gaps between
+   turns, replies as plain text across the column, your message a small
+   bubble with your initial beside it, and a two-row message box (text on
+   top, buttons underneath). */
+.message-thread { gap: 34px; padding-top: 18px; padding-bottom: 24px; }
+.message.agent .message-avatar { display: none; }
+.message.agent { flex-direction: column; gap: 6px; }
+.message.agent > div { padding: 0; font-size: 1rem; line-height: 1.7; }
+.message.agent .message-flag { align-self: flex-start; margin: 0; }
+.message.user { align-items: flex-start; gap: 10px; }
+.message.user .message-avatar {
+  display: grid; width: 28px; height: 28px; border-radius: 50%; margin-top: 4px;
+  background: #2f7a4a; color: #fff; font: 700 .78rem/1 var(--font-sans);
+}
+.message.user > div { padding: 10px 16px; border-radius: 14px; font-size: 1rem; }
+.composer {
+  display: grid; grid-template-columns: auto 1fr auto auto; grid-template-rows: auto auto;
+  align-items: center; gap: 6px 8px; padding: 14px 14px 10px; border-radius: 18px;
+  box-shadow: 0 2px 14px rgba(22, 19, 17, .06);
+}
+.composer textarea { grid-column: 1 / -1; grid-row: 1; min-height: 44px; padding: 4px 6px; }
+.composer .composer-add { grid-column: 1; grid-row: 2; }
+.composer .composer-bg { grid-column: 3; grid-row: 2; }
+.composer .send-button { grid-column: 4; grid-row: 2; border-radius: 12px; }

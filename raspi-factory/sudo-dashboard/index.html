@@ -2952,7 +2952,8 @@
       item.className = `message ${role}`;
       const avatar = document.createElement('span');
       avatar.className = 'message-avatar';
-      avatar.textContent = role === 'agent' ? (state.status?.agent_name || 's').slice(0, 1).toLowerCase() : t('chat.you');
+      avatar.textContent = role === 'agent' ? (state.status?.agent_name || 's').slice(0, 1).toLowerCase()
+        : (state.status?.user_name || 'y').slice(0, 1).toUpperCase();
       const bubble = document.createElement('div');
       // Each message reads in its own direction: an English reply inside the
       // Arabic dashboard (or the other way round) keeps its punctuation right.
@@ -8949,6 +8950,7 @@
       renderAccessSummary(status);
       $('chat-tab-main-name').textContent = status.agent_name || 'sudo';
       document.querySelectorAll('#messages .message.agent .message-avatar').forEach(a => { a.textContent = (status.agent_name || 's').slice(0, 1).toLowerCase(); });
+      document.querySelectorAll('.message.user .message-avatar').forEach(a => { a.textContent = (status.user_name || 'y').slice(0, 1).toUpperCase(); });
       renderLegacyWhatsapp(status);
       $('channel-alert').hidden = !(status && status.channel_alert && status.channel_alert.channel) || state.tab === 'welcome';
       renderReports(status);
