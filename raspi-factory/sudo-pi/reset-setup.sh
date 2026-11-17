@@ -90,6 +90,7 @@ for key in (
     "model", "remote_access", "pico_token", "theme",
     "exec_enabled", "ssh_enabled", "ssh_auth",
     "openrouter_key_source", "user_openrouter_key", "composio_api_key",
+    "openrouter_key", "brain", "chatgpt_signed_in",
     "composio_enabled", "routing_mode", "prefer_local",
     # Added since: keys, linked numbers and choices a new owner must not inherit.
     "provider_keys", "github_token", "github_username", "github_enabled", "telegram", "problem_reports", "problem_reports_auto", "problem_reports_notice_seen",

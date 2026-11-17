@@ -68,6 +68,7 @@ for key in (
     # Owner-controlled settings — a factory unit must not inherit these
     "exec_enabled", "ssh_enabled", "ssh_auth",
     "openrouter_key_source", "user_openrouter_key", "composio_api_key",
+    "openrouter_key", "brain", "chatgpt_signed_in",
     # Added since: keys, linked numbers and choices a new owner must not inherit.
     "provider_keys", "github_token", "github_username", "github_enabled", "telegram", "problem_reports", "problem_reports_auto", "problem_reports_notice_seen",
     "whatsapp_mode", "whatsapp_numbers", "whatsapp_owner_number",
