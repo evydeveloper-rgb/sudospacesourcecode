@@ -3460,3 +3460,16 @@ input[type="password"], input[type="tel"], input[type="number"], #ssh-key, #devi
 .composer .composer-add { grid-column: 1; grid-row: 2; }
 .composer .composer-bg { grid-column: 3; grid-row: 2; }
 .composer .send-button { grid-column: 4; grid-row: 2; border-radius: 12px; }
+
+/* Buttons one size smaller everywhere: lighter weight, shorter, no glow.
+   Full-width ones stay full width (setup steps); only their height drops. */
+.primary-button, .soft-button, .ghost-button { font-size: .9rem; font-weight: 650; box-shadow: none; }
+.primary-button { min-height: 42px; border-radius: 11px; }
+.soft-button { min-height: 36px; border-radius: 10px; font-size: .85rem; }
+.ghost-button { min-height: 38px; font-size: .86rem; }
+.or-connect .primary-button, .or-connect .soft-button, .wa-contact-add .primary-button,
+.lm-login-actions .primary-button, .lm-login-actions .soft-button,
+.tg-row .primary-button, .tg-row .ghost-button, .tg-row .soft-button,
+.milestone-actions .primary-button, .wa-number-row .primary-button { min-height: 40px; }
+.set-section .primary-button { min-height: 38px; padding: 0 16px; }
+.done, .welcome-view .primary-button { min-height: 46px; }
