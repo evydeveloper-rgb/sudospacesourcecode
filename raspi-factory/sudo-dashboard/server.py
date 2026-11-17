@@ -733,6 +733,26 @@ def credit_start():
     return True, out
 
 
+def credit_redeem(code):
+    """A code Sudo handed out (beta testers, promos): its credit goes on
+    this sudo. Each code works once, and a sudo gets one start credit."""
+    code = re.sub(r"[^A-Za-z0-9-]", "", str(code or ""))[:40]
+    if len(code) < 8:
+        return False, "Type the code first"
+    status, out = credit_call("/start", {"claim_code": code})
+    if status != 200:
+        return False, out.get("error") or "Could not check the code"
+    if not out.get("claimed_usd"):
+        return False, "That code didn't work. It may be used already, or this sudo already got its start credit."
+    with CREDIT_LOCK:
+        data = credit_read()
+        data["started"] = True
+        data.pop("claim_code", None)
+        credit_write(data)
+    credit_take(out)
+    return True, out
+
+
 def credit_notify_loop():
     """Tell the owner on WhatsApp when credit runs low and when it runs out:
     with no credit the agent cannot answer, so it cannot say so itself."""
@@ -6226,6 +6246,19 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             self.send_json({"ok": True, "claimed_usd": out.get("claimed_usd", 0),
                             "credit": credit_state(refresh=False),
                             **setup_status(include_sensitive=False)})
+            return True
+
+        if path == "/api/credit/redeem" and self.command == "POST":
+            try:
+                body = self.read_body_json()
+            except (ValueError, json.JSONDecodeError):
+                body = {}
+            ok, out = credit_redeem(body.get("code"))
+            if not ok:
+                self.send_json({"error": out}, code=400)
+                return True
+            self.send_json({"ok": True, "claimed_usd": out.get("claimed_usd"),
+                            "credit": credit_state(refresh=False)})
             return True
 
         if path == "/api/credit/use" and self.command == "POST":

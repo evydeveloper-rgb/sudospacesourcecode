@@ -3549,3 +3549,11 @@ input.cr-other { flex: 1; min-width: 110px; min-height: 40px; margin: 0; }
 .cr-picker .cr-total { margin: 10px 0 12px !important; }
 .cr-amounts { align-items: stretch; }
 .cr-chip, input.cr-other { height: 44px; min-height: 44px; margin: 0; box-sizing: border-box; }
+
+.cr-code { margin: 4px 0 10px; }
+.cr-code summary { cursor: pointer; color: var(--ink-2); font-weight: 650; font-size: .9rem; }
+.cr-code[open] summary { margin-bottom: 8px; }
+.cr-code-row { display: flex; gap: 8px; }
+.cr-code-row input { flex: 1; min-width: 0; margin: 0; font-family: var(--font-mono); text-transform: uppercase; }
+.cr-code-row .soft-button { flex: none; }
+#cr-code-status:empty { display: none; }

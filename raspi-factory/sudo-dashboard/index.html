@@ -1784,6 +1784,14 @@
               <button class="primary-button" id="cr-start" type="button" hidden data-i18n="cr.use">Use Sudo credit</button>
               <p class="microcopy warn" id="cr-own-note" hidden data-i18n="cr.ownWins">Your own AI key is in use right now, not Sudo credit.</p>
               <button class="soft-button" id="cr-use" type="button" hidden data-i18n="cr.switch">Use Sudo credit instead</button>
+              <details class="cr-code" id="cr-code">
+                <summary data-i18n="cr.haveCode">Have a code?</summary>
+                <div class="cr-code-row">
+                  <input id="cr-code-input" type="text" autocomplete="off" spellcheck="false" autocapitalize="characters" dir="ltr" placeholder="SUDO-XXXX-XXXX-XXXX">
+                  <button class="soft-button" id="cr-code-btn" type="button" data-i18n="cr.useCode">Use code</button>
+                </div>
+                <p class="form-status" id="cr-code-status" role="status"></p>
+              </details>
               <div id="cr-picker-wrap" hidden>
                 <div class="settings-subgroup" data-i18n="cr.addTitle">Add credit</div>
                 <div class="cr-picker" id="cr-picker"></div>
@@ -8781,6 +8789,28 @@
       }
     }
 
+    async function creditRedeem() {
+      const input = $('cr-code-input'), btn = $('cr-code-btn'), status = $('cr-code-status');
+      const code = input.value.trim();
+      if (!code) { status.textContent = t('cr.typeCode'); return; }
+      btn.disabled = true;
+      status.textContent = t('common.checking');
+      try {
+        const r = await api('/api/credit/redeem', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code }),
+        }, 45000);
+        input.value = '';
+        status.textContent = t('cr.codeAdded', { amount: usd(r.claimed_usd) });
+        await loadCredit();
+        refreshStatusQuiet();
+      } catch (error) {
+        status.textContent = error.message;
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
     async function creditSwitchOn() {
       if (!confirm(t('cr.switchConfirm'))) return;
       try {
@@ -9685,6 +9715,8 @@
     $('save-profile').addEventListener('click', saveProfile);
     $('cr-start').addEventListener('click', creditStartFromSettings);
     $('cr-use').addEventListener('click', creditSwitchOn);
+    $('cr-code-btn').addEventListener('click', creditRedeem);
+    $('cr-code-input').addEventListener('keydown', e => { if (e.key === 'Enter') creditRedeem(); });
     $('wc-credit').addEventListener('click', cloudUseCredit);
     $('remote-toggle').addEventListener('change', toggleRemote);
     $('copy-remote').addEventListener('click', event => copyText(state.publicUrl, event.currentTarget));
