@@ -198,6 +198,8 @@ chmod +x /usr/local/bin/sudo-tailscale.sh
 chmod +x /usr/local/bin/sudo-voice-calls.sh /usr/local/bin/sudo-voice-bridge.py /usr/local/bin/sudo-voice-call.py
 chmod +x /usr/local/bin/sudo-problem-report.py
 cp "${BOOT}/sudo-pi/notify-owner.sh" /usr/local/bin/sudo-notify-owner.sh
+cp "${BOOT}/sudo-pi/chatgpt-login.sh" /usr/local/bin/sudo-chatgpt-login.sh
+chmod +x /usr/local/bin/sudo-chatgpt-login.sh
 cp "${BOOT}/sudo-pi/install-adguard.sh" /usr/local/bin/sudo-install-adguard.sh
 cp "${BOOT}/sudo-pi/home.py" /usr/local/bin/sudo-home.py
 chmod +x /usr/local/bin/sudo-notify-owner.sh /usr/local/bin/sudo-install-adguard.sh /usr/local/bin/sudo-home.py

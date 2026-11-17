@@ -297,27 +297,8 @@
             <h1 data-i18n="wc.title">give me a smarter brain.</h1>
             <p class="wc-done" id="wc-done" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5 10 17 19 7"/></svg><span id="wc-done-text" data-i18n="wc.connected">Connected</span></p>
             <button class="primary-button" id="wc-next" type="button" hidden data-i18n="ws.next">Next</button>
-            <div class="wc-opts" id="wc-opts">
-              <div class="wc-opt easy">
-                <div class="wc-opt-head"><strong data-i18n="cr.easyTitle">Use Sudo credit</strong><span class="wc-tag" data-i18n="cr.easiest">Easiest</span></div>
-                <p data-i18n="cr.easyText">We set up the AI account for you. Pay as you go, no keys to paste.</p>
-                <p class="wc-gift" id="wc-gift" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8v13M3 12h18M12 8c-2-4-6-4-6-1.5S9 8 12 8Zm0 0c2-4 6-4 6-1.5S15 8 12 8Z"/></svg><span data-i18n="cr.startFree">$5 to start is on us.</span></p>
-                <button class="primary-button" id="wc-credit" type="button" data-i18n="cr.use">Use Sudo credit</button>
-                <p class="cr-need" id="wc-credit-later" hidden data-i18n="cr.addLater">Sudo credit is set up. Add credit in Settings &gt; Billing when you're ready.</p>
-              </div>
-              <details class="wc-more" id="wc-own">
-                <summary data-i18n="cr.ownAccount">Use my own OpenRouter account</summary>
-                <button class="soft-button" id="wc-connect" type="button" data-i18n="or.connect">Connect OpenRouter</button>
-              </details>
-              <details class="wc-more" id="wc-paste">
-                <summary data-i18n="cr.pasteKey">Advanced: paste an API key</summary>
-                <p class="warning-copy" data-i18n="cr.keyWarn">For people who know API pricing. Some models cost a lot, and the bill goes to your own account.</p>
-                <input id="wc-key" type="text" autocomplete="off" spellcheck="false" autocapitalize="off" dir="ltr" placeholder="sk-…">
-                <button class="soft-button" id="wc-key-save" type="button" data-i18n="wc.saveKey">Save key</button>
-              </details>
-            </div>
+            <div class="wc-opts" id="wc-opts"><div class="bc-mount" data-brain-chooser="explain"></div></div>
             <p class="form-status" id="wc-status" role="status"></p>
-            <p class="wc-local" id="wc-local"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><span data-i18n="cr.localNote">A small private model on this device is always there too, in the chat's “On this device” tab.</span></p>
             <button class="ghost-button" id="wc-skip" type="button" data-i18n="cr.skip">Skip for now</button>
           </div>
 
@@ -704,35 +685,7 @@
               </div>
               <p class="gs-cap" data-i18n="gs.c.cap">Hundreds of times bigger: the difference between chatting and real work.</p>
 
-              <ol class="gs-steps">
-                <li>
-                  <span class="gs-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0M19 8v6M16 11h6"/></svg><b>1</b></span>
-                  <strong data-i18n="or.connect">Connect OpenRouter</strong>
-                  <small data-i18n="gs.c.o1b">Sign in, or make an account</small>
-                </li>
-                <li>
-                  <span class="gs-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2M9 14l2 2 4-4"/></svg><b>2</b></span>
-                  <strong data-i18n="gs.c.o2">Allow sudo</strong>
-                  <small data-i18n="gs.c.o2b">The key arrives by itself</small>
-                </li>
-                <li>
-                  <span class="gs-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg><b>3</b></span>
-                  <strong data-i18n="gs.c.s2">Add credit</strong>
-                  <small data-i18n="gs.c.s2b">You pick the amount</small>
-                </li>
-              </ol>
-
-              <div class="gs-chips">
-                <span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15 9.5c-.5-1-1.6-1.5-3-1.5-1.7 0-3 .9-3 2s1.3 1.8 3 2 3 .9 3 2-1.3 2-3 2c-1.4 0-2.5-.5-3-1.5M12 6v2M12 16v2"/></svg><span data-i18n="gs.c.chip1">≈ $10–15 a month</span></span>
-                <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6Z"/><path d="m9 12 2 2 4-4"/></svg><span data-i18n="gs.c.chip2">Sudo takes no cut</span></span>
-                <button type="button" data-go="spend"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14 16 9"/><path d="M3.5 18a9 9 0 1 1 17 0"/></svg><span data-i18n="gs.c.chip3">Daily spending cap</span></button>
-              </div>
-              <p class="gs-alt" data-i18n="gs.c.alt">Already have a DeepSeek, OpenAI, Anthropic or Gemini key? Paste that instead.</p>
-
-              <div class="milestone-actions">
-                <button class="primary-button" type="button" data-go="openrouter" data-i18n="or.connect">Connect OpenRouter</button>
-                <button class="text-link link-button" type="button" data-go="providers" data-i18n="gs.c.paste">Paste my key</button>
-              </div>
+              <div class="bc-mount" data-brain-chooser></div>
 
               <details class="gs-more">
                 <summary data-i18n="gs.more">How it works &amp; what it costs</summary>
@@ -1629,6 +1582,9 @@
               <span class="chevron">&rsaquo;</span>
             </button>
             <div class="setting-body">
+              <div class="settings-subgroup" data-i18n="bc.title">Cloud brain</div>
+              <div class="bc-mount" data-brain-chooser></div>
+              <div class="settings-subgroup" data-i18n="bc.keysTitle">Your keys</div>
               <p class="section-intro" data-i18n="key.intro">Your agent thinks with an AI model you pay for directly. Paste a key and sudo works out whose it is.</p>
 
               <div class="or-connect" id="or-connect">
@@ -3519,32 +3475,10 @@
       $('wc-done').hidden = !on;
       $('wc-done-text').textContent = on && c.in_use && c.remaining_usd != null
         ? t('cr.connected', { amount: usd(c.remaining_usd) }) : t('wc.connected');
-      const later = !on && c.started && !c.has_key;
       $('wc-next').hidden = !on;
-      $('wc-credit').hidden = later;
-      $('wc-credit-later').hidden = !later;
       $('wc-opts').hidden = on;
-      $('wc-local').hidden = on;
       $('wc-skip').hidden = on;
-      $('wc-gift').hidden = !c.code_waiting;
-    }
-    async function cloudUseCredit() {
-      const btn = $('wc-credit');
-      btn.disabled = true;
-      $('wc-status').textContent = t('common.checking');
-      try {
-        await api('/api/credit/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }, 45000);
-        await refreshStatusQuiet();
-        $('wc-status').textContent = '';
-        renderCloudStep();
-      } catch (error) {
-        await refreshStatusQuiet();
-        const c = (state.status || {}).credit || {};
-        $('wc-status').textContent = c.started ? '' : error.message;
-        renderCloudStep();
-      } finally {
-        btn.disabled = false;
-      }
+      renderBrainChoosers();
     }
     async function refreshStatusQuiet() {
       try { state.status = await api('/api/setup/status'); } catch (_) {}
@@ -3572,21 +3506,6 @@
           }
         } catch (_) {}
       }, 3000);
-    }
-    async function cloudSaveKey() {
-      const v = $('wc-key').value.trim();
-      if (!v) { $('wc-status').textContent = t('common.pasteKeyFirst'); return; }
-      $('wc-status').textContent = t('common.checking');
-      try {
-        await api('/api/agent/provider-keys', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ auto_key: v }),
-        });
-        $('wc-key').value = '';
-        await refreshStatusQuiet();
-        $('wc-status').textContent = '';
-        renderCloudStep();
-      } catch (error) { $('wc-status').textContent = error.message; }
     }
     // Setup: apps through Composio.
     async function appsSaveKey() {
@@ -7397,7 +7316,9 @@
         list.append(row);
       });
       list.hidden = !list.children.length;
-      $('key-empty').hidden = !!list.children.length;
+      const st = state.status || {};
+      // Sudo credit and ChatGPT are brains without a key of the owner's.
+      $('key-empty').hidden = !!list.children.length || !!((st.credit || {}).in_use || (st.chatgpt || {}).in_use);
       renderOpenRouterConnect(hints);
       $('providers-summary').textContent = brain
         ? t('key.summaryInUse', { name: brain.name })
@@ -8047,7 +7968,8 @@
       const accounts = (state.waInfo && state.waInfo.accounts) || {};
       return {
         cloud: (s.answering_with && s.answering_with.where === 'cloud')
-          || Object.values(s.provider_key_hints || {}).some(Boolean) || !!s.has_own_key,
+          || Object.values(s.provider_key_hints || {}).some(Boolean) || !!s.has_own_key
+          || !!(s.credit && s.credit.in_use) || !!(s.chatgpt && s.chatgpt.in_use),
         // Any chat app checks the step off; WhatsApp and Telegram are both there.
         channel: setupChannels().whatsapp || setupChannels().telegram,
         apps: !!s.has_composio,
@@ -8674,6 +8596,207 @@
       }
     }
 
+    // --- The cloud brain chooser ---------------------------------------------
+    // One piece, in three places (setup, the Setup page's step 1, Settings >
+    // AI brain): a tab for each way in, one shown at a time.
+    const LOCK_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+    const CLOUD_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 18a4.5 4.5 0 0 1-.5-9 6 6 0 0 1 11.6 1.5A3.8 3.8 0 0 1 17.5 18Z"/></svg>';
+    const SHIELD_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6Z"/><path d="m9 12 2 2 4-4"/></svg>';
+    const GIFT_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8v13M3 12h18M12 8c-2-4-6-4-6-1.5S9 8 12 8Zm0 0c2-4 6-4 6-1.5S15 8 12 8Z"/></svg>';
+    const BRAIN_CHOOSER_HTML = `
+      <div class="bc-two" data-part="explain">
+        <div class="bc-side">${LOCK_SVG}<strong data-i18n="bc.localT">On this device</strong><small data-i18n="bc.localS">Private chat, always free. In the chat's “On this device” tab.</small></div>
+        <div class="bc-side cloud">${CLOUD_SVG}<strong data-i18n="bc.cloudT">In the cloud</strong><small data-i18n="bc.cloudS">For real work: email, plans, research. Hundreds of times bigger.</small></div>
+      </div>
+      <p class="bc-privacy" data-part="explain">${SHIELD_SVG}<span data-i18n="bc.privacy">With Sudo credit or OpenRouter, your contacts' names and numbers are hidden from the cloud.</span></p>
+      <p class="bc-now" hidden></p>
+      <div class="bc-tabs" role="tablist">
+        <button type="button" role="tab" data-tab="credit" data-i18n="bc.tCredit">Sudo credit</button>
+        <button type="button" role="tab" data-tab="openrouter">OpenRouter</button>
+        <button type="button" role="tab" data-tab="chatgpt">ChatGPT</button>
+        <button type="button" role="tab" data-tab="key" data-i18n="bc.tKey">API key</button>
+      </div>
+      <div class="bc-panel" data-panel="credit">
+        <p><span class="wc-tag" data-i18n="cr.easiest">Easiest</span> <span data-i18n="cr.easyText">We set up the AI account for you. Pay as you go, no keys to paste.</span></p>
+        <p class="wc-gift bc-gift" hidden>${GIFT_SVG}<span data-i18n="cr.startFree">$5 to start is on us.</span></p>
+        <button class="primary-button bc-credit" type="button" data-i18n="cr.use">Use Sudo credit</button>
+        <p class="cr-need bc-credit-later" hidden data-i18n="cr.addLater">Sudo credit is set up. Add credit in Settings &gt; Billing when you're ready.</p>
+      </div>
+      <div class="bc-panel" data-panel="openrouter" hidden>
+        <p data-i18n="bc.orText">Your own OpenRouter account. You pay OpenRouter directly and can pick any model.</p>
+        <button class="primary-button bc-or" type="button" data-i18n="or.connect">Connect OpenRouter</button>
+      </div>
+      <div class="bc-panel" data-panel="chatgpt" hidden>
+        <p data-i18n="bc.cgText">Already pay for ChatGPT Plus or Pro? Your agent can use it, at no extra cost.</p>
+        <button class="primary-button bc-cg" type="button" data-i18n="bc.cgSign">Sign in with ChatGPT</button>
+        <div class="bc-cg-code" hidden>
+          <p class="bc-step"><b>1</b><span data-i18n="bc.cgStep1">Open this page and sign in:</span></p>
+          <a class="bc-cg-url" target="_blank" rel="noopener" href="https://auth.openai.com/codex/device">auth.openai.com/codex/device</a>
+          <p class="bc-step"><b>2</b><span data-i18n="bc.cgStep2">Type this code:</span></p>
+          <div class="bc-code-row"><code class="bc-code" dir="ltr">····-····</code><button class="soft-button bc-copy" type="button" data-i18n="set.access.copy">Copy</button></div>
+          <p class="microcopy" data-i18n="bc.cgWait">This page updates by itself when you're done.</p>
+          <button class="ghost-button bc-cg-cancel" type="button" data-i18n="bc.cancel">Cancel</button>
+        </div>
+        <p class="microcopy" data-i18n="bc.cgPrivacy">Names and numbers aren't hidden with ChatGPT yet.</p>
+      </div>
+      <div class="bc-panel" data-panel="key" hidden>
+        <p class="warning-copy" data-i18n="cr.keyWarn">For people who know API pricing. Some models cost a lot, and the bill goes to your own account.</p>
+        <input class="bc-key" type="text" autocomplete="off" spellcheck="false" autocapitalize="off" dir="ltr" placeholder="sk-…" aria-label="API key">
+        <button class="soft-button bc-key-save" type="button" data-i18n="wc.saveKey">Save key</button>
+      </div>
+      <p class="form-status bc-status" role="status"></p>`;
+
+    function brainNow(s) {
+      const c = s.credit || {};
+      if (s.chatgpt && s.chatgpt.in_use) return { tab: 'chatgpt', text: t('bc.nowChatgpt') };
+      if (c.in_use) return { tab: 'credit', text: t('bc.nowCredit', { amount: usd(c.remaining_usd) }) };
+      const b = s.agent_brain;
+      if (b) return { tab: b.provider === 'openrouter' ? 'openrouter' : 'key', text: t('bc.nowOther', { name: b.name }) };
+      return null;
+    }
+
+    function showBrainTab(root, tab) {
+      root.querySelectorAll('.bc-tabs button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
+      root.querySelectorAll('.bc-panel').forEach(p => { p.hidden = p.dataset.panel !== tab; });
+    }
+
+    async function afterBrainChange(root) {
+      await refreshStatusQuiet();
+      root.querySelector('.bc-status').textContent = '';
+      if (typeof renderStatus === 'function' && state.status) renderStatus(state.status);
+      if (state.tab === 'welcome') renderCloudStep();
+      renderBrainChoosers();
+    }
+
+    function mountBrainChooser(root) {
+      if (root.dataset.mounted) return;
+      root.dataset.mounted = '1';
+      root.classList.add('bc');
+      root.innerHTML = BRAIN_CHOOSER_HTML;
+      if (root.dataset.brainChooser !== 'explain') root.querySelectorAll('[data-part="explain"]').forEach(e => e.remove());
+      I18N.translate(root);
+      const status = root.querySelector('.bc-status');
+      root.querySelectorAll('.bc-tabs button').forEach(b => b.addEventListener('click', () => {
+        root.dataset.picked = b.dataset.tab;
+        showBrainTab(root, b.dataset.tab);
+      }));
+
+      root.querySelector('.bc-credit').addEventListener('click', async e => {
+        const hints = (state.status || {}).provider_key_hints || {};
+        if (hints.openrouter && !confirm(t('cr.switchConfirm'))) return;
+        e.currentTarget.disabled = true;
+        status.textContent = t('common.checking');
+        try {
+          await api('/api/credit/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }, 45000);
+        } catch (error) {
+          await refreshStatusQuiet();
+          if (!((state.status || {}).credit || {}).started) status.textContent = error.message;
+        }
+        e.currentTarget.disabled = false;
+        await afterBrainChange(root);
+      });
+
+      root.querySelector('.bc-or').addEventListener('click', () => {
+        window.open('/api/openrouter/start', '_blank', 'noopener');
+        status.textContent = t('wc.waiting');
+        const since = Date.now() / 1000 - 2, until = Date.now() + 30 * 60 * 1000;
+        clearInterval(root._orTimer);
+        root._orTimer = setInterval(async () => {
+          if (Date.now() > until) { clearInterval(root._orTimer); return; }
+          try {
+            const r = await api('/api/openrouter/state', {}, 8000);
+            if (!r.result || r.at <= since) return;
+            clearInterval(root._orTimer);
+            if (r.result === 'ok') await afterBrainChange(root);
+            else status.textContent = t('or.result.' + (OR_RESULTS.includes(r.result) ? r.result : 'failed'));
+          } catch (_) {}
+        }, 3000);
+      });
+
+      const cgBox = root.querySelector('.bc-cg-code'), cgBtn = root.querySelector('.bc-cg');
+      const cgStop = () => { clearInterval(root._cgTimer); cgBox.hidden = true; cgBtn.hidden = false; };
+      cgBtn.addEventListener('click', async () => {
+        cgBtn.disabled = true;
+        status.textContent = t('common.checking');
+        try {
+          await api('/api/chatgpt/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+        } catch (error) {
+          status.textContent = error.message;
+          cgBtn.disabled = false;
+          return;
+        }
+        cgBtn.disabled = false;
+        const until = Date.now() + 16 * 60 * 1000;
+        clearInterval(root._cgTimer);
+        root._cgTimer = setInterval(async () => {
+          if (Date.now() > until) { cgStop(); status.textContent = t('bc.cgExpired'); return; }
+          try {
+            const r = await api('/api/chatgpt/state', {}, 8000);
+            if (r.state === 'waiting' && r.code) {
+              status.textContent = '';
+              cgBtn.hidden = true;
+              cgBox.hidden = false;
+              root.querySelector('.bc-code').textContent = r.code;
+              const a = root.querySelector('.bc-cg-url');
+              a.href = r.url; a.textContent = r.url.replace(/^https:\/\//, '');
+            } else if (r.state === 'done') {
+              cgStop();
+              await afterBrainChange(root);
+            } else if (r.state === 'failed') {
+              cgStop();
+              status.textContent = t('bc.cgFailed');
+            } else if (r.state === 'cancelled') {
+              cgStop();
+              status.textContent = '';
+            }
+          } catch (_) {}
+        }, 2000);
+      });
+      root.querySelector('.bc-copy').addEventListener('click', e =>
+        copyText(root.querySelector('.bc-code').textContent, e.currentTarget));
+      root.querySelector('.bc-cg-cancel').addEventListener('click', async () => {
+        cgStop();
+        try { await api('/api/chatgpt/cancel', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }); } catch (_) {}
+      });
+
+      root.querySelector('.bc-key-save').addEventListener('click', async () => {
+        const input = root.querySelector('.bc-key');
+        const v = input.value.trim();
+        if (!v) { status.textContent = t('common.pasteKeyFirst'); return; }
+        status.textContent = t('common.checking');
+        try {
+          await api('/api/agent/provider-keys', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ auto_key: v }),
+          });
+          input.value = '';
+          await afterBrainChange(root);
+        } catch (error) { status.textContent = error.message; }
+      });
+      renderBrainChooser(root);
+    }
+
+    function renderBrainChooser(root) {
+      const s = state.status || {};
+      const c = s.credit || {};
+      const now = brainNow(s);
+      const nowEl = root.querySelector('.bc-now');
+      nowEl.hidden = !now;
+      if (now) nowEl.textContent = now.text;
+      root.querySelector('.bc-gift').hidden = !c.code_waiting;
+      const later = c.started && !c.has_key && !c.in_use;
+      root.querySelector('.bc-credit').hidden = later || !!c.in_use;
+      root.querySelector('.bc-credit-later').hidden = !later;
+      if (!root.dataset.picked) showBrainTab(root, now ? now.tab : 'credit');
+    }
+
+    function renderBrainChoosers() {
+      document.querySelectorAll('[data-brain-chooser]').forEach(root => {
+        if (!root.dataset.mounted) mountBrainChooser(root);
+        else renderBrainChooser(root);
+      });
+    }
+
     // --- Sudo credit: pay as you go -------------------------------------------
     // Must match the credit service's quote(): card and OpenRouter fees go on
     // top, so the amount picked is the amount there is to spend.
@@ -9162,6 +9285,7 @@
       $('full-access-toggle').checked = !!status.full_access_enabled;
       $('heartbeat-toggle').checked = !!status.heartbeat_enabled;
       $('privacy-toggle').checked = status.privacy_scrub !== false;
+      renderBrainChoosers();
       $('privacy-uncovered').hidden = status.privacy_covered !== false || status.privacy_scrub === false;
       renderSpend(status);
       renderAbilitiesSummary(status);
@@ -9663,8 +9787,6 @@
     $('wl-any').addEventListener('click', () => { showWelcomePanel('welcome-start'); goAnywhere(); });
     $('welcome-phone').addEventListener('click', () => welcomeNext(1));
     $('welcome-back-2').addEventListener('click', () => welcomeBack(2));
-    $('wc-connect').addEventListener('click', cloudConnect);
-    $('wc-key-save').addEventListener('click', cloudSaveKey);
     $('wc-next').addEventListener('click', () => welcomeNext(5));
     $('wc-skip').addEventListener('click', () => welcomeNext(5));
     $('wx-save').addEventListener('click', appsSaveKey);
@@ -9751,7 +9873,6 @@
     $('cr-code-btn').addEventListener('click', creditRedeem);
     $('privacy-toggle').addEventListener('change', savePrivacy);
     $('cr-code-input').addEventListener('keydown', e => { if (e.key === 'Enter') creditRedeem(); });
-    $('wc-credit').addEventListener('click', cloudUseCredit);
     $('remote-toggle').addEventListener('change', toggleRemote);
     $('copy-remote').addEventListener('click', event => copyText(state.publicUrl, event.currentTarget));
     $('link-pw-copy').addEventListener('click', event => copyText((state.remotePw || {}).password || '', event.currentTarget));

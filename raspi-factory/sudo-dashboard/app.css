@@ -3557,3 +3557,37 @@ input.cr-other { flex: 1; min-width: 110px; min-height: 40px; margin: 0; }
 .cr-code-row input { flex: 1; min-width: 0; margin: 0; font-family: var(--font-mono); text-transform: uppercase; }
 .cr-code-row .soft-button { flex: none; }
 #cr-code-status:empty { display: none; }
+
+/* The cloud brain chooser (setup, Setup step 1, Settings > AI brain). */
+.bc { display: grid; gap: 12px; text-align: start; }
+.bc-two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.bc-side { display: grid; gap: 4px; align-content: start; padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+.bc-side.cloud { background: var(--accent-soft, #fdeee9); border-color: transparent; }
+.bc-side svg, .bc-privacy svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.bc-side strong { font-size: .92rem; }
+.bc-side small { color: var(--ink-2); font-size: .8rem; line-height: 1.4; }
+.bc-privacy { display: flex; align-items: flex-start; gap: 8px; margin: 0; color: #16692b; font-size: .84rem; font-weight: 600; line-height: 1.4; }
+.bc-privacy svg { flex: none; width: 18px; height: 18px; }
+.bc-now { margin: 0; padding: 9px 12px; border-radius: 12px; background: #d8f5dd; color: #16692b; font-weight: 700; font-size: .88rem; }
+.bc-now[hidden] { display: none; }
+.bc-tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3px; padding: 3px; border-radius: 12px; background: var(--surface-low); }
+.bc-tabs button { min-height: 36px; padding: 0 4px; border: 0; border-radius: 9px; background: transparent; color: var(--ink-2); font: 650 .8rem/1.15 var(--font-sans); cursor: pointer; }
+.bc-tabs button[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 4px rgba(22, 19, 17, .1); }
+.bc-panel { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
+.bc-panel[hidden] { display: none; }
+.bc-panel p { margin: 0; color: var(--ink-2); font-size: .9rem; line-height: 1.45; }
+.bc-panel .wc-tag { margin-inline-end: 4px; }
+.bc-panel .primary-button, .bc-panel .soft-button.bc-key-save { width: 100%; }
+.bc-panel input { margin: 0; }
+.bc-panel .wc-gift { margin: 0 !important; }
+.bc-panel .cr-need { color: var(--ink) !important; font-weight: 700; }
+.bc-cg-code { display: grid; gap: 8px; }
+.bc-cg-code[hidden] { display: none; }
+.bc-step { display: flex; align-items: center; gap: 8px; color: var(--ink) !important; font-weight: 650; }
+.bc-step b { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--ink); color: var(--surface); font-size: .76rem; }
+.bc-cg-url { font-weight: 700; word-break: break-all; }
+.bc-code-row { display: flex; align-items: center; gap: 8px; }
+.bc-code { flex: 1; padding: 10px 12px; border-radius: 12px; background: var(--surface-low); font: 800 1.25rem/1.2 var(--font-mono); letter-spacing: .08em; text-align: center; }
+.bc-status:empty { display: none; }
+.wc-opts .bc-mount { display: grid; }
+@media (max-width: 380px) { .bc-two { grid-template-columns: 1fr; } }

@@ -586,6 +586,8 @@ DIRECT_BRAINS = (
 
 def agent_brain(cfg):
     """{provider, name, model} for the key the agent thinks with, or None."""
+    if cfg.get("brain") == "chatgpt" and cfg.get("chatgpt_signed_in"):
+        return {"provider": "chatgpt", "name": "ChatGPT", "model": "gpt-5.5"}
     if effective_openrouter_key(cfg):
         return {"provider": "openrouter", "name": "OpenRouter", "model": ""}
     if agent_backend(cfg) != "openclaw":
@@ -595,6 +597,46 @@ def agent_brain(cfg):
         if keys.get(provider):
             return {"provider": provider, "name": name, "model": model}
     return None
+
+
+# --- Sign in with ChatGPT ------------------------------------------------------
+# The owner's ChatGPT plan as the agent's brain, through OpenClaw's own
+# device-code sign-in (OpenAI allows its plans in tools like this). The helper
+# runs outside this sandbox and leaves what OpenClaw printed in CG_OUT; the
+# code and the address are read from it. OpenClaw keeps the sign-in itself.
+CG_SCRIPT = "/usr/local/bin/sudo-chatgpt-login.sh"
+CG_OUT = "/var/lib/sudo-chatgpt-login.out"
+CG_STATUS = "/var/lib/sudo-chatgpt-login.status"
+CG_CODE_RE = re.compile(r"\b([A-Z0-9]{4}-[A-Z0-9]{4,5})\b")
+CG_URL_RE = re.compile(r"https://auth\.openai\.com/[A-Za-z0-9/_?=&.-]*")
+
+
+def chatgpt_state():
+    status = (read_text(CG_STATUS) or "").strip()
+    out = {"state": status or "idle"}
+    if status == "waiting":
+        try:
+            with open(CG_OUT, "rb") as f:
+                raw = f.read().decode("utf-8", "replace")
+        except OSError:
+            raw = ""
+        raw = re.sub(r"\x1b\[[0-9;?]*[A-Za-z]", "", raw)
+        code = CG_CODE_RE.search(raw)
+        url = CG_URL_RE.search(raw)
+        out["code"] = code.group(1) if code else None
+        out["url"] = url.group(0) if url else "https://auth.openai.com/codex/device"
+    return out
+
+
+def chatgpt_use(on=True):
+    cfg = read_json_file(CONFIG)
+    if on:
+        cfg["brain"] = "chatgpt"
+        cfg["chatgpt_signed_in"] = True
+    else:
+        cfg.pop("brain", None)
+    write_json_file(CONFIG, cfg)
+    apply_settings()
 
 
 # --- Sudo credit (pay as you go) ---------------------------------------------
@@ -662,6 +704,7 @@ def credit_switch_on():
     if not key:
         return False
     cfg = read_json_file(CONFIG)
+    cfg.pop("brain", None)
     cfg["openrouter_key"] = key
     cfg["openrouter_key_source"] = "sudo"
     cfg.pop("user_openrouter_key", None)
@@ -1057,6 +1100,7 @@ def openrouter_finish(code: str, state: str | None) -> dict:
         stored["openrouter"] = key
         cfg["provider_keys"] = stored
         cfg["openrouter_connected_at"] = int(time.time())
+        cfg.pop("brain", None)
         write_json_file(CONFIG, cfg)  # chmod 600
         apply_settings()
         _or_last.clear()
@@ -2015,6 +2059,7 @@ def setup_status(include_sensitive=False):
         # Never return the key itself — only enough to recognise it.
         "has_own_key": bool(cfg.get("user_openrouter_key")),
         "credit": credit_state(refresh=False),
+        "chatgpt": {"signed_in": bool(cfg.get("chatgpt_signed_in")), "in_use": cfg.get("brain") == "chatgpt"},
         # Names and numbers swapped for stand-ins before the cloud sees them
         # (sudo-privacy-relay.py). Covers OpenRouter and DeepSeek brains.
         "privacy_scrub": cfg.get("privacy_scrub", True) is not False,
@@ -6254,6 +6299,54 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             self.send_json({"ok": True, "claimed_usd": out.get("claimed_usd", 0),
                             "credit": credit_state(refresh=False),
                             **setup_status(include_sensitive=False)})
+            return True
+
+        if path == "/api/chatgpt/start" and self.command == "POST":
+            if not os.path.isfile(CG_SCRIPT):
+                self.send_json({"error": "Update sudo first"}, code=400)
+                return True
+            try:
+                with open(CG_STATUS, "w") as f:
+                    f.write("waiting")
+                try:
+                    os.remove(CG_OUT)
+                except OSError:
+                    pass
+                run_privileged(f"sudo-chatgpt-{int(time.time() * 1000)}", CG_SCRIPT, wait=False, timeout=20)
+            except Exception as exc:          # noqa: BLE001
+                self.send_json({"error": f"Could not start the sign-in: {exc}"}, code=500)
+                return True
+            self.send_json({"ok": True})
+            return True
+
+        if path == "/api/chatgpt/state" and self.command == "GET":
+            st = chatgpt_state()
+            if st["state"] == "ok":
+                # Signed in: ChatGPT becomes the brain, once.
+                chatgpt_use(True)
+                with open(CG_STATUS, "w") as f:
+                    f.write("done")
+                st["state"] = "done"
+            self.send_json(st)
+            return True
+
+        if path == "/api/chatgpt/cancel" and self.command == "POST":
+            if os.path.isfile(CG_SCRIPT):
+                run_privileged(f"sudo-chatgpt-{int(time.time() * 1000)}", CG_SCRIPT, "cancel", wait=False, timeout=20)
+            self.send_json({"ok": True})
+            return True
+
+        if path == "/api/chatgpt/use" and self.command == "POST":
+            try:
+                body = self.read_body_json()
+            except (ValueError, json.JSONDecodeError):
+                body = {}
+            cfg = read_json_file(CONFIG)
+            if body.get("on") and not cfg.get("chatgpt_signed_in"):
+                self.send_json({"error": "Sign in with ChatGPT first"}, code=400)
+                return True
+            chatgpt_use(bool(body.get("on")))
+            self.send_json({"ok": True, **setup_status(include_sensitive=False)})
             return True
 
         if path == "/api/agent/privacy" and self.command == "POST":

@@ -227,6 +227,21 @@ if direct:
             "models": [{"id": "deepseek-chat", "name": "DeepSeek Chat"}]}
         defaults.pop("imageModel", None)                 # DeepSeek reads text only
     print(f"Brain: {model_id} (your own {direct} key)")
+# Signed in with ChatGPT and chosen as the brain (Settings): the owner's
+# ChatGPT plan, through OpenClaw's OpenAI sign-in, on OpenClaw's own runtime
+# so Sudo's tools and plugins keep working. Comes before any key.
+if sudo.get("brain") == "chatgpt" and sudo.get("chatgpt_signed_in"):
+    defaults["model"] = {"primary": "openai/gpt-5.5"}
+    defaults["models"] = {"openai/gpt-5.5": {}}
+    defaults["imageModel"] = {"primary": "openai/gpt-5.5"}
+    providers_cfg["openai"] = {"agentRuntime": {"id": "openclaw"}}
+    if "openai" not in pl_cfg["allow"]:
+        pl_cfg["allow"].append("openai")
+    pl_cfg.setdefault("entries", {})["openai"] = {"enabled": True}
+    print("Brain: openai/gpt-5.5 (ChatGPT sign-in)")
+elif (providers_cfg.get("openai") or {}).get("agentRuntime") == {"id": "openclaw"}:
+    providers_cfg.pop("openai", None)
+
 # Privacy relay (sudo-privacy-relay.py): names and numbers are swapped for
 # stand-ins before a request leaves the device. OpenRouter and DeepSeek go
 # through it while the owner has it on (Settings > AI brain) and the relay is
