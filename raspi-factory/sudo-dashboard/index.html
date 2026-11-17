@@ -2232,11 +2232,11 @@
               <span class="chevron">›</span>
             </button>
             <div class="setting-body">
-              <div class="settings-subgroup" data-i18n="dev.anywhere">access from anywhere</div>
+              <div class="settings-subgroup" data-i18n="dev.anywhere">Open sudo from anywhere</div>
               <div class="access-row">
                 <div>
-                  <strong data-i18n="set.access.accessFromAnywhere">Access from anywhere</strong>
-                  <small data-i18n="set.access.createsATemporaryPublic">Creates a temporary public Cloudflare link.</small>
+                  <strong data-i18n="set.access.accessFromAnywhere">Your sudo link</strong>
+                  <small data-i18n="set.access.createsATemporaryPublic">Works on any phone or computer, and asks for your password.</small>
                 </div>
                 <label class="switch">
                   <input id="remote-toggle" type="checkbox">
@@ -2254,6 +2254,12 @@
                 <a id="remote-url" href="#" target="_blank" rel="noopener"></a>
                 <button id="copy-remote" type="button" data-i18n="set.access.copy">Copy</button>
               </div>
+              <div class="link-pw" id="link-pw" hidden>
+                <small data-i18n="lk.pw">Password</small>
+                <code id="link-pw-value" dir="ltr">••••••••</code>
+                <button type="button" id="link-pw-copy" data-i18n="set.access.copy" hidden>Copy</button>
+              </div>
+              <p class="microcopy" id="link-pw-note" hidden></p>
 
               <div class="ts-block" id="ts-block">
                 <div class="settings-subgroup" data-i18n="ts.title">Your own Tailscale</div>
@@ -2268,7 +2274,7 @@
                 <button class="ghost-button" id="ts-retry" type="button" hidden data-i18n="ts.retry">Try again</button>
                 <div class="access-row" id="ts-funnel-row" hidden>
                   <div>
-                    <strong data-i18n="ts.funnel">Reachable without the Tailscale app</strong>
+                    <strong data-i18n="ts.funnel">Open it without the Tailscale app</strong>
                     <small data-i18n="ts.funnelNote">Off by default. The same address then opens from any phone or computer, like the public link, and still asks for your password.</small>
                   </div>
                   <label class="switch">
@@ -2283,7 +2289,7 @@
 
 
               
-              <div class="settings-subgroup" data-i18n="dev.terminal">terminal and coding tools</div>
+              <div class="settings-subgroup" data-i18n="dev.terminal">Terminal and coding tools</div>
 
               <div class="access-row">
                 <div>
@@ -3592,6 +3598,38 @@
         list.append(li);
       });
       body.replaceChildren(totals, hEl('p', 'microcopy us-est', t('us.estimate')), list);
+    }
+
+
+    // Setting pages read as a few boxes, one per topic: each "subgroup"
+    // heading starts a box holding everything up to the next heading, and an
+    // "i" button that sat on its own line moves next to the row it explains.
+    // Done once on the live DOM, so every id and listener stays as it is.
+    function sectionizeSettingPages() {
+      document.querySelectorAll('#view-settings .settings-list > .settings-block > .setting-card > .setting-body, '
+        + '#view-settings .settings-list > .setting-card > .setting-body').forEach(body => {
+        if (body.dataset.sectioned) return;
+        body.dataset.sectioned = '1';
+        const kids = [...body.children];
+        let box = null;
+        const startsSection = el => el.classList.contains('settings-subgroup')
+          || (el.firstElementChild && el.firstElementChild.classList.contains('settings-subgroup'));
+        kids.forEach(el => {
+          if (!box || startsSection(el)) {
+            box = document.createElement('div');
+            box.className = 'set-section';
+            body.insertBefore(box, el);
+          }
+          box.appendChild(el);
+        });
+        body.querySelectorAll('.info-btn').forEach(btn => {
+          const prev = btn.previousElementSibling;
+          if (prev && prev.classList.contains('access-row')) {
+            const title = prev.querySelector('strong');
+            if (title) title.appendChild(btn);
+          }
+        });
+      });
     }
 
     function afterPersonality() {
@@ -4933,7 +4971,7 @@
       window.scrollTo({ top: 0 });
       // Wi-Fi scans the moment its page opens — no extra tap to see networks.
       if (id === 'wifi-setting') openWifi();
-      if (id === 'ssh-setting') loadTailscale();
+      if (id === 'ssh-setting') { loadTailscale(); loadRemotePassword(); }
       if (id === 'usage-setting') loadUsage();
       if (id === 'models-setting') { loadHomeModels(); if (!$('mseg-local').hidden) loadLocalModels(); }
       if (id === 'providers-setting') loadOpenRouterAccount();
@@ -7341,8 +7379,26 @@
       $('remote-pw-warning').hidden = on;
     }
 
+    // The same password, shown under the anywhere link itself: that link is
+    // useless without it. Readable only at home, like on its own card.
+    function renderLinkPassword(data) {
+      const box = $('link-pw'), note = $('link-pw-note');
+      box.hidden = false; note.hidden = false;
+      if (!data.enabled) {
+        box.hidden = true;
+        note.textContent = t('lk.noPw');
+        note.classList.add('warn');
+        return;
+      }
+      note.classList.remove('warn');
+      $('link-pw-value').textContent = data.password || '••••••••';
+      $('link-pw-copy').hidden = !data.password;
+      note.textContent = data.password ? t('rpw.homeOnly')
+        : data.hidden_remotely ? t('rpw.hidden') : t('lk.yours');
+    }
     function renderRemotePasswordInfo(data) {
       state.remotePw = data;
+      renderLinkPassword(data);
       if (data.password) {
         $('remote-pw-value').textContent = data.password;
         $('remote-pw-note').textContent = t('rpw.homeOnly');
@@ -8892,6 +8948,7 @@
       renderNames(status);
       renderAccessSummary(status);
       $('chat-tab-main-name').textContent = status.agent_name || 'sudo';
+      document.querySelectorAll('#messages .message.agent .message-avatar').forEach(a => { a.textContent = (status.agent_name || 's').slice(0, 1).toLowerCase(); });
       renderLegacyWhatsapp(status);
       $('channel-alert').hidden = !(status && status.channel_alert && status.channel_alert.channel) || state.tab === 'welcome';
       renderReports(status);
@@ -9302,6 +9359,7 @@
     $('detail-back').addEventListener('click', () => history.back());
     document.querySelectorAll('#personality-options button').forEach(button => button.addEventListener('click', () => selectPersonality(button.dataset.value)));
     $('chat-form').addEventListener('submit', sendMessage);
+    sectionizeSettingPages();
     $('chat-tab-main').addEventListener('click', () => setChatMode('main'));
     $('chat-tab-local').addEventListener('click', () => setChatMode('local'));
     $('lc-more').addEventListener('click', () => SETUP_DESTINATIONS.localmodels());
@@ -9513,6 +9571,7 @@
     $('subscribe-button').addEventListener('click', subscribe);
     $('remote-toggle').addEventListener('change', toggleRemote);
     $('copy-remote').addEventListener('click', event => copyText(state.publicUrl, event.currentTarget));
+    $('link-pw-copy').addEventListener('click', event => copyText((state.remotePw || {}).password || '', event.currentTarget));
     $('whatsapp-connect').addEventListener('click', connectWhatsapp);
     $('whatsapp-settings-btn').addEventListener('click', openWhatsappSettings);
     $('whatsapp-panel-close').addEventListener('click', () => {

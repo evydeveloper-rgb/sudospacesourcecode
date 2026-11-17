@@ -2171,9 +2171,13 @@ ASKS_WHICH_MODEL = re.compile(r"\b(what|which)\b.{0,20}\b(model|llm|ai)\b|\bwho 
 # "What's your name?" -- the brief says the name, but a 1B model answered as
 # though it had none. A note beside the question works where the brief alone
 # did not (the same lesson as ASKS_WHICH_MODEL).
-ASKS_NAME = re.compile(r"\b(your name|who are you|what are you called|what should i call you)\b|"
+ASKS_NAME = re.compile(r"\b(your nam(e)?|ur name|who are you|who r u|what are you called|what should i call you)\b|"
                        r"c[oó]mo te llamas|tu nombre|qui[eé]n eres|c[oó]mo te llamo|"
                        r"你叫什么|你的名字|你是谁|ما اسمك|من أنت", re.I)
+# "Do you know my name?" -- the brief has it, a 1.7B model still said "I
+# don't know your name yet". Same remedy as the agent's own name.
+ASKS_MY_NAME = re.compile(r"\b(my name|my nam|who am i|do (you|u) know me)\b|"
+                          r"mi nombre|c[oó]mo me llamo|qui[eé]n soy|我叫什么|我的名字|我是谁|ما اسمي|من أنا", re.I)
 NO_NAME = re.compile(r"\s*Their name is (?:someone|friend)\.", re.I)
 STATUS_NOTICE = re.compile(r"I can't reply yet|on-device (brain|model) (is still|isn't|is installed|didn't)", re.I)
 
@@ -2741,6 +2745,9 @@ def local_model_chat(message, history=None, cfg=None):
     if ASKS_NAME.search(message):
         agent = (cfg.get("agent_name") or "sudo").strip()[:32]
         messages.append({"role": "system", "content": f"Your name is {agent}. Answer with it."})
+    user_name = (cfg.get("user_name") or "").strip()[:64]
+    if ASKS_MY_NAME.search(message) and user_name.lower() not in ("", "friend", "someone"):
+        messages.append({"role": "system", "content": f"Their name is {user_name}. Answer with it."})
     messages.append({"role": "user", "content": message})
 
     model = active_local_model()
