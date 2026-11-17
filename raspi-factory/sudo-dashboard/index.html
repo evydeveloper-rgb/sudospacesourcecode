@@ -9837,6 +9837,7 @@
       lastFocusAt = Date.now();
       composerFocused = true;
       setKeyboardOpen(true);
+      followViewport();
     });
     chatInput.addEventListener('blur', () => {
       if (Date.now() - lastFocusAt < 250) return;
@@ -9853,7 +9854,26 @@
       // reports 0 here. Only while typing: a pinch-zoom pans the same way
       // and must not drag the page about.
       const top = open && window.visualViewport ? Math.max(0, Math.round(window.visualViewport.offsetTop)) : 0;
-      document.documentElement.style.setProperty('--vvt', `${top}px`);
+      if (top !== setKeyboardOpen.top) {
+        setKeyboardOpen.top = top;
+        document.documentElement.style.setProperty('--vvt', `${top}px`);
+      }
+    }
+    // While typing, follow the visible area every frame instead of waiting
+    // for its events. iPhone Safari pans the page when the keyboard opens and
+    // pans it back a moment later, often without a "scroll" event for the
+    // second move; the shell then stayed shifted and the box sat under the
+    // keys, so what was being typed could not be seen. Reading two numbers a
+    // frame costs nothing, and it stops when the keyboard closes.
+    let vvFrame = 0;
+    function followViewport() {
+      if (vvFrame || !window.visualViewport) return;
+      const tick = () => {
+        if (!composerFocused) { vvFrame = 0; syncViewportHeight(); return; }
+        syncViewportHeight();
+        vvFrame = requestAnimationFrame(tick);
+      };
+      vvFrame = requestAnimationFrame(tick);
     }
     function syncViewportHeight() {
       if (!window.visualViewport) return;
@@ -9865,7 +9885,10 @@
       // under a real phone's shortest sane in-use height is treated as "not
       // ready yet" and left on the 100dvh fallback instead.
       if (!h || h < 200) return;
-      document.documentElement.style.setProperty('--vvh', `${h}px`);
+      if (h !== syncViewportHeight.h) {
+        syncViewportHeight.h = h;
+        document.documentElement.style.setProperty('--vvh', `${h}px`);
+      }
       // Track the tallest height seen as the keyboard-free baseline, and call
       // it "open" once the viewport is meaningfully shorter than that. Using a
       // running baseline instead of window.innerHeight is what works on
