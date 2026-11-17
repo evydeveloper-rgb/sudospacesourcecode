@@ -3335,3 +3335,28 @@ input[type="password"], input[type="tel"], input[type="number"], #ssh-key, #devi
 .us-empty { padding: 12px; border-radius: 12px; background: var(--surface-low); color: var(--ink-2); font-size: .88rem; list-style: none; }
 .us-list { grid-template-columns: minmax(0, 1fr); }
 .us-row { min-width: 0; }
+
+/* Settings, easy to scan: one panel per group, rows divided by a hairline,
+   one icon style, a colour per group. */
+.settings-group {
+  margin: 26px 0 8px 8px; color: var(--ink-3); font-size: .74rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .07em;
+}
+.settings-list > .settings-group:first-child { margin-top: 4px; }
+.settings-block {
+  border: 1px solid var(--line); border-radius: 20px; background: var(--surface);
+  box-shadow: 0 4px 16px rgba(22, 19, 17, .04); overflow: hidden;
+}
+.settings-block > .setting-card { border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.settings-block > .setting-card:not([hidden]) ~ .setting-card:not([hidden]) { border-top: 1px solid var(--line); }
+.settings-block .setting-head { min-height: 64px; padding: 10px 14px; }
+.settings-block .setting-head strong { font-size: .95rem; margin-bottom: 2px; }
+.setting-icon svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.settings-block .setting-icon { width: 38px; height: 38px; border-radius: 11px; }
+.g-agent .setting-icon { background: #ece9ff; color: #4f3fc9; }
+.g-money .setting-icon { background: #dcf3e3; color: #1d7a3d; }
+.g-look .setting-icon { background: #ffe4dc; color: #c4441f; }
+.g-device .setting-icon { background: #dcecff; color: #2463b0; }
+.g-dev .setting-icon { background: #ececef; color: #4a4a55; }
+.settings-list.detail-open .settings-block { border: 0; background: none; box-shadow: none; border-radius: 0; }
+.settings-list.detail-open .settings-block > .setting-card { border-top: 0; }

@@ -1777,6 +1777,7 @@ def setup_status(include_sensitive=False):
     cfg = read_json_file(CONFIG)
     url = public_url()
     data = {
+        "hostname": socket.gethostname(),
         "wifi_done": os.path.isfile(WIFI_MARKER),
         "agent_brain": agent_brain(cfg),
         "profile_done": bool(cfg.get("profile_done")),

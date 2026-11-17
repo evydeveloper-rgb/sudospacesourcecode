@@ -1596,129 +1596,11 @@
         </div>
 
         <div class="settings-list">
-          <div class="settings-group" data-i18n="settings.device">Device</div>
-          <section class="setting-card" id="update-setting">
-            <button class="setting-head" type="button" aria-expanded="false">
-              <span class="setting-icon">⟳</span>
-              <span><strong data-i18n="set.update.updates">Updates</strong><small id="update-summary">Version 1.0.0</small></span>
-              <span class="chevron">›</span>
-            </button>
-            <div class="setting-body">
-              <p class="section-intro" data-i18n="set.update.newVersionsInstallOver">New versions install over Wi‑Fi — no reflashing the card. Your files, memory, keys and WhatsApp pairing are kept; only the app changes.</p>
-              <div class="access-row">
-                <div><strong data-i18n="set.update.currentVersion">Current version</strong><small id="update-current">1.0.0</small></div>
-                <span class="status-pill" id="update-pill">…</span>
-              </div>
-              <div class="access-row">
-                <div>
-                  <strong data-i18n="set.update.automaticUpdates">Automatic updates</strong>
-                  <small data-i18n="set.update.checksOnceADay">Checks once a day and installs new versions overnight.</small>
-                </div>
-                <label class="switch"><input type="checkbox" id="update-auto"><span></span></label>
-              </div>
-              <button class="primary-button" id="update-check" type="button" data-i18n="set.update.checkForUpdates">Check for updates</button>
-              <button class="primary-button" id="update-apply" type="button" hidden data-i18n="set.update.updateNow">Update now</button>
-              <p class="microcopy" id="update-message"></p>
-              <p class="form-status" id="update-status" role="status"></p>
-              <p class="update-links">
-                <a id="update-releases" href="https://github.com/evydeveloper-rgb/sudospacesourcecode/releases" target="_blank" rel="noopener noreferrer" data-i18n="set.update.whatSNewIn">What’s new in each version</a> ·
-                <a id="update-repo" href="https://github.com/evydeveloper-rgb/sudospacesourcecode" target="_blank" rel="noopener noreferrer" data-i18n="set.update.seeTheCode">See the code</a>
-              </p>
-            </div>
-          </section>
-          <section class="setting-card" id="wifi-setting">
-            <button class="setting-head" type="button" aria-expanded="false">
-              <span class="setting-icon">⌁</span>
-              <span><strong data-i18n="set.wifi.title">Wi-Fi</strong><small id="wifi-summary">Checking…</small></span>
-              <span class="chevron">›</span>
-            </button>
-            <div class="setting-body">
-              <div class="wifi-warn" role="note">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 20h20Z"/><path d="M12 10v4M12 17h.01"/></svg>
-                <p data-i18n-html="wifi.warn"><strong>Moving sudo to another Wi‑Fi?</strong> The phone or computer you use must join that same Wi‑Fi to open sudo again, unless <strong>Access from anywhere</strong> is on.</p>
-              </div>
-              <div class="wifi-now">
-                <span class="wifi-now-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2 9a14 14 0 0 1 20 0M5.5 12.5a9 9 0 0 1 13 0M9 16a4 4 0 0 1 6 0"/><circle cx="12" cy="19.5" r="1.1"/></svg></span>
-                <div><small data-i18n="wifi.connectedTo">Connected to</small><strong id="wifi-current">Checking…</strong></div>
-                <span class="status-pill good" id="wifi-state-pill" data-i18n="set.access.connected">connected</span>
-              </div>
-              <div class="wifi-head">
-                <span id="wifi-available-label" data-i18n="wifi.nearby">Nearby networks</span>
-                <button class="wifi-rescan" type="button" id="wifi-rescan" data-i18n-attr="aria-label:wifi.rescan,title:wifi.rescan"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 5.5v5h-5"/><path d="M19.6 14.4a8 8 0 1 1-1.2-7.4l2.1 2"/></svg></button>
-              </div>
-              <div class="wifi-list" id="wifi-list" aria-live="polite">
-                <p class="microcopy" id="wifi-list-note">Scanning for networks…</p>
-              </div>
-              <div class="wifi-join" id="wifi-box" hidden>
-                <label for="wifi-username" id="wifi-username-label" hidden data-i18n="set.access.username">Username</label>
-                <input id="wifi-username" autocomplete="off" spellcheck="false" hidden data-i18n-attr="placeholder:set.access.username2" placeholder="username">
-                <label for="wifi-password" class="sr-only" data-i18n="login.password">Password</label>
-                <input id="wifi-password" type="password" autocomplete="off" spellcheck="false" data-i18n-attr="placeholder:set.access.networkPassword" placeholder="network password">
-                <button class="primary-button" id="wifi-connect" type="button" data-i18n="set.access.joinNetwork">Join network</button>
-              </div>
-              <p class="form-status" id="wifi-status" role="status"></p>
-              <details class="wifi-region">
-                <summary><span data-i18n="set.access.wiFiRegion">Wi‑Fi region</span></summary>
-                <select id="wifi-country">
-                  <option value="US">United States</option>
-                  <option value="GB">United Kingdom</option>
-                  <option value="ID">Indonesia</option>
-                  <option value="SG">Singapore</option>
-                  <option value="MY">Malaysia</option>
-                  <option value="AU">Australia</option>
-                  <option value="JP">Japan</option>
-                  <option value="DE">Germany</option>
-                  <option value="NL">Netherlands</option>
-                  <option value="CN">China</option>
-                  <option value="IN">India</option>
-                  <option value="CA">Canada</option>
-                  <option value="FR">France</option>
-                  <option value="ES">Spain</option>
-                  <option value="IT">Italy</option>
-                  <option value="BR">Brazil</option>
-                  <option value="MX">Mexico</option>
-                  <option value="PH">Philippines</option>
-                  <option value="TH">Thailand</option>
-                  <option value="VN">Vietnam</option>
-                  <option value="KR">South Korea</option>
-                  <option value="TW">Taiwan</option>
-                  <option value="HK">Hong Kong</option>
-                  <option value="AE">United Arab Emirates</option>
-                  <option value="SA">Saudi Arabia</option>
-                  <option value="ZA">South Africa</option>
-                  <option value="NG">Nigeria</option>
-                  <option value="EG">Egypt</option>
-                  <option value="PK">Pakistan</option>
-                  <option value="BD">Bangladesh</option>
-                  <option value="NZ">New Zealand</option>
-                  <option value="SE">Sweden</option>
-                  <option value="NO">Norway</option>
-                  <option value="DK">Denmark</option>
-                  <option value="FI">Finland</option>
-                  <option value="PL">Poland</option>
-                  <option value="TR">Turkey</option>
-                  <option value="RU">Russia</option>
-                  <option value="AR">Argentina</option>
-                  <option value="CO">Colombia</option>
-                  <option value="CL">Chile</option>
-                  <option value="PE">Peru</option>
-                  <option value="IL">Israel</option>
-                  <option value="IE">Ireland</option>
-                  <option value="CH">Switzerland</option>
-                  <option value="AT">Austria</option>
-                  <option value="BE">Belgium</option>
-                  <option value="PT">Portugal</option>
-                  <option value="GR">Greece</option>
-                  <option value="KE">Kenya</option>
-                </select>
-                <p class="microcopy" data-i18n="wifi.regionNote">Set at setup from your phone. It decides which Wi‑Fi channels sudo may use.</p>
-              </details>
-            </div>
-          </section>
           <div class="settings-group" data-i18n="settings.yourAgent">Your agent</div>
+          <div class="settings-block g-agent">
           <section class="setting-card" id="names-setting">
             <button class="setting-head" type="button" aria-expanded="false">
-              <span class="setting-icon">Aa</span>
+              <span class="setting-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2.2"/><path d="M5.8 16.5a3.6 3.6 0 0 1 6.4 0M14.5 10h4M14.5 13.5h3"/></svg></span>
               <span><strong data-i18n="nm.title">Names</strong><small id="names-summary">sudo</small></span>
               <span class="chevron">›</span>
             </button>
@@ -1733,8 +1615,8 @@
           </section>
           <section class="setting-card" id="providers-setting">
             <button class="setting-head" type="button">
-              <span class="setting-icon">⚿</span>
-              <span><strong data-i18n="key.title">LLM provider API key (agent's brain)</strong><small id="providers-summary">No key yet</small></span>
+              <span class="setting-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5l1.6 4.4 4.4 1.6-4.4 1.6L12 15.5l-1.6-4.4L6 9.5l4.4-1.6Z"/><path d="M18.5 15l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7Z"/></svg></span>
+              <span><strong data-i18n="key.title">AI brain</strong><small id="providers-summary">No key yet</small></span>
               <span class="chevron">&rsaquo;</span>
             </button>
             <div class="setting-body">
@@ -1788,10 +1670,9 @@
               </div>
             </div>
           </section>
-          <div class="settings-group" data-i18n="settings.safety">Safety</div>
           <section class="setting-card" id="abilities-setting">
             <button class="setting-head" type="button" aria-expanded="false">
-              <span class="setting-icon">⚡</span>
+              <span class="setting-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></span>
               <span><strong data-i18n="set.abilities.whatSudoCanDo">What sudo can do</strong><small id="abilities-summary">Web search on · commands off</small></span>
               <span class="chevron">›</span>
             </button>
@@ -1890,10 +1771,42 @@
               <p class="form-status" id="abilities-status" role="status"></p>
             </div>
           </section>
+          <section class="setting-card" id="language-setting">
+            <button class="setting-head" type="button" aria-expanded="false">
+              <span class="setting-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5a13 13 0 0 1 0 17M12 3.5a13 13 0 0 0 0 17"/></svg></span>
+              <span><strong data-i18n="lang.title">Language</strong><small id="language-summary">English · replies match you</small></span>
+              <span class="chevron">›</span>
+            </button>
+            <div class="setting-body">
+              <div class="settings-subgroup" id="ui-language-label" data-i18n="lang.dashHead">dashboard language</div>
+              <p class="section-intro" data-i18n="lang.dashIntro">The words on these screens. Changes right away, on every phone and computer that opens this dashboard.</p>
+              <div class="option-grid lang-grid" id="ui-language-options" role="group" aria-labelledby="ui-language-label">
+                <button type="button" data-value="en" lang="en"><strong>English</strong></button>
+                <button type="button" data-value="es" lang="es"><strong>Español</strong></button>
+                <button type="button" data-value="zh" lang="zh-CN"><strong>中文</strong></button>
+                <button type="button" data-value="ar" lang="ar" dir="rtl"><strong>العربية</strong></button>
+              </div>
+              <p class="form-status" id="ui-language-status" role="status"></p>
+
+              <div class="settings-subgroup" id="agent-language-label" data-i18n="lang.agentHead">agent’s reply language</div>
+              <p class="section-intro" data-i18n="lang.agentIntro">The language {agent} answers you in. This only changes the agent’s replies, not this dashboard. You can always ask it for another language right in the chat.</p>
+              <div class="option-grid lang-grid" id="agent-language-options" role="group" aria-labelledby="agent-language-label">
+                <button type="button" data-value="auto" class="lang-auto"><strong data-i18n="lang.agentAuto">Match how I write to it</strong><small data-i18n="lang.agentAutoNote">Replies in whatever language you use</small></button>
+                <button type="button" data-value="en" lang="en"><strong>English</strong></button>
+                <button type="button" data-value="es" lang="es"><strong>Español</strong></button>
+                <button type="button" data-value="zh" lang="zh-CN"><strong>中文</strong></button>
+                <button type="button" data-value="ar" lang="ar" dir="rtl"><strong>العربية</strong></button>
+              </div>
+              <p class="form-status" id="agent-language-status" role="status"></p>
+            </div>
+          </section>
+          </div>
+          <div class="settings-group" data-i18n="settings.money">Money</div>
+          <div class="settings-block g-money">
           <section class="setting-card" id="spend-setting">
             <button class="setting-head" type="button" aria-expanded="false">
-              <span class="setting-icon">🛑</span>
-              <span><strong data-i18n="set.spend.spendingGuard">Spending guard</strong><small id="spend-summary">On</small></span>
+              <span class="setting-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 16a8 8 0 1 1 15 0"/><path d="M12 15.5l3.5-5"/><circle cx="12" cy="16" r="1.2"/></svg></span>
+              <span><strong data-i18n="set.spend.spendingGuard">Spending limit</strong><small id="spend-summary">On</small></span>
               <span class="chevron">›</span>
             </button>
             <div class="setting-body">
@@ -1935,7 +1848,7 @@
           </section>
           <section class="setting-card" id="usage-setting">
             <button class="setting-head" type="button" aria-expanded="false">
-              <span class="setting-icon">$</span>
+              <span class="setting-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h12v17l-2.5-1.5-2 1.5-1.5-1.2-1.5 1.2-2-1.5L6 20.5Z"/><path d="M9 8h6M9 11.5h6M9 15h3.5"/></svg></span>
               <span><strong data-i18n="us.title">Usage</strong><small id="usage-summary" data-i18n="us.summary">What each message cost</small></span>
               <span class="chevron">›</span>
             </button>
@@ -1945,10 +1858,28 @@
               <p class="form-status" id="usage-status" role="status"></p>
             </div>
           </section>
-          <div class="settings-group" data-i18n="settings.dashboard">Sudo dashboard</div>
+          <section class="setting-card" id="billing-setting">
+            <button class="setting-head" type="button" aria-expanded="false">
+              <span class="setting-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18M7 14.5h3"/></svg></span>
+              <span><strong data-i18n="set.billing.billingCredits">Billing &amp; credits</strong><small id="billing-summary">Loading your plan…</small></span>
+              <span class="chevron">›</span>
+            </button>
+            <div class="setting-body">
+              <p class="section-intro" data-i18n-html="set.billing.donTWantTo"><strong>Don't want to deal with API keys?</strong> Top up here and we handle the routing for you — no accounts to sign up for, no keys to paste, no per-provider billing to keep track of.</p>
+              <span class="status-pill" id="subscription-status">loading</span>
+              <p class="credit-balance" id="balance">$—</p>
+              <p class="balance-label" data-i18n="set.billing.usdCreditsAvailable">USD credits available</p>
+              <button class="primary-button" id="subscribe-button" type="button" data-i18n="set.billing.startSudoPro10">Start Sudo Pro · $10/month</button>
+              <p class="microcopy" data-i18n="set.billing.includesA7Day">Includes a 7-day trial. Checkout opens securely in Stripe.</p>
+              <p class="form-status error-text" id="billing-error" role="alert"></p>
+            </div>
+          </section>
+          </div>
+          <div class="settings-group" data-i18n="settings.look">Appearance</div>
+          <div class="settings-block g-look">
           <section class="setting-card" id="theme-setting">
             <button class="setting-head" type="button" aria-expanded="false">
-              <span class="setting-icon">◐</span>
+              <span class="setting-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5a8.5 8.5 0 1 0 0 17c1.2 0 1.8-.9 1.4-1.9-.5-1.2.4-2.3 1.6-2.3h1.6a3.9 3.9 0 0 0 3.9-3.9A8.9 8.9 0 0 0 12 3.5Z"/><circle cx="8" cy="10" r="1.1"/><circle cx="12" cy="7.5" r="1.1"/><circle cx="16" cy="10" r="1.1"/></svg></span>
               <span><strong data-i18n="set.theme.look">Look</strong><small id="theme-summary">Default</small></span>
               <span class="chevron">&rsaquo;</span>
             </button>
@@ -2001,56 +1932,145 @@
               <p class="form-status" id="icon-status" role="status"></p>
             </div>
           </section>
-          <section class="setting-card" id="reports-setting">
+          </div>
+          <div class="settings-group" data-i18n="settings.thisDevice">This device</div>
+          <div class="settings-block g-device">
+          <section class="setting-card" id="wifi-setting">
             <button class="setting-head" type="button" aria-expanded="false">
-              <span class="setting-icon">✚</span>
-              <span><strong data-i18n="reports.title">Problem reports</strong><small id="reports-summary"></small></span>
-              <span class="chevron">&rsaquo;</span>
+              <span class="setting-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5a12 12 0 0 1 16 0M7 13a7.5 7.5 0 0 1 10 0M10 16.4a3 3 0 0 1 4 0"/><circle cx="12" cy="19.2" r=".9"/></svg></span>
+              <span><strong data-i18n="set.wifi.title">Wi-Fi</strong><small id="wifi-summary">Checking…</small></span>
+              <span class="chevron">›</span>
             </button>
             <div class="setting-body">
-              <p class="section-intro" data-i18n="reports.intro">Once a day, sudo can tell the Sudo team what went wrong on this device, so a broken reminder or a crashing agent gets fixed without you having to report it. Off unless you turn it on.</p>
+              <div class="wifi-warn" role="note">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 20h20Z"/><path d="M12 10v4M12 17h.01"/></svg>
+                <p data-i18n-html="wifi.warn"><strong>Moving sudo to another Wi‑Fi?</strong> The phone or computer you use must join that same Wi‑Fi to open sudo again, unless <strong>Access from anywhere</strong> is on.</p>
+              </div>
+              <div class="wifi-now">
+                <span class="wifi-now-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2 9a14 14 0 0 1 20 0M5.5 12.5a9 9 0 0 1 13 0M9 16a4 4 0 0 1 6 0"/><circle cx="12" cy="19.5" r="1.1"/></svg></span>
+                <div><small data-i18n="wifi.connectedTo">Connected to</small><strong id="wifi-current">Checking…</strong></div>
+                <span class="status-pill good" id="wifi-state-pill" data-i18n="set.access.connected">connected</span>
+              </div>
+              <div class="wifi-head">
+                <span id="wifi-available-label" data-i18n="wifi.nearby">Nearby networks</span>
+                <button class="wifi-rescan" type="button" id="wifi-rescan" data-i18n-attr="aria-label:wifi.rescan,title:wifi.rescan"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 5.5v5h-5"/><path d="M19.6 14.4a8 8 0 1 1-1.2-7.4l2.1 2"/></svg></button>
+              </div>
+              <div class="wifi-list" id="wifi-list" aria-live="polite">
+                <p class="microcopy" id="wifi-list-note">Scanning for networks…</p>
+              </div>
+              <div class="wifi-join" id="wifi-box" hidden>
+                <label for="wifi-username" id="wifi-username-label" hidden data-i18n="set.access.username">Username</label>
+                <input id="wifi-username" autocomplete="off" spellcheck="false" hidden data-i18n-attr="placeholder:set.access.username2" placeholder="username">
+                <label for="wifi-password" class="sr-only" data-i18n="login.password">Password</label>
+                <input id="wifi-password" type="password" autocomplete="off" spellcheck="false" data-i18n-attr="placeholder:set.access.networkPassword" placeholder="network password">
+                <button class="primary-button" id="wifi-connect" type="button" data-i18n="set.access.joinNetwork">Join network</button>
+              </div>
+              <p class="form-status" id="wifi-status" role="status"></p>
+              <details class="wifi-region">
+                <summary><span data-i18n="set.access.wiFiRegion">Wi‑Fi region</span></summary>
+                <select id="wifi-country">
+                  <option value="US">United States</option>
+                  <option value="GB">United Kingdom</option>
+                  <option value="ID">Indonesia</option>
+                  <option value="SG">Singapore</option>
+                  <option value="MY">Malaysia</option>
+                  <option value="AU">Australia</option>
+                  <option value="JP">Japan</option>
+                  <option value="DE">Germany</option>
+                  <option value="NL">Netherlands</option>
+                  <option value="CN">China</option>
+                  <option value="IN">India</option>
+                  <option value="CA">Canada</option>
+                  <option value="FR">France</option>
+                  <option value="ES">Spain</option>
+                  <option value="IT">Italy</option>
+                  <option value="BR">Brazil</option>
+                  <option value="MX">Mexico</option>
+                  <option value="PH">Philippines</option>
+                  <option value="TH">Thailand</option>
+                  <option value="VN">Vietnam</option>
+                  <option value="KR">South Korea</option>
+                  <option value="TW">Taiwan</option>
+                  <option value="HK">Hong Kong</option>
+                  <option value="AE">United Arab Emirates</option>
+                  <option value="SA">Saudi Arabia</option>
+                  <option value="ZA">South Africa</option>
+                  <option value="NG">Nigeria</option>
+                  <option value="EG">Egypt</option>
+                  <option value="PK">Pakistan</option>
+                  <option value="BD">Bangladesh</option>
+                  <option value="NZ">New Zealand</option>
+                  <option value="SE">Sweden</option>
+                  <option value="NO">Norway</option>
+                  <option value="DK">Denmark</option>
+                  <option value="FI">Finland</option>
+                  <option value="PL">Poland</option>
+                  <option value="TR">Turkey</option>
+                  <option value="RU">Russia</option>
+                  <option value="AR">Argentina</option>
+                  <option value="CO">Colombia</option>
+                  <option value="CL">Chile</option>
+                  <option value="PE">Peru</option>
+                  <option value="IL">Israel</option>
+                  <option value="IE">Ireland</option>
+                  <option value="CH">Switzerland</option>
+                  <option value="AT">Austria</option>
+                  <option value="BE">Belgium</option>
+                  <option value="PT">Portugal</option>
+                  <option value="GR">Greece</option>
+                  <option value="KE">Kenya</option>
+                </select>
+                <p class="microcopy" data-i18n="wifi.regionNote">Set at setup from your phone. It decides which Wi‑Fi channels sudo may use.</p>
+              </details>
+            </div>
+          </section>
+          <section class="setting-card" id="update-setting">
+            <button class="setting-head" type="button" aria-expanded="false">
+              <span class="setting-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 0 1-14.3 4.9M4 12A8 8 0 0 1 18.3 7.1"/><path d="M18.5 3.5v3.8h-3.8M5.5 20.5v-3.8h3.8"/></svg></span>
+              <span><strong data-i18n="set.update.updates">Updates</strong><small id="update-summary">Version 1.0.0</small></span>
+              <span class="chevron">›</span>
+            </button>
+            <div class="setting-body">
+              <p class="section-intro" data-i18n="set.update.newVersionsInstallOver">New versions install over Wi‑Fi — no reflashing the card. Your files, memory, keys and WhatsApp pairing are kept; only the app changes.</p>
+              <div class="access-row">
+                <div><strong data-i18n="set.update.currentVersion">Current version</strong><small id="update-current">1.0.0</small></div>
+                <span class="status-pill" id="update-pill">…</span>
+              </div>
               <div class="access-row">
                 <div>
-                  <strong data-i18n="reports.toggle">Send daily problem reports</strong>
-                  <small data-i18n="reports.toggleSmall">To the Sudo team only. You can turn it off any time.</small>
+                  <strong data-i18n="set.update.automaticUpdates">Automatic updates</strong>
+                  <small data-i18n="set.update.checksOnceADay">Checks once a day and installs new versions overnight.</small>
                 </div>
-                <label class="switch">
-                  <input id="reports-toggle" type="checkbox">
-                  <span aria-hidden="true"></span>
-                  <em class="sr-only" data-i18n="reports.toggle">Send daily problem reports</em>
-                </label>
+                <label class="switch"><input type="checkbox" id="update-auto"><span></span></label>
               </div>
-              <div class="access-row">
-                <div>
-                  <strong data-i18n="reports.now">Send a report now</strong>
-                  <small data-i18n="reports.nowSmall">When someone at Sudo is helping you. Sends this one report, even if daily reports are off.</small>
-                </div>
-                <button class="soft-button" type="button" id="reports-now-btn" data-i18n="reports.nowBtn">Send now</button>
-              </div>
-              <p class="form-status" id="reports-now-status" role="status"></p>
-              <div class="reports-lists">
-                <div><p class="usd-head" data-i18n="reports.sentHead">What's in a report</p>
-                  <ul><li data-i18n="reports.sent1">Sudo and OpenClaw versions, the board, memory, temperature</li>
-                  <li data-i18n="reports.sent2">Which kinds of key and chat app are set up (never the keys or numbers)</li>
-                  <li data-i18n="reports.sent3">How many reminders ran, failed or didn't arrive, and the kind of error</li>
-                  <li data-i18n="reports.sent4">Error counts per part of the agent; crashes, failed updates</li>
-                  <li data-i18n="reports.sent5">How it's used: messages per chat app, tools, check-ins, tokens and cost, reply times, settings, dashboard tabs</li>
-                  <li data-i18n="reports.sent6">Signs a reply went badly (counted here, not the words), and the name of a website when a task on it fails</li>
-                  <li data-i18n="reports.sent7">If the on-device model won't install: how far the download got, free space, and how fast the connection to the download is</li></ul></div>
-                <div><p class="usd-head" data-i18n="reports.neverHead">Never in a report</p>
-                  <ul><li data-i18n="reports.never1">Your messages, reminders' text, contacts or files</li>
-                  <li data-i18n="reports.never2">Names, phone numbers, email addresses, links</li>
-                  <li data-i18n="reports.never3">API keys, passwords or your location</li></ul></div>
-              </div>
-              <button class="soft-button" type="button" id="reports-preview-btn" data-i18n="reports.preview">See this device's report</button>
-              <pre class="reports-preview" id="reports-preview" hidden></pre>
-              <p class="microcopy" id="reports-last"></p>
-              <p class="form-status" id="reports-status" role="status"></p>
+              <button class="primary-button" id="update-check" type="button" data-i18n="set.update.checkForUpdates">Check for updates</button>
+              <button class="primary-button" id="update-apply" type="button" hidden data-i18n="set.update.updateNow">Update now</button>
+              <p class="microcopy" id="update-message"></p>
+              <p class="form-status" id="update-status" role="status"></p>
+              <p class="update-links">
+                <a id="update-releases" href="https://github.com/evydeveloper-rgb/sudospacesourcecode/releases" target="_blank" rel="noopener noreferrer" data-i18n="set.update.whatSNewIn">What’s new in each version</a> ·
+                <a id="update-repo" href="https://github.com/evydeveloper-rgb/sudospacesourcecode" target="_blank" rel="noopener noreferrer" data-i18n="set.update.seeTheCode">See the code</a>
+              </p>
+            </div>
+          </section>
+          <section class="setting-card" id="name-setting">
+            <button class="setting-head" type="button" aria-expanded="false">
+              <span class="setting-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 12.4V4.5a1 1 0 0 1 1-1h7.9L20.5 11.6a1.4 1.4 0 0 1 0 2l-6.9 6.9a1.4 1.4 0 0 1-2 0Z"/><circle cx="8" cy="8" r="1.4"/></svg></span>
+              <span><strong data-i18n="set.access.deviceName">Device name</strong><small id="access-summary">sudo.local</small></span>
+              <span class="chevron">›</span>
+            </button>
+            <div class="setting-body">
+              <label for="device-name" data-i18n="set.access.deviceName">Device name</label>
+              <input id="device-name" autocomplete="off" spellcheck="false" placeholder="sudo" maxlength="63">
+              <p class="microcopy" data-i18n="set.access.thisIsTheWeb">This is the web address you use to reach sudo. Letters, numbers and hyphens.</p>
+              <button class="primary-button" id="save-hostname" type="button" data-i18n="set.access.renameDevice">Rename device</button>
+              <p class="form-status" id="hostname-status" role="status"></p>
+              <div class="info-bubble" id="hostname-done" style="border-inline-start-color: var(--ok);"></div>
             </div>
           </section>
           <section class="setting-card" id="timezone-setting">
             <button class="setting-head" type="button" aria-expanded="false">
-              <span class="setting-icon">◷</span>
+              <span class="setting-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg></span>
               <span><strong data-i18n="tz.title">Time zone</strong><small id="timezone-summary"></small></span>
               <span class="chevron">&rsaquo;</span>
             </button>
@@ -2069,71 +2089,9 @@
               <p class="form-status" id="timezone-status" role="status"></p>
             </div>
           </section>
-          <section class="setting-card" id="language-setting">
-            <button class="setting-head" type="button" aria-expanded="false">
-              <span class="setting-icon" aria-hidden="true">文</span>
-              <span><strong data-i18n="lang.title">Language</strong><small id="language-summary">English · replies match you</small></span>
-              <span class="chevron">›</span>
-            </button>
-            <div class="setting-body">
-              <div class="settings-subgroup" id="ui-language-label" data-i18n="lang.dashHead">dashboard language</div>
-              <p class="section-intro" data-i18n="lang.dashIntro">The words on these screens. Changes right away, on every phone and computer that opens this dashboard.</p>
-              <div class="option-grid lang-grid" id="ui-language-options" role="group" aria-labelledby="ui-language-label">
-                <button type="button" data-value="en" lang="en"><strong>English</strong></button>
-                <button type="button" data-value="es" lang="es"><strong>Español</strong></button>
-                <button type="button" data-value="zh" lang="zh-CN"><strong>中文</strong></button>
-                <button type="button" data-value="ar" lang="ar" dir="rtl"><strong>العربية</strong></button>
-              </div>
-              <p class="form-status" id="ui-language-status" role="status"></p>
-
-              <div class="settings-subgroup" id="agent-language-label" data-i18n="lang.agentHead">agent’s reply language</div>
-              <p class="section-intro" data-i18n="lang.agentIntro">The language {agent} answers you in. This only changes the agent’s replies, not this dashboard. You can always ask it for another language right in the chat.</p>
-              <div class="option-grid lang-grid" id="agent-language-options" role="group" aria-labelledby="agent-language-label">
-                <button type="button" data-value="auto" class="lang-auto"><strong data-i18n="lang.agentAuto">Match how I write to it</strong><small data-i18n="lang.agentAutoNote">Replies in whatever language you use</small></button>
-                <button type="button" data-value="en" lang="en"><strong>English</strong></button>
-                <button type="button" data-value="es" lang="es"><strong>Español</strong></button>
-                <button type="button" data-value="zh" lang="zh-CN"><strong>中文</strong></button>
-                <button type="button" data-value="ar" lang="ar" dir="rtl"><strong>العربية</strong></button>
-              </div>
-              <p class="form-status" id="agent-language-status" role="status"></p>
-            </div>
-          </section>
-          <div class="settings-group" data-i18n="settings.billingCredits">Billing & credits</div>
-          <section class="setting-card" id="billing-setting">
-            <button class="setting-head" type="button" aria-expanded="false">
-              <span class="setting-icon">▭</span>
-              <span><strong data-i18n="set.billing.billingCredits">Billing &amp; credits</strong><small id="billing-summary">Loading your plan…</small></span>
-              <span class="chevron">›</span>
-            </button>
-            <div class="setting-body">
-              <p class="section-intro" data-i18n-html="set.billing.donTWantTo"><strong>Don't want to deal with API keys?</strong> Top up here and we handle the routing for you — no accounts to sign up for, no keys to paste, no per-provider billing to keep track of.</p>
-              <span class="status-pill" id="subscription-status">loading</span>
-              <p class="credit-balance" id="balance">$—</p>
-              <p class="balance-label" data-i18n="set.billing.usdCreditsAvailable">USD credits available</p>
-              <button class="primary-button" id="subscribe-button" type="button" data-i18n="set.billing.startSudoPro10">Start Sudo Pro · $10/month</button>
-              <p class="microcopy" data-i18n="set.billing.includesA7Day">Includes a 7-day trial. Checkout opens securely in Stripe.</p>
-              <p class="form-status error-text" id="billing-error" role="alert"></p>
-            </div>
-          </section>
-          <div class="settings-group" data-i18n="settings.thisDevice">This device</div>
-          <section class="setting-card" id="name-setting">
-            <button class="setting-head" type="button" aria-expanded="false">
-              <span class="setting-icon">✎</span>
-              <span><strong data-i18n="set.access.deviceName">Device name</strong><small id="access-summary">sudo.local</small></span>
-              <span class="chevron">›</span>
-            </button>
-            <div class="setting-body">
-              <label for="device-name" data-i18n="set.access.deviceName">Device name</label>
-              <input id="device-name" autocomplete="off" spellcheck="false" placeholder="sudo" maxlength="63">
-              <p class="microcopy" data-i18n="set.access.thisIsTheWeb">This is the web address you use to reach sudo. Letters, numbers and hyphens.</p>
-              <button class="primary-button" id="save-hostname" type="button" data-i18n="set.access.renameDevice">Rename device</button>
-              <p class="form-status" id="hostname-status" role="status"></p>
-              <div class="info-bubble" id="hostname-done" style="border-inline-start-color: var(--ok);"></div>
-            </div>
-          </section>
           <section class="setting-card" id="pi-password-setting">
             <button class="setting-head" type="button" aria-expanded="false">
-              <span class="setting-icon">•••</span>
+              <span class="setting-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5M12 14.5v2.5"/></svg></span>
               <span><strong data-i18n="sec.title">Passwords &amp; devices</strong><small id="pi-password-summary" data-i18n="sec.summary">Who is signed in, and your passwords</small></span>
               <span class="chevron">›</span>
             </button>
@@ -2198,9 +2156,56 @@
               </div>
             </div>
           </section>
+          <section class="setting-card" id="reports-setting">
+            <button class="setting-head" type="button" aria-expanded="false">
+              <span class="setting-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5h16v10H9l-5 4Z"/><path d="M12 8.5v3M12 13.5h.01"/></svg></span>
+              <span><strong data-i18n="reports.title">Problem reports</strong><small id="reports-summary"></small></span>
+              <span class="chevron">&rsaquo;</span>
+            </button>
+            <div class="setting-body">
+              <p class="section-intro" data-i18n="reports.intro">Once a day, sudo can tell the Sudo team what went wrong on this device, so a broken reminder or a crashing agent gets fixed without you having to report it. Off unless you turn it on.</p>
+              <div class="access-row">
+                <div>
+                  <strong data-i18n="reports.toggle">Send daily problem reports</strong>
+                  <small data-i18n="reports.toggleSmall">To the Sudo team only. You can turn it off any time.</small>
+                </div>
+                <label class="switch">
+                  <input id="reports-toggle" type="checkbox">
+                  <span aria-hidden="true"></span>
+                  <em class="sr-only" data-i18n="reports.toggle">Send daily problem reports</em>
+                </label>
+              </div>
+              <div class="access-row">
+                <div>
+                  <strong data-i18n="reports.now">Send a report now</strong>
+                  <small data-i18n="reports.nowSmall">When someone at Sudo is helping you. Sends this one report, even if daily reports are off.</small>
+                </div>
+                <button class="soft-button" type="button" id="reports-now-btn" data-i18n="reports.nowBtn">Send now</button>
+              </div>
+              <p class="form-status" id="reports-now-status" role="status"></p>
+              <div class="reports-lists">
+                <div><p class="usd-head" data-i18n="reports.sentHead">What's in a report</p>
+                  <ul><li data-i18n="reports.sent1">Sudo and OpenClaw versions, the board, memory, temperature</li>
+                  <li data-i18n="reports.sent2">Which kinds of key and chat app are set up (never the keys or numbers)</li>
+                  <li data-i18n="reports.sent3">How many reminders ran, failed or didn't arrive, and the kind of error</li>
+                  <li data-i18n="reports.sent4">Error counts per part of the agent; crashes, failed updates</li>
+                  <li data-i18n="reports.sent5">How it's used: messages per chat app, tools, check-ins, tokens and cost, reply times, settings, dashboard tabs</li>
+                  <li data-i18n="reports.sent6">Signs a reply went badly (counted here, not the words), and the name of a website when a task on it fails</li>
+                  <li data-i18n="reports.sent7">If the on-device model won't install: how far the download got, free space, and how fast the connection to the download is</li></ul></div>
+                <div><p class="usd-head" data-i18n="reports.neverHead">Never in a report</p>
+                  <ul><li data-i18n="reports.never1">Your messages, reminders' text, contacts or files</li>
+                  <li data-i18n="reports.never2">Names, phone numbers, email addresses, links</li>
+                  <li data-i18n="reports.never3">API keys, passwords or your location</li></ul></div>
+              </div>
+              <button class="soft-button" type="button" id="reports-preview-btn" data-i18n="reports.preview">See this device's report</button>
+              <pre class="reports-preview" id="reports-preview" hidden></pre>
+              <p class="microcopy" id="reports-last"></p>
+              <p class="form-status" id="reports-status" role="status"></p>
+            </div>
+          </section>
           <section class="setting-card" id="reset-setting">
             <button class="setting-head" type="button" aria-expanded="false">
-              <span class="setting-icon">↺</span>
+              <span class="setting-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4.5v4h4"/></svg></span>
               <span><strong data-i18n="set.reset.resetSetup">Reset setup</strong><small id="reset-summary" data-i18n="set.reset.backToABrand">Back to a brand-new device</small></span>
               <span class="chevron">›</span>
             </button>
@@ -2217,11 +2222,12 @@
               <p class="form-status" id="reset-status" role="status"></p>
             </div>
           </section>
-          <!-- Kept for their code; their jobs moved elsewhere. -->
+          </div>
           <div class="settings-group" data-i18n="settings.developer">Developer</div>
+          <div class="settings-block g-dev">
           <section class="setting-card" id="ssh-setting">
             <button class="setting-head" type="button" aria-expanded="false">
-              <span class="setting-icon">⌘</span>
+              <span class="setting-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="15" rx="2"/><path d="M7 10l3 2.5L7 15M12.5 15H17"/></svg></span>
               <span><strong data-i18n="set.ssh.developerAccess">Developer access</strong><small id="ssh-summary">Terminal off</small></span>
               <span class="chevron">›</span>
             </button>
@@ -2359,7 +2365,7 @@
           </section>
           <section class="setting-card" id="github-setting">
             <button class="setting-head" type="button" aria-expanded="false">
-              <span class="setting-icon">⌥</span>
+              <span class="setting-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6.5" cy="6" r="2"/><circle cx="6.5" cy="18" r="2"/><circle cx="17.5" cy="8" r="2"/><path d="M6.5 8v8M17.5 10c0 4-6 3-10 6"/></svg></span>
               <span><strong>GitHub</strong><small id="github-summary">Not connected</small></span>
               <span class="chevron">›</span>
             </button>
@@ -2390,7 +2396,7 @@
           </section>
           <section class="setting-card" id="models-setting">
             <button class="setting-head" type="button" aria-expanded="false">
-              <span class="setting-icon">◎</span>
+              <span class="setting-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5l8 4.5-8 4.5-8-4.5Z"/><path d="M4 12l8 4.5 8-4.5M4 16l8 4.5 8-4.5"/></svg></span>
               <span><strong data-i18n="ms.title">Models</strong><small data-i18n="ms.summary">Cloud and on-device</small></span>
               <span class="chevron">›</span>
             </button>
@@ -2539,6 +2545,8 @@
             </div>
             </div>
           </section>
+          </div>
+          <!-- Kept for their code; their jobs moved elsewhere. -->
           <section class="setting-card" id="profile-setting" hidden>
             <button class="setting-head" type="button" aria-expanded="true">
               <span class="setting-icon">✦</span>
@@ -2660,14 +2668,8 @@
               <p class="microcopy" data-i18n-html="set.files.storedOnThisDevice">Stored on this device at <code>/opt/sudo/agent-workspace</code>. To edit them, turn on terminal access below.</p>
             </div>
           </section>
-
-          
-
-          
-
-
           <div class="version-note" id="version-note" data-i18n="settings.runningOnPi">sudo · running on your Raspberry Pi</div>
-        </div>
+</div>
       </section>
     </main>
 
@@ -8644,13 +8646,12 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ enabled: toggle.checked }),
         });
-        if (toggle.checked) $('access-summary').textContent = t('access.starting');
-        else renderAccessSummary();
+        renderAccessSummary();
         if (!toggle.checked) showRemote('');
         else pollRemote();
       } catch (error) {
         toggle.checked = !toggle.checked;
-        $('access-summary').textContent = error.message;
+        $('ts-status').textContent = error.message;
       } finally {
         toggle.disabled = false;
       }
@@ -8662,7 +8663,6 @@
           const data = await api('/api/remote-access');
           if (data.public_url) {
             showRemote(data.public_url);
-            $('access-summary').textContent = t('access.ready');
             return;
           }
         } catch (_) {}
@@ -8707,11 +8707,9 @@
       $('profile-summary').textContent = `${label} · ${status.model || 'sudo-default'}`;
     }
 
-    function renderAccessSummary() {
-      const s = state.status || {};
-      $('access-summary').textContent = s.public_url
-        ? t('access.ready')
-        : t('access.summaryLocal', { host: (s.hostname || 'raspberrypi') + '.local' });
+    function renderAccessSummary(st) {
+      const s = st || state.status || {};
+      $('access-summary').textContent = (s.hostname || 'sudo') + '.local';
     }
 
     function renderLegacyWhatsapp(status) {
@@ -8892,6 +8890,7 @@
 
     function renderStatus(status) {
       renderNames(status);
+      renderAccessSummary(status);
       $('chat-tab-main-name').textContent = status.agent_name || 'sudo';
       renderLegacyWhatsapp(status);
       $('channel-alert').hidden = !(status && status.channel_alert && status.channel_alert.channel) || state.tab === 'welcome';
