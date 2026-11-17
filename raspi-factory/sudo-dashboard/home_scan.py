@@ -480,6 +480,28 @@ def _merge_names(devices, by_ip, mdns, ssdp):
             d["ssdp_model"] = info["model"] or d.get("ssdp_model", "")
 
 
+# Devices belong to the network they were seen on. A Pi that moves house
+# (another city, a new router) shows only the devices of the network it is on
+# now; the old ones stay on disk in case it moves back. The network is known
+# by its router's MAC, or by its address range when the router hides it.
+def _net_id(table, gateway, cidr):
+    for mac, (ip, _st) in table.items():
+        if ip == gateway:
+            return "gw:" + mac
+    return f"ip:{gateway}/{cidr}"
+
+
+def current_net():
+    with _lock:
+        nid = _state.get("net_id")
+    return nid or _read(SETTINGS, {}).get("current_net")
+
+
+def _here(d, cur):
+    """On the network sudo is on now. Before the first scan, everything is."""
+    return not cur or d.get("net") == cur
+
+
 def scan(full=True):
     net = network()
     if not net:
@@ -500,7 +522,14 @@ def scan(full=True):
             _nudge([devices[m]["ip"] for m in people_macs if devices[m].get("ip")])
         time.sleep(3)
         table = neighbours(dev)
-        baseline = bool(devices) or _read(SETTINGS, {}).get("baseline_done")
+        net_id = _net_id(table, gateway, cidr)
+        raw = _read(SETTINGS, {})
+        # A network sudo has swept before, or one where it already knows
+        # some of the devices (set up before networks were told apart), is
+        # not new: a device appearing there is worth an alert. A network
+        # seen for the first time is all new, and alerting on every device
+        # in it would be noise.
+        baseline = net_id in raw.get("baselines", []) or any(m in devices for m in table)
         removed = _read(REMOVED, {})
         new_macs = []
         for mac, (ip, st) in table.items():
@@ -512,9 +541,12 @@ def scan(full=True):
                 if baseline and now * 1000 - removed.get(mac, 0) > REMOVED_QUIET_DAYS * 86400_000:
                     new_macs.append(mac)
             d["ip"] = ip
+            d["net"] = net_id
             if st in LIVE_STATES:
                 d["last_seen"] = int(now * 1000)
             d["vendor"], d["private_mac"] = vendor(mac)
+            if d.get("role") == "router" and ip != gateway:
+                d.pop("role", None)
             if ip == gateway:
                 d["role"] = "router"
             if ip == own_ip:
@@ -531,7 +563,7 @@ def scan(full=True):
         selfmac = (_run(["cat", f"/sys/class/net/{dev}/address"]).strip() or "").lower()
         if selfmac:
             d = devices.setdefault(selfmac, {"mac": selfmac, "first_seen": int(now * 1000)})
-            d.update(ip=own_ip, last_seen=int(now * 1000), role="self")
+            d.update(ip=own_ip, last_seen=int(now * 1000), role="self", net=net_id)
             d.setdefault("vendor", "Raspberry Pi")
             d.setdefault("private_mac", False)
         for d in devices.values():
@@ -560,10 +592,18 @@ def scan(full=True):
             if s["presence"]:
                 _presence(devices, now)
             _write(DEVICES, devices)
-        if not _read(SETTINGS, {}).get("baseline_done") and full:
-            raw = _read(SETTINGS, {})
+        raw = _read(SETTINGS, {})
+        changed = raw.get("current_net") != net_id
+        raw["current_net"] = net_id
+        if full:
             raw["baseline_done"] = True
+            if net_id not in raw.setdefault("baselines", []):
+                raw["baselines"].append(net_id)
+                changed = True
+        if changed or full:
             _write(SETTINGS, raw)
+        with _lock:
+            _state["net_id"] = net_id
         _write_now(devices)
         if _after_scan:
             try:
@@ -612,6 +652,8 @@ def _presence(devices, now):
 
 
 def _write_now(devices):
+    cur = current_net()
+    devices = {m: d for m, d in devices.items() if _here(d, cur)}
     now_ms = int(time.time() * 1000)
     status = _read(os.path.join(HOME_DIR, "presence.json"), {})
     online = [d for d in devices.values() if now_ms - d.get("last_seen", 0) < AWAY_AFTER * 1000]
@@ -637,7 +679,10 @@ def snapshot(viewer=""):
     status = _read(os.path.join(HOME_DIR, "presence.json"), {})
     out = []
     hidden = []
+    cur = current_net()
     for d in devices.values():
+        if not _here(d, cur):
+            continue
         if d.get("hidden"):
             hidden.append({"mac": d["mac"], "label": display_name(d) or d.get("vendor") or "",
                            "kind": d.get("kind", "other"), "ip": d.get("ip", "")})
