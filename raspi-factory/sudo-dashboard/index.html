@@ -295,21 +295,33 @@
               <span class="ws-ico on"><svg viewBox="0 0 24 24"><path d="M7 18a4.5 4.5 0 0 1-.5-9 6 6 0 0 1 11.6 1.5A3.8 3.8 0 0 1 17.5 18Z"/></svg></span>
             </div>
             <h1 data-i18n="wc.title">give me a smarter brain.</h1>
-            <ul class="wc-chips">
-              <li data-i18n="gs.c.chip1">≈ $10–15 a month</li>
-              <li data-i18n="gs.c.chip2">Sudo takes no cut</li>
-              <li data-i18n="gs.c.chip3">Daily spending cap</li>
-            </ul>
-            <p class="wc-done" id="wc-done" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5 10 17 19 7"/></svg><span data-i18n="wc.connected">Connected</span></p>
-            <button class="primary-button" id="wc-connect" type="button" data-i18n="or.connect">Connect OpenRouter</button>
+            <p class="wc-done" id="wc-done" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5 10 17 19 7"/></svg><span id="wc-done-text" data-i18n="wc.connected">Connected</span></p>
             <button class="primary-button" id="wc-next" type="button" hidden data-i18n="ws.next">Next</button>
-            <details class="wc-paste" id="wc-paste">
-              <summary data-i18n="wc.haveKey">I already have a key</summary>
-              <input id="wc-key" type="text" autocomplete="off" spellcheck="false" autocapitalize="off" dir="ltr" placeholder="sk-or-…">
-              <button class="soft-button" id="wc-key-save" type="button" data-i18n="wc.saveKey">Save key</button>
-            </details>
+            <div class="wc-opts" id="wc-opts">
+              <div class="wc-opt easy">
+                <div class="wc-opt-head"><strong data-i18n="cr.easyTitle">Use Sudo credit</strong><span class="wc-tag" data-i18n="cr.easiest">Easiest</span></div>
+                <p data-i18n="cr.easyText">We set up the AI account for you. Pay as you go, no keys to paste.</p>
+                <p class="wc-gift" id="wc-gift" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8v13M3 12h18M12 8c-2-4-6-4-6-1.5S9 8 12 8Zm0 0c2-4 6-4 6-1.5S15 8 12 8Z"/></svg><span data-i18n="cr.startFree">$5 to start is on us.</span></p>
+                <button class="primary-button" id="wc-credit" type="button" data-i18n="cr.use">Use Sudo credit</button>
+                <div class="cr-box" id="wc-credit-topup" hidden>
+                  <p class="cr-need" data-i18n="cr.addToStart">Add credit to start.</p>
+                  <div class="cr-picker" id="wc-picker"></div>
+                </div>
+              </div>
+              <details class="wc-more" id="wc-own">
+                <summary data-i18n="cr.ownAccount">Use my own OpenRouter account</summary>
+                <button class="soft-button" id="wc-connect" type="button" data-i18n="or.connect">Connect OpenRouter</button>
+              </details>
+              <details class="wc-more" id="wc-paste">
+                <summary data-i18n="cr.pasteKey">Advanced: paste an API key</summary>
+                <p class="warning-copy" data-i18n="cr.keyWarn">For people who know API pricing. Some models cost a lot, and the bill goes to your own account.</p>
+                <input id="wc-key" type="text" autocomplete="off" spellcheck="false" autocapitalize="off" dir="ltr" placeholder="sk-…">
+                <button class="soft-button" id="wc-key-save" type="button" data-i18n="wc.saveKey">Save key</button>
+              </details>
+            </div>
             <p class="form-status" id="wc-status" role="status"></p>
-            <button class="ghost-button" id="wc-skip" type="button" data-i18n="wc.skip">Skip, use the small model on this device</button>
+            <p class="wc-local" id="wc-local"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><span data-i18n="cr.localNote">A small private model on this device is always there too, in the chat's “On this device” tab.</span></p>
+            <button class="ghost-button" id="wc-skip" type="button" data-i18n="cr.skip">Skip for now</button>
           </div>
 
           <!-- apps through Composio -->
@@ -1760,16 +1772,26 @@
           <section class="setting-card" id="billing-setting">
             <button class="setting-head" type="button" aria-expanded="false">
               <span class="setting-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18M7 14.5h3"/></svg></span>
-              <span><strong data-i18n="set.billing.billingCredits">Billing &amp; credits</strong><small id="billing-summary">Loading your plan…</small></span>
+              <span><strong data-i18n="set.billing.billingCredits">Billing</strong><small id="billing-summary" data-i18n="cr.summaryOff">Pay as you go</small></span>
               <span class="chevron">›</span>
             </button>
             <div class="setting-body">
-              <p class="section-intro" data-i18n-html="set.billing.donTWantTo"><strong>Don't want to deal with API keys?</strong> Top up here and we handle the routing for you — no accounts to sign up for, no keys to paste, no per-provider billing to keep track of.</p>
-              <span class="status-pill" id="subscription-status">loading</span>
-              <p class="credit-balance" id="balance">$—</p>
-              <p class="balance-label" data-i18n="set.billing.usdCreditsAvailable">USD credits available</p>
-              <button class="primary-button" id="subscribe-button" type="button" data-i18n="set.billing.startSudoPro10">Start Sudo Pro · $10/month</button>
-              <p class="microcopy" data-i18n="set.billing.includesA7Day">Includes a 7-day trial. Checkout opens securely in Stripe.</p>
+              <div class="settings-subgroup" data-i18n="cr.title">Sudo credit</div>
+              <div class="cr-balance-box" id="cr-balance-box" hidden>
+                <p class="credit-balance" id="cr-left">$—</p>
+                <p class="balance-label" data-i18n="cr.left">left to spend</p>
+                <p class="microcopy" id="cr-detail"></p>
+              </div>
+              <p class="section-intro" data-i18n="cr.intro">Sudo runs the AI account for you. Add credit when you need it, and you'll get a message when it runs low.</p>
+              <p class="wc-gift" id="cr-gift" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8v13M3 12h18M12 8c-2-4-6-4-6-1.5S9 8 12 8Zm0 0c2-4 6-4 6-1.5S15 8 12 8Z"/></svg><span data-i18n="cr.startFree">$5 to start is on us.</span></p>
+              <button class="primary-button" id="cr-start" type="button" hidden data-i18n="cr.use">Use Sudo credit</button>
+              <p class="microcopy warn" id="cr-own-note" hidden data-i18n="cr.ownWins">Your own AI key is in use right now, not Sudo credit.</p>
+              <button class="soft-button" id="cr-use" type="button" hidden data-i18n="cr.switch">Use Sudo credit instead</button>
+              <div id="cr-picker-wrap" hidden>
+                <div class="settings-subgroup" data-i18n="cr.addTitle">Add credit</div>
+                <div class="cr-picker" id="cr-picker"></div>
+                <p class="microcopy" data-i18n="cr.fees">Paid by card through Stripe. Card and OpenRouter fees are added on top, so every dollar you add is a dollar to spend.</p>
+              </div>
               <p class="form-status error-text" id="billing-error" role="alert"></p>
             </div>
           </section>
@@ -3469,15 +3491,42 @@
     // Setup: the cloud brain step.
     function cloudConnected() {
       const s = state.status || {};
-      return Object.values(s.provider_key_hints || {}).some(Boolean);
+      return Object.values(s.provider_key_hints || {}).some(Boolean) || !!(s.credit && s.credit.in_use);
     }
     function renderCloudStep() {
       const on = cloudConnected();
+      const c = (state.status || {}).credit || {};
       $('wc-done').hidden = !on;
+      $('wc-done-text').textContent = on && c.in_use && c.remaining_usd != null
+        ? t('cr.connected', { amount: usd(c.remaining_usd) }) : t('wc.connected');
       $('wc-next').hidden = !on;
-      $('wc-connect').hidden = on;
-      $('wc-paste').hidden = on;
+      $('wc-opts').hidden = on;
+      $('wc-local').hidden = on;
       $('wc-skip').hidden = on;
+      $('wc-gift').hidden = !c.code_waiting;
+      if (c.started && !c.in_use && !c.has_key) showStartTopup();
+    }
+    function showStartTopup() {
+      $('wc-credit').hidden = true;
+      $('wc-credit-topup').hidden = false;
+      mountCreditPicker($('wc-picker'));
+    }
+    async function cloudUseCredit() {
+      const btn = $('wc-credit');
+      btn.disabled = true;
+      $('wc-status').textContent = t('common.checking');
+      try {
+        await api('/api/credit/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }, 45000);
+        await refreshStatusQuiet();
+        $('wc-status').textContent = '';
+        renderCloudStep();
+        const c = (state.status || {}).credit || {};
+        if (!c.in_use) showStartTopup();
+      } catch (error) {
+        $('wc-status').textContent = error.message;
+      } finally {
+        btn.disabled = false;
+      }
     }
     async function refreshStatusQuiet() {
       try { state.status = await api('/api/setup/status'); } catch (_) {}
@@ -4974,6 +5023,7 @@
       if (id === 'wifi-setting') openWifi();
       if (id === 'ssh-setting') { loadTailscale(); loadRemotePassword(); }
       if (id === 'usage-setting') loadUsage();
+      if (id === 'billing-setting') loadCredit();
       if (id === 'models-setting') { loadHomeModels(); if (!$('mseg-local').hidden) loadLocalModels(); }
       if (id === 'providers-setting') loadOpenRouterAccount();
       if (id === 'pi-password-setting') { loadPiLogin(); loadSessions(); loadRemotePassword(); }
@@ -8606,82 +8656,140 @@
       }
     }
 
-    function planLabel(value) {
-      if (value === 'trialing') return t('billing.trial');
-      if (value === 'active') return 'Sudo Pro';
-      if (value === 'past_due') return t('billing.pastDue');
-      return t('billing.notSubscribed');
+    // --- Sudo credit: pay as you go -------------------------------------------
+    // Must match the credit service's quote(): card and OpenRouter fees go on
+    // top, so the amount picked is the amount there is to spend.
+    const CREDIT_MIN = 3, CREDIT_MAX = 500;
+    function usd(n) { return '$' + Number(n || 0).toFixed(2); }
+    function creditCharge(amount) {
+      return Math.ceil(((amount * 1.055 + 0.30) / (1 - 0.029)) * 100) / 100;
+    }
+    function mountCreditPicker(el) {
+      if (el.dataset.mounted) return;
+      el.dataset.mounted = '1';
+      let amount = 10;
+      const chips = [3, 10, 20].map(v => {
+        const b = hEl('button', 'cr-chip' + (v === amount ? ' on' : ''), '$' + v);
+        b.type = 'button';
+        b.addEventListener('click', () => { amount = v; other.value = ''; draw(); });
+        return b;
+      });
+      const other = document.createElement('input');
+      other.type = 'number'; other.min = CREDIT_MIN; other.max = CREDIT_MAX; other.step = '1';
+      other.inputMode = 'decimal'; other.placeholder = t('cr.other'); other.className = 'cr-other';
+      other.setAttribute('aria-label', t('cr.other'));
+      other.addEventListener('input', () => { const v = Number(other.value); amount = v || 0; draw(); });
+      const row = hEl('div', 'cr-amounts');
+      row.append(...chips, other);
+      const total = hEl('p', 'cr-total');
+      const pay = hEl('button', 'primary-button cr-pay');
+      pay.type = 'button';
+      const status = hEl('p', 'form-status');
+      status.setAttribute('role', 'status');
+      function valid() { return amount >= CREDIT_MIN && amount <= CREDIT_MAX; }
+      function draw() {
+        chips.forEach((b, i) => b.classList.toggle('on', [3, 10, 20][i] === amount && !other.value));
+        if (!valid()) {
+          total.textContent = t('cr.range');
+          pay.disabled = true;
+          pay.textContent = t('cr.payBtn', { amount: '' }).trim();
+          return;
+        }
+        const charge = creditCharge(amount);
+        total.textContent = t('cr.youPay', { total: usd(charge), fees: usd(charge - amount) });
+        pay.disabled = false;
+        pay.textContent = t('cr.payBtn', { amount: usd(amount) });
+      }
+      pay.addEventListener('click', async () => {
+        if (!valid()) return;
+        pay.disabled = true;
+        status.textContent = t('cr.opening');
+        try {
+          const r = await api('/api/credit/checkout', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ amount_usd: Math.round(amount * 100) / 100 }),
+          }, 45000);
+          location.href = r.url;
+        } catch (error) {
+          status.textContent = error.message;
+          pay.disabled = false;
+        }
+      });
+      el.replaceChildren(row, total, pay, status);
+      draw();
     }
 
-    function renderBilling(data) {
-      state.billing = data;
-      const subscription = data.subscription_status || 'inactive';
-      $('subscription-status').textContent = planLabel(subscription);
-      $('subscription-status').className = `status-pill ${['active', 'trialing'].includes(subscription) ? 'good' : ''}`;
-      $('balance').textContent = `$${Number(data.balance_usd || 0).toFixed(2)}`;
-      $('billing-summary').textContent = t('billing.summary', { plan: planLabel(subscription), amount: '$' + Number(data.balance_usd || 0).toFixed(2) });
-      $('subscribe-button').hidden = ['active', 'trialing'].includes(subscription);
+    function renderCredit(c) {
+      state.credit = c;
+      const started = !!c.started;
+      $('cr-start').hidden = started;
+      $('cr-gift').hidden = started || !c.code_waiting;
+      $('cr-balance-box').hidden = !started;
+      $('cr-picker-wrap').hidden = !started;
+      const ownWins = started && c.has_key && !c.in_use;
+      $('cr-own-note').hidden = !ownWins;
+      $('cr-use').hidden = !ownWins;
+      if (started) {
+        $('cr-left').textContent = usd(c.remaining_usd);
+        $('cr-detail').textContent = t('cr.detail', { added: usd(c.credited_usd), used: usd(c.used_usd) });
+        mountCreditPicker($('cr-picker'));
+      }
+      $('billing-summary').textContent = started ? t('cr.summaryLeft', { amount: usd(c.remaining_usd) }) : t('cr.summaryOff');
     }
 
-    // Show/hide the whole Sudo-credits / billing surface to match BILLING_ENABLED.
-    // With it off (the shipping default) the box is zero-cloud, BYO-key only.
+    // The Billing card is always there now; only the old subscription
+    // choice on the keys card still follows BILLING_ENABLED.
     function applyBillingVisibility() {
-      // The group label is the card's sibling, not its parent: hide both.
-      const card = $('billing-setting');
-      if (card) card.hidden = !BILLING_ENABLED;
-      const label = document.querySelector('.settings-group[data-i18n="settings.billingCredits"]');
-      if (label) label.hidden = !BILLING_ENABLED;
       const sudoChoice = document.querySelector('#key-source-options button[data-value="sudo"]');
       if (sudoChoice) sudoChoice.hidden = !BILLING_ENABLED;
     }
 
-    async function loadBilling() {
-      if (!BILLING_ENABLED) return;
+    async function loadCredit() {
       try {
-        renderBilling(await api('/api/billing/balance'));
+        renderCredit(await api('/api/credit', {}, 30000));
+        $('billing-error').textContent = '';
       } catch (error) {
-        $('billing-summary').textContent = t('billing.loadFailed');
         $('billing-error').textContent = error.message;
       }
     }
 
-    async function confirmPayment(sessionId) {
-      if (!sessionId) return;
-      $('billing-summary').textContent = t('billing.confirming');
-      for (let i = 0; i < 8; i++) {
-        try {
-          const data = await api('/api/billing/confirm', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ session_id: sessionId }),
-          });
-          if (data.ok) {
-            renderBilling(data);
-            history.replaceState({}, '', '/billing.html');
-            return;
-          }
-        } catch (_) {}
-        await new Promise(resolve => setTimeout(resolve, 1500));
+    // Back from Stripe: the credit service checks the payment itself, so a
+    // few looks at the balance are enough even before the webhook lands.
+    async function creditPaidLanding(before) {
+      for (let i = 0; i < 6; i++) {
+        await loadCredit();
+        if (state.credit && Number(state.credit.credited_usd || 0) > before) break;
+        await new Promise(resolve => setTimeout(resolve, 2500));
       }
-      loadBilling();
+      $('billing-error').textContent = '';
+      await refreshStatusQuiet();
+      if (state.tab === 'welcome') renderCloudStep();
     }
 
-    async function subscribe() {
-      const button = $('subscribe-button');
-      button.disabled = true;
+    async function creditStartFromSettings() {
+      const btn = $('cr-start');
+      btn.disabled = true;
+      $('billing-error').textContent = t('common.checking');
       try {
-        const data = await api('/api/billing/checkout', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            return_url: `${location.origin}/billing.html?paid=1`,
-            cancel_url: `${location.origin}/billing.html`,
-          }),
-        });
-        location.href = data.checkout_url;
+        await api('/api/credit/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }, 45000);
+        $('billing-error').textContent = '';
+        await loadCredit();
+        refreshStatusQuiet();
       } catch (error) {
         $('billing-error').textContent = error.message;
-        button.disabled = false;
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function creditSwitchOn() {
+      if (!confirm(t('cr.switchConfirm'))) return;
+      try {
+        await api('/api/credit/use', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+        await loadCredit();
+        refreshStatusQuiet();
+      } catch (error) {
+        $('billing-error').textContent = error.message;
       }
     }
 
@@ -9156,7 +9264,7 @@
       if (state.tab === 'welcome') { renderHowTo(); if (state.welcomeStep === 3) renderPersChips(); }
       if (state.tab === 'house' && house.data) renderHouse();
       if (state.tab === 'screentime') renderScreenTime();
-      if (BILLING_ENABLED && state.billing) renderBilling(state.billing);
+      if (state.credit) renderCredit(state.credit);
       if (state.renamed && $('hostname-done').classList.contains('show')) {
         I18N.setHtml($('hostname-done'), I18N.tHtml('host.renamed', state.renamed));
       }
@@ -9332,7 +9440,7 @@
       }
       await loadChatHistory();
       renderStatus(status);
-      loadBilling();
+      loadCredit();
       api('/api/agent/ssh').then(renderSsh).catch(() => {});
       loadAgentFiles();
       loadRemotePassword();
@@ -9344,12 +9452,18 @@
 
       const params = new URLSearchParams(location.search);
       if (landedFromOpenRouter) openRouterLanded(landedFromOpenRouter);
-      if (BILLING_ENABLED && (params.get('paid') === '1' || params.get('session_id'))) {
-        setTab('settings');
-        $('billing-setting').classList.add('open');
-        $('billing-setting').querySelector('.setting-head').setAttribute('aria-expanded', 'true');
-        if (params.get('session_id')) confirmPayment(params.get('session_id'));
-        else setTimeout(loadBilling, 1500);
+      const creditBack = params.get('credit');
+      if (creditBack === 'done' || creditBack === 'cancel') {
+        history.replaceState({}, '', location.pathname);
+        const before = Number(((status.credit || {}).credited_usd) || 0);
+        if (status.profile_done) {
+          setTab('settings');
+          openSettingPage('billing-setting', true);
+        }
+        if (creditBack === 'done') {
+          $('billing-error').textContent = t('cr.paid');
+          creditPaidLanding(before);
+        }
       }
     }
 
@@ -9570,7 +9684,9 @@
     $('prefer-local-toggle').addEventListener('change', togglePreferLocal);
     $('remove-composio').addEventListener('click', removeComposio);
     $('save-profile').addEventListener('click', saveProfile);
-    $('subscribe-button').addEventListener('click', subscribe);
+    $('cr-start').addEventListener('click', creditStartFromSettings);
+    $('cr-use').addEventListener('click', creditSwitchOn);
+    $('wc-credit').addEventListener('click', cloudUseCredit);
     $('remote-toggle').addEventListener('change', toggleRemote);
     $('copy-remote').addEventListener('click', event => copyText(state.publicUrl, event.currentTarget));
     $('link-pw-copy').addEventListener('click', event => copyText((state.remotePw || {}).password || '', event.currentTarget));

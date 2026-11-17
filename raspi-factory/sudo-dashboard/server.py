@@ -597,6 +597,175 @@ def agent_brain(cfg):
     return None
 
 
+# --- Sudo credit (pay as you go) ---------------------------------------------
+# "Sudo makes the OpenRouter account for you": the credit service gives this
+# device its own OpenRouter key with a spending limit, the limit being the
+# credit ($5 on cards Sudo flashed, then whatever the owner adds by card).
+# The service knows the device only by a random key made here; the
+# OpenRouter key is handed over once and kept in CREDIT_FILE. In the config it
+# is the "openrouter_key" Sudo provides, so the owner's own OpenRouter key,
+# if they add one, still comes first.
+CREDIT_URL = "https://gluklijoptuvampxmtbl.supabase.co/functions/v1/credit"
+CREDIT_FILE = "/etc/sudo/credit.json"
+CREDIT_LOCK = threading.Lock()
+CREDIT_LOW_USD = 0.50
+CREDIT_CHECK_EVERY = 30 * 60
+
+
+def credit_read():
+    data = read_json_file(CREDIT_FILE)
+    return data if isinstance(data, dict) else {}
+
+
+def credit_write(data):
+    write_json_file(CREDIT_FILE, data)
+
+
+def credit_device_key():
+    with CREDIT_LOCK:
+        data = credit_read()
+        if not data.get("device_key"):
+            data["device_key"] = secrets.token_urlsafe(36)
+            credit_write(data)
+        return data["device_key"]
+
+
+def credit_call(route, body=None, timeout=25):
+    req = urllib.request.Request(
+        CREDIT_URL + route, data=json.dumps(body or {}).encode("utf-8"), method="POST",
+        headers={"Content-Type": "application/json", "User-Agent": "sudo-dashboard",
+                 "x-sudo-credit-key": credit_device_key()})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            return resp.status, json.loads(resp.read().decode("utf-8") or "{}")
+    except urllib.error.HTTPError as exc:
+        try:
+            out = json.loads(exc.read().decode("utf-8", "replace") or "{}")
+        except json.JSONDecodeError:
+            out = {}
+        return exc.code, out if isinstance(out, dict) else {}
+    except Exception:            # noqa: BLE001
+        return 502, {"error": "Could not reach Sudo credit. Check this sudo's internet connection."}
+
+
+def credit_in_use(cfg=None):
+    """True when the agent is thinking on Sudo credit right now."""
+    key = credit_read().get("or_key")
+    cfg = cfg if cfg is not None else read_json_file(CONFIG)
+    return bool(key) and effective_openrouter_key(cfg) == key
+
+
+def credit_switch_on():
+    """Make the credit key the one the agent uses. The owner's own OpenRouter
+    key would win over it, so choosing Sudo credit removes that one."""
+    key = credit_read().get("or_key")
+    if not key:
+        return False
+    cfg = read_json_file(CONFIG)
+    cfg["openrouter_key"] = key
+    cfg["openrouter_key_source"] = "sudo"
+    cfg.pop("user_openrouter_key", None)
+    stored = cfg.get("provider_keys") or {}
+    stored.pop("openrouter", None)
+    cfg["provider_keys"] = stored
+    write_json_file(CONFIG, cfg)
+    apply_settings()
+    return True
+
+
+def credit_take(out):
+    """Keep what the service said: the balance, and a key it handed over
+    (shown once). A new key replaces the old one in the config too."""
+    with CREDIT_LOCK:
+        data = credit_read()
+        for k in ("credited_usd", "used_usd", "remaining_usd"):
+            if k in out:
+                data[k] = out[k]
+        data["checked_at"] = int(time.time())
+        key = out.get("key")
+        fresh = isinstance(key, str) and key.startswith("sk-or-")
+        old = data.get("or_key")
+        if fresh:
+            data["or_key"] = key
+        credit_write(data)
+    if fresh and (data.get("wanted") or (old and read_json_file(CONFIG).get("openrouter_key") == old)):
+        credit_switch_on()
+
+
+def credit_state(refresh=True):
+    data = credit_read()
+    out = {"started": bool(data.get("started")), "in_use": credit_in_use(),
+           "has_key": bool(data.get("or_key")), "code_waiting": bool(data.get("claim_code")),
+           "credited_usd": data.get("credited_usd"), "used_usd": data.get("used_usd"),
+           "remaining_usd": data.get("remaining_usd")}
+    if refresh and data.get("started"):
+        code, remote = credit_call("/balance")
+        if code == 200:
+            credit_take(remote)
+            out.update(in_use=credit_in_use(), has_key=bool(credit_read().get("or_key")),
+                       credited_usd=remote.get("credited_usd"), used_usd=remote.get("used_usd"),
+                       remaining_usd=remote.get("remaining_usd"))
+        else:
+            out["error"] = remote.get("error") or "Could not check your credit"
+    return out
+
+
+def credit_start():
+    """Choose Sudo credit: make the account, use the $5 code if this card
+    came with one, and switch the agent over once there is a key."""
+    data = credit_read()
+    code = data.get("claim_code") or ""
+    status, out = credit_call("/start", {"claim_code": code} if code else {})
+    if status != 200:
+        return False, out.get("error") or "Could not start Sudo credit"
+    with CREDIT_LOCK:
+        data = credit_read()
+        data["started"] = True
+        data["wanted"] = True
+        # A code is used once, whatever the answer: a second try never helps.
+        data.pop("claim_code", None)
+        if out.get("claimed_usd"):
+            data["claimed_usd"] = out["claimed_usd"]
+        credit_write(data)
+    credit_take(out)
+    if credit_read().get("or_key"):
+        credit_switch_on()
+    return True, out
+
+
+def credit_notify_loop():
+    """Tell the owner on WhatsApp when credit runs low and when it runs out:
+    with no credit the agent cannot answer, so it cannot say so itself."""
+    time.sleep(120)
+    while True:
+        try:
+            data = credit_read()
+            if data.get("started") and credit_in_use():
+                status, out = credit_call("/balance")
+                if status == 200:
+                    credit_take(out)
+                    left = float(out.get("remaining_usd") or 0)
+                    data = credit_read()
+                    level = "out" if left <= 0.02 else "low" if left < CREDIT_LOW_USD else ""
+                    if level and data.get("warned") != level:
+                        link = (read_text(PUBLIC_URL_FILE) or "").strip()
+                        where = f" ({link})" if link.startswith("https://") else ""
+                        notify_owner(
+                            "Your sudo is out of AI credit, so it can't answer messages right now. "
+                            f"Add more in Settings > Billing on your dashboard{where}."
+                            if level == "out" else
+                            f"Your sudo has ${left:.2f} of AI credit left. "
+                            f"Add more in Settings > Billing on your dashboard{where}.")
+                    if data.get("warned") != level:
+                        with CREDIT_LOCK:
+                            d = credit_read()
+                            d["warned"] = level
+                            credit_write(d)
+        except Exception as exc:   # noqa: BLE001
+            print(f"credit check failed: {exc}")
+        time.sleep(CREDIT_CHECK_EVERY)
+
+
 # ── Usage log (Settings > Usage) ─────────────────────────────────────────────
 # What each message cost, read from the agent's own transcripts: OpenClaw
 # writes every model call with its tokens and its cost (from the model's
@@ -1821,6 +1990,7 @@ def setup_status(include_sensitive=False):
         ) if BILLING_ENABLED else "own",
         # Never return the key itself — only enough to recognise it.
         "has_own_key": bool(cfg.get("user_openrouter_key")),
+        "credit": credit_state(refresh=False),
         "own_key_hint": (cfg.get("user_openrouter_key") or "")[-4:] or None,
         "local_model": local_model_state(),
         # Just the state, not the QR image: this rides along on every status
@@ -3052,8 +3222,11 @@ def openclaw_chat(message: str, session_key: str = DASHBOARD_SESSION) -> str:
             break
         except urllib.error.HTTPError as exc:
             detail = exc.read().decode("utf-8", "replace")[:300]
-            if "insufficient" in detail.lower() or "credit" in detail.lower():
-                raise RuntimeError("Insufficient credits — top up at /billing.html")
+            low = detail.lower()
+            if exc.code == 402 or "insufficient" in low or "credit" in low or "key limit" in low:
+                if credit_in_use():
+                    raise RuntimeError("You're out of Sudo credit. Add more in Settings > Billing.")
+                raise RuntimeError("Your AI account is out of credit. Top it up with your provider.")
             raise RuntimeError(f"Agent error ({exc.code}): {detail}")
         except (urllib.error.URLError, ConnectionError) as exc:
             if time.time() >= deadline:
@@ -6041,6 +6214,58 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             self.send_json({"ok": True, **setup_status(include_sensitive=False)})
             return True
 
+        if path == "/api/credit" and self.command == "GET":
+            self.send_json(credit_state())
+            return True
+
+        if path == "/api/credit/start" and self.command == "POST":
+            ok, out = credit_start()
+            if not ok:
+                self.send_json({"error": out}, code=502)
+                return True
+            self.send_json({"ok": True, "claimed_usd": out.get("claimed_usd", 0),
+                            "credit": credit_state(refresh=False),
+                            **setup_status(include_sensitive=False)})
+            return True
+
+        if path == "/api/credit/use" and self.command == "POST":
+            if not credit_switch_on():
+                self.send_json({"error": "Add credit first"}, code=400)
+                return True
+            with CREDIT_LOCK:
+                d = credit_read()
+                d["wanted"] = True
+                credit_write(d)
+            self.send_json({"ok": True, "credit": credit_state(refresh=False)})
+            return True
+
+        if path == "/api/credit/checkout" and self.command == "POST":
+            try:
+                body = self.read_body_json()
+                amount = round(float(body.get("amount_usd")), 2)
+            except (ValueError, TypeError, json.JSONDecodeError):
+                self.send_json({"error": "Pick an amount"}, code=400)
+                return True
+            back = self.own_origin()
+            if not back:
+                self.send_json({"error": "Open the dashboard by its address to pay"}, code=400)
+                return True
+            if not credit_read().get("started"):
+                ok, out = credit_start()
+                if not ok:
+                    self.send_json({"error": out}, code=502)
+                    return True
+            with CREDIT_LOCK:
+                d = credit_read()
+                d["wanted"] = True
+                credit_write(d)
+            status, out = credit_call("/checkout", {"amount_usd": amount, "return_url": back})
+            if status != 200 or not str(out.get("url") or "").startswith("https://"):
+                self.send_json({"error": out.get("error") or "Could not open the payment page"}, code=502)
+                return True
+            self.send_json({"ok": True, "url": out["url"], "charge_usd": out.get("charge_usd")})
+            return True
+
         if path == "/api/usage" and self.command == "GET":
             self.send_json(usage_log())
             return True
@@ -6449,6 +6674,7 @@ if __name__ == "__main__":
     default_remote_on()
     threading.Thread(target=telegram_local_loop, name="telegram-local", daemon=True).start()
     threading.Thread(target=channel_watch_loop, name="channel-watch", daemon=True).start()
+    threading.Thread(target=credit_notify_loop, name="credit-watch", daemon=True).start()
 
     print(f"Sudo Dashboard listening on {BIND}:{PORT} remote={remote_enabled()}")
     server.serve_forever()

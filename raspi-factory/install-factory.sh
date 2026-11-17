@@ -870,6 +870,34 @@ else
 fi
 systemctl enable sudo-local-model.service 2>/dev/null || true
 
+# Sudo credit: a card Sudo flashed carries a one-time code worth the $5
+# start (prepare-sd.sh asks the credit service for it). It leaves the boot
+# partition, which anyone with the card can read, for a root-only file. A code
+# already moved is never overwritten, so a repair flash cannot add a second.
+if [ -f "${BOOT}/sudo-credit-code" ]; then
+    mkdir -p /etc/sudo
+    CODE="$(tr -cd 'A-Za-z0-9-' < "${BOOT}/sudo-credit-code" | head -c 40)"
+    if [ -n "$CODE" ]; then
+        SUDO_CREDIT_CODE="$CODE" python3 - << 'PYCREDIT'
+import json, os
+path = "/etc/sudo/credit.json"
+try:
+    with open(path, encoding="utf-8") as f:
+        data = json.load(f)
+except Exception:
+    data = {}
+if not data.get("started") and not data.get("claim_code"):
+    data["claim_code"] = os.environ["SUDO_CREDIT_CODE"]
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
+    os.chmod(tmp, 0o600)
+    os.replace(tmp, path)
+PYCREDIT
+    fi
+    rm -f "${BOOT}/sudo-credit-code"
+fi
+
 echo "=== install-factory complete ==="
 echo "Dashboard credentials: /etc/sudo/dashboard_credentials.txt"
 echo "Remote link: enabled from onboarding (no domain needed)"

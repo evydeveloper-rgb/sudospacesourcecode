@@ -297,6 +297,29 @@ apply_dev_access() {
     fi
 }
 
+# Sudo credit start code ($5), for cards Sudo itself flashes. Needs Sudo's
+# admin key in ~/.sudo/credit-admin-key (or SUDO_CREDIT_ADMIN_KEY_FILE); it
+# is never in the repo. One code per card, used once, only on a fresh install.
+CREDIT_URL="https://gluklijoptuvampxmtbl.supabase.co/functions/v1/credit"
+add_credit_code() {
+    local boot="$1"
+    local keyfile="${SUDO_CREDIT_ADMIN_KEY_FILE:-$HOME/.sudo/credit-admin-key}"
+    rm -f "$boot/sudo-credit-code" 2>/dev/null || true
+    [ "$MODE" = "install" ] || return 0
+    [ -f "$keyfile" ] || { echo "No Sudo credit code (no admin key on this computer)."; return 0; }
+    local out code
+    out="$(curl -fsS -m 20 -X POST "$CREDIT_URL/admin/codes" \
+        -H "x-sudo-admin-key: $(tr -d '\r\n' < "$keyfile")" -H "Content-Type: application/json" \
+        -d "{\"count\":1,\"amount_usd\":5,\"note\":\"flashed $(date +%Y-%m-%d)\"}" 2>/dev/null)" || out=""
+    code="$(printf '%s' "$out" | grep -o 'SUDO-[A-Z0-9-]*' | head -1)"
+    if [ -n "$code" ]; then
+        printf '%s\n' "$code" > "$boot/sudo-credit-code"
+        echo "Sudo credit: \$5 start code added to this card."
+    else
+        echo "WARNING: could not get a Sudo credit code; this card starts with \$0 credit."
+    fi
+}
+
 prepare_boot() {
     local boot="$1"
 
@@ -318,6 +341,7 @@ prepare_boot() {
     copy_factory_files "$boot"
     normalize_line_endings "$boot"
     apply_dev_access "$boot"
+    add_credit_code "$boot"
 
     case "$MODE" in
         reset)

@@ -3508,3 +3508,44 @@ input[type="password"], input[type="tel"], input[type="number"], #ssh-key, #devi
   .cloud-nudge-actions { flex: 1 1 100%; }
   .cloud-nudge-actions button:last-child { position: absolute; top: 6px; inset-inline-end: 6px; }
 }
+
+/* Sudo credit: the setup choice and the Billing card. */
+.wc-opts { display: grid; gap: 10px; margin: 4px 0 6px; text-align: start; }
+.wc-opts[hidden] { display: none; }
+.wc-opt { padding: 16px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); }
+.wc-opt.easy { border-color: color-mix(in srgb, var(--accent, #e8735c) 45%, var(--line)); box-shadow: 0 2px 12px rgba(22, 19, 17, .05); }
+.wc-opt-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.wc-opt-head strong { font-size: 1.02rem; }
+.wc-tag { padding: 3px 9px; border-radius: 999px; background: #d8f5dd; color: #16692b; font-size: .74rem; font-weight: 700; }
+.wc-opt p { margin: 6px 0 12px; color: var(--ink-2); font-size: .9rem; line-height: 1.45; }
+.wc-opt .primary-button { width: 100%; }
+.wc-gift { display: flex; align-items: center; gap: 8px; margin: 0 0 12px !important; color: #16692b !important; font-weight: 700; font-size: .9rem; }
+.wc-gift[hidden] { display: none; }
+.wc-gift svg { width: 19px; height: 19px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.wc-more { padding: 12px 16px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
+.wc-more summary { cursor: pointer; font-weight: 650; font-size: .92rem; color: var(--ink-2); }
+.wc-more[open] summary { margin-bottom: 10px; }
+.wc-more input { margin: 8px 0; }
+.wc-more .soft-button { width: 100%; }
+.wc-more .warning-copy { margin: 0 0 4px; font-size: .84rem; }
+.wc-local { display: flex; align-items: flex-start; gap: 8px; margin: 12px 0 4px; color: var(--ink-3); font-size: .84rem; line-height: 1.45; text-align: start; }
+.wc-local[hidden] { display: none; }
+.wc-local svg { width: 17px; height: 17px; flex: none; margin-top: 1px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.cr-box[hidden], #cr-picker-wrap[hidden], .cr-balance-box[hidden] { display: none; }
+.cr-need { margin: 0 0 8px !important; font-weight: 700; color: var(--ink) !important; }
+.cr-amounts { display: flex; flex-wrap: wrap; gap: 8px; }
+.cr-chip { min-width: 64px; min-height: 40px; padding: 0 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink); font: 700 .95rem var(--font-sans); cursor: pointer; }
+.cr-chip.on { border-color: var(--ink); background: var(--ink); color: var(--surface); }
+input.cr-other { flex: 1; min-width: 110px; min-height: 40px; margin: 0; }
+.cr-total { margin: 10px 0 !important; color: var(--ink-2); font-size: .86rem; }
+.cr-pay { width: 100%; }
+.cr-balance-box { margin: 0 0 6px; }
+.cr-balance-box .credit-balance { margin: 0; font: 800 2.1rem/1.1 var(--font-sans); letter-spacing: -.02em; }
+.cr-balance-box .balance-label { margin: 2px 0 4px; color: var(--ink-2); font-weight: 600; }
+#cr-own-note.warn { color: var(--danger, #b3261e); }
+.wc-opts { margin-top: 16px; }
+.cr-picker .form-status { margin: 8px 0 0 !important; }
+.cr-picker .form-status:empty { display: none; }
+.cr-picker .cr-total { margin: 10px 0 12px !important; }
+.cr-amounts { align-items: stretch; }
+.cr-chip, input.cr-other { height: 44px; min-height: 44px; margin: 0; box-sizing: border-box; }
