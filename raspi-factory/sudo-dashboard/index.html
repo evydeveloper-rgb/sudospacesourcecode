@@ -8759,6 +8759,8 @@
     }
 
     async function creditStartFromSettings() {
+      const hints = (state.status || {}).provider_key_hints || {};
+      if (hints.openrouter && !confirm(t('cr.switchConfirm'))) return;
       const btn = $('cr-start');
       btn.disabled = true;
       $('billing-error').textContent = t('common.checking');
