@@ -3591,3 +3591,25 @@ input.cr-other { flex: 1; min-width: 110px; min-height: 40px; margin: 0; }
 .bc-status:empty { display: none; }
 .wc-opts .bc-mount { display: grid; }
 @media (max-width: 380px) { .bc-two { grid-template-columns: 1fr; } }
+
+/* Phones: the shell moves with "top", not a transform. iPhone Safari draws
+   a focused text box inside a transformed box in the wrong place or not at
+   all, so what was typed could not be seen. Fixed, so "top" adds no page
+   height for Safari to scroll. */
+@media (hover: none) and (pointer: coarse) {
+  .app-shell { top: var(--vvt, 0px); transform: none; }
+}
+
+/* Community: a globe in the phone's top bar; the desktop rail keeps its row. */
+.hub-button.top-community[hidden] { display: none; }
+@media (min-width: 1024px) {
+  .topbar .top-community { display: none; }
+}
+/* Channels from Settings: a row that opens the Channels page. */
+.setting-card.setting-link .setting-body { display: none; }
+#view-channels .view-heading { display: flex; align-items: flex-start; gap: 10px; }
+.chn-back { flex: none; display: grid; place-items: center; width: 38px; height: 38px; margin-top: 4px;
+  border: 1px solid var(--line); border-radius: 50%; background: var(--surface); color: var(--ink);
+  font-size: 1.5rem; line-height: 1; cursor: pointer; }
+#view-channels .view-heading { justify-content: flex-start; text-align: start; }
+#view-channels .view-heading > div { flex: 1; min-width: 0; }
