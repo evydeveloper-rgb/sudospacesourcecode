@@ -303,10 +303,7 @@
                 <p data-i18n="cr.easyText">We set up the AI account for you. Pay as you go, no keys to paste.</p>
                 <p class="wc-gift" id="wc-gift" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8v13M3 12h18M12 8c-2-4-6-4-6-1.5S9 8 12 8Zm0 0c2-4 6-4 6-1.5S15 8 12 8Z"/></svg><span data-i18n="cr.startFree">$5 to start is on us.</span></p>
                 <button class="primary-button" id="wc-credit" type="button" data-i18n="cr.use">Use Sudo credit</button>
-                <div class="cr-box" id="wc-credit-topup" hidden>
-                  <p class="cr-need" data-i18n="cr.addToStart">Add credit to start.</p>
-                  <div class="cr-picker" id="wc-picker"></div>
-                </div>
+                <p class="cr-need" id="wc-credit-later" hidden data-i18n="cr.addLater">Sudo credit is set up. Add credit in Settings &gt; Billing when you're ready.</p>
               </div>
               <details class="wc-more" id="wc-own">
                 <summary data-i18n="cr.ownAccount">Use my own OpenRouter account</summary>
@@ -3499,17 +3496,14 @@
       $('wc-done').hidden = !on;
       $('wc-done-text').textContent = on && c.in_use && c.remaining_usd != null
         ? t('cr.connected', { amount: usd(c.remaining_usd) }) : t('wc.connected');
+      const later = !on && c.started && !c.has_key;
       $('wc-next').hidden = !on;
+      $('wc-credit').hidden = later;
+      $('wc-credit-later').hidden = !later;
       $('wc-opts').hidden = on;
       $('wc-local').hidden = on;
       $('wc-skip').hidden = on;
       $('wc-gift').hidden = !c.code_waiting;
-      if (c.started && !c.in_use && !c.has_key) showStartTopup();
-    }
-    function showStartTopup() {
-      $('wc-credit').hidden = true;
-      $('wc-credit-topup').hidden = false;
-      mountCreditPicker($('wc-picker'));
     }
     async function cloudUseCredit() {
       const btn = $('wc-credit');
@@ -3520,8 +3514,6 @@
         await refreshStatusQuiet();
         $('wc-status').textContent = '';
         renderCloudStep();
-        const c = (state.status || {}).credit || {};
-        if (!c.in_use) showStartTopup();
       } catch (error) {
         $('wc-status').textContent = error.message;
       } finally {
