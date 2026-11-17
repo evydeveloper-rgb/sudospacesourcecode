@@ -24,6 +24,11 @@ fi
 
 # 2) Stop services that own WiFi / portal
 systemctl stop sudo-dashboard.service sudo-remote-access.service \
+# The ad blocker (Home app) answers DNS on port 53 on every address. The
+# setup hotspot needs that port for its own DNS, and with it taken the
+# hotspot never comes up: no "Sudo Setup" network at all. It was the last
+# owner's anyway.
+systemctl disable --now sudo-adguard.service 2>/dev/null || true
     wifi-setup.service raspi-hotspot.service sudo-openclaw-gateway.service \
     2>/dev/null || true
 systemctl disable sudo-dashboard.service sudo-cloud-init.service \
