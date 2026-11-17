@@ -426,10 +426,22 @@ def default_remote_on():
     who turned it off keeps it off.
     """
     cfg = read_json_file(CONFIG)
-    if cfg.get("profile_done") or "remote_access" in cfg:
-        return
     if not os.path.isfile(WIFI_MARKER):
         return
+    if not cfg.get("profile_done"):
+        if "remote_access" in cfg:
+            return
+    else:
+        # Devices set up before the link was the default: switched on once,
+        # in 1.0.65. Never where the link would open without a password, and
+        # never again after an owner turns it off (remote_access_user_off).
+        if (cfg.get("remote_access") or cfg.get("remote_default_applied")
+                or cfg.get("remote_access_user_off")):
+            return
+        cfg["remote_default_applied"] = True
+        if not remote_password_required():
+            write_json_file(CONFIG, cfg)
+            return
     cfg["remote_access"] = True
     write_json_file(CONFIG, cfg)
     run_remote_access(True)
@@ -4165,6 +4177,8 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                 want = bool(body.get("enabled", True))
                 cfg = read_json_file(CONFIG)
                 cfg["remote_access"] = want
+                # Turned off by the owner: stays off, through every update.
+                cfg["remote_access_user_off"] = not want
                 write_json_file(CONFIG, cfg)
                 run_remote_access(want)
                 self.send_json({"ok": True, "enabled": want})
