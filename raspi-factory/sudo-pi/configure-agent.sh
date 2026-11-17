@@ -86,8 +86,8 @@ if model not in model_ids:
 # config is written from the same keys by configure-openclaw.sh; these feed
 # RUNTIME.md and AGENTS.md here.
 exec_enabled = bool(sudo.get("exec_enabled", True))
-subagent = bool(sudo.get("subagent_enabled", False))
-skills_on = bool(sudo.get("skills_enabled", False))
+subagent = bool(sudo.get("subagent_enabled", True))
+skills_on = bool(sudo.get("skills_enabled", True))
 connectors_on = bool((sudo.get("composio_api_key") or "").strip())
 # Retired keys from the PicoClaw era.
 for retired in ("pico_token", "agent_backend"):

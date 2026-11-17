@@ -1795,8 +1795,8 @@ def setup_status(include_sensitive=False):
         # On by default, owner can switch it off. Absent means never set,
         # which is a new device, not a deliberate "no".
         "exec_enabled": bool(cfg.get("exec_enabled", True)),
-        "subagent_enabled": bool(cfg.get("subagent_enabled", False)),
-        "skills_enabled": bool(cfg.get("skills_enabled", False)),
+        "subagent_enabled": bool(cfg.get("subagent_enabled", True)),
+        "skills_enabled": bool(cfg.get("skills_enabled", True)),
         # Off by default, unlike exec: this is what lets the agent edit its
         # own dashboard and the rest of the device, not just run commands
         # inside its workspace -- and it is also what lets it read its own

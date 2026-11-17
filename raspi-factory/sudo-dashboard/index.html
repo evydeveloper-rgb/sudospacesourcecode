@@ -1670,107 +1670,6 @@
               </div>
             </div>
           </section>
-          <section class="setting-card" id="abilities-setting">
-            <button class="setting-head" type="button" aria-expanded="false">
-              <span class="setting-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></span>
-              <span><strong data-i18n="set.abilities.whatSudoCanDo">What sudo can do</strong><small id="abilities-summary">Web search on · commands off</small></span>
-              <span class="chevron">›</span>
-            </button>
-            <div class="setting-body">
-              <p class="section-intro" data-i18n="set.abilities.abilitiesYouCanGrant">Abilities you can grant your agent. Everything here is your call — turn things on as you need them.</p>
-
-              <div class="access-row">
-                <div><strong data-i18n="set.abilities.searchTheWeb">Search the web</strong><small data-i18n="set.abilities.lookUpCurrentInformation">Look up current information to answer you.</small></div>
-                <span class="status-pill good" data-i18n="set.abilities.on">on</span>
-              </div>
-
-              <div class="access-row">
-                <div>
-                  <strong data-i18n="set.abilities.runCommandsOnThis">Run commands on this device</strong>
-                  <small data-i18n="set.abilities.onByDefaultThe">On by default. The agent can use the terminal — install things, edit files, check the system. Switch off to keep it talking only.</small>
-                </div>
-                <label class="switch">
-                  <input id="exec-toggle" type="checkbox">
-                  <span aria-hidden="true"></span>
-                  <em class="sr-only" data-i18n="set.abilities.toggleCommandAccess">Toggle command access</em>
-                </label>
-              </div>
-              <button class="info-btn" type="button" data-info="exec-info" aria-expanded="false" aria-label="About command access" data-i18n-attr="aria-label:set.abilities.aboutCommandAccess">i</button>
-              <div class="info-bubble" id="exec-info" data-i18n-html="set.abilities.whyItSOn">
-                <strong>Why it's on.</strong> Doing things is the point. With the terminal the agent can actually install, fix and check things on your Pi instead of describing what you could do yourself.<br><br>
-                <strong>What you're accepting.</strong> It has the same power on this device that you do when you log in. It also reads web pages, and a page can contain text written to trick it into running something — it can't always tell instructions from content. Blocked-command patterns catch obvious attempts, not clever ones.<br><br>
-                <strong>When to switch it off.</strong> If this Pi holds anything you'd mind losing, or if you've turned on <em>Access from anywhere</em> — that puts the dashboard on a public link with no password, and anyone who has it would be talking to something that can run commands.
-              </div>
-              <div class="access-row">
-                <div>
-                  <strong data-i18n="set.abilities.workWithHelpers">Work with helpers</strong>
-                  <small data-i18n="set.abilities.splitBigJobsAcross">Split big jobs across copies of itself, then combine the results.</small>
-                </div>
-                <label class="switch">
-                  <input id="subagent-toggle" type="checkbox">
-                  <span aria-hidden="true"></span>
-                  <em class="sr-only" data-i18n="set.abilities.toggleSubAgents">Toggle sub-agents</em>
-                </label>
-              </div>
-              <button class="info-btn" type="button" data-info="subagent-info" aria-expanded="false" aria-label="About helpers" data-i18n-attr="aria-label:set.abilities.aboutHelpers">i</button>
-              <div class="info-bubble" id="subagent-info" data-i18n-html="set.abilities.forAJobWith">
-                For a job with several parts, sudo can start temporary helpers, give each a piece, and gather the answers. Useful for research or anything with a lot of steps.<br><br>
-                <strong>It costs more.</strong> Every helper is its own conversation and is billed separately, so one request can cost several times a normal message. Limited to 2 helpers at a time.
-              </div>
-
-              <div class="access-row">
-                <div>
-                  <strong data-i18n="set.abilities.installSkills">Install skills</strong>
-                  <small data-i18n="set.abilities.downloadReadyMadeAbilities">Download ready-made abilities from the ClawHub library.</small>
-                </div>
-                <label class="switch">
-                  <input id="skills-toggle" type="checkbox">
-                  <span aria-hidden="true"></span>
-                  <em class="sr-only" data-i18n="set.abilities.toggleSkills">Toggle skills</em>
-                </label>
-              </div>
-              <button class="info-btn" type="button" data-info="skills-info" aria-expanded="false" aria-label="About skills" data-i18n-attr="aria-label:set.abilities.aboutSkills">i</button>
-              <div class="info-bubble" id="skills-info" data-i18n-html="set.abilities.skillsAreSmallAdd">
-                Skills are small add-ons other people have written, fetched from clawhub.ai and run on your device.<br><br>
-                <strong>They are code from strangers.</strong> We don't review them. Leave this off unless you want a specific skill and trust where it came from.
-              </div>
-
-              <div class="access-row">
-                <div>
-                  <strong data-i18n="set.abilities.fullDeviceAccess">Full device access</strong>
-                  <small data-i18n="set.abilities.offByDefaultLets">Off by default. Lets sudo change this dashboard itself, add things to it, and reach anywhere on the device — not just its own workspace.</small>
-                </div>
-                <label class="switch">
-                  <input id="full-access-toggle" type="checkbox">
-                  <span aria-hidden="true"></span>
-                  <em class="sr-only" data-i18n="set.abilities.toggleFullDeviceAccess">Toggle full device access</em>
-                </label>
-              </div>
-              <button class="info-btn" type="button" data-info="full-access-info" aria-expanded="false" aria-label="About full device access" data-i18n-attr="aria-label:set.abilities.aboutFullDeviceAccess">i</button>
-              <div class="info-bubble" id="full-access-info" data-i18n-html="set.abilities.whyItSOff">
-                <strong>Why it's off.</strong> Normally sudo is boxed into its own workspace — its memory, its notes, nothing else. This takes the box away, the same as running it on a regular computer with no restriction at all.<br><br>
-                <strong>What you're accepting.</strong> It can rewrite this dashboard, install things, and change anything on the device — genuine ownership, but with no undo button if an edit goes wrong. It also means it could, if asked the right way by whoever it's talking to, read its own configuration file out loud — and that file holds your live API key. Treat it as equivalent to handing out that key.<br><br>
-                <strong>When to turn it on.</strong> When you want it building or changing things here yourself, and you've accepted that a bad edit is yours to fix — the same trust you'd put in a program you run directly on your own machine.
-              </div>
-
-              <div class="access-row">
-                <div>
-                  <strong data-i18n="set.abilities.speakUpOnIts">Speak up on its own</strong>
-                  <small data-i18n="set.abilities.onByDefaultAgent">On by default. sudo can message you first now and then — a reminder about something you said you'd do, or a reply you're waiting on. Most checks end in silence.</small>
-                </div>
-                <label class="switch">
-                  <input id="heartbeat-toggle" type="checkbox">
-                  <span aria-hidden="true"></span>
-                  <em class="sr-only" data-i18n="set.abilities.toggleProactiveMessages">Toggle proactive messages</em>
-                </label>
-              </div>
-              <button class="info-btn" type="button" data-info="heartbeat-info" aria-expanded="false" aria-label="About proactive messages" data-i18n-attr="aria-label:set.abilities.aboutProactiveMessages">i</button>
-              <div class="info-bubble" id="heartbeat-info" data-i18n-html="set.abilities.whatItDoesEvery">
-                <strong>What it does.</strong> About once an hour sudo takes a quick look at what it knows about you and decides whether anything is genuinely worth sending: something due, a reply you're waiting on, an event coming up. If not, it stays quiet. At most two check-ins a day.<br><br><strong>Where.</strong> On WhatsApp or Telegram, once one is linked in Channels. No messages between 22:00 and 08:00 your time.<br><br><strong>Why it's on.</strong> An agent that only ever answers is a search box. Speaking first is what makes it feel like it's paying attention. Reminders you ask for arrive either way; this switch is only about it speaking up unasked.
-              </div>
-              <p class="form-status" id="abilities-status" role="status"></p>
-            </div>
-          </section>
           <section class="setting-card" id="language-setting">
             <button class="setting-head" type="button" aria-expanded="false">
               <span class="setting-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5a13 13 0 0 1 0 17M12 3.5a13 13 0 0 0 0 17"/></svg></span>
@@ -2225,6 +2124,107 @@
           </div>
           <div class="settings-group" data-i18n="settings.developer">Developer</div>
           <div class="settings-block g-dev">
+          <section class="setting-card" id="abilities-setting">
+            <button class="setting-head" type="button" aria-expanded="false">
+              <span class="setting-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></span>
+              <span><strong data-i18n="set.abilities.whatSudoCanDo">What sudo can do</strong><small id="abilities-summary">Web search on · commands off</small></span>
+              <span class="chevron">›</span>
+            </button>
+            <div class="setting-body">
+              <p class="section-intro" data-i18n="set.abilities.abilitiesYouCanGrant">What your agent is allowed to do. Almost everything is on; switch off anything you don’t want.</p>
+
+              <div class="access-row">
+                <div><strong data-i18n="set.abilities.searchTheWeb">Search the web</strong><small data-i18n="set.abilities.lookUpCurrentInformation">Look up current information to answer you.</small></div>
+                <span class="status-pill good" data-i18n="set.abilities.on">on</span>
+              </div>
+
+              <div class="access-row">
+                <div>
+                  <strong data-i18n="set.abilities.runCommandsOnThis">Run commands on this device</strong>
+                  <small data-i18n="set.abilities.onByDefaultThe">On by default. The agent can use the terminal — install things, edit files, check the system. Switch off to keep it talking only.</small>
+                </div>
+                <label class="switch">
+                  <input id="exec-toggle" type="checkbox">
+                  <span aria-hidden="true"></span>
+                  <em class="sr-only" data-i18n="set.abilities.toggleCommandAccess">Toggle command access</em>
+                </label>
+              </div>
+              <button class="info-btn" type="button" data-info="exec-info" aria-expanded="false" aria-label="About command access" data-i18n-attr="aria-label:set.abilities.aboutCommandAccess">i</button>
+              <div class="info-bubble" id="exec-info" data-i18n-html="set.abilities.whyItSOn">
+                <strong>Why it's on.</strong> Doing things is the point. With the terminal the agent can actually install, fix and check things on your Pi instead of describing what you could do yourself.<br><br>
+                <strong>What you're accepting.</strong> It has the same power on this device that you do when you log in. It also reads web pages, and a page can contain text written to trick it into running something — it can't always tell instructions from content. Blocked-command patterns catch obvious attempts, not clever ones.<br><br>
+                <strong>When to switch it off.</strong> If this Pi holds anything you'd mind losing, or if you've turned on <em>Access from anywhere</em> — that puts the dashboard on a public link with no password, and anyone who has it would be talking to something that can run commands.
+              </div>
+              <div class="access-row">
+                <div>
+                  <strong data-i18n="set.abilities.workWithHelpers">Work with helpers</strong>
+                  <small data-i18n="set.abilities.splitBigJobsAcross">Split big jobs across copies of itself, then combine the results.</small>
+                </div>
+                <label class="switch">
+                  <input id="subagent-toggle" type="checkbox">
+                  <span aria-hidden="true"></span>
+                  <em class="sr-only" data-i18n="set.abilities.toggleSubAgents">Toggle sub-agents</em>
+                </label>
+              </div>
+              <button class="info-btn" type="button" data-info="subagent-info" aria-expanded="false" aria-label="About helpers" data-i18n-attr="aria-label:set.abilities.aboutHelpers">i</button>
+              <div class="info-bubble" id="subagent-info" data-i18n-html="set.abilities.forAJobWith">
+                For a job with several parts, sudo can start temporary helpers, give each a piece, and gather the answers. Useful for research or anything with a lot of steps.<br><br>
+                <strong>It costs more.</strong> Every helper is its own conversation and is billed separately, so one request can cost several times a normal message. Limited to 2 helpers at a time.
+              </div>
+
+              <div class="access-row">
+                <div>
+                  <strong data-i18n="set.abilities.installSkills">Install skills</strong>
+                  <small data-i18n="set.abilities.downloadReadyMadeAbilities">Download ready-made abilities from the ClawHub library.</small>
+                </div>
+                <label class="switch">
+                  <input id="skills-toggle" type="checkbox">
+                  <span aria-hidden="true"></span>
+                  <em class="sr-only" data-i18n="set.abilities.toggleSkills">Toggle skills</em>
+                </label>
+              </div>
+              <button class="info-btn" type="button" data-info="skills-info" aria-expanded="false" aria-label="About skills" data-i18n-attr="aria-label:set.abilities.aboutSkills">i</button>
+              <div class="info-bubble" id="skills-info" data-i18n-html="set.abilities.skillsAreSmallAdd">
+                Skills are small add-ons other people have written, fetched from clawhub.ai and run on your device.<br><br>
+                <strong>They are code from strangers.</strong> We don't review them. Leave this off unless you want a specific skill and trust where it came from.
+              </div>
+
+              <div class="access-row">
+                <div>
+                  <strong data-i18n="set.abilities.fullDeviceAccess">Full device access</strong>
+                  <small data-i18n="set.abilities.offByDefaultLets">Off by default. Lets sudo change this dashboard itself, add things to it, and reach anywhere on the device — not just its own workspace.</small>
+                </div>
+                <label class="switch">
+                  <input id="full-access-toggle" type="checkbox">
+                  <span aria-hidden="true"></span>
+                  <em class="sr-only" data-i18n="set.abilities.toggleFullDeviceAccess">Toggle full device access</em>
+                </label>
+              </div>
+              <button class="info-btn" type="button" data-info="full-access-info" aria-expanded="false" aria-label="About full device access" data-i18n-attr="aria-label:set.abilities.aboutFullDeviceAccess">i</button>
+              <div class="info-bubble" id="full-access-info" data-i18n-html="set.abilities.whyItSOff">
+                <strong>Why it's off.</strong> Normally sudo is boxed into its own workspace — its memory, its notes, nothing else. This takes the box away, the same as running it on a regular computer with no restriction at all.<br><br>
+                <strong>What you're accepting.</strong> It can rewrite this dashboard, install things, and change anything on the device — genuine ownership, but with no undo button if an edit goes wrong. It also means it could, if asked the right way by whoever it's talking to, read its own configuration file out loud — and that file holds your live API key. Treat it as equivalent to handing out that key.<br><br>
+                <strong>When to turn it on.</strong> When you want it building or changing things here yourself, and you've accepted that a bad edit is yours to fix — the same trust you'd put in a program you run directly on your own machine.
+              </div>
+
+              <div class="access-row">
+                <div>
+                  <strong data-i18n="set.abilities.speakUpOnIts">Speak up on its own</strong>
+                  <small data-i18n="set.abilities.onByDefaultAgent">On by default. sudo can message you first now and then — a reminder about something you said you'd do, or a reply you're waiting on. Most checks end in silence.</small>
+                </div>
+                <label class="switch">
+                  <input id="heartbeat-toggle" type="checkbox">
+                  <span aria-hidden="true"></span>
+                  <em class="sr-only" data-i18n="set.abilities.toggleProactiveMessages">Toggle proactive messages</em>
+                </label>
+              </div>
+              <button class="info-btn" type="button" data-info="heartbeat-info" aria-expanded="false" aria-label="About proactive messages" data-i18n-attr="aria-label:set.abilities.aboutProactiveMessages">i</button>
+              <div class="info-bubble" id="heartbeat-info" data-i18n-html="set.abilities.whatItDoesEvery">
+                <strong>What it does.</strong> About once an hour sudo takes a quick look at what it knows about you and decides whether anything is genuinely worth sending: something due, a reply you're waiting on, an event coming up. If not, it stays quiet. At most two check-ins a day.<br><br><strong>Where.</strong> On WhatsApp or Telegram, once one is linked in Channels. No messages between 22:00 and 08:00 your time.<br><br><strong>Why it's on.</strong> An agent that only ever answers is a search box. Speaking first is what makes it feel like it's paying attention. Reminders you ask for arrive either way; this switch is only about it speaking up unasked.
+              </div>
+              <p class="form-status" id="abilities-status" role="status"></p>
+            </div>
+          </section>
           <section class="setting-card" id="ssh-setting">
             <button class="setting-head" type="button" aria-expanded="false">
               <span class="setting-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="15" rx="2"/><path d="M7 10l3 2.5L7 15M12.5 15H17"/></svg></span>

@@ -304,11 +304,11 @@ if not search_cfg:
         tools.pop("web")
 print(f"Web search: {search_cfg.get('provider') or 'none'}")
 
-if not sudo.get("subagent_enabled", False):
+if not sudo.get("subagent_enabled", True):
     deny |= {"sessions_spawn", "subagents"}
-print(f"Helpers (sub-agents): {'on' if sudo.get('subagent_enabled') else 'off'}")
+print(f"Helpers (sub-agents): {'on' if sudo.get('subagent_enabled', True) else 'off'}")
 
-if sudo.get("skills_enabled", False):
+if sudo.get("skills_enabled", True):
     cfg.get("skills", {}).pop("allowBundled", None)
     print("Skills: on")
 else:
