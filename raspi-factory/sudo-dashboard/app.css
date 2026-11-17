@@ -3473,3 +3473,38 @@ input[type="password"], input[type="tel"], input[type="number"], #ssh-key, #devi
 .milestone-actions .primary-button, .wa-number-row .primary-button { min-height: 40px; }
 .set-section .primary-button { min-height: 38px; padding: 0 16px; }
 .done, .welcome-view .primary-button { min-height: 46px; }
+
+/* Message box: compact. Text on top, buttons below on a computer; one row
+   on a phone, where the keyboard leaves little room. */
+.composer { padding: 10px 12px 8px; gap: 2px 6px; border-radius: 16px; }
+.composer textarea { min-height: 28px; padding: 4px 6px; }
+.composer .composer-add, .composer .composer-bg { width: 34px; height: 34px; min-height: 34px; }
+.composer .send-button { width: 34px; height: 34px; min-height: 34px; border-radius: 10px; }
+@media (max-width: 700px) {
+  .composer { grid-template-rows: auto; align-items: end; padding: 6px 8px; }
+  .composer textarea { grid-column: 2; grid-row: 1; min-height: 36px; padding: 7px 4px; }
+  .composer .composer-add { grid-column: 1; grid-row: 1; }
+  .composer .composer-bg { grid-column: 3; grid-row: 1; }
+  .composer .send-button { grid-column: 4; grid-row: 1; }
+}
+
+/* Phones: the shell is pinned to the screen and slides with the visible
+   area (translate, not top). A shell moved with "top" made the page itself
+   taller, so iPhone Safari could scroll it under the keyboard -- the box
+   cut off or floating mid-screen. Fixed + transform adds no page height. */
+@media (hover: none) and (pointer: coarse) {
+  html { overflow: hidden; }
+  .app-shell {
+    position: fixed; top: 0; left: 0; right: 0;
+    transform: translateY(var(--vvt, 0px));
+  }
+}
+
+/* The cloud banner on a phone: text across the top, buttons in a row under
+   it -- squeezed side by side it became a tall column of words. */
+@media (max-width: 700px) {
+  .cloud-nudge { flex-wrap: wrap; position: relative; }
+  .cloud-nudge > div:first-child { flex: 1 1 100%; padding-inline-end: 22px; }
+  .cloud-nudge-actions { flex: 1 1 100%; }
+  .cloud-nudge-actions button:last-child { position: absolute; top: 6px; inset-inline-end: 6px; }
+}
