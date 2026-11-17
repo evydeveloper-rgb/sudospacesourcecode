@@ -2015,6 +2015,10 @@ def setup_status(include_sensitive=False):
         # Never return the key itself — only enough to recognise it.
         "has_own_key": bool(cfg.get("user_openrouter_key")),
         "credit": credit_state(refresh=False),
+        # Names and numbers swapped for stand-ins before the cloud sees them
+        # (sudo-privacy-relay.py). Covers OpenRouter and DeepSeek brains.
+        "privacy_scrub": cfg.get("privacy_scrub", True) is not False,
+        "privacy_covered": (agent_brain(cfg) or {}).get("provider") in (None, "openrouter", "deepseek"),
         "own_key_hint": (cfg.get("user_openrouter_key") or "")[-4:] or None,
         "local_model": local_model_state(),
         # Just the state, not the QR image: this rides along on every status
@@ -6250,6 +6254,19 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             self.send_json({"ok": True, "claimed_usd": out.get("claimed_usd", 0),
                             "credit": credit_state(refresh=False),
                             **setup_status(include_sensitive=False)})
+            return True
+
+        if path == "/api/agent/privacy" and self.command == "POST":
+            try:
+                body = self.read_body_json()
+            except (ValueError, json.JSONDecodeError):
+                self.send_json({"error": "Invalid JSON"}, code=400)
+                return True
+            cfg = read_json_file(CONFIG)
+            cfg["privacy_scrub"] = bool(body.get("privacy_scrub"))
+            write_json_file(CONFIG, cfg)
+            apply_settings()
+            self.send_json({"ok": True, **setup_status(include_sensitive=False)})
             return True
 
         if path == "/api/credit/redeem" and self.command == "POST":

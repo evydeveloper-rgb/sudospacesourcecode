@@ -65,6 +65,8 @@ cp "${BOOT}/sudo-pi/configure-openclaw.sh" /usr/local/bin/sudo-configure-opencla
 cp "${BOOT}/sudo-pi/install-openclaw.sh" /usr/local/bin/sudo-install-openclaw.sh
 cp "${BOOT}/sudo-pi/install-openclaw-whatsapp.sh" /usr/local/bin/sudo-install-openclaw-whatsapp.sh
 cp "${BOOT}/sudo-pi/composio-relay.py" /usr/local/bin/sudo-composio-relay.py
+cp "${BOOT}/sudo-pi/privacy-relay.py" /usr/local/bin/sudo-privacy-relay.py
+chmod +x /usr/local/bin/sudo-privacy-relay.py
 chmod +x /usr/local/bin/sudo-configure-openclaw.sh /usr/local/bin/sudo-install-openclaw.sh /usr/local/bin/sudo-install-openclaw-whatsapp.sh /usr/local/bin/sudo-composio-relay.py
 
 # First boot with Wi-Fi: install OpenClaw from the bundle on the card (or npm

@@ -1677,6 +1677,21 @@
                 A key straight from <strong>DeepSeek, OpenAI, Anthropic or Google</strong> runs your agent on that company's model, usually cheaper if you already pay them.<br><br>
                 Keys stay on this device and only ever go to the company they belong to.
               </div>
+              <div class="settings-subgroup" data-i18n="pv.title">Privacy</div>
+              <div class="access-row">
+                <div>
+                  <strong data-i18n="pv.hide">Hide names and numbers from the cloud</strong>
+                  <small data-i18n="pv.hideSmall">Before a message leaves this sudo, your contacts' names, phone numbers, emails, and card and bank numbers are swapped for stand-ins like [PERSON_3]. The real ones go back in when the answer arrives.</small>
+                </div>
+                <label class="switch">
+                  <input id="privacy-toggle" type="checkbox">
+                  <span aria-hidden="true"></span>
+                  <em class="sr-only" data-i18n="pv.hide">Hide names and numbers from the cloud</em>
+                </label>
+              </div>
+              <p class="microcopy" data-i18n="pv.limits">It can't catch everything. Names that aren't in your contacts, addresses, and things described in words still reach the AI company.</p>
+              <p class="microcopy warn" id="privacy-uncovered" hidden data-i18n="pv.uncovered">Your current AI brain isn't covered yet. It works with Sudo credit, OpenRouter and DeepSeek.</p>
+              <p class="form-status" id="privacy-status" role="status"></p>
             </div>
           </section>
           <section class="setting-card" id="language-setting">
@@ -8789,6 +8804,22 @@
       }
     }
 
+    async function savePrivacy() {
+      const box = $('privacy-toggle'), status = $('privacy-status');
+      status.textContent = t('common.saving');
+      try {
+        renderStatus(await api('/api/agent/privacy', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ privacy_scrub: box.checked }),
+        }));
+        status.textContent = t('common.saved');
+        setTimeout(() => { status.textContent = ''; }, 3000);
+      } catch (error) {
+        box.checked = !box.checked;
+        status.textContent = error.message;
+      }
+    }
+
     async function creditRedeem() {
       const input = $('cr-code-input'), btn = $('cr-code-btn'), status = $('cr-code-status');
       const code = input.value.trim();
@@ -9130,6 +9161,8 @@
       $('skills-toggle').checked = !!status.skills_enabled;
       $('full-access-toggle').checked = !!status.full_access_enabled;
       $('heartbeat-toggle').checked = !!status.heartbeat_enabled;
+      $('privacy-toggle').checked = status.privacy_scrub !== false;
+      $('privacy-uncovered').hidden = status.privacy_covered !== false || status.privacy_scrub === false;
       renderSpend(status);
       renderAbilitiesSummary(status);
       renderProviders(status.provider_key_hints);
@@ -9716,6 +9749,7 @@
     $('cr-start').addEventListener('click', creditStartFromSettings);
     $('cr-use').addEventListener('click', creditSwitchOn);
     $('cr-code-btn').addEventListener('click', creditRedeem);
+    $('privacy-toggle').addEventListener('change', savePrivacy);
     $('cr-code-input').addEventListener('keydown', e => { if (e.key === 'Enter') creditRedeem(); });
     $('wc-credit').addEventListener('click', cloudUseCredit);
     $('remote-toggle').addEventListener('change', toggleRemote);

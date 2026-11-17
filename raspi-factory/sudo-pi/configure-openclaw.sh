@@ -227,6 +227,21 @@ if direct:
             "models": [{"id": "deepseek-chat", "name": "DeepSeek Chat"}]}
         defaults.pop("imageModel", None)                 # DeepSeek reads text only
     print(f"Brain: {model_id} (your own {direct} key)")
+# Privacy relay (sudo-privacy-relay.py): names and numbers are swapped for
+# stand-ins before a request leaves the device. OpenRouter and DeepSeek go
+# through it while the owner has it on (Settings > AI brain) and the relay is
+# up; the shell part started it before this ran. The other direct providers
+# (Anthropic, OpenAI, Google plugins) are not covered yet.
+RELAY = "http://127.0.0.1:18792"
+privacy_on = sudo.get("privacy_scrub", True) is not False and os.environ.get("PRIVACY_RELAY_UP") == "1"
+OR_BASE = RELAY + "/openrouter/api/v1" if privacy_on else "https://openrouter.ai/api/v1"
+if privacy_on and has_or:
+    providers_cfg["openrouter"] = {"baseUrl": OR_BASE}
+elif str((providers_cfg.get("openrouter") or {}).get("baseUrl") or "").startswith(RELAY):
+    providers_cfg.pop("openrouter", None)
+if "deepseek" in providers_cfg:
+    providers_cfg["deepseek"]["baseUrl"] = (RELAY + "/deepseek/v1") if privacy_on else "https://api.deepseek.com/v1"
+print(f"Privacy relay: {'on' if privacy_on else 'off'}")
 if not providers_cfg:
     cfg["models"].pop("providers", None)
 if not cfg["models"]:
@@ -244,7 +259,7 @@ if or_key:
     mem.update({
         "provider": "openai-compatible",
         "model": "openai/text-embedding-3-small",
-        "remote": {"baseUrl": "https://openrouter.ai/api/v1", "apiKey": or_key},
+        "remote": {"baseUrl": OR_BASE, "apiKey": or_key},
         # OpenClaw's default cut-off (0.35) is set for keyword hits. This
         # model scores a match that shares no words with the question at
         # 0.15-0.30 ("food allergy" vs "allergic to peanuts": 0.18), so the
@@ -291,7 +306,7 @@ if pplx_installed and or_key and search_cfg.get("provider") in (None, "perplexit
     if "perplexity" not in pl_web.setdefault("allow", []):
         pl_web["allow"].append("perplexity")
     pl_web.setdefault("entries", {})["perplexity"] = {"enabled": True, "config": {"webSearch": {
-        "apiKey": or_key, "baseUrl": "https://openrouter.ai/api/v1", "model": "perplexity/sonar"}}}
+        "apiKey": or_key, "baseUrl": OR_BASE, "model": "perplexity/sonar"}}}
 elif search_cfg.get("provider") == "perplexity":
     # The OpenRouter key was removed: no stale key left behind.
     search_cfg.pop("provider")
@@ -1049,6 +1064,44 @@ os.replace(tmp, out)
 print(f"Wrote {out} (model {cfg['agents']['defaults']['model']['primary']})")
 PY
 }
+
+# The privacy relay runs before the config is built, so the config points at
+# it only when it is really up: if it ever fails to start, the agent talks to
+# the cloud directly rather than not at all. Managed here, like the Composio
+# relay, so devices that only ever update over Wi-Fi get it too.
+PRIVACY_UNIT=/etc/systemd/system/sudo-privacy-relay.service
+PRIVACY_BIN=/usr/local/bin/sudo-privacy-relay.py
+if [ -f "$PRIVACY_BIN" ]; then
+  want_privacy='[Unit]
+Description=Sudo privacy relay (keeps names and numbers on this device)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /usr/local/bin/sudo-privacy-relay.py
+Restart=always
+RestartSec=2
+NoNewPrivileges=true
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target'
+  [ "$(cat "$PRIVACY_UNIT" 2>/dev/null)" = "$want_privacy" ] || { printf '%s\n' "$want_privacy" > "$PRIVACY_UNIT"; systemctl daemon-reload; }
+  privacy_hash=$(cat "$PRIVACY_BIN" "$PRIVACY_UNIT" | sha256sum | cut -d' ' -f1)
+  systemctl enable sudo-privacy-relay.service 2>/dev/null || true
+  if [ "$(cat "$STATE_DIR/.privacy-hash" 2>/dev/null)" != "$privacy_hash" ]; then
+    systemctl restart sudo-privacy-relay.service 2>/dev/null || true
+    printf '%s' "$privacy_hash" > "$STATE_DIR/.privacy-hash"
+  else
+    systemctl start sudo-privacy-relay.service 2>/dev/null || true
+  fi
+  for _ in 1 2 3 4 5 6; do
+    python3 -c 'import socket; socket.create_connection(("127.0.0.1", 18792), 1).close()' 2>/dev/null && { export PRIVACY_RELAY_UP=1; break; }
+    sleep 0.5
+  done
+fi
 
 build_config
 # The merge keeps whatever was already in openclaw.json. If that ever makes

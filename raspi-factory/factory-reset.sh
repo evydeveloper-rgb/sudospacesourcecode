@@ -95,6 +95,7 @@ rm -rf /opt/sudo/picoclaw   # left by older versions
 rm -rf /opt/sudo/openclaw
 rm -f /etc/sudo/agent.env
 rm -f /opt/sudo/dashboard-chat.json
+rm -f /opt/sudo/privacy-map.json /opt/sudo/local-chat.json   # stand-ins and on-device chat of the last owner
 
 # 4b) Tear down any terminal access — a factory unit ships with sshd off,
 # no stored password, and none of our injected keys or sshd drop-ins.

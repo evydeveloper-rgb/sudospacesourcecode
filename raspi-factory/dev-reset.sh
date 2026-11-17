@@ -109,6 +109,7 @@ mkdir -p /opt/sudo/agent-workspace
 rm -rf /opt/sudo/picoclaw   # left by older versions
 rm -rf /opt/sudo/openclaw
 rm -f /opt/sudo/dashboard-chat.json
+rm -f /opt/sudo/privacy-map.json /opt/sudo/local-chat.json
 rm -f /boot/firmware/forget-keys
 
 # NOTE: no SSH teardown here on purpose. factory-reset.sh disables sshd and

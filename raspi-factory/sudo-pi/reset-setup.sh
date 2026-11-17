@@ -102,7 +102,7 @@ for key in (
     # Missing until 1.0.42: the owner's time zone, check-ins switch, app
     # layout and the welcome's place.
     "timezone", "timezone_pinned", "checkins_enabled", "apps_archived", "welcome_pending",
-    "spend_usd_day", "spend_usd_month",
+    "spend_usd_day", "spend_usd_month", "privacy_scrub",
 ):
     data.pop(key, None)
 os.makedirs("/opt/sudo", exist_ok=True)
@@ -125,6 +125,7 @@ rm -rf /opt/sudo/picoclaw   # left by older versions
 rm -rf /opt/sudo/openclaw
 rm -f /etc/sudo/agent.env
 rm -f /opt/sudo/dashboard-chat.json
+rm -f /opt/sudo/privacy-map.json /opt/sudo/local-chat.json   # stand-ins and on-device chat of the last owner
 # The rest of what belonged to the last owner: their dashboard password (a
 # new random one is made when the dashboard next starts), home-screen icon and
 # theme, the old WhatsApp bridge's login, spending and usage counters, and
