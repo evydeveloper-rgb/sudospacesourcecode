@@ -458,6 +458,15 @@ if whatsapp_installed:
             owner_account["allowFrom"] = ["*"]
             if numbers.get("agent"):
                 owner_account["selfChatMode"] = False
+    # WhatsApp calls an account set up even before it is linked, so the
+    # gateway's health monitor "restarted" the unused one every 15 minutes, all
+    # day, filling the log (a beta device: 56 times by noon). It skips an
+    # account until it is linked; linking or removing one runs this again.
+    def wa_account(name, account):
+        creds = f"/opt/sudo/openclaw/credentials/whatsapp/{name}/creds.json"
+        if not numbers.get(name) and not os.path.isfile(creds):
+            account["healthMonitor"] = {"enabled": False}
+        return account
     cfg.setdefault("channels", {})["whatsapp"] = {
         "enabled": True,
         "dmPolicy": "allowlist",
@@ -465,8 +474,8 @@ if whatsapp_installed:
         "groupPolicy": "disabled",
         "defaultAccount": default_account,
         "accounts": {
-            "owner": owner_account,
-            "agent": {"dmPolicy": "allowlist", "allowFrom": agent_allow},
+            "owner": wa_account("owner", owner_account),
+            "agent": wa_account("agent", {"dmPolicy": "allowlist", "allowFrom": agent_allow}),
         },
     }
     print(f"WhatsApp: reaches the owner via {default_account}, owner number "
