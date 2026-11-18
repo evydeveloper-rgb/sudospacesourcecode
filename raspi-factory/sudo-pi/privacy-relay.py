@@ -161,7 +161,7 @@ class Book:
             self.dirty = True
         if show == entry["show"]:
             return f"[{kind}_{entry['n']}]"
-        # The same person or number written another way ("jude", "Jude Okafor",
+        # The same person or number written another way ("rosa", "Rosa Delgado",
         # "+1 555 123 4567") comes back exactly as it was written: a file name
         # or a phone number with the wrong spelling no longer works.
         alts = entry.setdefault("alts", [])
