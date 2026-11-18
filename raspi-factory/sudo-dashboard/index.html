@@ -256,13 +256,23 @@
           <!-- step 3 — names -->
           <div class="welcome-step" id="welcome-step2" hidden>
             <h1 data-i18n="welcome.sayHiToEach">say hi to each other.</h1>
-            <p class="lede" data-i18n="welcome.twoThingsAndWe">Two things and we can start talking. Everything else can wait — it’s all in Settings later.</p>
+            <div class="wn-card you">
+              <span class="wn-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span>
+              <div class="wn-field">
+                <label for="welcome-user" data-i18n="wn.you">Your name</label>
+                <input id="welcome-user" autocomplete="given-name" placeholder="Maria" maxlength="64" data-i18n-attr="placeholder:wn.youPh">
+              </div>
+            </div>
 
-            <label for="welcome-user" data-i18n="welcome.whatShouldICall">What should I call you?</label>
-            <input id="welcome-user" autocomplete="given-name" placeholder="your name" maxlength="64" data-i18n-attr="placeholder:welcome.yourName">
+            <div class="wn-card bot">
+              <span class="wn-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 8V4M9 14h.01M15 14h.01M2 13v3M22 13v3"/><circle cx="12" cy="3" r="1"/></svg></span>
+              <div class="wn-field">
+                <label for="welcome-agent" data-i18n="wn.agent">Your agent's name</label>
+                <input id="welcome-agent" placeholder="sudo" maxlength="32" autocomplete="off">
+              </div>
+            </div>
 
-            <label for="welcome-agent" data-i18n="welcome.andWhatShouldYou">And what should you call me?</label>
-            <input id="welcome-agent" placeholder="sudo" maxlength="32">
+            <p class="wn-preview" aria-live="polite"><span class="wn-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 8V4M9 14h.01M15 14h.01"/></svg></span><span id="wn-preview-text"></span></p>
             <p class="microcopy wel-later" data-i18n="wel.namesLater">You can change both names later in Settings → Names.</p>
 
             <button class="primary-button" id="welcome-finish" type="button" data-i18n="welcome.sayHello">Say hello</button>
@@ -2767,6 +2777,7 @@
       document.querySelector('.topbar .brand-home').hidden = tab === 'welcome';
       $('hub-button').hidden = tab === 'welcome';
       document.querySelector('.top-gear').hidden = tab === 'welcome';
+      document.querySelector('.top-community').hidden = tab === 'welcome';
       if (tab !== 'settings' && state.settingPage) closeSettingPage();
       // The WhatsApp setup panel polls while it is open; leaving the tab stops it.
       if (tab !== 'channels') stopWhatsappPoll();
@@ -3241,6 +3252,14 @@
       $('step-now').textContent = t('welcome.stepOf', { n: pos + 1, total: seq.length });
     }
 
+    // The agent greets the owner with the two names as they are typed, so a
+    // name in the wrong box shows up straight away.
+    function drawNamesPreview() {
+      const you = $('welcome-user').value.trim();
+      const agent = $('welcome-agent').value.trim() || 'sudo';
+      $('wn-preview-text').textContent = you ? t('wn.hello', { you, agent }) : t('wn.helloNoName', { agent });
+    }
+
     function renderWelcomeStep(step) {
       state.welcomeStep = step;
       for (let i = 0; i < WELCOME_STEPS; i += 1) $('welcome-step' + i).hidden = step !== i;
@@ -3252,7 +3271,7 @@
       $('welcome-back-2').hidden = !isPhoneFlow();
       renderWelcomeDots();
       if (step === 1) loadWelcomeAddress();
-      if (step === 2) setTimeout(() => $('welcome-user').focus(), 60);
+      if (step === 2) { drawNamesPreview(); setTimeout(() => $('welcome-user').focus(), 60); }
       if (step === 3) { loadSoul(); $('welcome-pers-save').textContent = t(wantsOwnPassword() ? 'ws.next' : 'wel.persSave'); }
       if (step === 4) setTimeout(() => $('wp-new').focus(), 60);
       if (step === 5) renderCloudStep();
@@ -9844,6 +9863,9 @@
     $('home-preview-edit').addEventListener('click', startHomeEdit);
     $('home-preview-cancel').addEventListener('click', stopHomeEdit);
     $('home-preview-save').addEventListener('click', saveHomeEdit);
+    $('welcome-user').addEventListener('input', drawNamesPreview);
+    $('welcome-agent').addEventListener('input', drawNamesPreview);
+    document.addEventListener('i18n:change', drawNamesPreview);
     $('welcome-agent').addEventListener('keydown', event => {
       if (event.key === 'Enter') finishWelcome();
     });

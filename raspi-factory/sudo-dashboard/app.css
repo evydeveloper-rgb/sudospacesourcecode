@@ -3618,3 +3618,19 @@ input.cr-other { flex: 1; min-width: 110px; min-height: 40px; margin: 0; }
 .bc-later { display: none; margin: 0; color: var(--ink-3); font-size: .8rem; line-height: 1.4; text-align: center; }
 .bc-simple .bc-later { display: block; }
 .bc-simple .bc-tabs, .bc-simple .wc-tag, .bc-simple .bc-panel.bc-done { display: none; }
+
+/* Setup, the two names: one card for the person, one for the agent. */
+.wn-card { display: grid; grid-template-columns: 52px minmax(0, 1fr); align-items: center; gap: 14px; margin: 0 0 12px; padding: 14px; border: 1.5px solid var(--line); border-radius: 18px; background: var(--surface); }
+.wn-card:focus-within { border-color: var(--ink); }
+.wn-ico { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%; }
+.wn-ico svg { width: 28px; height: 28px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.wn-card.you .wn-ico { background: #ffe6dd; color: #c2410c; }
+.wn-card.bot .wn-ico, .wn-preview .wn-ico { background: #ece4ff; color: #4c1d95; }
+.wn-field { display: grid; gap: 4px; min-width: 0; }
+.welcome-view .wn-field label { margin: 0; color: var(--ink); font: 750 .95rem/1.25 var(--font-sans); letter-spacing: 0; }
+.welcome-view .wn-field input { width: 100%; min-height: 42px; margin: 0; padding: 8px 12px; border: 0; border-radius: 10px; background: var(--surface-low); font-size: 1rem; }
+.wn-preview { display: flex; align-items: center; gap: 10px; margin: 4px 0 10px; color: var(--ink); font-size: .95rem; font-weight: 600; }
+.wn-preview .wn-ico { flex: none; width: 32px; height: 32px; }
+.wn-preview .wn-ico svg { width: 19px; height: 19px; }
+.wn-preview #wn-preview-text { min-width: 0; padding: 8px 12px; border-radius: 14px; background: var(--surface-low); overflow-wrap: anywhere; }
+#welcome-step2 h1 { margin-bottom: 18px; }
