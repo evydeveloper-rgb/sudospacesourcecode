@@ -51,8 +51,11 @@ STREAM_KEYS = {"content", "text", "arguments", "partial_json", "reasoning", "rea
                "thinking", "delta", "refusal"}
 JSON_TEXT_KEYS = {"arguments", "partial_json"}   # tool input: JSON inside a string
 KINDS = ("PERSON", "PHONE", "EMAIL", "CARD", "IBAN")
-TOKEN_RE = re.compile(r"\[(PERSON|PHONE|EMAIL|CARD|IBAN)_(\d{1,5})\]")
-LOOSE_RE = re.compile(r"(?<![\w\[])(PERSON|PHONE|EMAIL|CARD|IBAN)_(\d{1,5})(?![\w\]])")
+TOKEN_RE = re.compile(r"\[(PERSON|PHONE|EMAIL|CARD|IBAN)_(\d{1,5})(?:_([a-z]{1,2}))?\]")
+LOOSE_RE = re.compile(r"(?<![\w\[])(PERSON|PHONE|EMAIL|CARD|IBAN)_(\d{1,5})(?:_([a-z]{1,2}))?(?![\w\]])")
+# Labels of the conversation, not what was said: a contact called "Read" must
+# not rename the read tool.
+NOT_TEXT_KEYS = {"role", "name", "id", "type", "tool_call_id", "tool_use_id", "call_id", "model"}
 
 EMAIL_RE = re.compile(r"(?<![\w.%+-])[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9-]{1,63}(?:\.[A-Za-z0-9-]{1,63})*\.[A-Za-z]{2,24}(?![\w-])")
 CARD_RE = re.compile(r"(?<![\w-])\d(?:[ -]?\d){12,18}(?![\w-])")
@@ -124,6 +127,12 @@ def iban_ok(text):
 
 
 # --- The map: real value <-> stand-in ------------------------------------------
+def alt_tag(i):
+    """a, b ... z, aa, ab: which way of writing a value this stand-in is."""
+    letters = "abcdefghijklmnopqrstuvwxyz"
+    return letters[i] if i < 26 else letters[i // 26 - 1] + letters[i % 26]
+
+
 class Book:
     """Stand-ins that never change, and the owner's contacts' names."""
 
@@ -134,7 +143,9 @@ class Book:
         self.reverse = {}
         for kind in KINDS:
             for key, entry in self.data[kind].items():
-                self.reverse[(kind, entry["n"])] = entry["show"]
+                self.reverse[(kind, entry["n"], "")] = entry["show"]
+                for i, alt in enumerate(entry.get("alts") or []):
+                    self.reverse[(kind, entry["n"], alt_tag(i))] = alt
         self.dirty = False
         self.names_sig = None
         self.name_re = None
@@ -146,9 +157,22 @@ class Book:
             n = max([e["n"] for e in self.data[kind].values()] or [0]) + 1
             entry = {"n": n, "show": show}
             self.data[kind][key] = entry
-            self.reverse[(kind, n)] = show
+            self.reverse[(kind, n, "")] = show
             self.dirty = True
-        return f"[{kind}_{entry['n']}]"
+        if show == entry["show"]:
+            return f"[{kind}_{entry['n']}]"
+        # The same person or number written another way ("jude", "Jude Okafor",
+        # "+1 555 123 4567") comes back exactly as it was written: a file name
+        # or a phone number with the wrong spelling no longer works.
+        alts = entry.setdefault("alts", [])
+        if show not in alts:
+            if len(alts) >= 702:
+                return f"[{kind}_{entry['n']}]"
+            alts.append(show)
+            self.dirty = True
+        tag = alt_tag(alts.index(show))
+        self.reverse[(kind, entry["n"], tag)] = show
+        return f"[{kind}_{entry['n']}_{tag}]"
 
     def save(self):
         if not self.dirty:
@@ -221,8 +245,9 @@ class Book:
             self.name_re = None
         else:
             alts = sorted(self.name_key, key=len, reverse=True)
-            self.name_re = re.compile(r"(?<![\w@])(" + "|".join(re.escape(a) for a in alts) + r")(?![\w@])",
-                                      re.IGNORECASE)
+            # Not inside a path, file name or address: rosa.md stays rosa.md.
+            self.name_re = re.compile(r"(?<![\w@/\\.-])(" + "|".join(re.escape(a) for a in alts)
+                                      + r")(?![\w@/\\-]|\.\w)", re.IGNORECASE)
         return self.name_re
 
     # --- Out: hide --------------------------------------------------------------
@@ -263,7 +288,7 @@ class Book:
         if name_re:
             def person(m):
                 key = self.name_key.get(m.group(0).lower(), m.group(0).lower())
-                return self.token("PERSON", key, self.name_show.get(key, m.group(0)))
+                return self.token("PERSON", key, m.group(0))
             text = name_re.sub(person, text)
         return text
 
@@ -273,7 +298,7 @@ class Book:
             return text
 
         def back(m):
-            v = self.reverse.get((m.group(1), int(m.group(2))))
+            v = self.reverse.get((m.group(1), int(m.group(2)), m.group(3) or ""))
             if v is None:
                 return m.group(0)
             return json.dumps(v, ensure_ascii=False)[1:-1] if json_text else v
@@ -330,7 +355,8 @@ def add_note(body):
 def hide_request(body):
     with _lock:
         b = book()
-        out = {k: (walk(v, lambda s, _p: b.hide(s)) if k in SCRUB_KEYS else v) for k, v in body.items()}
+        hide = lambda s, p: s if last_key(p) in NOT_TEXT_KEYS else b.hide(s)
+        out = {k: (walk(v, hide, (k,)) if k in SCRUB_KEYS else v) for k, v in body.items()}
         b.save()
     return add_note(out)
 
@@ -353,7 +379,7 @@ class StreamFixer:
     @staticmethod
     def split_tail(text):
         i = text.rfind("[")
-        if i == -1 or "]" in text[i:] or len(text) - i > 14:
+        if i == -1 or "]" in text[i:] or len(text) - i > 20:
             return text, ""
         return text[:i], text[i:]
 
