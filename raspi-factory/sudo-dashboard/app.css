@@ -3634,3 +3634,28 @@ input.cr-other { flex: 1; min-width: 110px; min-height: 40px; margin: 0; }
 .wn-preview .wn-ico svg { width: 19px; height: 19px; }
 .wn-preview #wn-preview-text { min-width: 0; padding: 8px 12px; border-radius: 14px; background: var(--surface-low); overflow-wrap: anywhere; }
 #welcome-step2 h1 { margin-bottom: 18px; }
+
+/* Password and key boxes: hidden, with an eye to show what was typed. */
+.pw-wrap { position: relative; display: block; width: 100%; min-width: 0; direction: ltr; }
+.pw-wrap:has(> input[hidden]) { display: none; }
+.pw-wrap > input { display: block; width: 100%; margin: 0 !important; padding-right: 48px !important; box-sizing: border-box; }
+.pw-eye { position: absolute; top: 50%; right: 4px; display: grid; place-items: center; width: 40px; height: 40px; min-height: 0; margin: 0; padding: 0; border: 0; border-radius: 10px; background: transparent; color: var(--ink-3); cursor: pointer; transform: translateY(-50%); }
+.pw-eye:hover, .pw-eye[aria-pressed="true"] { color: var(--ink); }
+.pw-eye:focus-visible { outline: 2px solid var(--ink); outline-offset: -2px; }
+.pw-eye svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.tg-row .pw-wrap { flex: 1 1 220px; width: auto; }
+
+/* Phones: while typing, the menu bar steps aside. The page shrinks to the
+   space above the keyboard, so the bar rode up with it and sat on top of the
+   message box: what was being typed could not be seen. */
+@media (hover: none) and (pointer: coarse) {
+  body.keyboard-open .bottom-nav { display: none !important; }
+  /* The view starts 5px below the top bar, so it ends 5px past the visible
+     area: keep the box clear of that edge. */
+  body.keyboard-open .chat-view.active { padding-bottom: 8px; }
+}
+/* A narrow window on a computer has no on-screen keyboard: the bar stays, and
+   so does the room kept for it. */
+@media (hover: hover) and (max-width: 1023px) {
+  body.keyboard-open .chat-view.active { margin-bottom: calc(72px + var(--safe-bottom)); padding-bottom: 10px; }
+}
