@@ -321,7 +321,10 @@ if pplx_installed and or_key and search_cfg.get("provider") in (None, "perplexit
     if "perplexity" not in pl_web.setdefault("allow", []):
         pl_web["allow"].append("perplexity")
     pl_web.setdefault("entries", {})["perplexity"] = {"enabled": True, "config": {"webSearch": {
-        "apiKey": or_key, "baseUrl": OR_BASE, "model": "perplexity/sonar"}}}
+        # Straight to OpenRouter, never through the privacy relay: OpenClaw's
+        # network guard refuses loopback addresses for web search, so every
+        # search failed with "Blocked hostname" (1.0.66 and 1.0.67).
+        "apiKey": or_key, "baseUrl": "https://openrouter.ai/api/v1", "model": "perplexity/sonar"}}}
 elif search_cfg.get("provider") == "perplexity":
     # The OpenRouter key was removed: no stale key left behind.
     search_cfg.pop("provider")
