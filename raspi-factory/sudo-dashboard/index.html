@@ -296,7 +296,7 @@
             <h1 data-i18n="wc.title">give me a smarter brain.</h1>
             <p class="wc-done" id="wc-done" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5 10 17 19 7"/></svg><span id="wc-done-text" data-i18n="wc.connected">Connected</span></p>
             <button class="primary-button" id="wc-next" type="button" hidden data-i18n="ws.next">Next</button>
-            <div class="wc-opts" id="wc-opts"><div class="bc-mount" data-brain-chooser="explain"></div></div>
+            <div class="wc-opts" id="wc-opts"><div class="bc-mount" data-brain-chooser="explain" data-brain-simple="1"></div></div>
             <p class="form-status" id="wc-status" role="status"></p>
             <button class="ghost-button" id="wc-skip" type="button" data-i18n="cr.skip">Skip for now</button>
           </div>
@@ -684,7 +684,7 @@
               </div>
               <p class="gs-cap" data-i18n="gs.c.cap">Hundreds of times bigger: the difference between chatting and real work.</p>
 
-              <div class="bc-mount" data-brain-chooser></div>
+              <div class="bc-mount" data-brain-chooser data-brain-simple="1"></div>
 
               <details class="gs-more">
                 <summary data-i18n="gs.more">How it works &amp; what it costs</summary>
@@ -8670,6 +8670,7 @@
         <button class="soft-button bc-key-save" type="button" data-i18n="wc.saveKey">Save key</button>
         <p class="microcopy" data-i18n="bc.keyNote">Anthropic, OpenAI and Gemini keys aren't scrubbed yet.</p>
       </div>
+      <p class="bc-later" data-i18n="bc.later">You can add an existing OpenRouter account or log in with OpenAI later in Settings.</p>
       <p class="form-status bc-status" role="status"></p>`;
 
     function brainNow(s) {
@@ -8698,6 +8699,8 @@
       if (root.dataset.mounted) return;
       root.dataset.mounted = '1';
       root.classList.add('bc');
+      // Setup asks for one decision: the other ways in wait in Settings.
+      root.classList.toggle('bc-simple', !!root.dataset.brainSimple);
       root.innerHTML = BRAIN_CHOOSER_HTML;
       if (root.dataset.brainChooser !== 'explain') root.querySelectorAll('[data-part="explain"]').forEach(e => e.remove());
       I18N.translate(root);
@@ -8708,9 +8711,10 @@
       }));
 
       root.querySelector('.bc-credit').addEventListener('click', async e => {
+        const btn = e.currentTarget;   // gone from the event after the first await
         const hints = (state.status || {}).provider_key_hints || {};
         if (hints.openrouter && !confirm(t('cr.switchConfirm'))) return;
-        e.currentTarget.disabled = true;
+        btn.disabled = true;
         status.textContent = t('common.checking');
         try {
           await api('/api/credit/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }, 45000);
@@ -8718,7 +8722,7 @@
           await refreshStatusQuiet();
           if (!((state.status || {}).credit || {}).started) status.textContent = error.message;
         }
-        e.currentTarget.disabled = false;
+        btn.disabled = false;
         await afterBrainChange(root);
       });
 
@@ -8811,9 +8815,12 @@
       if (now) nowEl.textContent = now.text;
       root.querySelector('.bc-gift').hidden = !c.code_waiting;
       const later = c.started && !c.has_key && !c.in_use;
-      root.querySelector('.bc-credit').hidden = later || !!c.in_use;
+      const simple = !!root.dataset.brainSimple;
+      root.querySelector('.bc-credit').hidden = later || !!c.in_use || (simple && !!now);
+      root.querySelector('[data-panel="credit"]').classList.toggle('bc-done', simple && !!now);
       root.querySelector('.bc-credit-later').hidden = !later;
-      if (!root.dataset.picked) showBrainTab(root, now ? now.tab : 'credit');
+      if (simple) showBrainTab(root, 'credit');
+      else if (!root.dataset.picked) showBrainTab(root, now ? now.tab : 'credit');
     }
 
     function renderBrainChoosers() {
