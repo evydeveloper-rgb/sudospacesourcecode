@@ -3045,6 +3045,11 @@
     // The "On this device" tab: its own conversation with the on-device
     // model, kept on the device and never sent anywhere.
     state.chatMode = 'main';
+    // On a phone, focusing the box opens the keyboard, so only a tap on the
+    // box itself may do that. A computer has no such cost: keep it ready.
+    function readyChatBox() {
+      if (!matchMedia('(hover: none) and (pointer: coarse)').matches) $('chat-input').focus();
+    }
     // Each conversation has its own "thinking": a reply on one tab says
     // nothing about the other, and the other tab stays free to use.
     const chatBusy = { main: null, local: null };
@@ -3072,7 +3077,7 @@
       drawChatBusy();
       if (local && !localLoaded) loadLocalChat();
       scrollChat('auto', local ? 'local-messages' : 'messages');
-      $('chat-input').focus();
+      readyChatBox();
     }
     async function loadLocalChat() {
       localLoaded = true;
@@ -3100,7 +3105,7 @@
         addMessage('system', error.message, 'local-messages');
       } finally {
         setChatBusy('local', null);
-        input.focus();
+        readyChatBox();
       }
     }
 
@@ -3129,7 +3134,7 @@
         } catch (error) {
           addMessage('system', error.message);
         }
-        input.focus();
+        readyChatBox();
         return;
       }
       // Captured before the new message is drawn, or it would be sent twice —
@@ -3194,7 +3199,7 @@
       } finally {
         thinkingTimers.forEach(clearTimeout);
         setChatBusy('main', null);
-        input.focus();
+        readyChatBox();
       }
     }
 
@@ -8447,7 +8452,7 @@
       const input = $('chat-input');
       input.value = text;
       input.dispatchEvent(new Event('input'));
-      input.focus();
+      readyChatBox();
       input.setSelectionRange(text.length, text.length);
     }
 

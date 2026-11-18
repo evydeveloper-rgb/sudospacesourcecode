@@ -3674,3 +3674,12 @@ input.cr-other { flex: 1; min-width: 110px; min-height: 40px; margin: 0; }
   body.keyboard-open #model-loading { display: none !important; }
   html.ios-float-bar body.keyboard-open .chat-view.active { padding-bottom: 120px; }
 }
+
+/* Phones: the menu bar sits low, with just enough room under the icons to
+   clear the iPhone's home bar. */
+@media (hover: none) and (pointer: coarse) and (max-width: 1023px) {
+  :root { --nav-foot: max(6px, min(env(safe-area-inset-bottom, 0px), 14px)); }
+  .bottom-nav { height: calc(58px + var(--nav-foot)); padding: 4px 8px var(--nav-foot); }
+  .bottom-nav button { min-height: 54px; gap: 3px; }
+  .chat-view.active { margin-bottom: calc(58px + var(--nav-foot)); }
+}
