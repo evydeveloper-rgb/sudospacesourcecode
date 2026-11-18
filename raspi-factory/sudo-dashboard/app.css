@@ -3727,3 +3727,13 @@ input.cr-other { flex: 1; min-width: 110px; min-height: 40px; margin: 0; }
 .info-link.conn-row:hover, .info-link.conn-row[aria-expanded="true"] { color: var(--ink); }
 .conn-title.tight { margin-bottom: 4px; }
 .conn-more { margin-bottom: -6px; }
+
+/* Phones: Home, Contacts and Screen time are full pages, but the shell is
+   pinned to the screen here, so the page itself cannot move. They scroll
+   inside the shell, like every other tab. */
+@media (hover: none) and (pointer: coarse) {
+  body.site-mode { height: 100%; overflow: hidden; }
+  body.site-mode .app-shell { height: var(--vvh, 100dvh); min-height: 0; display: flex; }
+  body.site-mode #app-main { display: block; flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+  body.site-mode .crm-site-body { padding-bottom: calc(96px + var(--safe-bottom)); }
+}
