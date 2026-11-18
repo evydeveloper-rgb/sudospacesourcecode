@@ -1198,11 +1198,37 @@ def count_usage(kind, name=None):
             pass
 
 
+CHANNEL_RECOVER = "/var/lib/sudo-channel-recover.json"
+CHANNEL_RECOVER_EVERY = 6 * 3600
+
+
+def channel_try_recover(accounts, now):
+    """Restart the gateway for a WhatsApp that is still linked but has stopped
+    listening. On a beta device the listener stopped and stayed stopped for
+    days, with every reminder undelivered, until something restarted it. An
+    account that is logged out needs the owner, so it is left alone. At most
+    once per account every six hours, remembered across restarts, so this
+    can never become a restart loop. True when a restart was started."""
+    tried = read_json_file(CHANNEL_RECOVER, {}) or {}
+    due = [a.get("accountId") for a in accounts
+           if a.get("linked") and a.get("enabled") is not False
+           and now - float(tried.get(a.get("accountId")) or 0) >= CHANNEL_RECOVER_EVERY]
+    if not due:
+        return False
+    tried.update({aid: int(now) for aid in due})
+    write_json_file(CHANNEL_RECOVER, tried)
+    subprocess.run(["systemctl", "restart", "--no-block", "sudo-openclaw-gateway.service"],
+                   capture_output=True, timeout=20)
+    print(f"WhatsApp stopped listening ({', '.join(due)}): gateway restarted")
+    return True
+
+
 def channel_watch_loop():
-    """Tell the owner when a linked WhatsApp drops. A linked device can be
-    logged out from the phone, or lose its session, and reminders then fail
-    silently (seen on a beta device). Two checks in a row ten minutes apart,
-    then one notice -- over Telegram when WhatsApp itself is what is down --
+    """Look after a linked WhatsApp that drops. A linked device can be logged
+    out from the phone, or lose its session, and reminders then fail silently
+    (seen on a beta device). Two checks in a row ten minutes apart, then one
+    try at restarting it if it is still linked. If that does not bring it
+    back: one notice -- over Telegram when WhatsApp itself is what is down --
     and a dashboard banner until it is linked again."""
     down_since = {}
     while True:
@@ -1214,8 +1240,10 @@ def channel_watch_loop():
                 continue
             payload = openclaw_rpc("channels.status", timeout=20)
             down = []
+            by_id = {}
             for account in (payload.get("channelAccounts") or {}).get("whatsapp", []):
                 aid = account.get("accountId")
+                by_id[aid] = account
                 if aid in numbers and not (account.get("linked") and account.get("connected")):
                     down.append(aid)
             alert = read_json_file(CHANNEL_ALERT, {}) or {}
@@ -1230,6 +1258,11 @@ def channel_watch_loop():
             for aid in down:
                 down_since.setdefault(aid, now)
             confirmed = [aid for aid in down if now - down_since[aid] >= 590]
+            if confirmed and channel_try_recover([by_id[aid] for aid in confirmed], now):
+                # Give it two fresh checks before telling anyone.
+                for aid in confirmed:
+                    down_since.pop(aid, None)
+                continue
             if confirmed and not alert:
                 write_json_file(CHANNEL_ALERT, {"channel": "whatsapp", "accounts": confirmed, "since": int(now)})
                 who = "your agent's own WhatsApp number" if confirmed == ["agent"] else "WhatsApp"
