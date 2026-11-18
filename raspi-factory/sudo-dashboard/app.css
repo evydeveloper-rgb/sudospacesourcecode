@@ -3683,3 +3683,47 @@ input.cr-other { flex: 1; min-width: 110px; min-height: 40px; margin: 0; }
   .bottom-nav button { min-height: 54px; gap: 3px; }
   .chat-view.active { margin-bottom: calc(58px + var(--nav-foot)); }
 }
+
+/* Connectors: three plain boxes, like Settings. */
+.connectors-panel .setting-card { overflow: visible; border: 0; border-radius: 0; background: none; box-shadow: none; }
+.connectors-panel .setting-body { padding: 0; }
+.conn-title { margin: 0 0 12px; color: var(--ink); font: 750 1.02rem/1.3 var(--font-sans); letter-spacing: -.01em; }
+.conn-steps { display: grid; gap: 16px; margin: 0; padding: 0; list-style: none; }
+.conn-steps li { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 12px; }
+.conn-steps b { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--surface-low); color: var(--ink); font-size: .78rem; font-weight: 750; }
+.conn-steps li > div { display: grid; gap: 4px; min-width: 0; }
+.conn-steps strong, .conn-steps label { margin: 0; color: var(--ink); font: 650 .92rem/1.5 var(--font-sans); letter-spacing: 0; text-transform: none; }
+.conn-steps small { color: var(--ink-3); font-size: .8rem; line-height: 1.4; }
+.conn-key-row { display: flex; align-items: center; gap: 8px; }
+.conn-key-row .pw-wrap { flex: 1 1 auto; width: auto; margin: 0 !important; }
+.conn-key-row input { min-height: 40px; height: 40px; font-size: 1rem; }
+.conn-key-row .primary-button { flex: none; width: auto; min-height: 40px; height: 40px; margin: 0; padding: 0 14px; border-radius: 10px; font-size: .85rem; }
+.conn-link { justify-self: start; color: var(--primary); font-size: .85rem; font-weight: 650; text-decoration: none; }
+.conn-link:hover { text-decoration: underline; }
+.conn-on { display: grid; grid-template-columns: 32px minmax(0, 1fr) auto; align-items: start; gap: 12px; }
+.conn-on[hidden], .conn-setup[hidden] { display: none; }
+.conn-on-ico { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: #d8f5dd; color: #16692b; }
+.conn-on-ico svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.conn-on-text { display: grid; gap: 3px; min-width: 0; }
+.conn-on-text strong { color: var(--ink); font-size: .97rem; }
+.conn-on-text small { color: var(--ink-2); font-size: .84rem; line-height: 1.4; }
+.conn-text-btn { min-height: 32px; padding: 0 2px; border: 0; background: none; color: var(--ink-3); font-size: .8rem; font-weight: 600; text-decoration: underline; cursor: pointer; }
+.conn-top .form-status { margin: 8px 0 0; }
+.conn-top .form-status:empty { display: none; }
+.conn-note { margin: 0 0 14px; color: var(--ink-2); font-size: .88rem; line-height: 1.45; }
+#connector-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px 6px; }
+@media (min-width: 560px) { #connector-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+#connector-grid .connector-tile { flex-direction: column; justify-content: flex-start; gap: 6px; min-height: 0; padding: 2px; border: 0; border-radius: 12px; background: none; text-align: center; }
+#connector-grid .connector-logo { width: 44px; height: 44px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+#connector-grid .connector-logo img { width: 26px; height: 26px; }
+#connector-grid .connector-meta { width: 100%; }
+#connector-grid .connector-meta strong { display: -webkit-box; font-size: .7rem; font-weight: 600; line-height: 1.2; white-space: normal; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.conn-all { display: inline-block; margin-top: 14px; }
+.conn-more { display: grid; }
+.info-link.conn-row { display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 44px; margin: 0; padding: 0; border: 0; border-top: 1px solid var(--line); border-radius: 0; background: none; color: var(--ink); font-size: .92rem; font-weight: 600; text-align: start; text-decoration: none; }
+.info-link.conn-row:first-child { border-top: 0; }
+.info-link.conn-row::after { content: "\203A"; color: var(--ink-3); font-size: 1.25rem; line-height: 1; transition: transform .15s ease; }
+.info-link.conn-row[aria-expanded="true"]::after { transform: rotate(90deg); }
+.info-link.conn-row:hover, .info-link.conn-row[aria-expanded="true"] { color: var(--ink); }
+.conn-title.tight { margin-bottom: 4px; }
+.conn-more { margin-bottom: -6px; }
