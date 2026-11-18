@@ -217,6 +217,9 @@ def gateway_log():
 # 1.0.54's rejected config logged 27,000 lines a day on two beta devices and
 # the report could only say "other".
 LOG_ERROR_KINDS = (
+    ("whatsapp_gave_up", r"max attempts reached|stopping web monitoring"),
+    ("whatsapp_conflict", r"session conflict"),
+    ("whatsapp_logged_out", r"logged out|session (expired|invalid)"),
     ("config_invalid", r"invalid config|config (reload|validation) failed|additional propert"),
     ("plugin", r"plugin"),
     ("auth", r"\b40[13]\b|unauthori[sz]ed|invalid api key|forbidden"),
