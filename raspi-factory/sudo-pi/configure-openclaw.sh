@@ -287,6 +287,12 @@ defaults["memorySearch"] = mem
 # config; enable it explicitly here so search is on out of the box.
 cfg.setdefault("plugins", {}).setdefault("entries", {}).setdefault("memory-core", {})["enabled"] = True
 
+# WhatsApp stops for good after 12 failed reconnects in a row ("max attempts
+# reached. Stopping web monitoring"): about four minutes of bad internet left
+# a beta device linked but deaf for days. 0 means keep trying, at most every
+# 30 seconds. A value the owner set themselves stays.
+cfg.setdefault("web", {}).setdefault("reconnect", {}).setdefault("maxAttempts", 0)
+
 cfg["gateway"]["auth"]["token"] = token
 
 tools = cfg.setdefault("tools", {})
