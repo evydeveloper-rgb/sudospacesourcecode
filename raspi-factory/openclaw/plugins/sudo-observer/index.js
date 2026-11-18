@@ -200,7 +200,12 @@ export default {
         if (runChannel(event, ctx) !== "whatsapp") return;
         if ((event?.accountId ?? ctx?.accountId) !== "owner") return;
         const sender = digits(event?.senderId ?? ctx?.senderId);
-        if (!watchOnly() && owner && sender === owner) return;
+        // Reminders and check-ins are started by the schedule, so no sender
+        // comes with them. Blocking them meant no reminder ever reached an
+        // owner on this account. message_sending below still limits what they
+        // send to the owner's own chat.
+        const scheduled = ["cron", "heartbeat"].includes(ctx?.trigger) && (!sender || sender === owner);
+        if (!watchOnly() && owner && (sender === owner || scheduled)) return;
         api.logger.warn("sudo-observer: blocked an agent run on the owner's own WhatsApp (read-only)");
         return block("the owner's own WhatsApp is read-only");
       } catch (err) {
