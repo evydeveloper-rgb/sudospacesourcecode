@@ -330,7 +330,7 @@ def _bg_run_worker(run_id: str) -> None:
     task = run.get("task") or ""
     session_key = run.get("session") or DASHBOARD_SESSION
     try:
-        reply = agent_chat(task, session_key)
+        reply = agent_chat(task, session_key, CHAT_JOB_TIMEOUT)
         # The run had its own lane, so it never got the chat box's history and
         # never wrote to the on-device chat log. Land it in the log now, so the
         # answer shows up in the conversation the way a normal reply would.
@@ -3295,7 +3295,7 @@ def agent_backend(cfg=None) -> str:
     return "install_failed" if openclaw_install_failed() else "provisioning"
 
 
-def openclaw_chat(message: str, session_key: str = DASHBOARD_SESSION) -> str:
+def openclaw_chat(message: str, session_key: str = DASHBOARD_SESSION, timeout: int = 130) -> str:
     if not os.path.isfile(OPENCLAW_CONFIG) and os.path.isfile(CONFIGURE_SCRIPT):
         subprocess.run([CONFIGURE_SCRIPT], capture_output=True, timeout=120)
     token = (read_text(OPENCLAW_TOKEN_FILE) or "").strip()
@@ -3323,7 +3323,7 @@ def openclaw_chat(message: str, session_key: str = DASHBOARD_SESSION) -> str:
     deadline = time.time() + OPENCLAW_STARTUP_WAIT
     while True:
         try:
-            with urllib.request.urlopen(request, timeout=130) as response:
+            with urllib.request.urlopen(request, timeout=timeout) as response:
                 data = json.loads(response.read().decode("utf-8"))
             break
         except urllib.error.HTTPError as exc:
@@ -3339,7 +3339,7 @@ def openclaw_chat(message: str, session_key: str = DASHBOARD_SESSION) -> str:
                 raise RuntimeError(f"Agent is starting up or unreachable — try again in a moment ({exc})")
             time.sleep(2)
         except socket.timeout as exc:
-            raise RuntimeError(f"Agent timed out ({exc})")
+            raise RuntimeError("That ran for too long and was stopped. Try asking for one smaller step.") from exc
     spend_guard("record")
     choices = data.get("choices") or [{}]
     reply = ((choices[0].get("message") or {}).get("content") or "").strip()
@@ -3675,12 +3675,82 @@ def openclaw_whatsapp_state() -> dict:
     return state
 
 
-def agent_chat(message: str, session_key: str = DASHBOARD_SESSION) -> str:
+def agent_chat(message: str, session_key: str = DASHBOARD_SESSION, timeout: int = 130) -> str:
     backend = agent_backend()
     if backend == "openclaw":
-        return openclaw_chat(message, session_key)
+        return openclaw_chat(message, session_key, timeout)
     raise AgentProvisioningError(INSTALL_FAILED_MESSAGE if backend == "install_failed"
                                  else PROVISIONING_MESSAGE)
+
+
+# --- Dashboard chat turns that outlast one web request -------------------------
+# The gateway cancels a turn the moment its caller hangs up. The chat used to
+# wait 130 seconds and hang up, so any longer task was thrown away, the owner
+# saw "taking longer than expected", asked again, and it started over (a beta
+# tester hit this again and again). The public link also cuts any request off
+# at 100 seconds. So the turn runs here, on its own, and the page asks how it
+# is going; closing the page does not stop it.
+CHAT_JOB_TIMEOUT = 900
+CHAT_JOB_KEEP = 3600
+CHAT_JOBS: dict = {}
+_chat_jobs_lock = threading.Lock()
+
+
+def chat_job_payload(message, history, cfg, session_key):
+    """What the page shows for this turn; the reply is saved to the chat log."""
+    try:
+        reply = agent_chat(message, session_key, CHAT_JOB_TIMEOUT)
+        append_chat_log(message, reply)
+        return {"reply": reply, "source": "cloud"}
+    except AgentProvisioningError as exc:
+        local = local_model_chat(message, history, cfg)
+        if local:
+            append_chat_log(message, local)
+            return {"reply": local, "source": "local", "note": str(exc)}
+        return {"reply": str(exc), "source": "provisioning"}
+    except SpendGuardError as exc:
+        append_chat_log(message, str(exc))
+        return {"reply": str(exc), "source": "guard"}
+    except Exception as exc:  # noqa: BLE001 - shown to the owner in the chat
+        return {"error": str(exc)}
+
+
+def chat_job_start(message, history, cfg, session_key):
+    job = {"id": secrets.token_urlsafe(12), "message": message, "status": "running",
+           "started": time.time(), "result": None}
+
+    def work():
+        result = chat_job_payload(message, history, cfg, session_key)
+        with _chat_jobs_lock:
+            job.update(result=result, status="done", finished=time.time())
+
+    with _chat_jobs_lock:
+        for jid in [j for j, v in CHAT_JOBS.items()
+                    if v["status"] == "done" and time.time() - v["finished"] > CHAT_JOB_KEEP]:
+            CHAT_JOBS.pop(jid, None)
+        CHAT_JOBS[job["id"]] = job
+    threading.Thread(target=work, name="chat-job", daemon=True).start()
+    return job
+
+
+def chat_job_view(job_id):
+    with _chat_jobs_lock:
+        job = CHAT_JOBS.get(job_id)
+        if not job:
+            return {"status": "gone"}
+        if job["status"] == "running":
+            return {"status": "running", "secs": int(time.time() - job["started"])}
+        return {"status": "done", **(job["result"] or {})}
+
+
+def chat_job_pending():
+    """The turn still being worked on, for a page opened in the meantime."""
+    with _chat_jobs_lock:
+        running = [j for j in CHAT_JOBS.values() if j["status"] == "running"]
+    if not running:
+        return {}
+    job = max(running, key=lambda j: j["started"])
+    return {"job": job["id"], "message": job["message"]}
 
 
 def remote_password_required() -> bool:
@@ -6492,6 +6562,15 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             self.send_json({"reply": reply, "source": "local"})
             return True
 
+        if path == "/api/agent/chat/job" and self.command == "GET":
+            q = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            self.send_json(chat_job_view((q.get("id") or [""])[0]))
+            return True
+
+        if path == "/api/agent/chat/pending" and self.command == "GET":
+            self.send_json(chat_job_pending())
+            return True
+
         if path == "/api/agent/chat/history" and self.command == "GET":
             self.send_json({"messages": read_chat_log()})
             return True
@@ -6571,6 +6650,9 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                 # Not written into the transcript: it is a status, not
                 # something the agent said.
                 self.send_json({**no_brain_reply(), "source": "none"})
+                return True
+            if body.get("poll"):
+                self.send_json({"job": chat_job_start(message, history, cfg, session_key)["id"]})
                 return True
             try:
                 reply = agent_chat(message, session_key)

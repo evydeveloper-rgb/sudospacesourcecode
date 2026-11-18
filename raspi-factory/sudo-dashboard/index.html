@@ -3110,36 +3110,51 @@
         input.focus();
         return;
       }
-      $('send-button').disabled = true;
-      const thinkingLabel = $('thinking').querySelector('em');
-      thinkingLabel.textContent = t('chat.thinking');
-      $('thinking').hidden = false;
-      // A wait long enough to need the raised timeout above is long enough to
-      // look frozen on a plain, unchanging "thinking" dot -- say what is
-      // actually likely rather than leaving the same three words on screen
-      // for up to two minutes.
-      const thinkingTimers = [
-        setTimeout(() => { thinkingLabel.textContent = t('chat.stillThinking'); }, 8000),
-        setTimeout(() => {
-          thinkingLabel.textContent = t('chat.firstStart');
-        }, 25000),
-      ];
       // Captured before the new message is drawn, or it would be sent twice —
       // once as history and once as the message.
       const history = recentTurns(8);
       addMessage('user', message);
       scrollChat('smooth');
+      await followChatTurn(() => api('/api/agent/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message, history, record: true, poll: true }),
+      }, 45000));
+    }
+
+    // The agent works on the device whether or not this page is watching, so
+    // a long task is never cut off: ask how it is going until it is done.
+    async function waitForChatJob(first) {
+      if (!first.job) return first;
+      const until = Date.now() + 16 * 60 * 1000;
+      while (Date.now() < until) {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        let job;
+        // A dropped connection says nothing about the agent: keep asking.
+        try { job = await api(`/api/agent/chat/job?id=${encodeURIComponent(first.job)}`, {}, 15000); }
+        catch (_) { continue; }
+        if (job.status === 'done') {
+          if (job.error) throw new Error(I18N.serverError(job.error));
+          return job;
+        }
+        if (job.status === 'gone') throw new Error(t('chat.jobGone'));
+      }
+      throw new Error(t('chat.jobGone'));
+    }
+
+    async function followChatTurn(start) {
+      const input = $('chat-input');
+      $('send-button').disabled = true;
+      const thinkingLabel = $('thinking').querySelector('em');
+      thinkingLabel.textContent = t('chat.thinking');
+      $('thinking').hidden = false;
+      const thinkingTimers = [
+        setTimeout(() => { thinkingLabel.textContent = t('chat.stillThinking'); }, 8000),
+        setTimeout(() => { thinkingLabel.textContent = t('chat.firstStart'); }, 25000),
+        setTimeout(() => { thinkingLabel.textContent = t('chat.longRun'); }, 120000),
+      ];
       try {
-        // 30s (the api() default) is well under what the server itself will
-        // wait for: up to 90s for the on-device model, 120s for the cloud
-        // agent, either of which is ordinary on a Pi 5 the first time a model
-        // has to load into memory. The client was giving up first and blaming
-        // Wi-Fi for what was actually the agent still starting up.
-        const data = await api('/api/agent/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message, history, record: true }),
-        }, 130000, t('chat.slowReply'));
+        const data = await waitForChatJob(await start());
         if (data.source === 'provisioning') {
           // Not an answer -- the agent is still installing. Say so plainly
           // and keep watching, so the banner clears the moment it lands.
@@ -3163,6 +3178,16 @@
         $('send-button').disabled = false;
         input.focus();
       }
+    }
+
+    // Opened or reloaded while the agent is still on a task: pick it back up.
+    async function resumeChatTurn() {
+      let pending;
+      try { pending = await api('/api/agent/chat/pending', {}, 10000); } catch (_) { return; }
+      if (!pending.job) return;
+      addMessage('user', pending.message);
+      scrollChat('auto');
+      followChatTurn(async () => ({ job: pending.job }));
     }
 
     // Which device this is decides the add-to-home-screen steps. Returns
@@ -9625,6 +9650,7 @@
         throw error;
       }
       await loadChatHistory();
+      resumeChatTurn();
       renderStatus(status);
       loadCredit();
       api('/api/agent/ssh').then(renderSsh).catch(() => {});
