@@ -207,8 +207,15 @@ export default {
       if (event?.toolName !== "message") return;
       const params = event?.params || {};
       const channel = String(params.channel || "").toLowerCase();
+      // Reminders, check-ins and the dashboard chat are not WhatsApp sessions,
+      // and often name no channel. With WhatsApp the only chat app, that send
+      // still goes to WhatsApp, so a name in it must be looked up here too.
+      const session = String(ctx?.sessionKey || "");
+      const telegram = api.config?.channels?.telegram;
+      const telegramOn = Boolean(telegram) && telegram.enabled !== false;
       const onWhatsApp = channel ? channel === "whatsapp"
-        : ctx?.channelId === "whatsapp" || String(ctx?.sessionKey || "").includes(":whatsapp:");
+        : ctx?.channelId === "whatsapp" || session.includes(":whatsapp:")
+          || (!telegramOn && ctx?.channelId !== "telegram" && !session.includes(":telegram:"));
       if (!onWhatsApp) return;
       const fields = ["target", "to"].filter((k) => typeof params[k] === "string" && params[k].trim());
       const many = Array.isArray(params.targets) ? params.targets : null;
