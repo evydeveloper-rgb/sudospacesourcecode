@@ -10049,6 +10049,12 @@
     //   - the visual viewport height, as a fallback for the moment before
     //     focus settles or on browsers with no focus event timing we can trust.
     let composerFocused = false;
+    // Safari 26 on iPhone floats its address pill and form bar over the page,
+    // above the keyboard, and the visual viewport does not count them: a box
+    // placed at its bottom edge sits behind them until typing scrolls it out.
+    const safariVersion = Number((navigator.userAgent.match(/Version\/(\d+)/) || [])[1] || 0);
+    document.documentElement.classList.toggle('ios-float-bar',
+      /iPhone/.test(navigator.userAgent) && safariVersion >= 26 && !navigator.standalone);
     // Ignore a blur that lands within a few ms of a refocus (mobile Safari
     // blurs then refocuses on submit); it would flash the lane back in mid-typing.
     let lastFocusAt = 0;
@@ -10058,6 +10064,7 @@
       composerFocused = true;
       setKeyboardOpen(true);
       followViewport();
+      setTimeout(() => scrollChat('auto', state.chatMode === 'local' ? 'local-messages' : 'messages'), 350);
     });
     chatInput.addEventListener('blur', () => {
       if (Date.now() - lastFocusAt < 250) return;
@@ -10150,7 +10157,7 @@
         const vv = window.visualViewport || {};
         const cs = getComputedStyle(document.documentElement);
         const ta = $('chat-input');
-        box.textContent = `iOS ${ios} | inner ${innerHeight} | vv h ${Math.round(vv.height)} top ${Math.round(vv.offsetTop)} | scrollY ${Math.round(scrollY)}\n`
+        box.textContent = `iOS ${ios} Safari ${safariVersion} ${navigator.standalone ? 'app' : 'browser'} | inner ${innerHeight} | vv h ${Math.round(vv.height)} top ${Math.round(vv.offsetTop)} | scrollY ${Math.round(scrollY)}\n`
           + `--vvh ${cs.getPropertyValue('--vvh')} --vvt ${cs.getPropertyValue('--vvt')} | kb ${document.body.classList.contains('keyboard-open')}\n`
           + `shell ${r(document.querySelector('.app-shell'))} | form ${r($('chat-form'))} | box ${r(ta)} h${ta ? ta.offsetHeight : '-'} | text ${ta ? ta.value.length : 0}`;
       };

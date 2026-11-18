@@ -3659,3 +3659,18 @@ input.cr-other { flex: 1; min-width: 110px; min-height: 40px; margin: 0; }
 @media (hover: hover) and (max-width: 1023px) {
   body.keyboard-open .chat-view.active { margin-bottom: calc(72px + var(--safe-bottom)); padding-bottom: 10px; }
 }
+
+/* Phones: a chat that gives the conversation the room, like a messaging app.
+   A slim top bar and tabs, and nothing else above the messages while typing. */
+@media (hover: none) and (pointer: coarse) and (max-width: 1023px) {
+  .topbar { height: calc(46px + var(--safe-top)); padding-inline: 14px; }
+  .topbar .wordmark { font-size: 1.3rem; }
+  .topbar .hub-button, .topbar .brand-home { width: 34px; height: 34px; min-height: 34px; border-radius: 10px; }
+  .topbar .hub-button svg, .topbar .brand-home svg { width: 18px; height: 18px; }
+  .chat-view.active { margin-top: 0; padding-top: 0; }
+  .chat-tabs { margin: 0; padding: 0 2px; }
+  .chat-tab { min-height: 32px; padding: 4px 10px; font-size: .84rem; }
+  body.keyboard-open #app-main > :not(.view) { display: none !important; }
+  body.keyboard-open #model-loading { display: none !important; }
+  html.ios-float-bar body.keyboard-open .chat-view.active { padding-bottom: 120px; }
+}
