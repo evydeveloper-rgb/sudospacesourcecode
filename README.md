@@ -4,12 +4,12 @@
 
 <div align="center">
 
-**A fully-owned AI teammate that lives on a Raspberry Pi 5.**
+**A fully-owned AI teammate that runs on a Raspberry Pi 5, a mini PC, or a Linux computer you already have.**
 Local by default. No subscription. Your keys, your data, your machine.
 
 [Website](https://sudospace.tech) · [Instagram](https://instagram.com/sudospace.tech) · [Early access](https://sudospace.tech)
 
-<img src="https://img.shields.io/badge/hardware-Raspberry%20Pi%205-C51A4A?style=flat-square" alt="Raspberry Pi 5">
+<img src="https://img.shields.io/badge/hardware-Raspberry%20Pi%205%20%C2%B7%20Linux%20PC-C51A4A?style=flat-square" alt="Raspberry Pi 5 or a Linux PC">
 <img src="https://img.shields.io/badge/runs%20on-OpenClaw-161311?style=flat-square" alt="OpenClaw">
 <img src="https://img.shields.io/badge/local%20by%20default-F2603C?style=flat-square" alt="Local by default">
 <img src="https://img.shields.io/badge/subscription-none-2ecc71?style=flat-square" alt="No subscription">
@@ -21,7 +21,7 @@ Local by default. No subscription. Your keys, your data, your machine.
 
 ## What is this?
 
-`sudo` is a physical AI teammate that lives on a Raspberry Pi on your shelf — **OpenClaw, without the maintenance tax**. Self-hosting an AI agent normally means cryptic configs, broken dependencies, and constant updates. `sudo` packages all of that into a plug-and-play box: buy it, plug it in, name it, talk to it.
+`sudo` is an AI teammate that lives on a small computer on your shelf — **OpenClaw, without the maintenance tax**. That can be the Sudo box (a Raspberry Pi 5), or a PC, mini PC or home server you already own. Self-hosting an AI agent normally means cryptic configs, broken dependencies, and constant updates. `sudo` packages all of that into a plug-and-play box: buy it, plug it in, name it, talk to it.
 
 > **Ownership without the CS degree.**
 
@@ -86,9 +86,30 @@ The first setup downloads the agent, which can take 10–15 minutes. After that,
 
 ---
 
+## Install it on a computer you already have
+
+sudo also runs on a PC, mini PC, home server or Jetson, and on a Raspberry Pi you'd rather not reflash.
+
+**You need:** Debian or Ubuntu with systemd, on an arm64 or x86_64 processor. It doesn't run on macOS or Windows.
+
+1. **Run this on that machine:**
+
+   ```bash
+   curl -fsSL https://raw.githubusercontent.com/evydeveloper-rgb/sudospacesourcecode/main/install.sh | sudo bash
+   ```
+
+   It installs the dashboard, the agent (OpenClaw) and an on-device model picked for your hardware. Running it again repairs or updates sudo and keeps your settings, chats and agent.
+2. **Open `http://<your-machine>.local`** (or `:8080` if something already used port 80). There's no setup hotspot, since the machine is already on your network, so it opens straight to the welcome.
+
+Options such as `--hostname`, `--port` and `--model` are listed in [`install.sh`](install.sh). To install on several machines at once, use the [Ansible playbook](ansible/README.md).
+
+---
+
 ## Repository layout
 
 ```
+install.sh            Installer for a Debian/Ubuntu machine you already have
+ansible/              The same install, on many machines at once
 raspi-factory/        Factory image builder + on-device runtime
 ├── sudo-dashboard/   On-device web dashboard (Python, no build step)
 ├── sudo-pi/          First-boot installers + configurators
